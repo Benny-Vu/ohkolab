@@ -25,7 +25,7 @@ npm run dev      # start the dev server
 ## Project notes
 
 - Import from `src/` with the `@/` alias, e.g. `import { x } from "@/lib/x"`.
-- The app is built with `base: "/ohkolab/"` for GitHub Pages.
+- The app is built with `base: "/"` and served from the custom domain ohkolab.com on GitHub Pages (see `public/CNAME`).
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## Disclaimer

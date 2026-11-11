@@ -4,8 +4,8 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Served from https://<user>.github.io/ohkolab/
-  base: "/ohkolab/",
+  // Served from the custom domain https://ohkolab.com/
+  base: "/",
   plugins: [react()],
   resolve: {
     alias: {
