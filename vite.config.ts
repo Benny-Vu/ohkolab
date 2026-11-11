@@ -4,8 +4,8 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Served from https://<user>.github.io/Pokemon-Champions-Utility-Tool/
-  base: "/Pokemon-Champions-Utility-Tool/",
+  // Served from https://<user>.github.io/ohkolab/
+  base: "/ohkolab/",
   plugins: [react()],
   resolve: {
     alias: {
