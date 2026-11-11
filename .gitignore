@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 CLAUDE.md
+.claude/
+.worktreeinclude
 dist-ssr
 *.local
 

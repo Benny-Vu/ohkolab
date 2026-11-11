@@ -21,6 +21,8 @@ npm run dev      # start the dev server
 | `npm run lint`         | Run ESLint                             |
 | `npm run format`       | Format with Prettier                   |
 | `npm run format:check` | Check formatting without changing code |
+| `npm run test`         | Run the unit tests once (Vitest)       |
+| `npm run check`        | Lint, format check, tests and build    |
 
 ## Project notes
 
