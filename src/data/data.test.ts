@@ -195,6 +195,9 @@ describe("damage", () => {
     expect(result.min).toBeGreaterThan(0);
     expect(result.max).toBeGreaterThanOrEqual(result.min);
     expect(result.defenderMaxHp).toBe(202);
+    expect(result.rolls).toHaveLength(16);
+    expect(result.rolls?.[0]).toBe(result.min);
+    expect(result.rolls?.at(-1)).toBe(result.max);
     expect(result.maxPercent).toBeCloseTo((result.max / 202) * 100, 1);
     expect(result.description).toContain("Garchomp Earthquake vs.");
     expect(result.koText).not.toBe("");

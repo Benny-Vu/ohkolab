@@ -101,10 +101,19 @@ export function calculateDamage(
     }
   }
 
+  const { damage } = result;
+  const rolls =
+    typeof damage === "number"
+      ? [damage]
+      : damage.every((roll): roll is number => typeof roll === "number")
+        ? [...damage].sort((a, b) => a - b)
+        : null;
+
   return {
     move: move.name,
     min,
     max,
+    rolls,
     minPercent: round1((min / defenderMaxHp) * 100),
     maxPercent: round1((max / defenderMaxHp) * 100),
     defenderMaxHp,

@@ -60,10 +60,24 @@ export interface DamageResult {
   minPercent: number;
   maxPercent: number;
   defenderMaxHp: number;
+  /**
+   * Every possible damage roll, lowest first. Null when the move's hits roll
+   * independently (some multi-hit moves), where only min and max are known.
+   */
+  rolls: number[] | null;
   /** Full one-line description, e.g. "32 Atk Garchomp Earthquake vs. ...". */
   description: string;
   /** KO summary, e.g. "37.5% chance to OHKO". Empty when the move does no damage. */
   koText: string;
+}
+
+/**
+ * Router state another page can pass when navigating to `/calc` to preload a
+ * side, e.g. `navigate("/calc", { state: { attacker: set } })`.
+ */
+export interface CalcHandoff {
+  attacker?: PokemonSet;
+  defender?: PokemonSet;
 }
 
 export function emptyBoosts(): BoostTable {
