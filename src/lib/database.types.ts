@@ -1,11 +1,10 @@
 /**
  * Database schema as the Supabase client sees it. Hand-written to match the
- * SQL in `supabase/migrations/` (no database was reachable to generate it):
- * when a migration changes a table, change this file in the same commit.
+ * SQL in `supabase/migrations/`: when a migration changes a table, change this
+ * file in the same commit.
  *
- * Nullability mirrors the migrations. The `teams` columns that existed before
- * the migrations (`user_id`, `name`, `data`, `created_at`, `updated_at`) have
- * no NOT NULL constraint, so they are nullable here too.
+ * Nullability mirrors the migrations. Every `teams` column is NOT NULL, as in
+ * the live project.
  */
 import type { BattleFormat } from "@/types/battle";
 import type { PokemonSet } from "@/types/pokemon";
@@ -61,38 +60,39 @@ export type Database = {
       teams: {
         Row: {
           id: string;
-          user_id: string | null;
-          name: string | null;
+          user_id: string;
+          name: string;
           /**
-           * The team members. Stored as `jsonb`: the database does not check
-           * the shape, so validate what you read before trusting it.
+           * The team members. Stored as `jsonb`: the database only checks that
+           * it is an array of at most six entries, so validate what you read
+           * before trusting it.
            */
-          data: PokemonSet[] | null;
+          data: PokemonSet[];
           format: BattleFormat;
           is_public: boolean;
-          created_at: string | null;
-          updated_at: string | null;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           /** Defaults to the signed-in user. */
-          user_id?: string | null;
-          name?: string | null;
-          data?: PokemonSet[] | null;
+          user_id?: string;
+          name: string;
+          data: PokemonSet[];
           format?: BattleFormat;
           is_public?: boolean;
-          created_at?: string | null;
-          updated_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
-          user_id?: string | null;
-          name?: string | null;
-          data?: PokemonSet[] | null;
+          user_id?: string;
+          name?: string;
+          data?: PokemonSet[];
           format?: BattleFormat;
           is_public?: boolean;
-          created_at?: string | null;
-          updated_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
