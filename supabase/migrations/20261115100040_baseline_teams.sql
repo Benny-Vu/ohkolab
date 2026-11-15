@@ -18,9 +18,17 @@ create table if not exists public.teams (
 alter table public.teams enable row level security;
 
 -- A signed-in user can read and write their own teams, nothing else.
-drop policy if exists "own teams" on public.teams;
-create policy "own teams" on public.teams
-  for all
-  to authenticated
-  using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'teams' and policyname = 'own teams'
+  ) then
+    create policy "own teams" on public.teams
+      for all
+      to authenticated
+      using (user_id = (select auth.uid()))
+      with check (user_id = (select auth.uid()));
+  end if;
+end;
+$$;

@@ -1,6 +1,6 @@
--- Accounts: public profiles, team format and sharing flag, account deletion.
+-- Accounts: public profiles, team format and sharing flag.
 -- The limits here mirror `src/lib/auth/validation.ts`; change both together.
--- `src/lib/database.types.ts` is hand-written from this file.
+-- `src/lib/database.types.ts` is hand-written from the migrations.
 
 -- ---------------------------------------------------------------------------
 -- Profiles: one row per auth user, readable by everyone.
@@ -111,27 +111,3 @@ create policy "public teams are readable" on public.teams
   for select
   to anon, authenticated
   using (is_public);
-
--- ---------------------------------------------------------------------------
--- Account deletion: removes the caller's auth user; profiles and teams go
--- with it through their foreign keys.
--- ---------------------------------------------------------------------------
-
-create function public.delete_own_account()
-returns void
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  caller uuid := auth.uid();
-begin
-  if caller is null then
-    raise exception 'Not signed in' using errcode = '42501';
-  end if;
-  delete from auth.users where id = caller;
-end;
-$$;
-
-revoke execute on function public.delete_own_account() from public, anon;
-grant execute on function public.delete_own_account() to authenticated;
