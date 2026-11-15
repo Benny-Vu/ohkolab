@@ -1,7 +1,7 @@
--- Account deletion. NOT YET APPLIED to the live project (as of 2026-11-15):
--- the Supabase connector refused it because the function body contains a
--- `delete`. Run it in the Supabase SQL editor. The editor does not record it
--- in the migration history, so this file's version is only a placeholder.
+-- Account deletion. Applied to the live project on 2026-11-15 by the owner
+-- through the Supabase SQL editor, because the Supabase connector refuses a
+-- function body that contains a `delete`. The editor does not record it in
+-- the migration history, so this file's version is only a placeholder.
 
 -- ---------------------------------------------------------------------------
 -- Account deletion: removes the caller's auth user; profiles and teams go
