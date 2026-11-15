@@ -301,6 +301,20 @@ describe("calcReducer: actions", () => {
     );
   });
 
+  it("restores an earlier state, undoing a reset", () => {
+    const changed = reduce(
+      createDefaultCalcState(),
+      { type: "setSet", side: "p1", set: createDefaultSet("Dragonite") },
+      { type: "setTerrain", terrain: "Grassy" },
+    );
+    const undone = reduce(
+      changed,
+      { type: "reset" },
+      { type: "restore", state: changed },
+    );
+    expect(undone).toBe(changed);
+  });
+
   it("loads handed-over sets as fresh sides and keeps the field", () => {
     const start = reduce(
       createDefaultCalcState(),

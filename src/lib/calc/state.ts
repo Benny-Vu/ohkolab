@@ -83,6 +83,8 @@ export type CalcAction =
   | { type: "setSpikes"; side: SideId; layers: number }
   | { type: "swapSides" }
   | { type: "reset" }
+  /** Puts back an earlier state, e.g. to undo a reset. */
+  | { type: "restore"; state: CalcState }
   | { type: "loadSets"; sets: Partial<Record<SideId, PokemonSet>> };
 
 export function otherSide(side: SideId): SideId {
@@ -246,6 +248,8 @@ export function calcReducer(state: CalcState, action: CalcAction): CalcState {
       };
     case "reset":
       return createDefaultCalcState();
+    case "restore":
+      return action.state;
     case "loadSets": {
       const sides = { ...state.sides };
       for (const id of SIDE_IDS) {

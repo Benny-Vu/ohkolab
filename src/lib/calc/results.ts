@@ -157,9 +157,15 @@ function percentOf(amount: number, max: number): number {
 }
 
 /**
- * The HP range a defender at `hpPercent` is left with after taking a hit.
- * Current HP is rounded the way the damage function rounds it.
+ * Current HP of a Pokémon at `hpPercent` of `maxHp`, rounded the way the
+ * damage function rounds it: never below 1.
  */
+export function currentHp(maxHp: number, hpPercent: number): number {
+  const percent = Math.min(MAX_HP_PERCENT, Math.max(MIN_HP_PERCENT, hpPercent));
+  return Math.max(1, Math.round((maxHp * percent) / 100));
+}
+
+/** The HP range a defender at `hpPercent` is left with after taking a hit. */
 export function remainingHp(
   result: Pick<DamageResult, "min" | "max" | "defenderMaxHp">,
   hpPercent: number,

@@ -30,6 +30,16 @@ export function battleName(side: CalcSide): string {
   return battleSet(side).species;
 }
 
+/**
+ * A name for each side to show next to results. Two Pokémon of the same forme
+ * are told apart by their number.
+ */
+export function sideNames(state: CalcState): Record<SideId, string> {
+  const p1 = battleName(state.sides.p1);
+  const p2 = battleName(state.sides.p2);
+  return p1 === p2 ? { p1: `${p1} (1)`, p2: `${p2} (2)` } : { p1, p2 };
+}
+
 /** A side as the damage function wants it. */
 export function toBattler(side: CalcSide): BattlerState {
   return {
