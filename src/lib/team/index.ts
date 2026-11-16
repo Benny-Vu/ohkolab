@@ -47,8 +47,28 @@ export {
   type TeamStore,
 } from "@/lib/team/team-store";
 export {
+  createCloudTeamStore,
+  getCloudTeamStore,
+  isCloudTeamStore,
+  rowToTeam,
+  teamToUpsert,
+  type CloudSyncState,
+  type CloudSyncStatus,
+  type CloudTeamStore,
+  type CloudTeamStoreOptions,
+} from "@/lib/team/cloud-team-store";
+export {
+  copyLocalTeamsToAccount,
+  copiedTeamsFlagKey,
+} from "@/lib/team/copy-local-teams";
+export {
+  resolveActiveTeamStore,
+  setTeamsSyncClient,
+} from "@/lib/team/active-store";
+export {
   createTeamActions,
   useTeams,
   type TeamActions,
+  type TeamSync,
   type UseTeams,
 } from "@/lib/team/use-teams";

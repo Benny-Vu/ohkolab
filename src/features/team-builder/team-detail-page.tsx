@@ -37,6 +37,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -49,12 +51,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { createDefaultSet, validateSet } from "@/data";
+import { useAuth } from "@/lib/auth/use-auth";
 import {
   attackingTypes,
   battleTypes,
   defensiveOverview,
   exportTeam,
-  localTeamStore,
   memberLabel,
   offensiveCoverage,
   teamWarnings,
@@ -92,7 +94,11 @@ export function TeamDetailPage() {
     updateMember,
     removeMember,
     moveMember,
+    restore,
+    setPublic,
+    sync,
   } = useTeams();
+  const { user } = useAuth();
   const team = teams.find((candidate) => candidate.id === teamId);
 
   const [renameOpen, setRenameOpen] = useState(false);
@@ -104,6 +110,29 @@ export function TeamDetailPage() {
   const [exportOpen, setExportOpen] = useState(false);
 
   if (!team) {
+    if (sync.loading) {
+      return (
+        <Page title="Teams" description="Loading your teams…">
+          <p className="text-muted-foreground">Loading your teams…</p>
+        </Page>
+      );
+    }
+    if (sync.error) {
+      return (
+        <Page title="Teams" description="Your teams could not be loaded.">
+          <div className="grid gap-4">
+            <Alert>
+              <TriangleAlertIcon />
+              <AlertTitle>Teams could not be loaded</AlertTitle>
+              <AlertDescription>{sync.error}</AlertDescription>
+            </Alert>
+            <Button className="justify-self-start" onClick={() => sync.retry()}>
+              Retry
+            </Button>
+          </div>
+        </Page>
+      );
+    }
     return (
       <Page
         title="Team not found"
@@ -177,7 +206,7 @@ export function TeamDetailPage() {
     toast(`Deleted “${team.name}”.`, {
       action: {
         label: "Undo",
-        onClick: () => localTeamStore.save(team),
+        onClick: () => restore(team),
       },
     });
   };
@@ -212,6 +241,17 @@ export function TeamDetailPage() {
             <ToggleGroupItem value="singles">Singles</ToggleGroupItem>
             <ToggleGroupItem value="doubles">Doubles</ToggleGroupItem>
           </ToggleGroup>
+          {user && (
+            <div className="flex items-center gap-2">
+              <Switch
+                id="team-public"
+                checked={team.isPublic ?? false}
+                onCheckedChange={(checked) => setPublic(team.id, checked)}
+                aria-label="Public team"
+              />
+              <Label htmlFor="team-public">Public</Label>
+            </div>
+          )}
           <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
             <DialogTrigger asChild>
               <Button

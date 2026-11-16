@@ -1,5 +1,11 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
+import { useAuth } from "@/lib/auth/use-auth";
+import { resolveActiveTeamStore } from "@/lib/team/active-store";
+import {
+  isCloudTeamStore,
+  type CloudSyncState,
+} from "@/lib/team/cloud-team-store";
 import {
   addMember,
   createTeam,
@@ -12,7 +18,7 @@ import {
   updateMember,
   type NewTeamInit,
 } from "@/lib/team/team-ops";
-import { localTeamStore, type TeamStore } from "@/lib/team/team-store";
+import type { TeamStore } from "@/lib/team/team-store";
 import type { BattleFormat } from "@/types/battle";
 import type { PokemonSet } from "@/types/pokemon";
 import type { Team } from "@/types/team";
@@ -33,6 +39,10 @@ export interface TeamActions {
   removeMember(id: string, index: number): void;
   /** Moves the member at `from` to position `to`. */
   moveMember(id: string, from: number, to: number): void;
+  /** Saves the team as it was (Undo), keeping its `updatedAt`. */
+  restore(team: Team): void;
+  /** Shows or hides the team to other players. */
+  setPublic(id: string, isPublic: boolean): void;
 }
 
 /** The team operations bound to a store. Unknown ids are ignored. */
@@ -73,20 +83,71 @@ export function createTeamActions(store: TeamStore): TeamActions {
       change(id, (team) => removeMember(team, index)),
     moveMember: (id, from, to) =>
       change(id, (team) => moveMember(team, from, to)),
+    restore: (team) => store.save(team),
+    setPublic(id, isPublic) {
+      const current = store.get(id);
+      if (!current || (current.isPublic ?? false) === isPublic) return;
+      store.save({ ...current, isPublic });
+    },
   };
 }
+
+/** Where the sync of the active store is at, for pages that show it. */
+export interface TeamSync {
+  loading: boolean;
+  /** Friendly text when the teams could not be loaded. */
+  error: string | null;
+  /** Tries the failed load or write again. */
+  retry(): void;
+}
+
+/** The sync state of a store without a server behind it. */
+const LOCAL_SYNC: CloudSyncState = {
+  status: "ready",
+  message: null,
+  unsynced: [],
+};
 
 export interface UseTeams extends TeamActions {
   /** Every saved team, in the order they were first saved. */
   teams: readonly Team[];
+  /** The sync state of the active store. */
+  sync: TeamSync;
 }
 
 /**
- * The saved teams as React state, plus the operations on them. Pass another
- * store to read teams from somewhere other than this browser.
+ * The saved teams as React state, plus the operations on them. With no store
+ * passed it follows the account: the local store for guests and unconfigured
+ * builds, the cloud store for signed-in users. Pass a store to read teams
+ * from somewhere specific.
  */
-export function useTeams(store: TeamStore = localTeamStore): UseTeams {
-  const teams = useSyncExternalStore(store.subscribe, store.list, store.list);
-  const actions = useMemo(() => createTeamActions(store), [store]);
-  return useMemo(() => ({ teams, ...actions }), [teams, actions]);
+export function useTeams(store?: TeamStore): UseTeams {
+  const auth = useAuth();
+  const active = useMemo(
+    () => store ?? resolveActiveTeamStore(auth),
+    [store, auth],
+  );
+  const teams = useSyncExternalStore(
+    active.subscribe,
+    active.list,
+    active.list,
+  );
+  const getSync = useCallback(
+    () => (isCloudTeamStore(active) ? active.syncState() : LOCAL_SYNC),
+    [active],
+  );
+  const syncState = useSyncExternalStore(active.subscribe, getSync, getSync);
+  const actions = useMemo(() => createTeamActions(active), [active]);
+  return useMemo(
+    () => ({
+      teams,
+      sync: {
+        loading: syncState.status === "loading",
+        error: syncState.status === "error" ? syncState.message : null,
+        retry: isCloudTeamStore(active) ? active.retry : () => {},
+      },
+      ...actions,
+    }),
+    [teams, syncState, active, actions],
+  );
 }

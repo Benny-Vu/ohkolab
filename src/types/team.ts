@@ -13,4 +13,6 @@ export interface Team {
   /** ISO timestamps. */
   createdAt: string;
   updatedAt: string;
+  /** Cloud only: visible to other players. Undefined for local teams. */
+  isPublic?: boolean;
 }
