@@ -48,6 +48,7 @@ import {
   validateUsername,
 } from "@/lib/auth/validation";
 import type { AuthFailure, Profile } from "@/lib/auth/types";
+import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 
 type ProfileFieldErrors = Partial<
   Record<"username" | "displayName" | "bio" | "avatarSpecies", string>
@@ -77,19 +78,6 @@ function GuestPrompt() {
         </Button>
       </CardContent>
     </Card>
-  );
-}
-
-function UnconfiguredNotice() {
-  return (
-    <Alert>
-      <TriangleAlertIcon />
-      <AlertTitle>Accounts are unavailable</AlertTitle>
-      <AlertDescription>
-        Accounts are not available in this build. The tools still work without
-        one.
-      </AlertDescription>
-    </Alert>
   );
 }
 
