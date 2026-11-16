@@ -7,4 +7,11 @@ export const teamBuilderRoutes: RouteObject[] = [
       Component: (await import("@/features/team-builder/teams-page")).TeamsPage,
     }),
   },
+  {
+    path: "teams/:teamId",
+    lazy: async () => ({
+      Component: (await import("@/features/team-builder/team-detail-page"))
+        .TeamDetailPage,
+    }),
+  },
 ];
