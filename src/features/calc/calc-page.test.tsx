@@ -41,7 +41,12 @@ describe("CalcPage", () => {
     const user = userEvent.setup();
     renderCalc();
     await user.click(screen.getByRole("tab", { name: "Pokémon 2" }));
-    await user.selectOptions(screen.getByLabelText("Species"), "Charizard");
+    await user.click(screen.getByRole("combobox", { name: "Species" }));
+    await user.type(
+      screen.getByRole("combobox", { name: "Search Pokémon" }),
+      "charizard",
+    );
+    await user.click(screen.getByText("Charizard"));
     const earthquake = screen.getByRole("button", { name: /Earthquake/ });
     expect(earthquake).toHaveTextContent("0%");
     expect(earthquake).toHaveTextContent("No effect");
@@ -62,7 +67,9 @@ describe("CalcPage", () => {
     const user = userEvent.setup();
     renderCalc();
     await user.click(screen.getByRole("button", { name: "Swap sides" }));
-    expect(screen.getByLabelText("Species")).toHaveValue("Incineroar");
+    expect(screen.getByRole("combobox", { name: "Species" })).toHaveTextContent(
+      "Incineroar",
+    );
   });
 
   it("resets and undoes through the toast", async () => {
@@ -78,6 +85,8 @@ describe("CalcPage", () => {
 
   it("loads a handed-over set from the router state", () => {
     renderCalc({ attacker: createDefaultSet("Charizard") });
-    expect(screen.getByLabelText("Species")).toHaveValue("Charizard");
+    expect(screen.getByRole("combobox", { name: "Species" })).toHaveTextContent(
+      "Charizard",
+    );
   });
 });
