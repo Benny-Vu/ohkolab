@@ -55,4 +55,39 @@ describe("AuthCallbackPage", () => {
       screen.queryByRole("link", { name: "Back to sign in" }),
     ).not.toBeInTheDocument();
   });
+
+  it("shows the guest notice and skips the redirect when unconfigured", () => {
+    const auth = createFakeAuth({
+      isConfigured: false,
+      user: null,
+      session: null,
+      profile: null,
+    });
+    renderPage(<AuthCallbackPage />, auth, { path: "/auth/callback" });
+
+    expect(screen.getByText("Accounts are unavailable")).toBeInTheDocument();
+    expect(
+      screen.queryByText("One moment while your sign-in is completed."),
+    ).not.toBeInTheDocument();
+    expect(auth.calls).toHaveLength(0);
+    const link = screen.getByRole("link", { name: "Back to home" });
+    expect(link).toHaveAttribute("href", "/");
+  });
+
+  it("announces the failure message", async () => {
+    const auth = createFakeAuth(
+      {},
+      {
+        completeAuthRedirect: {
+          code: "invalid_input",
+          message: "That sign-in link has expired. Request a new one.",
+        },
+      },
+    );
+    renderPage(<AuthCallbackPage />, auth, { path: "/auth/callback" });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "That sign-in link has expired. Request a new one.",
+    );
+  });
 });

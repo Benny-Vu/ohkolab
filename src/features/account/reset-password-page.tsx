@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth/use-auth";
 import { validateNewPassword } from "@/lib/auth/validation";
 import type { AuthFailure } from "@/lib/auth/types";
+import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 
 /** The page the password-reset email links to: choose a new password. */
 export function ResetPasswordPage() {
@@ -25,17 +26,27 @@ export function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [formError, setFormError] = useState<AuthFailure | null>(null);
   const [pending, setPending] = useState(false);
+
+  if (!auth.isConfigured) {
+    return (
+      <Page title="Choose a new password" width="narrow">
+        <UnconfiguredNotice />
+      </Page>
+    );
+  }
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const error = validateNewPassword(password);
     setPasswordError(error);
+    setConfirmError(null);
     setFormError(null);
     if (error) return;
     if (confirmPassword !== password) {
-      setPasswordError("Passwords do not match.");
+      setConfirmError("Passwords do not match.");
       return;
     }
 
@@ -45,6 +56,8 @@ export function ResetPasswordPage() {
     if (result.ok) {
       toast.success("Password updated.");
       navigate("/", { replace: true });
+    } else if (result.error.field === "password") {
+      setPasswordError(result.error.message);
     } else {
       setFormError(result.error);
     }
@@ -71,9 +84,16 @@ export function ResetPasswordPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 aria-invalid={passwordError ? true : undefined}
+                aria-describedby={
+                  passwordError ? "new-password-error" : undefined
+                }
               />
               {passwordError ? (
-                <p className="text-sm text-destructive" role="alert">
+                <p
+                  id="new-password-error"
+                  className="text-sm text-destructive"
+                  role="alert"
+                >
                   {passwordError}
                 </p>
               ) : null}
@@ -86,14 +106,35 @@ export function ResetPasswordPage() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
+                aria-invalid={confirmError ? true : undefined}
+                aria-describedby={
+                  confirmError ? "confirm-password-error" : undefined
+                }
               />
+              {confirmError ? (
+                <p
+                  id="confirm-password-error"
+                  className="text-sm text-destructive"
+                  role="alert"
+                >
+                  {confirmError}
+                </p>
+              ) : null}
             </div>
             {formError ? (
-              <p className="text-sm text-destructive" role="alert">
+              <p
+                id="reset-form-error"
+                className="text-sm text-destructive"
+                role="alert"
+              >
                 {formError.message}
               </p>
             ) : null}
-            <Button type="submit" disabled={pending}>
+            <Button
+              type="submit"
+              disabled={pending}
+              aria-describedby={formError ? "reset-form-error" : undefined}
+            >
               {pending ? (
                 <LoaderCircleIcon className="animate-spin" />
               ) : (
