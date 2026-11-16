@@ -117,7 +117,7 @@ export function PokemonEditor({
         </label>
       </div>
 
-      <fieldset className="grid gap-2">
+      <fieldset className="grid min-w-0 gap-2">
         <legend className="flex w-full items-baseline justify-between gap-2 text-xs text-muted-foreground">
           Stat Points
           <span aria-live="polite" className="tabular-nums">
@@ -161,7 +161,7 @@ export function PokemonEditor({
         </div>
       </fieldset>
 
-      <fieldset className="grid gap-2">
+      <fieldset className="grid min-w-0 gap-2">
         <legend className="text-xs text-muted-foreground">Moves</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {value.moves.map((move, index) => (

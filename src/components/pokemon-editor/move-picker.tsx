@@ -194,6 +194,8 @@ export function MovePicker({
       <Combobox
         id={id}
         label={label}
+        // Let the trigger give up width to the clear button beside it.
+        className="shrink"
         onIntent={() => {
           // Warm the learnset cache so the list opens already grouped.
           if (species) void getLearnableMoves(species).catch(() => undefined);

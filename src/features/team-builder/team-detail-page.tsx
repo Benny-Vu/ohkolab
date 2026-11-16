@@ -493,7 +493,7 @@ export function TeamDetailPage() {
           if (!open) setDraft(null);
         }}
       >
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {editorIndex === null ? "Add Pokémon" : "Edit Pokémon"}
