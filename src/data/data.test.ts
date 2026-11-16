@@ -20,6 +20,7 @@ import {
   typeEffectiveness,
   validateSet,
 } from "@/data";
+import { gen, toID } from "@/data/gen";
 import { battlerFromSet, emptyField } from "@/types/battle";
 import type { PokemonSet } from "@/types/pokemon";
 
@@ -123,6 +124,40 @@ describe("moves, items, abilities, natures", () => {
       name: "Hardy",
       plus: null,
       minus: null,
+    });
+  });
+});
+
+describe("move data patches", () => {
+  it("fills missing move data from the Pokédex", () => {
+    expect(getMove("anchorshot")).toMatchObject({
+      name: "Anchor Shot",
+      type: "Steel",
+      category: "Physical",
+      basePower: 90,
+    });
+    expect(getMove("metalclaw")).toMatchObject({
+      type: "Steel",
+      category: "Physical",
+      basePower: 50,
+    });
+    expect(getMove("swordsdance")?.category).toBe("Status");
+    expect(getMove("geargrind")?.multihit).toBe(2);
+    expect(getMove("tripledive")?.multihit).toBe(3);
+    expect(getMove("roar")?.priority).toBe(-6);
+    expect(getMove("astralbarrage")).toMatchObject({
+      type: "Ghost",
+      category: "Special",
+      isSpread: true,
+    });
+  });
+
+  it("keeps data the calc library set deliberately", () => {
+    expect(gen.moves.get(toID("Freeze-Dry"))?.secondaries).toBeUndefined();
+    expect(gen.moves.get(toID("Dragon Claw"))?.flags.slicing).toBe(1);
+    expect(gen.moves.get(toID("Fishious Rend"))?.flags).toMatchObject({
+      contact: 1,
+      bite: 1,
     });
   });
 });
@@ -260,5 +295,16 @@ describe("damage", () => {
     expect(calculateDamage(base, hurt, "Dragon Claw", field).koText).toContain(
       "OHKO",
     );
+  });
+
+  it("calculates damage for moves patched from the Pokédex", () => {
+    const result = calculateDamage(
+      battlerFromSet(garchomp()),
+      battlerFromSet(incineroar),
+      "Anchor Shot",
+      emptyField("singles"),
+    );
+    expect(result.min).toBeGreaterThan(0);
+    expect(result.max).toBeGreaterThanOrEqual(result.min);
   });
 });

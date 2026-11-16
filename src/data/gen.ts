@@ -5,7 +5,10 @@
 import { Dex } from "@pkmn/dex";
 import { Generations, toID } from "@smogon/calc";
 
+import { applyMovePatches } from "@/data/patch-moves";
+
 /** `@smogon/calc` models Pokémon Champions as generation 0. */
 export const gen = Generations.get(0);
+applyMovePatches(gen);
 
 export { Dex, toID };
