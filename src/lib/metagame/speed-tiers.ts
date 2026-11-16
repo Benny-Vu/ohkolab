@@ -1,4 +1,5 @@
-import { calcStat, getSpecies } from "@/data";
+import { calcStat } from "@/data";
+import { resolveUsageSpecies } from "@/lib/metagame/species";
 import type { PokemonUsage } from "@/lib/metagame/types";
 
 export interface SpeedTierEntry {
@@ -28,7 +29,7 @@ const UNBURDEN = "unburden";
 export function speedTiers(pokemon: PokemonUsage[]): SpeedTier[] {
   const tiers: SpeedTier[] = [];
   for (const usage of pokemon) {
-    const species = getSpecies(usage.species);
+    const species = resolveUsageSpecies(usage.species);
     if (!species) continue;
     const base = species.baseStats.spe;
     tiers.push({

@@ -3,10 +3,10 @@ import {
   getAbility,
   getItem,
   getNature,
-  getSpecies,
   MAX_SP_TOTAL,
   totalStatPoints,
 } from "@/data";
+import { resolveUsageSpecies } from "@/lib/metagame/species";
 import {
   emptyStatsTable,
   STAT_IDS,
@@ -39,7 +39,7 @@ function clampStatPoints(statPoints: StatsTable): StatsTable {
  * is unknown or a battle-only forme cannot be represented.
  */
 export function usageToSet(usage: PokemonUsage): PokemonSet | null {
-  const forme = getSpecies(usage.species);
+  const forme = resolveUsageSpecies(usage.species);
   if (!forme) return null;
   if (forme.isBattleOnly && (!forme.baseSpecies || !forme.megaStone))
     return null;
