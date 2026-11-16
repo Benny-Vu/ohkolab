@@ -215,4 +215,13 @@ describe("ProfilePage", () => {
       expect(auth.calls.map((c) => c.name)).toContain("refreshProfile"),
     );
   });
+
+  it("links to the public profile page", () => {
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    expect(screen.getByRole("link", { name: /public page/i })).toHaveAttribute(
+      "href",
+      "/u/ashketchum",
+    );
+  });
 });
