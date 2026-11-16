@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { createDefaultSet } from "@/data";
-import { mapProfileRow, mapTeamRow } from "@/features/profile/profile-queries";
+import { mapProfileRow } from "@/features/profile/profile-queries";
 import type { ProfileRow, TeamRow } from "@/lib/database.types";
+import { rowToTeam } from "@/lib/team";
 
 const profileRow: ProfileRow = {
   id: "user-1",
@@ -55,20 +56,21 @@ describe("mapProfileRow", () => {
   });
 });
 
-describe("mapTeamRow", () => {
+describe("rowToTeam (via @/lib/team)", () => {
   it("maps a database row to a team", () => {
-    expect(mapTeamRow(teamRow())).toEqual({
+    expect(rowToTeam(teamRow())).toEqual({
       id: "team-1",
       name: "Champion team",
       format: "doubles",
       members: [createDefaultSet("Garchomp"), createDefaultSet("Incineroar")],
       createdAt: "2024-01-01T00:00:00Z",
       updatedAt: "2024-01-02T00:00:00Z",
+      isPublic: true,
     });
   });
 
   it("drops members without a species", () => {
-    const team = mapTeamRow(
+    const team = rowToTeam(
       teamRow({
         data: [
           createDefaultSet("Garchomp"),
@@ -80,7 +82,7 @@ describe("mapTeamRow", () => {
   });
 
   it("caps members at the team size limit", () => {
-    const team = mapTeamRow(
+    const team = rowToTeam(
       teamRow({
         data: [
           createDefaultSet("Garchomp"),
@@ -98,13 +100,13 @@ describe("mapTeamRow", () => {
   });
 
   it("falls back to doubles for an unknown format", () => {
-    const team = mapTeamRow(
+    const team = rowToTeam(
       teamRow({ format: "triples" as unknown as TeamRow["format"] }),
     );
     expect(team?.format).toBe("doubles");
   });
 
   it("returns null when the row has no id", () => {
-    expect(mapTeamRow(teamRow({ id: "" }))).toBeNull();
+    expect(rowToTeam(teamRow({ id: "" }))).toBeNull();
   });
 });

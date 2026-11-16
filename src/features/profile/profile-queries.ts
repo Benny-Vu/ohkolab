@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
-import type { ProfileRow, TeamRow } from "@/lib/database.types";
+import type { ProfileRow } from "@/lib/database.types";
 import type { Profile } from "@/lib/auth/types";
-import { sanitizeTeam } from "@/lib/team";
+import { rowToTeam } from "@/lib/team";
 import type { Team } from "@/types/team";
 
 export function mapProfileRow(row: ProfileRow): Profile {
@@ -16,17 +16,6 @@ export function mapProfileRow(row: ProfileRow): Profile {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
-}
-
-export function mapTeamRow(row: TeamRow): Team | null {
-  return sanitizeTeam({
-    id: row.id,
-    name: row.name,
-    format: row.format,
-    members: row.data,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  });
 }
 
 export function usePublicProfile(
@@ -74,7 +63,7 @@ export function usePublicTeams(
         throw error;
       }
       return (data ?? [])
-        .map(mapTeamRow)
+        .map(rowToTeam)
         .filter((team): team is Team => team !== null);
     },
   });
