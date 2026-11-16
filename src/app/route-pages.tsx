@@ -34,7 +34,12 @@ export function RouteError() {
       <pre className="mb-4 overflow-x-auto rounded-md bg-muted p-3 text-xs">
         {detail}
       </pre>
-      <Button onClick={() => window.location.reload()}>Reload</Button>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => window.location.reload()}>Reload</Button>
+        <Button asChild variant="outline">
+          <Link to="/">Back to home</Link>
+        </Button>
+      </div>
     </Page>
   );
 }
@@ -49,6 +54,9 @@ export function PageLoading() {
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-40 w-full" />
       <Skeleton className="h-40 w-full" />
+      <Button asChild variant="link" className="h-auto p-0">
+        <Link to="/">Back to home</Link>
+      </Button>
     </div>
   );
 }

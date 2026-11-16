@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/use-auth";
 import type { AuthFailure } from "@/lib/auth/types";
+import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 
 /**
  * Finishes an OAuth, email-confirmation or password-reset redirect, then
@@ -25,7 +26,7 @@ export function AuthCallbackPage() {
   const [failure, setFailure] = useState<AuthFailure | null>(null);
 
   useEffect(() => {
-    if (started.current) return;
+    if (started.current || !auth.isConfigured) return;
     started.current = true;
     let active = true;
     auth
@@ -50,6 +51,17 @@ export function AuthCallbackPage() {
     };
   }, [auth, navigate]);
 
+  if (!auth.isConfigured) {
+    return (
+      <Page title="Finishing sign-in…" width="narrow">
+        <UnconfiguredNotice />
+        <Button asChild variant="outline" className="mt-4">
+          <Link to="/">Back to home</Link>
+        </Button>
+      </Page>
+    );
+  }
+
   return (
     <Page title="Finishing sign-in…" width="narrow">
       <Card>
@@ -58,9 +70,11 @@ export function AuthCallbackPage() {
             {failure ? "Sign-in could not be completed" : "Finishing sign-in…"}
           </CardTitle>
           <CardDescription>
-            {failure
-              ? failure.message
-              : "One moment while your sign-in is completed."}
+            {failure ? (
+              <span role="alert">{failure.message}</span>
+            ) : (
+              "One moment while your sign-in is completed."
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
