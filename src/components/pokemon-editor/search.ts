@@ -36,6 +36,8 @@ export function matchRank(
 
   if (needle.length >= MIN_KEYWORD_QUERY) {
     for (const keyword of keywords) {
+      // Some data entries lack a keyword at runtime (a move without a type).
+      if (typeof keyword !== "string") continue;
       if (normalizeSearch(keyword).includes(needle)) return 3;
     }
   }

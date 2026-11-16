@@ -1,15 +1,23 @@
 import { useId } from "react";
 
+import { AbilityPicker } from "@/components/pokemon-editor/ability-picker";
+import { ItemPicker } from "@/components/pokemon-editor/item-picker";
+import { MovePicker } from "@/components/pokemon-editor/move-picker";
+import { NaturePicker } from "@/components/pokemon-editor/nature-picker";
+import { SpeciesPicker } from "@/components/pokemon-editor/species-picker";
+import {
+  remainingStatPoints,
+  withStatPoints,
+} from "@/components/pokemon-editor/stat-points";
 import { PokemonSprite } from "@/components/pokemon-sprite";
 import { TypeBadge } from "@/components/type-badge";
 import {
+  calcStats,
   createDefaultSet,
   getSpecies,
-  listItemsFor,
-  listMoves,
-  listNatures,
-  listSpecies,
   MAX_SP_PER_STAT,
+  MAX_SP_TOTAL,
+  resolveBattleForme,
 } from "@/data";
 import { cn } from "@/lib/utils";
 import { STAT_IDS, STAT_LABELS, type PokemonSet } from "@/types/pokemon";
@@ -22,44 +30,8 @@ export interface PokemonEditorProps {
   className?: string;
 }
 
-export interface SpeciesPickerProps {
-  /** Selected species name, or null when nothing is picked yet. */
-  value: string | null;
-  onChange: (species: string) => void;
-  allowBattleOnly?: boolean;
-  placeholder?: string;
-  className?: string;
-}
-
 const fieldClass =
   "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
-
-/** Picks one species from the Champions roster. */
-export function SpeciesPicker({
-  value,
-  onChange,
-  allowBattleOnly = false,
-  placeholder = "Choose a Pokémon",
-  className,
-}: SpeciesPickerProps) {
-  return (
-    <select
-      aria-label="Species"
-      className={cn(fieldClass, className)}
-      value={value ?? ""}
-      onChange={(event) => {
-        if (event.target.value) onChange(event.target.value);
-      }}
-    >
-      <option value="">{placeholder}</option>
-      {listSpecies({ includeBattleOnly: allowBattleOnly }).map((species) => (
-        <option key={species.name} value={species.name}>
-          {species.name}
-        </option>
-      ))}
-    </select>
-  );
-}
 
 /**
  * Edits one Pokémon set: species, item, ability, nature, Stat Points and
@@ -72,14 +44,24 @@ export function PokemonEditor({
   className,
 }: PokemonEditorProps) {
   const id = useId();
-  const info = getSpecies(value.species);
   const update = (patch: Partial<PokemonSet>) =>
     onChange({ ...value, ...patch });
+
+  // A Mega Stone turns the set into its Mega forme in battle, so the editor
+  // shows that forme's sprite, types and stats.
+  const battleForme = resolveBattleForme(value.species, value.item);
+  const formeInfo = getSpecies(battleForme);
+  const finalStats = calcStats({
+    species: battleForme,
+    nature: value.nature,
+    statPoints: value.statPoints,
+  });
+  const remaining = remainingStatPoints(value.statPoints);
 
   return (
     <div className={cn("grid gap-3", className)}>
       <div className="flex items-center gap-3">
-        <PokemonSprite species={value.species} size={64} />
+        <PokemonSprite species={battleForme} size={64} />
         <div className="grid min-w-0 flex-1 gap-1.5">
           <SpeciesPicker
             value={value.species}
@@ -87,10 +69,13 @@ export function PokemonEditor({
             onChange={(species) => onChange(createDefaultSet(species))}
           />
           <div className="flex gap-1">
-            {info?.types.map((type) => (
+            {formeInfo?.types.map((type) => (
               <TypeBadge key={type} type={type} />
             ))}
           </div>
+          {battleForme !== value.species ? (
+            <p className="text-xs text-muted-foreground">{battleForme}</p>
+          ) : null}
         </div>
       </div>
 
@@ -100,113 +85,100 @@ export function PokemonEditor({
           htmlFor={`${id}-item`}
         >
           Item
-          <select
+          <ItemPicker
             id={`${id}-item`}
-            className={fieldClass}
-            value={value.item ?? ""}
-            onChange={(event) => update({ item: event.target.value || null })}
-          >
-            <option value="">None</option>
-            {listItemsFor(value.species).map((item) => (
-              <option key={item.name} value={item.name}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+            value={value.item}
+            onChange={(item) => update({ item })}
+            species={value.species}
+          />
         </label>
         <label
           className="grid gap-1 text-xs text-muted-foreground"
           htmlFor={`${id}-ability`}
         >
           Ability
-          <select
+          <AbilityPicker
             id={`${id}-ability`}
-            className={fieldClass}
-            value={value.ability ?? ""}
-            onChange={(event) =>
-              update({ ability: event.target.value || null })
-            }
-          >
-            {info?.abilities.map((ability) => (
-              <option key={ability} value={ability}>
-                {ability}
-              </option>
-            ))}
-          </select>
+            value={value.ability}
+            onChange={(ability) => update({ ability })}
+            species={value.species}
+          />
         </label>
         <label
           className="col-span-2 grid gap-1 text-xs text-muted-foreground"
           htmlFor={`${id}-nature`}
         >
           Nature
-          <select
+          <NaturePicker
             id={`${id}-nature`}
-            className={fieldClass}
             value={value.nature}
-            onChange={(event) => update({ nature: event.target.value })}
-          >
-            {listNatures().map((nature) => (
-              <option key={nature.name} value={nature.name}>
-                {nature.name}
-                {nature.plus && nature.minus
-                  ? ` (+${STAT_LABELS[nature.plus]}, -${STAT_LABELS[nature.minus]})`
-                  : ""}
-              </option>
-            ))}
-          </select>
+            onChange={(nature) => update({ nature })}
+          />
         </label>
       </div>
 
-      <fieldset className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        <legend className="mb-1 text-xs text-muted-foreground">
+      <fieldset className="grid gap-2">
+        <legend className="flex w-full items-baseline justify-between gap-2 text-xs text-muted-foreground">
           Stat Points
+          <span aria-live="polite" className="tabular-nums">
+            {remaining} of {MAX_SP_TOTAL} remaining
+          </span>
         </legend>
-        {STAT_IDS.map((stat) => (
-          <label
-            key={stat}
-            className="grid gap-1 text-xs text-muted-foreground"
-          >
-            {STAT_LABELS[stat]}
-            <input
-              type="number"
-              min={0}
-              max={MAX_SP_PER_STAT}
-              className={fieldClass}
-              value={value.statPoints[stat]}
-              onChange={(event) => {
-                const points = Math.min(
-                  MAX_SP_PER_STAT,
-                  Math.max(0, Math.trunc(Number(event.target.value) || 0)),
-                );
-                update({ statPoints: { ...value.statPoints, [stat]: points } });
-              }}
-            />
-          </label>
-        ))}
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {STAT_IDS.map((stat) => (
+            <div key={stat} className="grid gap-1">
+              <div className="flex items-baseline justify-between gap-1">
+                <label
+                  className="text-xs text-muted-foreground"
+                  htmlFor={`${id}-sp-${stat}`}
+                >
+                  {STAT_LABELS[stat]}
+                </label>
+                <span className="text-xs tabular-nums text-foreground">
+                  <span className="sr-only">{`Final ${STAT_LABELS[stat]} `}</span>
+                  {finalStats[stat]}
+                </span>
+              </div>
+              <input
+                id={`${id}-sp-${stat}`}
+                type="number"
+                min={0}
+                max={MAX_SP_PER_STAT}
+                className={fieldClass}
+                value={value.statPoints[stat]}
+                onChange={(event) =>
+                  update({
+                    statPoints: withStatPoints(
+                      value.statPoints,
+                      stat,
+                      Number(event.target.value),
+                    ),
+                  })
+                }
+              />
+            </div>
+          ))}
+        </div>
       </fieldset>
 
-      <fieldset className="grid gap-2 sm:grid-cols-2">
-        <legend className="mb-1 text-xs text-muted-foreground">Moves</legend>
-        {value.moves.map((move, index) => (
-          <select
-            key={index}
-            aria-label={`Move ${index + 1}`}
-            className={fieldClass}
-            value={move ?? ""}
-            onChange={(event) => {
-              const moves: PokemonSet["moves"] = [...value.moves];
-              moves[index] = event.target.value || null;
-              update({ moves });
-            }}
-          >
-            <option value="">(none)</option>
-            {listMoves().map((option) => (
-              <option key={option.name} value={option.name}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        ))}
+      <fieldset className="grid gap-2">
+        <legend className="text-xs text-muted-foreground">Moves</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {value.moves.map((move, index) => (
+            <MovePicker
+              key={index}
+              label={`Move ${index + 1}`}
+              value={move}
+              species={value.species}
+              exclude={value.moves.filter((_, slot) => slot !== index)}
+              onChange={(next) => {
+                const moves: PokemonSet["moves"] = [...value.moves];
+                moves[index] = next;
+                update({ moves });
+              }}
+            />
+          ))}
+        </div>
       </fieldset>
     </div>
   );
