@@ -42,6 +42,35 @@ export function usePublicProfile(
   });
 }
 
+/** Profiles for a list of user ids, in the order the ids were given. */
+export function useProfilesByIds(
+  ids: string[],
+  client: AppSupabaseClient | null = supabase,
+) {
+  return useQuery({
+    queryKey: ["profiles-by-ids", [...ids].sort()],
+    enabled: client !== null && ids.length > 0,
+    retry: false,
+    queryFn: async () => {
+      if (!client) {
+        throw new Error("Supabase is not configured");
+      }
+      const { data, error } = await client
+        .from("profiles")
+        .select("*")
+        .in("id", ids);
+      if (error) {
+        throw error;
+      }
+      const profiles = (data ?? []).map(mapProfileRow);
+      const byId = new Map(profiles.map((profile) => [profile.id, profile]));
+      return ids
+        .map((id) => byId.get(id))
+        .filter((profile): profile is Profile => profile !== undefined);
+    },
+  });
+}
+
 export function usePublicTeams(
   userId: string | null,
   client: AppSupabaseClient | null = supabase,

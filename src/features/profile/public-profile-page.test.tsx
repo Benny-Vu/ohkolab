@@ -1,15 +1,65 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { Providers } from "@/app/providers";
+import { AuthContext } from "@/lib/auth/use-auth";
 import { createDefaultSet } from "@/data";
 import { PublicProfilePage } from "@/features/profile/public-profile-page";
+import { createFakeAuth, TEST_PROFILE } from "@/features/account/test-utils";
 import { TEAMS_STORAGE_KEY } from "@/lib/team";
 import type { AppSupabaseClient } from "@/lib/supabase";
 import type { ProfileRow, TeamRow } from "@/lib/database.types";
 import type { Team } from "@/types/team";
+
+const socialMocks = vi.hoisted(() => ({
+  socialAvailability: vi.fn(() => "not-configured"),
+  useFollowState: vi.fn(),
+  useToggleFollow: vi.fn(),
+  useFollowCounts: vi.fn(),
+  useFollowers: vi.fn(),
+  useFollowing: vi.fn(),
+  useBlocks: vi.fn(),
+  useToggleBlock: vi.fn(),
+  useIsModerator: vi.fn(),
+  useReports: vi.fn(),
+  usePost: vi.fn(),
+  useHandleReport: vi.fn(),
+  useRemoveContent: vi.fn(),
+  useSuspendUser: vi.fn(),
+}));
+
+vi.mock("@/lib/social", () => socialMocks);
+
+const queryResult = (data: unknown, extra: Record<string, unknown> = {}) => ({
+  data,
+  isPending: false,
+  isError: false,
+  error: null,
+  refetch: vi.fn(),
+  ...extra,
+});
+
+const mutationResult = (
+  mutateAsync: (args?: unknown) => Promise<unknown> = async () => ({
+    ok: true,
+    data: undefined,
+  }),
+) => ({ mutateAsync, mutate: vi.fn(), isPending: false });
+
+function stubSocial(overrides: Partial<typeof socialMocks> = {}) {
+  socialMocks.useFollowState.mockReturnValue(queryResult(false));
+  socialMocks.useToggleFollow.mockReturnValue(mutationResult());
+  socialMocks.useFollowCounts.mockReturnValue(
+    queryResult({ followers: 0, following: 0 }),
+  );
+  socialMocks.useFollowers.mockReturnValue(queryResult([]));
+  socialMocks.useFollowing.mockReturnValue(queryResult([]));
+  socialMocks.useBlocks.mockReturnValue(queryResult([]));
+  socialMocks.useToggleBlock.mockReturnValue(mutationResult());
+  Object.assign(socialMocks, overrides);
+}
 
 function profileRow(overrides: Partial<ProfileRow> = {}): ProfileRow {
   return {
@@ -127,6 +177,8 @@ function renderProfilePage(client: AppSupabaseClient | null, username: string) {
 describe("PublicProfilePage", () => {
   beforeEach(() => {
     localStorage.clear();
+    vi.clearAllMocks();
+    socialMocks.socialAvailability.mockReturnValue("not-configured");
   });
 
   it("shows a skeleton while the profile loads", () => {
@@ -294,5 +346,217 @@ describe("PublicProfilePage", () => {
       "Garchomp",
       "Incineroar",
     ]);
+  });
+});
+
+describe("PublicProfilePage social section", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    socialMocks.socialAvailability.mockReturnValue("ready");
+    stubSocial();
+  });
+
+  function renderSignedIn(client: AppSupabaseClient, username: string) {
+    const auth = createFakeAuth();
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/u/:username",
+          element: (
+            <AuthContext.Provider value={auth}>
+              <PublicProfilePage client={client} />
+            </AuthContext.Provider>
+          ),
+        },
+      ],
+      { initialEntries: [`/u/${username}`] },
+    );
+    return render(
+      <Providers>
+        <RouterProvider router={router} />
+      </Providers>,
+    );
+  }
+
+  it("shows a sign-in link when signed out", async () => {
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-guest", username: "guestu" }),
+    });
+    renderProfilePage(client, "guestu");
+
+    const signIn = await screen.findByRole("link", {
+      name: /sign in to follow/i,
+    });
+    expect(signIn).toHaveAttribute("href", "/login?returnTo=/u/guestu");
+  });
+
+  it("shows Follow when not following and toggles to Unfollow", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    const mutateAsync = vi.fn(async () => ({
+      ok: true,
+      data: { following: true },
+    }));
+    stubSocial({
+      useFollowState: vi.fn(() => queryResult(false)),
+      useToggleFollow: vi.fn(() => ({
+        mutateAsync,
+        mutate: vi.fn(),
+        isPending: false,
+      })),
+    });
+    renderSignedIn(client, "brock");
+
+    const followButton = await screen.findByRole("button", {
+      name: /^follow$/i,
+    });
+    expect(followButton).toHaveTextContent("Follow");
+
+    await user.click(followButton);
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
+  });
+
+  it("shows Unfollow when already following", async () => {
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    stubSocial({
+      useFollowState: vi.fn(() => queryResult(true)),
+    });
+    renderSignedIn(client, "brock");
+
+    expect(
+      await screen.findByRole("button", { name: /^unfollow$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the follow controls on your own profile", async () => {
+    const client = createFakeClient({
+      profile: profileRow({ id: TEST_PROFILE.id, username: "ashketchum" }),
+    });
+    renderSignedIn(client, "ashketchum");
+
+    await screen.findByText("Pallet Town");
+    expect(
+      screen.queryByRole("button", { name: /^follow$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /more options/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lists followers and following in dialogs", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    stubSocial({
+      useFollowCounts: vi.fn(() => queryResult({ followers: 2, following: 1 })),
+      useFollowers: vi.fn(() =>
+        queryResult([
+          {
+            id: "user-3",
+            username: "misty",
+            displayName: "Misty",
+            avatarSpecies: "Staryu",
+          },
+          {
+            id: "user-4",
+            username: "tracey",
+            displayName: null,
+            avatarSpecies: null,
+          },
+        ]),
+      ),
+      useFollowing: vi.fn(() =>
+        queryResult([
+          {
+            id: "user-5",
+            username: "pikachu",
+            displayName: "Pika",
+            avatarSpecies: "Pikachu",
+          },
+        ]),
+      ),
+    });
+    renderSignedIn(client, "brock");
+
+    const followersButton = await screen.findByRole("button", {
+      name: /2 followers/i,
+    });
+    expect(
+      screen.getByRole("button", { name: /1 following/i }),
+    ).toBeInTheDocument();
+
+    await user.click(followersButton);
+
+    expect(await screen.findByText("Misty")).toBeInTheDocument();
+    expect(screen.getByText("@misty")).toBeInTheDocument();
+    expect(screen.getByText("tracey")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /@misty/i })).toHaveAttribute(
+      "href",
+      "/u/misty",
+    );
+  });
+
+  it("shows empty text when there are no followers", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    stubSocial({
+      useFollowCounts: vi.fn(() => queryResult({ followers: 0, following: 0 })),
+    });
+    renderSignedIn(client, "brock");
+
+    await user.click(
+      await screen.findByRole("button", { name: /0 followers/i }),
+    );
+
+    expect(await screen.findByText(/no followers yet/i)).toBeInTheDocument();
+  });
+
+  it("blocks a user through the overflow menu and confirm dialog", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    const mutateAsync = vi.fn(async () => ({
+      ok: true,
+      data: { blocked: true },
+    }));
+    stubSocial({
+      useToggleBlock: vi.fn(() => ({
+        mutateAsync,
+        mutate: vi.fn(),
+        isPending: false,
+      })),
+    });
+    renderSignedIn(client, "brock");
+
+    await screen.findByText("Pallet Town");
+    await user.click(screen.getByRole("button", { name: /more options/i }));
+    await user.click(await screen.findByRole("menuitem", { name: /block/i }));
+
+    const confirm = await screen.findByRole("button", { name: /^block$/i });
+    await user.click(confirm);
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
+  });
+
+  it("shows the posts placeholder", async () => {
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    renderSignedIn(client, "brock");
+
+    expect(
+      await screen.findByTestId("profile-posts-placeholder"),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/posts — coming soon/i)).toBeInTheDocument();
   });
 });

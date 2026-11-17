@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProfilePage } from "@/features/account/profile-page";
 import {
@@ -8,8 +8,60 @@ import {
   renderPage,
   TEST_PROFILE,
 } from "@/features/account/test-utils";
+import type { Profile } from "@/lib/auth/types";
+
+const socialMocks = vi.hoisted(() => ({
+  socialAvailability: vi.fn(() => "not-configured"),
+  useBlocks: vi.fn(),
+  useToggleBlock: vi.fn(),
+}));
+
+vi.mock("@/lib/social", () => socialMocks);
+
+const profileQueriesMocks = vi.hoisted(() => ({
+  useProfilesByIds: vi.fn(),
+}));
+
+vi.mock("@/features/profile/profile-queries", () => profileQueriesMocks);
+
+const queryResult = (data: unknown, extra: Record<string, unknown> = {}) => ({
+  data,
+  isPending: false,
+  isError: false,
+  error: null,
+  refetch: vi.fn(),
+  ...extra,
+});
+
+const mutationResult = (
+  mutateAsync: (args?: unknown) => Promise<unknown> = async () => ({
+    ok: true,
+    data: undefined,
+  }),
+) => ({ mutateAsync, mutate: vi.fn(), isPending: false });
+
+function blockedProfile(overrides: Partial<Profile> = {}): Profile {
+  return {
+    id: "user-blocked",
+    username: "teamrocket",
+    displayName: "Jessie",
+    avatarSpecies: "Wobbuffet",
+    bio: null,
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
 
 describe("ProfilePage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    socialMocks.socialAvailability.mockReturnValue("not-configured");
+    socialMocks.useBlocks.mockReturnValue(queryResult([]));
+    socialMocks.useToggleBlock.mockReturnValue(mutationResult());
+    profileQueriesMocks.useProfilesByIds.mockReturnValue(queryResult([]));
+  });
+
   it("shows a skeleton while loading", () => {
     const auth = createFakeAuth({ loading: true, profile: null });
     renderPage(<ProfilePage />, auth, { path: "/profile" });
@@ -223,5 +275,84 @@ describe("ProfilePage", () => {
       "href",
       "/u/ashketchum",
     );
+  });
+});
+
+describe("ProfilePage blocked users", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    socialMocks.socialAvailability.mockReturnValue("ready");
+    socialMocks.useBlocks.mockReturnValue(queryResult([]));
+    socialMocks.useToggleBlock.mockReturnValue(mutationResult());
+    profileQueriesMocks.useProfilesByIds.mockReturnValue(queryResult([]));
+  });
+
+  it("hides the blocked users card when social is not configured", () => {
+    socialMocks.socialAvailability.mockReturnValue("not-configured");
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    expect(
+      screen.queryByText("Blocked users", {
+        selector: "h3, [data-slot='card-title'] *",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the empty state when nobody is blocked", () => {
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    expect(screen.getByText("Blocked users")).toBeInTheDocument();
+    expect(screen.getByText("You haven't blocked anyone.")).toBeInTheDocument();
+  });
+
+  it("lists blocked users with links and unblock buttons", () => {
+    const blocked = blockedProfile();
+    socialMocks.useBlocks.mockReturnValue(queryResult(["user-blocked"]));
+    profileQueriesMocks.useProfilesByIds.mockReturnValue(
+      queryResult([blocked]),
+    );
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    expect(screen.getByText("Jessie")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /@teamrocket/i });
+    expect(link).toHaveAttribute("href", "/u/teamrocket");
+    expect(
+      screen.getByRole("button", { name: /unblock/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("unblocks a user when the button is clicked", async () => {
+    const user = userEvent.setup();
+    const blocked = blockedProfile();
+    const unblock = vi.fn(async () => ({ ok: true, data: { blocked: false } }));
+    socialMocks.useBlocks.mockReturnValue(queryResult(["user-blocked"]));
+    profileQueriesMocks.useProfilesByIds.mockReturnValue(
+      queryResult([blocked]),
+    );
+    socialMocks.useToggleBlock.mockReturnValue(mutationResult(unblock));
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    await user.click(screen.getByRole("button", { name: /unblock/i }));
+
+    await waitFor(() => expect(unblock).toHaveBeenCalled());
+  });
+
+  it("shows the error message when unblocking fails", async () => {
+    const user = userEvent.setup();
+    const blocked = blockedProfile();
+    const unblock = vi.fn(async () => ({
+      ok: false,
+      error: { code: "network", message: "Could not reach the server." },
+    }));
+    socialMocks.useBlocks.mockReturnValue(queryResult(["user-blocked"]));
+    profileQueriesMocks.useProfilesByIds.mockReturnValue(
+      queryResult([blocked]),
+    );
+    socialMocks.useToggleBlock.mockReturnValue(mutationResult(unblock));
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    await user.click(screen.getByRole("button", { name: /unblock/i }));
+
+    await waitFor(() => expect(unblock).toHaveBeenCalled());
   });
 });
