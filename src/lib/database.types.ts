@@ -108,6 +108,8 @@ export type Database = {
            * serialized, so validate what you read before trusting it.
            */
           attachment: Json | null;
+          /** The group the post belongs to, or null on the main feed. */
+          group_id: string | null;
           created_at: string;
           updated_at: string;
           /** Set by a moderator through `remove_post()`; null while visible. */
@@ -120,6 +122,8 @@ export type Database = {
           author_id: string;
           body: string;
           attachment?: Json | null;
+          /** Row-level security forces active membership of this group. */
+          group_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -269,6 +273,167 @@ export type Database = {
         Update: { [_ in never]: never };
         Relationships: [];
       };
+      moderation_actions: {
+        Row: {
+          id: string;
+          /** One of "post", "comment", "profile". */
+          target_type: string;
+          /**
+           * Id of the removed post or comment, or of the suspended profile.
+           * Not a foreign key: the record survives its target being deleted.
+           */
+          target_id: string;
+          /** The user the action was taken against; null if deleted. */
+          target_user_id: string | null;
+          /** One of "remove", "suspend". */
+          action: string;
+          /** 1 to 500 characters. */
+          reason: string;
+          /** The report that led to this action, when there was one. */
+          report_id: string | null;
+          /** The moderator who acted; null if deleted. */
+          moderator_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          target_type: string;
+          target_id: string;
+          target_user_id?: string | null;
+          action: string;
+          reason: string;
+          report_id?: string | null;
+          moderator_id?: string | null;
+          created_at?: string;
+        };
+        /**
+         * No role may write moderation actions through the API; only the
+         * security-definer moderation functions insert them.
+         */
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
+      appeals: {
+        Row: {
+          id: string;
+          moderation_action_id: string;
+          appellant_id: string;
+          /** 1 to 1000 characters. */
+          message: string;
+          /** One of "open", "upheld", "reversed". */
+          status: string;
+          created_at: string;
+          /** Set by `handle_appeal()`; null while the appeal is open. */
+          handled_by: string | null;
+          handled_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          moderation_action_id: string;
+          /** Row-level security forces this to the signed-in user. */
+          appellant_id: string;
+          message: string;
+          created_at?: string;
+        };
+        /**
+         * No update grant: `handle_appeal()` is the only writer of status,
+         * handled_by and handled_at.
+         */
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
+      groups: {
+        Row: {
+          id: string;
+          /** 3 to 40 characters: lowercase letters, digits, hyphens. Unique. */
+          slug: string;
+          /** 1 to 60 characters. */
+          name: string;
+          /** Up to 500 characters. */
+          description: string | null;
+          /** One of "public", "invite_only". */
+          visibility: string;
+          owner_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          name: string;
+          description?: string | null;
+          visibility?: string;
+          /** Row-level security forces this to the signed-in user. */
+          owner_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        /** Only name, description and visibility are granted for update. */
+        Update: {
+          name?: string;
+          description?: string | null;
+          visibility?: string;
+        };
+        Relationships: [];
+      };
+      group_members: {
+        Row: {
+          group_id: string;
+          user_id: string;
+          /** One of "owner", "moderator", "member". */
+          role: string;
+          /** One of "active", "invited", "requested". */
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          group_id: string;
+          user_id: string;
+          role?: string;
+          status?: string;
+          created_at?: string;
+        };
+        /** Only status (invitees) and role (owners) are granted for update. */
+        Update: {
+          status?: string;
+          role?: string;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          recipient_id: string;
+          /** Who did it; null when the actor's account is deleted. */
+          actor_id: string | null;
+          /** One of "like", "comment", "follow", "moderation", "appeal", "group_invite". */
+          type: string;
+          post_id: string | null;
+          comment_id: string | null;
+          group_id: string | null;
+          moderation_action_id: string | null;
+          /** Null until the recipient marks the notification read. */
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          recipient_id: string;
+          actor_id?: string | null;
+          type: string;
+          post_id?: string | null;
+          comment_id?: string | null;
+          group_id?: string | null;
+          moderation_action_id?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        /** Only `read_at` is granted for update. */
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       /**
@@ -291,6 +456,8 @@ export type Database = {
           comment_count: number;
           /** Whether the current signed-in user liked the post. */
           liked_by_me: boolean;
+          /** The group the post belongs to, or null on the main feed. */
+          group_id: string | null;
         };
         Relationships: [];
       };
@@ -340,6 +507,66 @@ export type Database = {
         };
         Returns: undefined;
       };
+      /** True when the calling user is an active member of the group. */
+      is_group_member: {
+        Args: { target_group_id: string };
+        Returns: boolean;
+      };
+      /** The calling user's role in the group, or null when not a member. */
+      group_role: {
+        Args: { target_group_id: string };
+        Returns: string;
+      };
+      /**
+       * Moderators only: removes a post, records the reason in
+       * moderation_actions and notifies the author.
+       */
+      remove_post_with_reason: {
+        Args: {
+          target_post_id: string;
+          removal_reason: string;
+          source_report_id?: string;
+        };
+        Returns: undefined;
+      };
+      /**
+       * Moderators only: removes a comment, records the reason in
+       * moderation_actions and notifies the author.
+       */
+      remove_comment_with_reason: {
+        Args: {
+          target_comment_id: string;
+          removal_reason: string;
+          source_report_id?: string;
+        };
+        Returns: undefined;
+      };
+      /**
+       * Moderators only: suspends a user, records the reason in
+       * moderation_actions and notifies them.
+       */
+      suspend_user_with_reason: {
+        Args: {
+          target_user_id: string;
+          suspend_until: string;
+          suspension_reason: string;
+          source_report_id?: string;
+        };
+        Returns: undefined;
+      };
+      /** Moderators only: upholds or reverses an appeal. */
+      handle_appeal: {
+        Args: { target_appeal_id: string; decision: string };
+        Returns: undefined;
+      };
+      /**
+       * Group owners and moderators only: removes a post in their group,
+       * records the reason in moderation_actions and notifies the author.
+       */
+      remove_group_post: {
+        Args: { target_post_id: string; removal_reason: string };
+        Returns: undefined;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
@@ -366,4 +593,21 @@ export type ReportUpdate = Database["public"]["Tables"]["reports"]["Update"];
 export type UserRoleRow = Database["public"]["Tables"]["user_roles"]["Row"];
 export type UserSuspensionRow =
   Database["public"]["Tables"]["user_suspensions"]["Row"];
+export type ModerationActionRow =
+  Database["public"]["Tables"]["moderation_actions"]["Row"];
+export type AppealRow = Database["public"]["Tables"]["appeals"]["Row"];
+export type AppealInsert = Database["public"]["Tables"]["appeals"]["Insert"];
+export type GroupRow = Database["public"]["Tables"]["groups"]["Row"];
+export type GroupInsert = Database["public"]["Tables"]["groups"]["Insert"];
+export type GroupUpdate = Database["public"]["Tables"]["groups"]["Update"];
+export type GroupMemberRow =
+  Database["public"]["Tables"]["group_members"]["Row"];
+export type GroupMemberInsert =
+  Database["public"]["Tables"]["group_members"]["Insert"];
+export type GroupMemberUpdate =
+  Database["public"]["Tables"]["group_members"]["Update"];
+export type NotificationRow =
+  Database["public"]["Tables"]["notifications"]["Row"];
+export type NotificationUpdate =
+  Database["public"]["Tables"]["notifications"]["Update"];
 export type FeedPostRow = Database["public"]["Views"]["feed_posts"]["Row"];

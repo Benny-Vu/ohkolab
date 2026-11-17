@@ -76,6 +76,8 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [removeReason, setRemoveReason] = useState("");
 
   const isOwn = user?.id === post.author_id;
   const attachment = parseTeamAttachment(post.attachment);
@@ -137,12 +139,23 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
   }
 
   async function handleRemove() {
+    const reason = removeReason.trim();
+    if (reason === "") {
+      toast.error("Enter a reason for the removal.");
+      return;
+    }
     const result = await removeContent.mutateAsync({
       type: "post",
       id: post.id,
+      reason,
     });
-    if (result.ok) toast.success("Post removed.");
-    else toast.error(result.error.message);
+    if (result.ok) {
+      setRemoving(false);
+      setRemoveReason("");
+      toast.success("Post removed.");
+    } else {
+      toast.error(result.error.message);
+    }
   }
 
   return (
@@ -305,7 +318,7 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       variant="destructive"
-                      onSelect={() => handleRemove()}
+                      onSelect={() => setRemoving(true)}
                     >
                       <Trash2Icon aria-hidden />
                       Remove post
@@ -324,6 +337,43 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
         targetType="post"
         targetId={post.id}
       />
+
+      <Dialog open={removing} onOpenChange={setRemoving}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Remove this post?</DialogTitle>
+            <DialogDescription>
+              The post is removed for everyone and the author is notified with
+              your reason.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            aria-label="Reason for the removal"
+            placeholder="Reason for the removal"
+            value={removeReason}
+            onChange={(event) => setRemoveReason(event.target.value)}
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRemoving(false)}
+              disabled={removeContent.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemove}
+              disabled={removeContent.isPending || removeReason.trim() === ""}
+            >
+              {removeContent.isPending && (
+                <LoaderCircleIcon className="animate-spin" aria-hidden />
+              )}
+              Remove post
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent className="sm:max-w-sm">

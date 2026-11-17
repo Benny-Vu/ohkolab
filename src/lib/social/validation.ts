@@ -16,6 +16,9 @@ export const REPORT_DETAILS_MAX = 500;
 export const SUSPENSION_REASON_MIN = 1;
 export const SUSPENSION_REASON_MAX = 500;
 
+export const MODERATION_REASON_MIN = 1;
+export const MODERATION_REASON_MAX = 500;
+
 /** Maximum size of a post attachment, in bytes, measured on its JSON text. */
 export const ATTACHMENT_MAX_BYTES = 8192;
 
@@ -100,6 +103,21 @@ export function validateReportReason(reason: string): string | null {
 
 export function normalizeSuspensionReason(reason: string): string {
   return reason.trim();
+}
+
+export function normalizeModerationReason(reason: string): string {
+  return reason.trim();
+}
+
+/** Returns a user-facing message when a moderation reason is invalid, or null when valid. */
+export function validateModerationReason(reason: string): string | null {
+  if (reason.length < MODERATION_REASON_MIN) {
+    return "Write a reason for this action.";
+  }
+  if (reason.length > MODERATION_REASON_MAX) {
+    return `Reasons are limited to ${MODERATION_REASON_MAX} characters.`;
+  }
+  return null;
 }
 
 /** Returns a user-facing message when the reason is invalid, or null when valid. */

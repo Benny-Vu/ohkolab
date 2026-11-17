@@ -267,19 +267,34 @@ describe("AdminReportsPage", () => {
 
   it("removes content and actions the report after confirming", async () => {
     const user = userEvent.setup();
-    const remove = vi.fn(async () => ({ ok: true, data: undefined }));
+    const remove = vi.fn(
+      async (input: { type: string; id: string; reason: string }) => ({
+        ok: true,
+        data: undefined,
+        input,
+      }),
+    );
     const handle = vi.fn(async () => ({ ok: true, data: undefined }));
     socialMocks.useReports.mockReturnValue(queryResult([reportRow()]));
-    socialMocks.useRemoveContent.mockReturnValue(mutationResult(remove));
+    socialMocks.useRemoveContent.mockReturnValue(
+      mutationResult(remove as unknown as (args?: unknown) => Promise<unknown>),
+    );
     socialMocks.useHandleReport.mockReturnValue(mutationResult(handle));
     renderReportsPage(createFakeClient());
 
     await user.click(screen.getByRole("button", { name: /remove content/i }));
-    expect(screen.getByText("Remove this content?")).toBeInTheDocument();
+    expect(screen.getByText("Remove this post?")).toBeInTheDocument();
+
+    const reason = screen.getByPlaceholderText(/reason for the removal/i);
+    await user.type(reason, "Spam links");
 
     await user.click(screen.getByRole("button", { name: /^remove content$/i }));
 
     await waitFor(() => expect(remove).toHaveBeenCalled());
+    expect(remove.mock.calls[0]![0]).toMatchObject({
+      reason: "Spam links",
+      reportId: "report-1",
+    });
     await waitFor(() => expect(handle).toHaveBeenCalled());
   });
 

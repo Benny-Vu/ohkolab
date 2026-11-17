@@ -165,6 +165,7 @@ function postRow(overrides: Partial<FeedPostRow> = {}): FeedPostRow {
     like_count: 2,
     comment_count: 1,
     liked_by_me: false,
+    group_id: null,
     ...overrides,
   };
 }

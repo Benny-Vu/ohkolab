@@ -16,8 +16,13 @@ import { expect } from "vitest";
 import type { AuthContextValue } from "@/lib/auth/types";
 import { AuthContext, GUEST_AUTH } from "@/lib/auth/use-auth";
 import type {
+  AppealRow,
   CommentRow,
   FeedPostRow,
+  GroupMemberRow,
+  GroupRow,
+  ModerationActionRow,
+  NotificationRow,
   PostRow,
   ReportRow,
 } from "@/lib/database.types";
@@ -36,6 +41,7 @@ export interface ChainRecord {
   eqFilters: Array<[string, unknown]>;
   orFilters: string[];
   inFilters: Array<[string, unknown[]]>;
+  isFilters: Array<[string, unknown]>;
   orders: Array<[string, { ascending: boolean }]>;
   limitCount: number | null;
   insertValues: unknown[] | null;
@@ -58,6 +64,7 @@ interface ChainNode {
   eq(column: string, value: unknown): ChainNode;
   or(filter: string): ChainNode;
   in(column: string, values: unknown[]): ChainNode;
+  is(column: string, value: unknown): ChainNode;
   order(column: string, options: { ascending: boolean }): ChainNode;
   limit(count: number): ChainNode;
   insert(values: unknown): ChainNode;
@@ -116,6 +123,10 @@ export function createFakeClient(config: FakeClientConfig = {}): FakeClient {
         record.inFilters.push([column, values]);
         return node;
       },
+      is(column, value) {
+        record.isFilters.push([column, value]);
+        return node;
+      },
       order(column, options) {
         record.orders.push([column, options]);
         return node;
@@ -160,6 +171,7 @@ export function createFakeClient(config: FakeClientConfig = {}): FakeClient {
         eqFilters: [],
         orFilters: [],
         inFilters: [],
+        isFilters: [],
         orders: [],
         limitCount: null,
         insertValues: null,
@@ -253,6 +265,7 @@ export function feedRow(
     like_count: 2,
     comment_count: 1,
     liked_by_me: false,
+    group_id: null,
     ...partial,
   };
 }
@@ -262,6 +275,7 @@ export function postRow(partial: Partial<PostRow> & { id: string }): PostRow {
     author_id: "user-1",
     body: "Hello",
     attachment: null,
+    group_id: null,
     created_at: "2026-11-17T10:00:00.000Z",
     updated_at: "2026-11-17T10:00:00.000Z",
     removed_at: null,
@@ -297,6 +311,85 @@ export function reportRow(
     created_at: "2026-11-17T10:00:00.000Z",
     handled_by: null,
     handled_at: null,
+    ...partial,
+  };
+}
+
+export function moderationActionRow(
+  partial: Partial<ModerationActionRow> & { id: string },
+): ModerationActionRow {
+  return {
+    target_type: "post",
+    target_id: "post-1",
+    target_user_id: "user-2",
+    action: "remove",
+    reason: "Spam",
+    report_id: null,
+    moderator_id: "user-1",
+    created_at: "2026-11-18T10:00:00.000Z",
+    ...partial,
+  };
+}
+
+export function appealRow(
+  partial: Partial<AppealRow> & { id: string },
+): AppealRow {
+  return {
+    moderation_action_id: "action-1",
+    appellant_id: "user-2",
+    message: "I disagree with this removal.",
+    status: "open",
+    created_at: "2026-11-18T10:05:00.000Z",
+    handled_by: null,
+    handled_at: null,
+    ...partial,
+  };
+}
+
+export function groupRow(
+  partial: Partial<GroupRow> & { id: string },
+): GroupRow {
+  return {
+    slug: "test-group",
+    name: "Test Group",
+    description: "A group for testing.",
+    visibility: "public",
+    owner_id: "user-1",
+    created_at: "2026-11-18T10:00:00.000Z",
+    updated_at: "2026-11-18T10:00:00.000Z",
+    ...partial,
+  };
+}
+
+export function groupMemberRow(
+  partial: Partial<GroupMemberRow> & {
+    groupId: string;
+    userId: string;
+  },
+): GroupMemberRow {
+  return {
+    group_id: partial.groupId,
+    user_id: partial.userId,
+    role: "member",
+    status: "active",
+    created_at: "2026-11-18T10:00:00.000Z",
+    ...partial,
+  };
+}
+
+export function notificationRow(
+  partial: Partial<NotificationRow> & { id: string },
+): NotificationRow {
+  return {
+    recipient_id: "user-1",
+    actor_id: "user-2",
+    type: "like",
+    post_id: null,
+    comment_id: null,
+    group_id: null,
+    moderation_action_id: null,
+    read_at: null,
+    created_at: "2026-11-18T10:00:00.000Z",
     ...partial,
   };
 }

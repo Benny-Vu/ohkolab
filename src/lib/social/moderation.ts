@@ -1,7 +1,10 @@
 /**
  * Moderation hooks. All moderation writes go through security-definer
- * functions (remove_post, remove_comment, handle_report, suspend_user);
- * nothing here writes to the tables directly.
+ * functions (remove_post_with_reason, remove_comment_with_reason,
+ * handle_report, suspend_user_with_reason, handle_appeal); nothing here
+ * writes to the tables directly. Every removal and suspension carries a
+ * reason, which the database records in moderation_actions and shows to
+ * the affected user.
  */
 
 import {
@@ -24,7 +27,9 @@ import {
   type SocialResult,
 } from "@/lib/social/errors";
 import {
+  normalizeModerationReason,
   normalizeSuspensionReason,
+  validateModerationReason,
   validateSuspensionReason,
   validateSuspensionUntil,
   type ReportStatus,
@@ -38,13 +43,25 @@ export interface HandleReportInput {
 export interface RemoveContentInput {
   type: "post" | "comment";
   id: string;
+  /** Why the content is being removed. Required, 1 to 500 characters. */
+  reason: ModerationReason;
+  /** The report being actioned, when the removal came from one. */
+  reportId?: string;
 }
 
 export interface SuspendUserInput {
   userId: string;
   until: string;
   reason: string;
+  /** The report being actioned, when the suspension came from one. */
+  reportId?: string;
 }
+
+/**
+ * A moderation reason: trimmed, 1 to 500 characters. The database records it
+ * in moderation_actions and the affected user sees it with a link to appeal.
+ */
+export type ModerationReason = string;
 
 /** Sets a report to "actioned" or "dismissed". Moderators only. */
 export function useHandleReport(
@@ -107,14 +124,21 @@ export function useRemoveContent(
       if (!client) return socialFail("not_configured");
       const me = user?.id ?? null;
       if (!me) return socialFail("not_signed_in");
+      const reason = normalizeModerationReason(input.reason);
+      const reasonError = validateModerationReason(reason);
+      if (reasonError) return socialFail("invalid_input", reasonError);
       if (input.type === "post") {
-        const { error } = await client.rpc("remove_post", {
+        const { error } = await client.rpc("remove_post_with_reason", {
           target_post_id: input.id,
+          removal_reason: reason,
+          source_report_id: input.reportId,
         });
         if (error) return { ok: false, error: describeWriteError(error) };
       } else if (input.type === "comment") {
-        const { error } = await client.rpc("remove_comment", {
+        const { error } = await client.rpc("remove_comment_with_reason", {
           target_comment_id: input.id,
+          removal_reason: reason,
+          source_report_id: input.reportId,
         });
         if (error) return { ok: false, error: describeWriteError(error) };
       } else {
@@ -150,10 +174,11 @@ export function useSuspendUser(
       if (reasonError) return socialFail("invalid_input", reasonError);
       const untilError = validateSuspensionUntil(input.until);
       if (untilError) return socialFail("invalid_input", untilError);
-      const { error } = await client.rpc("suspend_user", {
+      const { error } = await client.rpc("suspend_user_with_reason", {
         target_user_id: input.userId,
         suspend_until: input.until,
         suspension_reason: reason,
+        source_report_id: input.reportId,
       });
       if (error) return { ok: false, error: describeWriteError(error) };
       return socialSucceed();

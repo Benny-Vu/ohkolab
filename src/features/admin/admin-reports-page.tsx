@@ -394,6 +394,76 @@ function SuspendDialog({
   );
 }
 
+function RemoveContentDialog({
+  targetType,
+  onRemove,
+}: {
+  targetType: "post" | "comment";
+  onRemove: (reason: string) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const remove = async () => {
+    const trimmed = reason.trim();
+    if (trimmed === "") {
+      toast.error("Enter a reason for the removal.");
+      return;
+    }
+    setBusy(true);
+    await onRemove(trimmed);
+    setBusy(false);
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="destructive" size="sm">
+          <Trash2Icon />
+          Remove content
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Remove this {targetType}?</DialogTitle>
+          <DialogDescription>
+            The content is removed for everyone, the author is notified with
+            your reason, and the report is marked as actioned.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2">
+          <Textarea
+            placeholder="Reason for the removal"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={busy}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              void remove();
+            }}
+            disabled={busy || reason.trim() === ""}
+          >
+            {busy ? <LoaderCircleIcon className="animate-spin" /> : null}
+            Remove content
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ReportCard({
   report,
   client,
@@ -416,13 +486,15 @@ function ReportCard({
     }
   };
 
-  const remove = async () => {
+  const remove = async (reason: string) => {
     if (report.target_type !== "post" && report.target_type !== "comment") {
       return;
     }
     const removed = await removeContent.mutateAsync({
       type: report.target_type,
       id: report.target_id,
+      reason,
+      reportId: report.id,
     });
     if (!removed.ok) {
       toast.error(removed.error.message);
@@ -481,18 +553,9 @@ function ReportCard({
             onConfirm={dismiss}
           />
           {report.target_type === "post" || report.target_type === "comment" ? (
-            <ConfirmDialog
-              trigger={
-                <Button variant="destructive" size="sm">
-                  <Trash2Icon />
-                  Remove content
-                </Button>
-              }
-              title="Remove this content?"
-              description="The content is removed for everyone and the report is marked as actioned."
-              confirmLabel="Remove content"
-              confirmVariant="destructive"
-              onConfirm={remove}
+            <RemoveContentDialog
+              targetType={report.target_type}
+              onRemove={remove}
             />
           ) : null}
           {suspendUserId ? (
