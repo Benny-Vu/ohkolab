@@ -1,6 +1,6 @@
 import { InfoIcon, LoaderCircleIcon } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
@@ -390,7 +390,20 @@ export function LoginPage() {
                       htmlFor="signup-terms"
                       className="font-normal leading-snug"
                     >
-                      I am 13 or older and accept the terms
+                      I am 13 or older and accept the{" "}
+                      <Link
+                        to="/terms"
+                        className="text-primary underline underline-offset-4"
+                      >
+                        terms
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        to="/privacy"
+                        className="text-primary underline underline-offset-4"
+                      >
+                        privacy policy
+                      </Link>
                     </Label>
                   </div>
                   <FieldError
