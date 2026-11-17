@@ -7,6 +7,7 @@ import {
   CopyIcon,
   EllipsisIcon,
   ExternalLinkIcon,
+  FlagIcon,
   LoaderCircleIcon,
   LogInIcon,
   UserRoundIcon,
@@ -52,11 +53,14 @@ import {
   useFollowers,
   useFollowing,
   useFollowState,
+  useIsModerator,
   useToggleBlock,
   useToggleFollow,
   type SocialProfileSummary,
 } from "@/lib/social";
 import { PostList } from "@/features/feed/post-list";
+import { ReportDialog } from "@/features/feed/report-dialog";
+import { SuspendDialog } from "@/features/admin/suspend-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -414,10 +418,14 @@ function ProfileSocialSection({
   const toggleFollow = useToggleFollow(profile.id, client);
   const toggleBlock = useToggleBlock(profile.id, client);
   const countsQuery = useFollowCounts(profile.id, client);
+  const moderatorQuery = useIsModerator(client);
   const [listOpen, setListOpen] = useState<"followers" | "following" | null>(
     null,
   );
   const [blockOpen, setBlockOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const isModerator = moderatorQuery.data === true;
 
   const following = followState.data === true;
   const counts = countsQuery.data;
@@ -509,6 +517,19 @@ function ProfileSocialSection({
                     <BanIcon />
                     Block user
                   </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setReportOpen(true)}>
+                    <FlagIcon />
+                    Report user
+                  </DropdownMenuItem>
+                  {isModerator ? (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={() => setSuspendOpen(true)}
+                    >
+                      <BanIcon />
+                      Suspend user
+                    </DropdownMenuItem>
+                  ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
@@ -540,8 +561,9 @@ function ProfileSocialSection({
           <DialogHeader>
             <DialogTitle>Block @{profile.username}?</DialogTitle>
             <DialogDescription>
-              You will stop seeing each other's posts and profiles. You can
-              unblock them later from your profile page.
+              Blocking works both ways: you won't see their posts or profile,
+              they won't see yours, and neither of you can follow the other. You
+              can unblock them later from your account page.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -567,6 +589,20 @@ function ProfileSocialSection({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ReportDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        targetType="profile"
+        targetId={profile.id}
+      />
+
+      <SuspendDialog
+        userId={profile.id}
+        client={client}
+        open={suspendOpen}
+        onOpenChange={setSuspendOpen}
+      />
 
       {listOpen === "followers" ? (
         <FollowersDialog

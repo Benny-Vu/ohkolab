@@ -9,16 +9,24 @@
 
 import {
   useMutation,
+  useQuery,
   useQueryClient,
   type UseMutationResult,
+  type UseQueryResult,
 } from "@tanstack/react-query";
 
 import { useAuth } from "@/lib/auth/use-auth";
+import type {
+  AppealRow,
+  ModerationActionRow,
+  UserSuspensionRow,
+} from "@/lib/database.types";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 
 import {
   describeWriteError,
   isSocialNotInstalled,
+  softReadError,
 } from "@/lib/social/availability";
 import {
   socialFail,
@@ -34,6 +42,36 @@ import {
   validateSuspensionUntil,
   type ReportStatus,
 } from "@/lib/social/validation";
+
+/** Appeal message limits, matching the appeals table check constraint. */
+export const APPEAL_MESSAGE_MIN = 1;
+export const APPEAL_MESSAGE_MAX = 1000;
+
+export const APPEAL_DECISIONS = ["upheld", "reversed"] as const;
+export type AppealDecision = (typeof APPEAL_DECISIONS)[number];
+
+/** 100 years: the "permanent" suspension duration. */
+export const PERMANENT_SUSPENSION_DAYS = 36_500;
+
+/** Returns the ISO timestamp a suspension of the given days ends at. */
+export function suspendUntil(days: number): string {
+  return new Date(Date.now() + days * 86_400_000).toISOString();
+}
+
+export function normalizeAppealMessage(message: string): string {
+  return message.trim();
+}
+
+/** Returns a user-facing message when an appeal message is invalid, or null when valid. */
+export function validateAppealMessage(message: string): string | null {
+  if (message.length < APPEAL_MESSAGE_MIN) {
+    return "Write a message for the moderators.";
+  }
+  if (message.length > APPEAL_MESSAGE_MAX) {
+    return `Appeals are limited to ${APPEAL_MESSAGE_MAX} characters.`;
+  }
+  return null;
+}
 
 export interface HandleReportInput {
   reportId: string;
@@ -188,5 +226,274 @@ export function useSuspendUser(
         void queryClient.invalidateQueries({ queryKey: ["social"] });
       }
     },
+  });
+}
+
+export interface HandleAppealInput {
+  appealId: string;
+  decision: AppealDecision;
+}
+
+/** Upholds or reverses an open appeal. Moderators only. */
+export function useHandleAppeal(
+  client: AppSupabaseClient | null = supabase,
+): UseMutationResult<
+  SocialResult<undefined>,
+  SocialFailure,
+  HandleAppealInput
+> {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation<SocialResult<undefined>, SocialFailure, HandleAppealInput>(
+    {
+      mutationFn: async (input): Promise<SocialResult<undefined>> => {
+        if (isSocialNotInstalled()) return socialFail("not_installed");
+        if (!client) return socialFail("not_configured");
+        const me = user?.id ?? null;
+        if (!me) return socialFail("not_signed_in");
+        if (!APPEAL_DECISIONS.includes(input.decision)) {
+          return socialFail(
+            "invalid_input",
+            "Choose whether to uphold or reverse the appeal.",
+          );
+        }
+        const { error } = await client.rpc("handle_appeal", {
+          target_appeal_id: input.appealId,
+          decision: input.decision,
+        });
+        if (error) return { ok: false, error: describeWriteError(error) };
+        return socialSucceed();
+      },
+      onSuccess: (result) => {
+        if (result.ok) {
+          void queryClient.invalidateQueries({
+            queryKey: ["social", "appeals"],
+          });
+        }
+      },
+    },
+  );
+}
+
+export interface CreateAppealInput {
+  moderationActionId: string;
+  message: string;
+}
+
+/** Files an appeal as the signed-in user against one moderation action. */
+export function useCreateAppeal(
+  client: AppSupabaseClient | null = supabase,
+): UseMutationResult<
+  SocialResult<undefined>,
+  SocialFailure,
+  CreateAppealInput
+> {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation<SocialResult<undefined>, SocialFailure, CreateAppealInput>(
+    {
+      mutationFn: async (input): Promise<SocialResult<undefined>> => {
+        if (isSocialNotInstalled()) return socialFail("not_installed");
+        if (!client) return socialFail("not_configured");
+        const me = user?.id ?? null;
+        if (!me) return socialFail("not_signed_in");
+        const message = normalizeAppealMessage(input.message);
+        const messageError = validateAppealMessage(message);
+        if (messageError) return socialFail("invalid_input", messageError);
+        const { error } = await client.from("appeals").insert({
+          moderation_action_id: input.moderationActionId,
+          appellant_id: me,
+          message,
+        });
+        if (error) return { ok: false, error: describeWriteError(error) };
+        return socialSucceed();
+      },
+      onSuccess: (result) => {
+        if (result.ok) {
+          void queryClient.invalidateQueries({
+            queryKey: ["social", "appeals"],
+          });
+        }
+      },
+    },
+  );
+}
+
+/** An open appeal together with the moderation action it appeals. */
+export interface AppealWithAction {
+  appeal: AppealRow;
+  action: ModerationActionRow | null;
+}
+
+/** Moderation queue: open appeals with their original action, newest first. */
+export function useAppeals(
+  client: AppSupabaseClient | null = supabase,
+): UseQueryResult<AppealWithAction[], SocialFailure> {
+  const { user } = useAuth();
+  return useQuery<AppealWithAction[], SocialFailure>({
+    queryKey: ["social", "appeals", "open"],
+    queryFn: async () => {
+      if (!client || isSocialNotInstalled()) {
+        return [];
+      }
+      const { data, error } = await client
+        .from("appeals")
+        .select("*, moderation_actions(*)")
+        .eq("status", "open")
+        .order("created_at", { ascending: false });
+      if (error) {
+        return softReadError(error, []);
+      }
+      return (data ?? []).map((row) => {
+        const { moderation_actions, ...appeal } =
+          row as unknown as AppealRow & {
+            moderation_actions?: ModerationActionRow | null;
+          };
+        return {
+          appeal,
+          action: moderation_actions ?? null,
+        };
+      });
+    },
+    enabled: client !== null && user !== null,
+    retry: false,
+  });
+}
+
+/** One moderation action, readable by the affected user and moderators. */
+export function useModerationAction(
+  actionId: string,
+  client: AppSupabaseClient | null = supabase,
+): UseQueryResult<ModerationActionRow | null, SocialFailure> {
+  const { user } = useAuth();
+  return useQuery<ModerationActionRow | null, SocialFailure>({
+    queryKey: ["social", "moderation-action", actionId],
+    queryFn: async () => {
+      if (!client || isSocialNotInstalled()) {
+        return null;
+      }
+      const { data, error } = await client
+        .from("moderation_actions")
+        .select("*")
+        .eq("id", actionId)
+        .maybeSingle();
+      if (error) {
+        return softReadError(error, null);
+      }
+      return (data as ModerationActionRow | null) ?? null;
+    },
+    enabled: client !== null && actionId !== "" && user !== null,
+    retry: false,
+  });
+}
+
+/** The appeal filed against one moderation action, when there is one. */
+export function useAppealForAction(
+  actionId: string,
+  client: AppSupabaseClient | null = supabase,
+): UseQueryResult<AppealRow | null, SocialFailure> {
+  const { user } = useAuth();
+  return useQuery<AppealRow | null, SocialFailure>({
+    queryKey: ["social", "appeals", "action", actionId],
+    queryFn: async () => {
+      if (!client || isSocialNotInstalled()) {
+        return null;
+      }
+      const { data, error } = await client
+        .from("appeals")
+        .select("*")
+        .eq("moderation_action_id", actionId)
+        .maybeSingle();
+      if (error) {
+        return softReadError(error, null);
+      }
+      return (data as AppealRow | null) ?? null;
+    },
+    enabled: client !== null && actionId !== "" && user !== null,
+    retry: false,
+  });
+}
+
+/** The signed-in user's suspensions, newest first. */
+export function useOwnSuspensions(
+  client: AppSupabaseClient | null = supabase,
+): UseQueryResult<UserSuspensionRow[], SocialFailure> {
+  const { user } = useAuth();
+  return useQuery<UserSuspensionRow[], SocialFailure>({
+    queryKey: ["social", "suspensions", user?.id ?? null],
+    queryFn: async () => {
+      if (!client || isSocialNotInstalled()) {
+        return [];
+      }
+      const me = user?.id ?? null;
+      if (!me) {
+        return [];
+      }
+      const { data, error } = await client
+        .from("user_suspensions")
+        .select("*")
+        .eq("user_id", me)
+        .order("created_at", { ascending: false });
+      if (error) {
+        return softReadError(error, []);
+      }
+      return data ?? [];
+    },
+    enabled: client !== null && user !== null,
+    retry: false,
+  });
+}
+
+/**
+ * Best-effort fetch of the text a removal acted on. Row-level security
+ * hides removed posts and comments from everyone (including moderators),
+ * so this returns null instead of failing when the row is unreadable.
+ */
+export function useModerationTargetText(
+  action: ModerationActionRow | null,
+  client: AppSupabaseClient | null = supabase,
+): UseQueryResult<string | null, SocialFailure> {
+  const { user } = useAuth();
+  const targetId = action?.target_id ?? "";
+  const targetType = action?.target_type ?? "";
+  return useQuery<string | null, SocialFailure>({
+    queryKey: ["social", "moderation-target", targetType, targetId],
+    queryFn: async () => {
+      if (!client || isSocialNotInstalled()) {
+        return null;
+      }
+      if (targetType === "post") {
+        const { data, error } = await client
+          .from("posts")
+          .select("body")
+          .eq("id", targetId)
+          .maybeSingle();
+        if (error) {
+          return softReadError(error, null);
+        }
+        const body = (data as { body?: string } | null)?.body;
+        return typeof body === "string" ? body : null;
+      }
+      if (targetType === "comment") {
+        const { data, error } = await client
+          .from("comments")
+          .select("body")
+          .eq("id", targetId)
+          .maybeSingle();
+        if (error) {
+          return softReadError(error, null);
+        }
+        const body = (data as { body?: string } | null)?.body;
+        return typeof body === "string" ? body : null;
+      }
+      return null;
+    },
+    enabled:
+      client !== null &&
+      user !== null &&
+      action !== null &&
+      action.action === "remove" &&
+      (action.target_type === "post" || action.target_type === "comment"),
+    retry: false,
   });
 }

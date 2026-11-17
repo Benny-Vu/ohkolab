@@ -1,7 +1,7 @@
 import {
   BanIcon,
-  CalendarClockIcon,
   EyeOffIcon,
+  ExternalLinkIcon,
   LoaderCircleIcon,
   RefreshCwIcon,
   ShieldAlertIcon,
@@ -36,8 +36,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/lib/supabase";
+import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import type { CommentRow, ProfileRow, ReportRow } from "@/lib/database.types";
 import {
   socialAvailability,
@@ -46,18 +47,15 @@ import {
   usePost,
   useRemoveContent,
   useReports,
-  useSuspendUser,
 } from "@/lib/social";
+import type { ReportStatus } from "@/lib/social/validation";
+import { SuspendDialog } from "@/features/admin/suspend-dialog";
 
-const SUSPEND_PRESETS = [
-  { label: "1 day", days: 1 },
-  { label: "7 days", days: 7 },
-  { label: "30 days", days: 30 },
-] as const;
-
-function suspendUntil(days: number): string {
-  return new Date(Date.now() + days * 86_400_000).toISOString();
-}
+const TAB_STATUSES: Array<{ status: ReportStatus; label: string }> = [
+  { status: "open", label: "Open" },
+  { status: "actioned", label: "Actioned" },
+  { status: "dismissed", label: "Dismissed" },
+];
 
 function formatDate(iso: string): string {
   const date = new Date(iso);
@@ -88,14 +86,7 @@ function reasonBadgeVariant(
 
 function useCommentRow(
   commentId: string,
-  client: typeof supabase,
-): { data: CommentRow | null; isPending: boolean } {
-  return useQueryCommentRow(commentId, client);
-}
-
-function useQueryCommentRow(
-  commentId: string,
-  client: typeof supabase,
+  client: AppSupabaseClient | null,
 ): { data: CommentRow | null; isPending: boolean } {
   const query = useReactQuery({
     queryKey: ["admin", "comment", commentId],
@@ -121,7 +112,7 @@ function useQueryCommentRow(
 
 function useProfileRow(
   profileId: string,
-  client: typeof supabase,
+  client: AppSupabaseClient | null,
 ): { data: ProfileRow | null; isPending: boolean } {
   const query = useReactQuery({
     queryKey: ["admin", "profile", profileId],
@@ -150,7 +141,7 @@ function ReportContent({
   client,
 }: {
   report: ReportRow;
-  client: typeof supabase;
+  client: AppSupabaseClient | null;
 }) {
   if (report.target_type === "post") {
     return <PostContent postId={report.target_id} client={client} />;
@@ -169,7 +160,7 @@ function PostContent({
   client,
 }: {
   postId: string;
-  client: typeof supabase;
+  client: AppSupabaseClient | null;
 }) {
   const postQuery = usePost(postId, client);
   if (postQuery.isPending) {
@@ -187,6 +178,13 @@ function PostContent({
       <p className="text-xs text-muted-foreground">
         by @{post.author_username}
       </p>
+      <Link
+        to={`/post/${postId}`}
+        className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+      >
+        <ExternalLinkIcon className="size-3" aria-hidden />
+        View post
+      </Link>
     </div>
   );
 }
@@ -196,7 +194,7 @@ function CommentContent({
   client,
 }: {
   commentId: string;
-  client: typeof supabase;
+  client: AppSupabaseClient | null;
 }) {
   const { data: comment, isPending } = useCommentRow(commentId, client);
   if (isPending) {
@@ -213,6 +211,13 @@ function CommentContent({
       <p className="text-xs text-muted-foreground">
         Comment by {comment.author_id.slice(0, 8)}
       </p>
+      <Link
+        to={`/post/${comment.post_id}`}
+        className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+      >
+        <ExternalLinkIcon className="size-3" aria-hidden />
+        View comment
+      </Link>
     </div>
   );
 }
@@ -222,7 +227,7 @@ function ProfileContent({
   client,
 }: {
   profileId: string;
-  client: typeof supabase;
+  client: AppSupabaseClient | null;
 }) {
   const { data: profile, isPending } = useProfileRow(profileId, client);
   if (isPending) {
@@ -234,15 +239,24 @@ function ProfileContent({
     );
   }
   return (
-    <div className="flex items-center gap-2">
-      {profile.avatar_species ? (
-        <PokemonIcon species={profile.avatar_species} />
-      ) : null}
+    <div className="grid gap-1">
+      <div className="flex items-center gap-2">
+        {profile.avatar_species ? (
+          <PokemonIcon species={profile.avatar_species} />
+        ) : null}
+        <Link
+          to={`/u/${profile.username}`}
+          className="text-sm font-medium hover:underline"
+        >
+          @{profile.username}
+        </Link>
+      </div>
       <Link
         to={`/u/${profile.username}`}
-        className="text-sm font-medium hover:underline"
+        className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
       >
-        @{profile.username}
+        <ExternalLinkIcon className="size-3" aria-hidden />
+        View profile
       </Link>
     </div>
   );
@@ -253,14 +267,12 @@ function ConfirmDialog({
   title,
   description,
   confirmLabel,
-  confirmVariant = "default",
   onConfirm,
 }: {
   trigger: ReactNode;
   title: string;
   description: ReactNode;
   confirmLabel: string;
-  confirmVariant?: "default" | "destructive";
   onConfirm: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -290,7 +302,7 @@ function ConfirmDialog({
             Cancel
           </Button>
           <Button
-            variant={confirmVariant}
+            variant="destructive"
             onClick={() => {
               void handleConfirm();
             }}
@@ -299,95 +311,6 @@ function ConfirmDialog({
             {busy ? <LoaderCircleIcon className="animate-spin" /> : null}
             {confirmLabel}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function SuspendDialog({
-  userId,
-  onSuspended,
-}: {
-  userId: string;
-  onSuspended: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const suspendUser = useSuspendUser();
-
-  const suspend = async (days: number) => {
-    const trimmed = reason.trim();
-    if (trimmed === "") {
-      toast.error("Enter a reason for the suspension.");
-      return;
-    }
-    setBusy(true);
-    const until = suspendUntil(days);
-    const result = await suspendUser.mutateAsync({
-      userId,
-      until,
-      reason: trimmed,
-    });
-    setBusy(false);
-    if (result.ok) {
-      toast.success("User suspended.");
-      setOpen(false);
-      onSuspended();
-    } else {
-      toast.error(result.error.message);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <BanIcon />
-          Suspend user
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Suspend user</DialogTitle>
-          <DialogDescription>
-            Temporarily prevent this user from posting, commenting and
-            interacting. Choose a duration and give a reason.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-2">
-          <Textarea
-            placeholder="Reason for the suspension"
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-          />
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
-            disabled={busy}
-          >
-            Cancel
-          </Button>
-          {SUSPEND_PRESETS.map((preset) => (
-            <Button
-              key={preset.days}
-              variant="destructive"
-              onClick={() => {
-                void suspend(preset.days);
-              }}
-              disabled={busy}
-            >
-              {busy ? (
-                <LoaderCircleIcon className="animate-spin" />
-              ) : (
-                <CalendarClockIcon />
-              )}
-              {preset.label}
-            </Button>
-          ))}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -435,6 +358,7 @@ function RemoveContentDialog({
         </DialogHeader>
         <div className="grid gap-2">
           <Textarea
+            aria-label="Reason for the removal"
             placeholder="Reason for the removal"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
@@ -469,10 +393,28 @@ function ReportCard({
   client,
 }: {
   report: ReportRow;
-  client: typeof supabase;
+  client: AppSupabaseClient | null;
 }) {
-  const handleReport = useHandleReport();
-  const removeContent = useRemoveContent();
+  const handleReport = useHandleReport(client);
+  const removeContent = useRemoveContent(client);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+
+  // The author of the reported content: the profile itself for profile
+  // reports, otherwise the author of the reported post or comment.
+  const postQuery = usePost(
+    report.target_type === "post" ? report.target_id : "",
+    client,
+  );
+  const commentQuery = useCommentRow(
+    report.target_type === "comment" ? report.target_id : "",
+    client,
+  );
+  const suspendUserId =
+    report.target_type === "profile"
+      ? report.target_id
+      : report.target_type === "post"
+        ? (postQuery.data?.author_id ?? null)
+        : (commentQuery.data?.author_id ?? null);
 
   const dismiss = async () => {
     const result = await handleReport.mutateAsync({
@@ -511,8 +453,17 @@ function ReportCard({
     }
   };
 
-  const suspendUserId =
-    report.target_type === "profile" ? report.target_id : null;
+  const markActioned = async () => {
+    const result = await handleReport.mutateAsync({
+      reportId: report.id,
+      status: "actioned",
+    });
+    if (result.ok) {
+      toast.success("User suspended and report actioned.");
+    } else {
+      toast.error(result.error.message);
+    }
+  };
 
   return (
     <Card>
@@ -559,7 +510,25 @@ function ReportCard({
             />
           ) : null}
           {suspendUserId ? (
-            <SuspendDialog userId={suspendUserId} onSuspended={() => {}} />
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSuspendOpen(true)}
+              >
+                <BanIcon />
+                Suspend user
+              </Button>
+              <SuspendDialog
+                userId={suspendUserId}
+                client={client}
+                open={suspendOpen}
+                onOpenChange={setSuspendOpen}
+                onSuspended={() => {
+                  void markActioned();
+                }}
+              />
+            </>
           ) : null}
         </div>
       </CardContent>
@@ -570,7 +539,7 @@ function ReportCard({
 export function AdminReportsPage({
   client = supabase,
 }: {
-  client?: typeof supabase;
+  client?: AppSupabaseClient | null;
 }) {
   if (socialAvailability(client) !== "ready") {
     return (
@@ -589,7 +558,7 @@ export function AdminReportsPage({
   return <ModeratorGate client={client} />;
 }
 
-function ModeratorGate({ client }: { client: typeof supabase }) {
+function ModeratorGate({ client }: { client: AppSupabaseClient | null }) {
   const moderatorQuery = useIsModerator(client);
 
   if (moderatorQuery.isPending) {
@@ -610,22 +579,35 @@ function ModeratorGate({ client }: { client: typeof supabase }) {
   return <ReportsList client={client} />;
 }
 
-function ReportsList({ client }: { client: typeof supabase }) {
-  const reportsQuery = useReports("open", client);
+function ReportsList({ client }: { client: AppSupabaseClient | null }) {
+  const [status, setStatus] = useState<ReportStatus>("open");
+  const reportsQuery = useReports(status, client);
 
   return (
     <Page
       title="Reports"
-      description="Review open reports from the community."
+      description="Review reports from the community."
       width="wide"
     >
+      <Tabs
+        value={status}
+        onValueChange={(value) => setStatus(value as ReportStatus)}
+      >
+        <TabsList aria-label="Report status">
+          {TAB_STATUSES.map((tab) => (
+            <TabsTrigger key={tab.status} value={tab.status}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
       {reportsQuery.isPending ? (
-        <div className="grid gap-4">
+        <div className="mt-4 grid gap-4">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
         </div>
       ) : reportsQuery.isError ? (
-        <div className="grid gap-4">
+        <div className="mt-4 grid gap-4">
           <Alert variant="destructive">
             <ShieldAlertIcon />
             <AlertTitle>Reports could not be loaded</AlertTitle>
@@ -643,9 +625,11 @@ function ReportsList({ client }: { client: typeof supabase }) {
           </Button>
         </div>
       ) : (reportsQuery.data ?? []).length === 0 ? (
-        <p className="text-sm text-muted-foreground">No open reports.</p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          No {status} reports.
+        </p>
       ) : (
-        <div className="grid gap-4">
+        <div className="mt-4 grid gap-4">
           {(reportsQuery.data ?? []).map((report) => (
             <ReportCard key={report.id} report={report} client={client} />
           ))}
