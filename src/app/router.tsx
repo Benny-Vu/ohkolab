@@ -5,6 +5,7 @@ import { NotFoundPage, PageLoading, RouteError } from "@/app/route-pages";
 import { accountRoutes } from "@/features/account/routes";
 import { calcRoutes } from "@/features/calc/routes";
 import { homeRoutes } from "@/features/home/routes";
+import { legalRoutes } from "@/features/legal/routes";
 import { metagameRoutes } from "@/features/metagame/routes";
 import { profileRoutes } from "@/features/profile/routes";
 import { teamBuilderRoutes } from "@/features/team-builder/routes";
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
         errorElement: <RouteError />,
         children: [
           ...homeRoutes,
+          ...legalRoutes,
           ...calcRoutes,
           ...teamBuilderRoutes,
           ...metagameRoutes,

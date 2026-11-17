@@ -129,7 +129,9 @@ describe("LoginPage", () => {
     expect(auth.calls.map((c) => c.name)).not.toContain("signUp");
 
     await user.click(
-      screen.getByLabelText("I am 13 or older and accept the terms"),
+      screen.getByLabelText(
+        "I am 13 or older and accept the terms and privacy policy",
+      ),
     );
     await user.click(screen.getByRole("button", { name: "Sign up" }));
 
@@ -162,7 +164,9 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText("Email"), "misty@example.com");
     await user.type(screen.getByLabelText("Password"), "staryu12345");
     await user.click(
-      screen.getByLabelText("I am 13 or older and accept the terms"),
+      screen.getByLabelText(
+        "I am 13 or older and accept the terms and privacy policy",
+      ),
     );
     await user.click(screen.getByRole("button", { name: "Sign up" }));
 
@@ -293,6 +297,22 @@ describe("LoginPage", () => {
     );
   });
 
+  it("links the sign-up checkbox text to the terms and privacy pages", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth({ user: null, session: null, profile: null });
+    renderPage(<LoginPage />, auth, { path: "/login" });
+
+    await user.click(screen.getByRole("tab", { name: "Sign up" }));
+
+    expect(screen.getByRole("link", { name: "terms" })).toHaveAttribute(
+      "href",
+      "/terms",
+    );
+    expect(
+      screen.getByRole("link", { name: "privacy policy" }),
+    ).toHaveAttribute("href", "/privacy");
+  });
+
   it("marks the terms checkbox invalid when sign-up is missing it", async () => {
     const user = userEvent.setup();
     const auth = createFakeAuth({ user: null, session: null, profile: null });
@@ -304,7 +324,7 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: "Sign up" }));
 
     const checkbox = screen.getByLabelText(
-      "I am 13 or older and accept the terms",
+      "I am 13 or older and accept the terms and privacy policy",
     );
     expect(checkbox).toHaveAttribute("aria-invalid", "true");
     expect(checkbox).toHaveAttribute("aria-describedby", "signup-terms-error");
