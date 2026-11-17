@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import type { ProfileRow } from "@/lib/database.types";
 import type { Profile } from "@/lib/auth/types";
-import { rowToTeam } from "@/lib/team";
+import { rowToTeam } from "@/lib/team/cloud-team-store";
 import type { Team } from "@/types/team";
 
 export function mapProfileRow(row: ProfileRow): Profile {

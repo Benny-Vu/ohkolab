@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import {
@@ -9,12 +9,7 @@ import {
 } from "lucide-react";
 
 import { Page } from "@/components/page";
-import {
-  PokemonSprite,
-  PokemonIcon,
-  ItemIcon,
-} from "@/components/pokemon-sprite";
-import { TypeBadge } from "@/components/type-badge";
+import { PokemonSprite, PokemonIcon } from "@/components/pokemon-sprite";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,13 +32,21 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { normalizeUsername } from "@/lib/auth/validation";
-import { battleTypes, memberLabel, useTeams } from "@/lib/team";
+import { useTeams } from "@/lib/team/use-teams";
 import type { Team } from "@/types/team";
 import { MAX_TEAM_SIZE } from "@/types/team";
 import {
   usePublicProfile,
   usePublicTeams,
 } from "@/features/profile/profile-queries";
+
+// Team member details need the dex (battleTypes), so the row lives in its
+// own module and loads lazily when the team dialog opens.
+const TeamMemberRow = lazy(() =>
+  import("@/features/profile/team-member-row").then((m) => ({
+    default: m.TeamMemberRow,
+  })),
+);
 
 function UnconfiguredNotice() {
   return (
@@ -108,45 +111,6 @@ function ProfileHeader({
   );
 }
 
-function TeamMemberRow({ team, index }: { team: Team; index: number }) {
-  const member = team.members[index];
-  if (!member) {
-    return null;
-  }
-  const types = battleTypes(member);
-  return (
-    <li className="flex min-w-0 items-center gap-3">
-      <PokemonSprite species={member.species} size={48} className="shrink-0" />
-      <div className="grid min-w-0 flex-1 gap-1">
-        <span className="min-w-0 truncate text-sm font-medium">
-          {memberLabel(member)}
-        </span>
-        <div className="flex min-w-0 flex-wrap gap-1">
-          {types ? (
-            types.map((type) => <TypeBadge key={type} type={type} />)
-          ) : (
-            <span className="text-xs text-muted-foreground">Unknown types</span>
-          )}
-        </div>
-        <div className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
-          {member.item ? (
-            <>
-              <ItemIcon item={member.item} className="shrink-0" />
-              <span className="min-w-0 truncate">{member.item}</span>
-            </>
-          ) : (
-            <span>No item</span>
-          )}
-        </div>
-        <p className="min-w-0 text-xs text-muted-foreground">
-          {member.moves.filter((move) => move !== null).join(" · ") ||
-            "No moves"}
-        </p>
-      </div>
-    </li>
-  );
-}
-
 function TeamDialog({ team, username }: { team: Team; username: string }) {
   const [open, setOpen] = useState(false);
   const { create } = useTeams();
@@ -178,7 +142,16 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
         </DialogHeader>
         <ul className="grid gap-3">
           {team.members.map((_, index) => (
-            <TeamMemberRow key={index} team={team} index={index} />
+            <Suspense
+              key={index}
+              fallback={
+                <li>
+                  <Skeleton className="h-16 w-full" />
+                </li>
+              }
+            >
+              <TeamMemberRow team={team} index={index} />
+            </Suspense>
           ))}
         </ul>
         <DialogFooter>

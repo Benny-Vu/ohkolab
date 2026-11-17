@@ -45,6 +45,16 @@ export default defineConfig({
               test: /[\\/]node_modules[\\/]@pkmn[\\/]dex[\\/]build[\\/]learnsets-[A-Z0-9]+\.mjs$/,
               includeDependenciesRecursively: false,
             },
+            // The ~200 KB sprite-sheet helpers from @pkmn/img plus our thin
+            // src/data/sprites wrapper. They are tiny next to the dex, so
+            // routes that only show sprites (team lists, profiles) load this
+            // small chunk instead of the 2.5 MB pokemon-data chunk. Must be
+            // matched before pokemon-data: groups are first-match-wins.
+            {
+              name: "sprites",
+              test: /[\\/]node_modules[\\/]@pkmn[\\/]img[\\/]|[\\/]src[\\/]data[\\/]sprites\.ts$/,
+              includeDependenciesRecursively: false,
+            },
             // Everything Pokémon: the dex, the calc and our src/data layer.
             // Only routes that actually need Pokémon data load this chunk.
             // Dependencies are NOT pulled in recursively: src/data imports

@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 
 import type { BattleFormat } from "@/types/battle";
+import { findSnapshot, normalizeDataPath } from "@/lib/metagame/snapshots";
 import {
-  findSnapshot,
-  normalizeDataPath,
   parseMetagameIndex,
   parseMetagameSnapshot,
-} from "@/lib/metagame";
-import type { MetagameIndex, MetagameSnapshot } from "@/lib/metagame";
+} from "@/lib/metagame/parse";
+import type { MetagameIndex, MetagameSnapshot } from "@/lib/metagame/types";
 
 const INDEX_PATH = "/data/metagame/index.json";
 

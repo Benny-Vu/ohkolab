@@ -7,13 +7,12 @@ import {
   Trash2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { lazy, Suspense, type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
 import { PokemonSprite } from "@/components/pokemon-sprite";
-import { SpeciesPicker } from "@/components/pokemon-editor";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +52,14 @@ import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 type ProfileFieldErrors = Partial<
   Record<"username" | "displayName" | "bio" | "avatarSpecies", string>
 >;
+
+// The species picker pulls the full dex; keep it out of the /profile route
+// chunk and load it only when the avatar form renders.
+const SpeciesPicker = lazy(() =>
+  import("@/components/pokemon-editor/species-picker").then((m) => ({
+    default: m.SpeciesPicker,
+  })),
+);
 
 function ProfileSkeleton() {
   return (
@@ -179,11 +186,13 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               )}
               <div className="grid min-w-0 flex-1 gap-2">
                 <Label htmlFor="avatar-species">Avatar species</Label>
-                <SpeciesPicker
-                  value={avatarSpecies}
-                  onChange={(species) => setAvatarSpecies(species)}
-                  placeholder="Choose a Pokémon"
-                />
+                <Suspense fallback={<Skeleton className="h-8 w-full" />}>
+                  <SpeciesPicker
+                    value={avatarSpecies}
+                    onChange={(species) => setAvatarSpecies(species)}
+                    placeholder="Choose a Pokémon"
+                  />
+                </Suspense>
               </div>
             </div>
             <div className="grid gap-2">

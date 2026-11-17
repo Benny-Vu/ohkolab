@@ -145,7 +145,7 @@ describe("MetagamePage", () => {
     expect(
       screen.getByRole("button", { name: /Archaludon/ }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Speed tiers")).toBeInTheDocument();
+    expect(await screen.findByText("Speed tiers")).toBeInTheDocument();
   });
 
   it("opens a detail dialog with moves, items and spreads", async () => {

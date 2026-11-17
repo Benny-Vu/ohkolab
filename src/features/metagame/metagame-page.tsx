@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { lazy, Suspense, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 
 import { InfoIcon } from "lucide-react";
@@ -8,7 +8,6 @@ import { FormatToggle } from "@/components/format-toggle";
 import { Page } from "@/components/page";
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,18 +38,23 @@ import {
   useMetagameSnapshot,
 } from "@/features/metagame/use-metagame";
 import { useBattleFormat } from "@/lib/preferences";
+import { findSnapshot, listSnapshots } from "@/lib/metagame/snapshots";
 import {
-  findSnapshot,
   formatAttribution,
   formatBattles,
   formatPeriod,
   formatShare,
-  listSnapshots,
-  speedTiers,
-  usageToSet,
-} from "@/lib/metagame";
-import type { PokemonUsage, SpeedTier } from "@/lib/metagame";
+} from "@/lib/metagame/format";
+import type { PokemonUsage } from "@/lib/metagame/types";
 import { STAT_IDS, STAT_LABELS } from "@/types/pokemon";
+
+// Speed tiers need the dex (calcStat), so the section lives in its own
+// module and loads lazily; the /meta route chunk stays dex-free.
+const SpeedTiersSection = lazy(() =>
+  import("@/features/metagame/speed-tiers-section").then((m) => ({
+    default: m.SpeedTiersSection,
+  })),
+);
 
 function ShareList({ shares }: { shares: { name: string; share: number }[] }) {
   if (shares.length === 0) {
@@ -137,85 +141,6 @@ function PokemonDetail({
   );
 }
 
-function SpeedTierNotes({ tier }: { tier: SpeedTier }) {
-  const notes: string[] = [];
-  if (tier.choiceScarf) notes.push("Choice Scarf");
-  if (tier.unburden) notes.push("Unburden");
-  if (notes.length === 0) return null;
-  return (
-    <div className="flex flex-wrap gap-1">
-      {notes.map((note) => (
-        <Badge key={note} variant="secondary">
-          {note}
-        </Badge>
-      ))}
-    </div>
-  );
-}
-
-function SpeedTiersSection({ tiers }: { tiers: SpeedTier[] }) {
-  return (
-    <section className="space-y-2">
-      <h2 className="text-base leading-tight font-semibold">Speed tiers</h2>
-      {tiers.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No speed tier data for this snapshot.
-        </p>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pokémon</TableHead>
-                <TableHead>Common speeds</TableHead>
-                <TableHead className="text-right">Max</TableHead>
-                <TableHead className="text-right">Min</TableHead>
-                <TableHead>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tiers.map((tier) => (
-                <TableRow key={tier.species}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <PokemonIcon species={tier.species} className="size-6" />
-                      <span className="min-w-0 font-medium">
-                        {tier.species}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                      {tier.entries.map((entry, index) => (
-                        <span
-                          key={`${tier.species}-${entry.speed}-${index}`}
-                          className="text-sm tabular-nums"
-                        >
-                          {entry.nature} {entry.speed} (
-                          {formatShare(entry.share)})
-                        </span>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {tier.maxSpeed}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {tier.minSpeed}
-                  </TableCell>
-                  <TableCell>
-                    <SpeedTierNotes tier={tier} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </section>
-  );
-}
-
 export function MetagamePage() {
   const [format] = useBattleFormat();
   const navigate = useNavigate();
@@ -237,7 +162,9 @@ export function MetagamePage() {
       : null;
   const snapshot = useMetagameSnapshot(format, period);
 
-  const handleUseSet = (pokemon: PokemonUsage) => {
+  const handleUseSet = async (pokemon: PokemonUsage) => {
+    // usageToSet needs the dex; import it on demand so the route stays light.
+    const { usageToSet } = await import("@/lib/metagame/sets");
     const set = usageToSet(pokemon);
     if (set) {
       navigate("/calc", { state: { attacker: set } });
@@ -361,7 +288,9 @@ export function MetagamePage() {
             </Table>
           </div>
         </section>
-        <SpeedTiersSection tiers={speedTiers(data.pokemon)} />
+        <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+          <SpeedTiersSection pokemon={data.pokemon} />
+        </Suspense>
       </div>
     );
   }

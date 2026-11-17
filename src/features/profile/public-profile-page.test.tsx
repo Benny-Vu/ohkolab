@@ -274,7 +274,7 @@ describe("PublicProfilePage", () => {
     expect(
       await screen.findByText(/Doubles · 2 Pokémon · shared by @copyu/),
     ).toBeInTheDocument();
-    expect(screen.getByText("Garchomp")).toBeInTheDocument();
+    expect(await screen.findByText("Garchomp")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /copy to my teams/i }));
 
