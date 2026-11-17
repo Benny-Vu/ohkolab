@@ -59,7 +59,14 @@ const queriesMocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/social", () => socialMocks);
 vi.mock("@/lib/social/mutations", () => mutationsMocks);
-vi.mock("@/lib/social/moderation", () => moderationMocks);
+vi.mock("@/lib/social/moderation", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/social/moderation")>();
+  return {
+    ...actual,
+    useSuspendUser: moderationMocks.useSuspendUser,
+  };
+});
 vi.mock("@/lib/social/queries", () => queriesMocks);
 
 const queryResult = (data: unknown, extra: Record<string, unknown> = {}) => ({
@@ -114,6 +121,8 @@ function stubSocial(overrides: Partial<typeof socialMocks> = {}) {
   mutationsMocks.useToggleFollow.mockReturnValue(mutationResult());
   mutationsMocks.useToggleBlock.mockReturnValue(mutationResult());
   moderationMocks.useRemoveContent.mockReturnValue(mutationResult());
+  moderationMocks.useSuspendUser.mockReturnValue(mutationResult());
+  socialMocks.useIsModerator.mockReturnValue(queryResult(false));
   queriesMocks.useIsModerator.mockReturnValue({
     data: false,
     isPending: false,
@@ -165,6 +174,7 @@ function postRow(overrides: Partial<FeedPostRow> = {}): FeedPostRow {
     like_count: 2,
     comment_count: 1,
     liked_by_me: false,
+    group_id: null,
     ...overrides,
   };
 }
@@ -623,10 +633,75 @@ describe("PublicProfilePage social section", () => {
     await user.click(screen.getByRole("button", { name: /more options/i }));
     await user.click(await screen.findByRole("menuitem", { name: /block/i }));
 
+    expect(
+      screen.getByText(/Blocking works both ways: you won't see their posts/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/they won't see yours, and neither of you can follow/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/unblock them later from your account page/i),
+    ).toBeInTheDocument();
+
     const confirm = await screen.findByRole("button", { name: /^block$/i });
     await user.click(confirm);
 
     await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
+  });
+
+  it("opens the report dialog from the overflow menu", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    renderSignedIn(client, "brock");
+
+    await screen.findByText("Pallet Town");
+    await user.click(screen.getByRole("button", { name: /more options/i }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: /report user/i }),
+    );
+
+    expect(
+      await screen.findByRole("dialog", { name: /report/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the suspend item from non-moderators", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    renderSignedIn(client, "brock");
+
+    await screen.findByText("Pallet Town");
+    await user.click(screen.getByRole("button", { name: /more options/i }));
+
+    expect(
+      screen.queryByRole("menuitem", { name: /suspend user/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers moderators a suspend action", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    stubSocial({
+      useIsModerator: vi.fn(() => queryResult(true)),
+    });
+    renderSignedIn(client, "brock");
+
+    await screen.findByText("Pallet Town");
+    await user.click(screen.getByRole("button", { name: /more options/i }));
+
+    await user.click(
+      await screen.findByRole("menuitem", { name: /suspend user/i }),
+    );
+
+    expect(
+      await screen.findByRole("dialog", { name: /suspend/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows the trainer's posts", async () => {

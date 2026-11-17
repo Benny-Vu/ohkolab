@@ -8,4 +8,11 @@ export const adminRoutes: RouteObject[] = [
         .AdminReportsPage,
     }),
   },
+  {
+    path: "admin/appeals",
+    lazy: async () => ({
+      Component: (await import("@/features/admin/admin-appeals-page"))
+        .AdminAppealsPage,
+    }),
+  },
 ];

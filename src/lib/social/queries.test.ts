@@ -19,6 +19,7 @@ import {
   useFollowers,
   useFollowing,
   useFollowState,
+  useGroupFeed,
   useIsModerator,
   usePost,
   useReports,
@@ -69,6 +70,7 @@ function createFakeClient(
     for (const method of [
       "select",
       "eq",
+      "is",
       "or",
       "in",
       "order",
@@ -151,6 +153,7 @@ function feedRow(partial: Partial<FeedPostRow> & { id: string }): FeedPostRow {
     like_count: 0,
     comment_count: 0,
     liked_by_me: false,
+    group_id: null,
     ...partial,
   };
 }
@@ -367,6 +370,38 @@ describe("useFeed", () => {
       code: "forbidden",
       message: "You cannot do that.",
     });
+  });
+});
+
+describe("useGroupFeed", () => {
+  it("loads one group's posts", async () => {
+    const rows = [
+      feedRow({ id: "p1", group_id: "group-1" }),
+      feedRow({ id: "p2", group_id: "group-1" }),
+    ];
+    const fake = createFakeClient(
+      byTable({ feed_posts: { data: rows, error: null } }),
+    );
+    const { result } = renderHook(() => useGroupFeed("group-1", fake.client), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.pages).toEqual([rows]);
+    expect(callsOn(fake, "feed_posts", "eq")).toEqual([
+      ["group_id", "group-1"],
+    ]);
+  });
+
+  it("stays idle without a group id", () => {
+    const fake = createFakeClient(byTable({}));
+    const { result } = renderHook(() => useGroupFeed("", fake.client), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(fake.queries).toHaveLength(0);
   });
 });
 

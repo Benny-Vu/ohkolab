@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { LoaderCircleIcon, MailIcon } from "lucide-react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,10 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/lib/auth/use-auth";
 import { useCreateReport } from "@/lib/social/mutations";
 import { REPORT_DETAILS_MAX, REPORT_REASONS } from "@/lib/social/validation";
-import { LoaderCircleIcon } from "lucide-react";
-import { toast } from "sonner";
 
 export type ReportTargetType = "post" | "comment" | "profile";
 
@@ -38,9 +40,27 @@ const REASON_LABELS: Record<(typeof REPORT_REASONS)[number], string> = {
   other: "Something else",
 };
 
+const EMAIL_SUBJECTS: Record<ReportTargetType, string> = {
+  post: "Report a post",
+  comment: "Report a comment",
+  profile: "Report a profile",
+};
+
+function contentUrl(targetType: ReportTargetType, targetId: string): string {
+  const origin = window.location.origin;
+  if (targetType === "post") {
+    return `${origin}/post/${targetId}`;
+  }
+  if (targetType === "profile") {
+    return `${origin}/u/${targetId}`;
+  }
+  return `${origin}${window.location.pathname}`;
+}
+
 /**
  * Report dialog shared by posts, comments and profiles. Collects a reason and
- * optional details, then submits a report through the social layer.
+ * optional details, then submits a report through the social layer. Signed-out
+ * visitors get an email link instead of the form.
  */
 export function ReportDialog({
   open,
@@ -48,6 +68,7 @@ export function ReportDialog({
   targetType,
   targetId,
 }: ReportDialogProps) {
+  const { user } = useAuth();
   const createReport = useCreateReport();
   const [reason, setReason] = useState<(typeof REPORT_REASONS)[number] | "">(
     "",
@@ -80,6 +101,48 @@ export function ReportDialog({
     } else {
       setError(result.error.message);
     }
+  }
+
+  if (user === null) {
+    const subject = encodeURIComponent(EMAIL_SUBJECTS[targetType]);
+    const body = encodeURIComponent(
+      `Please review this ${targetType}:\n${contentUrl(targetType, targetId)}`,
+    );
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Report {targetType}</DialogTitle>
+            <DialogDescription>
+              You need an account to report {targetType}s directly. You can also
+              send the report to the moderators by email.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <p className="text-sm break-all text-muted-foreground">
+              {contentUrl(targetType, targetId)}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Close
+            </Button>
+            <Button type="button" asChild>
+              <a
+                href={`mailto:contact@ohkolab.com?subject=${subject}&body=${body}`}
+              >
+                <MailIcon aria-hidden />
+                Report by email
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   return (

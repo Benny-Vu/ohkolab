@@ -55,19 +55,43 @@ function isSpreadShare(value: unknown): value is SpreadShare {
   );
 }
 
-function isShareList(value: unknown): value is Share[] {
-  return Array.isArray(value) && value.every(isShare);
+/** Keeps the valid share entries and warns about the dropped ones; null when
+ * the value is not an array at all, which makes the pokemon invalid. */
+function filterShareList(value: unknown): Share[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.filter((entry) => {
+    if (isShare(entry)) return true;
+    console.warn(
+      `metagame: dropped invalid share entry ${JSON.stringify(entry)}`,
+    );
+    return false;
+  });
 }
 
-function isPokemonUsage(value: unknown): value is PokemonUsage {
-  if (!isRecord(value)) return false;
-  if (!isNonEmptyString(value.species)) return false;
+/** Keeps the valid spread entries and warns about the dropped ones; null when
+ * the value is not an array at all, which makes the pokemon invalid. */
+function filterSpreadList(value: unknown): SpreadShare[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.filter((entry) => {
+    if (isSpreadShare(entry)) return true;
+    console.warn(
+      `metagame: dropped invalid spread entry ${JSON.stringify(entry)}`,
+    );
+    return false;
+  });
+}
+
+/** Parses one pokemon entry, dropping invalid list entries with a warning.
+ * Returns null when the pokemon itself is invalid and must be skipped. */
+function parsePokemonUsage(value: unknown): PokemonUsage | null {
+  if (!isRecord(value)) return null;
+  if (!isNonEmptyString(value.species)) return null;
   if (
     typeof value.rank !== "number" ||
     !Number.isInteger(value.rank) ||
     value.rank < 1
   ) {
-    return false;
+    return null;
   }
   if (
     value.usage !== null &&
@@ -76,17 +100,33 @@ function isPokemonUsage(value: unknown): value is PokemonUsage {
       value.usage < 0 ||
       value.usage > 1)
   ) {
-    return false;
+    return null;
   }
-  return (
-    isShareList(value.abilities) &&
-    isShareList(value.items) &&
-    isShareList(value.moves) &&
-    isShareList(value.natures) &&
-    Array.isArray(value.spreads) &&
-    value.spreads.every(isSpreadShare) &&
-    isShareList(value.teammates)
-  );
+  const abilities = filterShareList(value.abilities);
+  const items = filterShareList(value.items);
+  const moves = filterShareList(value.moves);
+  const natures = filterShareList(value.natures);
+  const spreads = filterSpreadList(value.spreads);
+  const teammates = filterShareList(value.teammates);
+  if (
+    abilities === null ||
+    items === null ||
+    moves === null ||
+    natures === null ||
+    spreads === null ||
+    teammates === null
+  ) {
+    return null;
+  }
+  return {
+    ...(value as unknown as PokemonUsage),
+    abilities,
+    items,
+    moves,
+    natures,
+    spreads,
+    teammates,
+  };
 }
 
 function isSource(value: unknown): value is MetagameSnapshot["source"] {
@@ -104,7 +144,10 @@ function isSource(value: unknown): value is MetagameSnapshot["source"] {
 
 /**
  * Validates a fetched snapshot file against the metagame data contract.
- * Returns null when anything does not fit; extra properties are tolerated.
+ * File-level problems (format, period, source, ...) still reject the whole
+ * file, but invalid pokemon entries are skipped and invalid list entries
+ * are dropped with a console warning, so one bad entry no longer blanks
+ * the whole metagame page. Extra properties are tolerated.
  */
 export function parseMetagameSnapshot(value: unknown): MetagameSnapshot | null {
   if (!isRecord(value)) return null;
@@ -125,15 +168,22 @@ export function parseMetagameSnapshot(value: unknown): MetagameSnapshot | null {
   }
   if (!isSource(value.source)) return null;
   if (!Array.isArray(value.pokemon)) return null;
-  const pokemon = value.pokemon;
-  if (!pokemon.every(isPokemonUsage)) return null;
-  for (let i = 0; i < pokemon.length; i += 1) {
-    const current = pokemon[i];
+  const kept: PokemonUsage[] = [];
+  for (const entry of value.pokemon) {
+    const pokemon = parsePokemonUsage(entry);
+    if (pokemon) {
+      kept.push(pokemon);
+    } else {
+      console.warn("metagame: skipped invalid pokemon entry");
+    }
+  }
+  for (let i = 0; i < kept.length; i += 1) {
+    const current = kept[i];
     if (!current) return null;
-    const previous = i > 0 ? pokemon[i - 1] : null;
+    const previous = i > 0 ? kept[i - 1] : null;
     if (previous && current.rank <= previous.rank) return null;
   }
-  return value as unknown as MetagameSnapshot;
+  return { ...value, pokemon: kept } as unknown as MetagameSnapshot;
 }
 
 /**

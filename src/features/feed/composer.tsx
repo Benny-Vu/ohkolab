@@ -19,9 +19,10 @@ import type { TeamAttachment } from "@/features/feed/attachment";
 
 /**
  * Post composer for the community feed. Signed-in users write a short post and
- * can attach one of their teams as a snapshot.
+ * can attach one of their teams as a snapshot. Pass `groupId` to post into a
+ * group instead of the main feed.
  */
-export function Composer() {
+export function Composer({ groupId }: { groupId?: string | null }) {
   const { teams } = useTeams();
   const createPost = useCreatePost();
   const [body, setBody] = useState("");
@@ -36,6 +37,7 @@ export function Composer() {
     const result = await createPost.mutateAsync({
       body,
       attachment: attachment ? teamAttachmentJson(attachment) : null,
+      groupId: groupId ?? null,
     });
     if (result.ok) {
       setBody("");

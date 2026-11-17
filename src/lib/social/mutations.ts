@@ -49,6 +49,8 @@ import {
 export interface CreatePostInput {
   body: string;
   attachment?: Json | null;
+  /** The group to post into; null or omitted posts to the main feed. */
+  groupId?: string | null;
 }
 
 export interface UpdatePostInput {
@@ -91,9 +93,10 @@ export function useCreatePost(
       const attachment = input.attachment ?? null;
       const attachmentError = validateAttachment(attachment);
       if (attachmentError) return socialFail("invalid_input", attachmentError);
+      const groupId = input.groupId ?? null;
       const { data, error } = await client
         .from("posts")
-        .insert({ author_id: me, body, attachment })
+        .insert({ author_id: me, body, attachment, group_id: groupId })
         .select("*")
         .single();
       if (error) return { ok: false, error: describeWriteError(error) };
@@ -102,6 +105,9 @@ export function useCreatePost(
     onSuccess: (result) => {
       if (!result.ok) return;
       void queryClient.invalidateQueries({ queryKey: ["social", "feed"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["social", "group-feed"],
+      });
       void queryClient.invalidateQueries({
         queryKey: ["social", "author-posts"],
       });

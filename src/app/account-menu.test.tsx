@@ -1,14 +1,37 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createSignedInAuth, renderAt } from "@/app/test-utils";
+
+const moderatorMocks = vi.hoisted(() => ({
+  useIsModerator: vi.fn(),
+}));
+
+vi.mock("@/lib/social/queries", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/social/queries")>();
+  return {
+    ...actual,
+    useIsModerator: moderatorMocks.useIsModerator,
+  };
+});
+
+const queryResult = (data: unknown) => ({
+  data,
+  isPending: false,
+  isError: false,
+  error: null,
+});
 
 function tabNav() {
   return screen.getAllByRole("navigation", { name: "Main" })[1]!;
 }
 
 describe("AccountMenu", () => {
+  beforeEach(() => {
+    moderatorMocks.useIsModerator.mockReturnValue(queryResult(false));
+  });
+
   it("offers sign-in in the header and on the tab bar when signed out", () => {
     renderAt("/");
 
@@ -48,8 +71,31 @@ describe("AccountMenu", () => {
     expect(
       within(menu).getByRole("menuitem", { name: "Profile" }),
     ).toHaveAttribute("href", "/profile");
+    expect(
+      within(menu).getByRole("menuitem", { name: "Groups" }),
+    ).toHaveAttribute("href", "/groups");
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Reports" }),
+    ).not.toBeInTheDocument();
 
     await user.click(within(menu).getByRole("menuitem", { name: "Sign out" }));
     expect(auth.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows moderation destinations for moderators", async () => {
+    moderatorMocks.useIsModerator.mockReturnValue(queryResult(true));
+    renderAt("/", createSignedInAuth());
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getAllByRole("button", { name: "Account menu" })[0]!,
+    );
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu).getByRole("menuitem", { name: "Reports" }),
+    ).toHaveAttribute("href", "/admin/reports");
+    expect(
+      within(menu).getByRole("menuitem", { name: "Moderation" }),
+    ).toHaveAttribute("href", "/admin/appeals");
   });
 });

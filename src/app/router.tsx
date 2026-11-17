@@ -5,9 +5,12 @@ import { NotFoundPage, PageLoading, RouteError } from "@/app/route-pages";
 import { accountRoutes } from "@/features/account/routes";
 import { adminRoutes } from "@/features/admin/routes";
 import { calcRoutes } from "@/features/calc/routes";
+import { groupsRoutes } from "@/features/groups/routes";
 import { homeRoutes } from "@/features/home/routes";
 import { legalRoutes } from "@/features/legal/routes";
 import { metagameRoutes } from "@/features/metagame/routes";
+import { moderationRoutes } from "@/features/moderation/routes";
+import { notificationRoutes } from "@/features/notifications/routes";
 import { postRoutes } from "@/features/post/routes";
 import { profileRoutes } from "@/features/profile/routes";
 import { teamBuilderRoutes } from "@/features/team-builder/routes";
@@ -34,6 +37,9 @@ export const router = createBrowserRouter([
           ...adminRoutes,
           ...postRoutes,
           ...profileRoutes,
+          ...notificationRoutes,
+          ...moderationRoutes,
+          ...groupsRoutes,
           { path: "*", element: <NotFoundPage /> },
         ],
       },

@@ -5,8 +5,12 @@ const SITE_NAME = "OHKOLab";
 
 /** Page titles for routes without parameters, keyed by exact path. */
 const EXACT_TITLES: Record<string, string> = {
+  "/admin/appeals": "Appeals",
   "/admin/reports": "Reports",
   "/calc": "Damage calculator",
+  "/groups": "Groups",
+  "/groups/new": "Create a group",
+  "/notifications": "Notifications",
   "/teams": "Teams",
   "/meta": "Metagame",
   "/profile": "Profile",
@@ -21,6 +25,8 @@ const EXACT_TITLES: Record<string, string> = {
 const PREFIX_TITLES: [prefix: string, title: string][] = [
   ["/teams/", "Team"],
   ["/post/", "Post"],
+  ["/g/", "Group"],
+  ["/moderation/", "Moderation notice"],
 ];
 
 function withSite(title: string): string {

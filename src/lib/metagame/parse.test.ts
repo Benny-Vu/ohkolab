@@ -1,9 +1,17 @@
-import { expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { indexFixture, snapshotFixture } from "@/lib/metagame/fixture";
 import {
   parseMetagameIndex,
   parseMetagameSnapshot,
 } from "@/lib/metagame/parse";
+
+beforeEach(() => {
+  vi.spyOn(console, "warn").mockImplementation(() => {});
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function snapshotVariant(
   mutate: (draft: Record<string, unknown>) => void,
@@ -163,143 +171,116 @@ test("rejects invalid pokemon lists", () => {
   ).not.toBeNull();
 });
 
-test("rejects invalid pokemon entries", () => {
-  expect(
-    parseMetagameSnapshot(
-      snapshotVariant((draft) => {
-        firstPokemon(draft).species = " ";
-      }),
-    ),
-  ).toBeNull();
+test("skips invalid pokemon entries with a warning", () => {
+  const species = parseMetagameSnapshot(
+    snapshotVariant((draft) => {
+      firstPokemon(draft).species = " ";
+    }),
+  );
+  expect(species).not.toBeNull();
+  expect(species?.pokemon).toHaveLength(5);
+  expect(species?.pokemon.map((pokemon) => pokemon.rank)).toEqual([
+    2, 3, 4, 5, 6,
+  ]);
   for (const rank of [0, -1, 1.5, "1", null]) {
-    expect(
-      parseMetagameSnapshot(
-        snapshotVariant((draft) => {
-          firstPokemon(draft).rank = rank;
-        }),
-      ),
-    ).toBeNull();
+    const parsed = parseMetagameSnapshot(
+      snapshotVariant((draft) => {
+        firstPokemon(draft).rank = rank;
+      }),
+    );
+    expect(parsed).not.toBeNull();
+    expect(parsed?.pokemon).toHaveLength(5);
   }
   for (const usage of [-0.1, 1.5, "high", Number.NaN]) {
-    expect(
-      parseMetagameSnapshot(
-        snapshotVariant((draft) => {
-          firstPokemon(draft).usage = usage;
-        }),
-      ),
-    ).toBeNull();
-  }
-  expect(
-    parseMetagameSnapshot(
+    const parsed = parseMetagameSnapshot(
       snapshotVariant((draft) => {
-        firstPokemon(draft).usage = null;
+        firstPokemon(draft).usage = usage;
       }),
-    ),
-  ).not.toBeNull();
+    );
+    expect(parsed).not.toBeNull();
+    expect(parsed?.pokemon).toHaveLength(5);
+  }
+  const nullUsage = parseMetagameSnapshot(
+    snapshotVariant((draft) => {
+      firstPokemon(draft).usage = null;
+    }),
+  );
+  expect(nullUsage).not.toBeNull();
+  expect(nullUsage?.pokemon).toHaveLength(6);
 });
 
-test("rejects invalid share lists", () => {
-  for (const list of ["abilities", "items", "moves", "natures", "teammates"]) {
-    expect(
-      parseMetagameSnapshot(
+test("drops invalid share entries and skips pokemon with non-array lists", () => {
+  for (const list of [
+    "abilities",
+    "items",
+    "moves",
+    "natures",
+    "teammates",
+  ] as const) {
+    const skipped = parseMetagameSnapshot(
+      snapshotVariant((draft) => {
+        firstPokemon(draft)[list] = "nope";
+      }),
+    );
+    expect(skipped).not.toBeNull();
+    expect(skipped?.pokemon).toHaveLength(5);
+    for (const bad of [
+      [{ name: "Focus Sash", share: 1.5 }],
+      [{ name: " ", share: 0.5 }],
+      [{ name: "Focus Sash" }],
+    ]) {
+      const parsed = parseMetagameSnapshot(
         snapshotVariant((draft) => {
-          firstPokemon(draft)[list] = "nope";
+          firstPokemon(draft)[list] = bad;
         }),
-      ),
-    ).toBeNull();
-    expect(
-      parseMetagameSnapshot(
-        snapshotVariant((draft) => {
-          firstPokemon(draft)[list] = [{ name: "Focus Sash", share: 1.5 }];
-        }),
-      ),
-    ).toBeNull();
-    expect(
-      parseMetagameSnapshot(
-        snapshotVariant((draft) => {
-          firstPokemon(draft)[list] = [{ name: " ", share: 0.5 }];
-        }),
-      ),
-    ).toBeNull();
-    expect(
-      parseMetagameSnapshot(
-        snapshotVariant((draft) => {
-          firstPokemon(draft)[list] = [{ name: "Focus Sash" }];
-        }),
-      ),
-    ).toBeNull();
+      );
+      expect(parsed).not.toBeNull();
+      expect(parsed?.pokemon).toHaveLength(6);
+      expect(parsed?.pokemon[0]?.[list]).toEqual([]);
+    }
   }
 });
 
-test("rejects invalid spreads", () => {
-  expect(
-    parseMetagameSnapshot(
+test("drops invalid spread entries and skips pokemon with non-array spreads", () => {
+  const skipped = parseMetagameSnapshot(
+    snapshotVariant((draft) => {
+      firstPokemon(draft).spreads = "nope";
+    }),
+  );
+  expect(skipped).not.toBeNull();
+  expect(skipped?.pokemon).toHaveLength(5);
+  for (const bad of [
+    { nature: " ", statPoints: {}, share: 1 },
+    {
+      nature: "Jolly",
+      statPoints: { hp: 33, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+      share: 1,
+    },
+    {
+      nature: "Jolly",
+      statPoints: { hp: 1.5, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+      share: 1,
+    },
+    {
+      nature: "Jolly",
+      statPoints: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+      share: 1,
+    },
+    {
+      nature: "Jolly",
+      statPoints: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+      share: 2,
+    },
+  ]) {
+    const parsed = parseMetagameSnapshot(
       snapshotVariant((draft) => {
-        firstPokemon(draft).spreads = "nope";
+        firstPokemon(draft).spreads = [bad];
       }),
-    ),
-  ).toBeNull();
-  expect(
-    parseMetagameSnapshot(
-      snapshotVariant((draft) => {
-        firstPokemon(draft).spreads = [
-          { nature: " ", statPoints: {}, share: 1 },
-        ];
-      }),
-    ),
-  ).toBeNull();
-  expect(
-    parseMetagameSnapshot(
-      snapshotVariant((draft) => {
-        firstPokemon(draft).spreads = [
-          {
-            nature: "Jolly",
-            statPoints: { hp: 33, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
-            share: 1,
-          },
-        ];
-      }),
-    ),
-  ).toBeNull();
-  expect(
-    parseMetagameSnapshot(
-      snapshotVariant((draft) => {
-        firstPokemon(draft).spreads = [
-          {
-            nature: "Jolly",
-            statPoints: { hp: 1.5, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
-            share: 1,
-          },
-        ];
-      }),
-    ),
-  ).toBeNull();
-  expect(
-    parseMetagameSnapshot(
-      snapshotVariant((draft) => {
-        firstPokemon(draft).spreads = [
-          {
-            nature: "Jolly",
-            statPoints: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
-            share: 1,
-          },
-        ];
-      }),
-    ),
-  ).toBeNull();
-  expect(
-    parseMetagameSnapshot(
-      snapshotVariant((draft) => {
-        firstPokemon(draft).spreads = [
-          {
-            nature: "Jolly",
-            statPoints: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
-            share: 2,
-          },
-        ];
-      }),
-    ),
-  ).toBeNull();
+    );
+    expect(parsed).not.toBeNull();
+    expect(parsed?.pokemon).toHaveLength(6);
+    expect(parsed?.pokemon[0]?.spreads).toEqual([]);
+  }
 });
 
 test("rejects ranks that are not strictly ascending", () => {

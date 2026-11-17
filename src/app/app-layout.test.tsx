@@ -17,6 +17,11 @@ describe("AppLayout", () => {
         within(header).getByRole("link", { name: item.label }),
       ).toHaveAttribute("href", item.to);
     }
+    expect(
+      within(screen.getByRole("banner")).getByRole("link", {
+        name: "Notifications",
+      }),
+    ).toHaveAttribute("href", "/notifications");
     expect(within(header).getByRole("link", { name: "Calc" })).toHaveAttribute(
       "aria-current",
       "page",

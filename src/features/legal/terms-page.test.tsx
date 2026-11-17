@@ -47,10 +47,11 @@ describe("TermsPage", () => {
   it("shows the contact email and links to the privacy policy", () => {
     renderTermsPage();
 
-    expect(screen.getByRole("link", { name: CONTACT_EMAIL })).toHaveAttribute(
-      "href",
-      `mailto:${CONTACT_EMAIL}`,
-    );
+    const emailLinks = screen.getAllByRole("link", { name: CONTACT_EMAIL });
+    expect(emailLinks).toHaveLength(2);
+    for (const link of emailLinks) {
+      expect(link).toHaveAttribute("href", `mailto:${CONTACT_EMAIL}`);
+    }
     expect(
       screen.getByRole("link", { name: "privacy policy" }),
     ).toHaveAttribute("href", "/privacy");

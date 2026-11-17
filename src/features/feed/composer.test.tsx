@@ -89,6 +89,7 @@ describe("Composer", () => {
       expect(mutateAsync).toHaveBeenCalledWith({
         body: "Hello world",
         attachment: null,
+        groupId: null,
       }),
     );
     expect(screen.getByRole("textbox", { name: "Write a post" })).toHaveValue(

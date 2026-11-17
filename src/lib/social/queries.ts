@@ -70,7 +70,7 @@ async function fetchFeedPage(
   kind: "latest" | "following",
   cursor: FeedCursor | null,
 ): Promise<FeedPostRow[]> {
-  let query = client.from("feed_posts").select("*");
+  let query = client.from("feed_posts").select("*").is("group_id", null);
   if (kind === "following") {
     if (!viewerId) {
       return [];
@@ -88,6 +88,25 @@ async function fetchFeedPage(
     }
     query = query.in("author_id", followeeIds);
   }
+  if (cursor) {
+    query = query.or(keysetFilter(cursor));
+  }
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(FEED_PAGE_SIZE);
+  if (error) {
+    return softReadError(error, []);
+  }
+  return data ?? [];
+}
+
+async function fetchGroupFeedPage(
+  client: AppSupabaseClient,
+  groupId: string,
+  cursor: FeedCursor | null,
+): Promise<FeedPostRow[]> {
+  let query = client.from("feed_posts").select("*").eq("group_id", groupId);
   if (cursor) {
     query = query.or(keysetFilter(cursor));
   }
@@ -133,6 +152,44 @@ export function useFeed(
       return last ? cursorOf(last) : null;
     },
     enabled: client !== null && (kind === "latest" || user !== null),
+    retry: false,
+  });
+}
+
+/**
+ * One group's feed, keyset-paginated by (created_at desc, id desc). The
+ * posts policies already hide invite-only group posts from non-members.
+ */
+export function useGroupFeed(
+  groupId: string,
+  client: AppSupabaseClient | null = supabase,
+): UseInfiniteQueryResult<
+  InfiniteData<FeedPostRow[], FeedCursor | null>,
+  SocialFailure
+> {
+  return useInfiniteQuery<
+    FeedPostRow[],
+    SocialFailure,
+    InfiniteData<FeedPostRow[], FeedCursor | null>,
+    QueryKey,
+    FeedCursor | null
+  >({
+    queryKey: ["social", "group-feed", groupId],
+    queryFn: async ({ pageParam }) => {
+      if (!client || isSocialNotInstalled()) {
+        return [];
+      }
+      return fetchGroupFeedPage(client, groupId, pageParam);
+    },
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.length < FEED_PAGE_SIZE) {
+        return null;
+      }
+      const last = lastPage[lastPage.length - 1];
+      return last ? cursorOf(last) : null;
+    },
+    enabled: client !== null && groupId !== "",
     retry: false,
   });
 }
