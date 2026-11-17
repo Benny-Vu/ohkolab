@@ -1268,3 +1268,22 @@ create index if not exists reports_handled_idx on public.reports (handled_by);
 create index if not exists posts_removed_by_idx on public.posts (removed_by);
 create index if not exists comments_removed_by_idx on public.comments (removed_by);
 create index if not exists user_suspensions_created_by_idx on public.user_suspensions (created_by);
+-- A user's groups and invitations (the primary key leads with group_id).
+create index if not exists group_members_user_idx on public.group_members (user_id);
+-- The group creation limit counts an owner's recent groups.
+create index if not exists groups_owner_idx on public.groups (owner_id, created_at desc);
+-- The actions against a user (notice page, appeals), and the audit columns.
+create index if not exists moderation_actions_target_user_idx
+  on public.moderation_actions (target_user_id, created_at desc);
+create index if not exists moderation_actions_moderator_idx on public.moderation_actions (moderator_id);
+create index if not exists moderation_actions_report_idx on public.moderation_actions (report_id);
+create index if not exists appeals_appellant_idx on public.appeals (appellant_id);
+create index if not exists appeals_handled_by_idx on public.appeals (handled_by);
+-- Foreign keys on notifications, so deleting a post, comment, group, action
+-- or actor does not scan every notification.
+create index if not exists notifications_actor_idx on public.notifications (actor_id);
+create index if not exists notifications_post_idx on public.notifications (post_id);
+create index if not exists notifications_comment_idx on public.notifications (comment_id);
+create index if not exists notifications_group_idx on public.notifications (group_id);
+create index if not exists notifications_moderation_action_idx
+  on public.notifications (moderation_action_id);
