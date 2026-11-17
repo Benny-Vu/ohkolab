@@ -19,6 +19,19 @@ const socialMocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/social", () => socialMocks);
 
+const moderationMocks = vi.hoisted(() => ({
+  useSuspendUser: vi.fn(),
+}));
+
+vi.mock("@/lib/social/moderation", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/social/moderation")>();
+  return {
+    ...actual,
+    useSuspendUser: moderationMocks.useSuspendUser,
+  };
+});
+
 const queryResult = (data: unknown, extra: Record<string, unknown> = {}) => ({
   data,
   isPending: false,
@@ -29,7 +42,7 @@ const queryResult = (data: unknown, extra: Record<string, unknown> = {}) => ({
 });
 
 const mutationResult = (
-  mutateAsync: (args?: unknown) => Promise<unknown> = async () => ({
+  mutateAsync: (...args: never[]) => Promise<unknown> = async () => ({
     ok: true,
     data: undefined,
   }),
@@ -130,6 +143,7 @@ describe("AdminReportsPage", () => {
     socialMocks.useHandleReport.mockReturnValue(mutationResult());
     socialMocks.useRemoveContent.mockReturnValue(mutationResult());
     socialMocks.useSuspendUser.mockReturnValue(mutationResult());
+    moderationMocks.useSuspendUser.mockReturnValue(mutationResult());
   });
 
   it("shows a not-found page for non-moderators", () => {
@@ -252,7 +266,12 @@ describe("AdminReportsPage", () => {
 
   it("dismisses a report after confirming", async () => {
     const user = userEvent.setup();
-    const handle = vi.fn(async () => ({ ok: true, data: undefined }));
+    const handle = vi.fn<
+      (input: { reportId: string; status: string }) => Promise<{
+        ok: true;
+        data: undefined;
+      }>
+    >(async () => ({ ok: true, data: undefined }));
     socialMocks.useReports.mockReturnValue(queryResult([reportRow()]));
     socialMocks.useHandleReport.mockReturnValue(mutationResult(handle));
     renderReportsPage(createFakeClient());
@@ -274,7 +293,12 @@ describe("AdminReportsPage", () => {
         input,
       }),
     );
-    const handle = vi.fn(async () => ({ ok: true, data: undefined }));
+    const handle = vi.fn<
+      (input: { reportId: string; status: string }) => Promise<{
+        ok: true;
+        data: undefined;
+      }>
+    >(async () => ({ ok: true, data: undefined }));
     socialMocks.useReports.mockReturnValue(queryResult([reportRow()]));
     socialMocks.useRemoveContent.mockReturnValue(
       mutationResult(remove as unknown as (args?: unknown) => Promise<unknown>),
@@ -316,7 +340,7 @@ describe("AdminReportsPage", () => {
         }),
       ]),
     );
-    socialMocks.useSuspendUser.mockReturnValue(
+    moderationMocks.useSuspendUser.mockReturnValue(
       mutationResult(
         suspend as unknown as (args?: unknown) => Promise<unknown>,
       ),
@@ -335,5 +359,232 @@ describe("AdminReportsPage", () => {
     expect(args.userId).toBe("user-target");
     expect(args.reason).toBe("Repeated harassment");
     expect(new Date(args.until).getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("disables suspend duration buttons until a reason is entered", async () => {
+    const user = userEvent.setup();
+    socialMocks.useReports.mockReturnValue(
+      queryResult([
+        reportRow({
+          id: "report-profile",
+          target_type: "profile",
+          target_id: "user-target",
+        }),
+      ]),
+    );
+    renderReportsPage(createFakeClient({ profile: profileRow() }));
+
+    await user.click(screen.getByRole("button", { name: /suspend user/i }));
+
+    expect(screen.getByRole("button", { name: /1 day/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /permanent/i })).toBeDisabled();
+
+    const reason = screen.getByPlaceholderText(/reason for the suspension/i);
+    await user.type(reason, "Spam");
+
+    expect(screen.getByRole("button", { name: /1 day/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /permanent/i })).toBeEnabled();
+  });
+
+  it("offers a permanent duration of about 100 years", async () => {
+    const user = userEvent.setup();
+    const suspend = vi.fn(async (input: { until: string }) => ({
+      ok: true,
+      data: undefined,
+      input,
+    }));
+    socialMocks.useReports.mockReturnValue(
+      queryResult([
+        reportRow({
+          id: "report-profile",
+          target_type: "profile",
+          target_id: "user-target",
+        }),
+      ]),
+    );
+    moderationMocks.useSuspendUser.mockReturnValue(
+      mutationResult(
+        suspend as unknown as (args?: unknown) => Promise<unknown>,
+      ),
+    );
+    renderReportsPage(createFakeClient({ profile: profileRow() }));
+
+    await user.click(screen.getByRole("button", { name: /suspend user/i }));
+    const reason = screen.getByPlaceholderText(/reason for the suspension/i);
+    await user.type(reason, "Ban evasion");
+    await user.click(screen.getByRole("button", { name: /permanent/i }));
+
+    await waitFor(() => expect(suspend).toHaveBeenCalled());
+    const until = new Date(suspend.mock.calls[0]![0].until).getTime();
+    const years = (until - Date.now()) / (365.25 * 24 * 60 * 60 * 1000);
+    expect(years).toBeGreaterThan(99);
+    expect(years).toBeLessThan(101);
+  });
+
+  it("suspends the post author from a post report", async () => {
+    const user = userEvent.setup();
+    const suspend = vi.fn(async (input: { userId: string }) => ({
+      ok: true,
+      data: undefined,
+      input,
+    }));
+    socialMocks.useReports.mockReturnValue(queryResult([reportRow()]));
+    socialMocks.usePost.mockReturnValue(
+      queryResult({
+        id: "post-1",
+        author_id: "user-post-author",
+        body: "Buy cheap rare candies",
+        attachment: null,
+        created_at: "2024-05-01T00:00:00Z",
+        updated_at: "2024-05-01T00:00:00Z",
+        author_username: "spammy",
+        author_display_name: "Spammy",
+        author_avatar_species: null,
+        like_count: 0,
+        comment_count: 0,
+        liked_by_me: false,
+      }),
+    );
+    moderationMocks.useSuspendUser.mockReturnValue(
+      mutationResult(
+        suspend as unknown as (args?: unknown) => Promise<unknown>,
+      ),
+    );
+    renderReportsPage(createFakeClient());
+
+    await user.click(screen.getByRole("button", { name: /suspend user/i }));
+    const reason = screen.getByPlaceholderText(/reason for the suspension/i);
+    await user.type(reason, "Spam");
+    await user.click(screen.getByRole("button", { name: /1 day/i }));
+
+    await waitFor(() => expect(suspend).toHaveBeenCalled());
+    expect(suspend.mock.calls[0]![0].userId).toBe("user-post-author");
+  });
+
+  it("suspends the comment author from a comment report", async () => {
+    const user = userEvent.setup();
+    const suspend = vi.fn(async (input: { userId: string }) => ({
+      ok: true,
+      data: undefined,
+      input,
+    }));
+    socialMocks.useReports.mockReturnValue(
+      queryResult([
+        reportRow({
+          id: "report-comment",
+          target_type: "comment",
+          target_id: "comment-1",
+        }),
+      ]),
+    );
+    moderationMocks.useSuspendUser.mockReturnValue(
+      mutationResult(
+        suspend as unknown as (args?: unknown) => Promise<unknown>,
+      ),
+    );
+    renderReportsPage(createFakeClient({ comment: commentRow() }));
+
+    await user.click(screen.getByRole("button", { name: /suspend user/i }));
+    const reason = screen.getByPlaceholderText(/reason for the suspension/i);
+    await user.type(reason, "Harassment");
+    await user.click(screen.getByRole("button", { name: /30 days/i }));
+
+    await waitFor(() => expect(suspend).toHaveBeenCalled());
+    expect(suspend.mock.calls[0]![0].userId).toBe("user-author");
+  });
+
+  it("marks the report actioned after a suspension", async () => {
+    const user = userEvent.setup();
+    const handle = vi.fn<
+      (input: { reportId: string; status: string }) => Promise<{
+        ok: true;
+        data: undefined;
+      }>
+    >(async () => ({ ok: true, data: undefined }));
+    socialMocks.useReports.mockReturnValue(
+      queryResult([
+        reportRow({
+          id: "report-profile",
+          target_type: "profile",
+          target_id: "user-target",
+        }),
+      ]),
+    );
+    socialMocks.useHandleReport.mockReturnValue(mutationResult(handle));
+    renderReportsPage(createFakeClient({ profile: profileRow() }));
+
+    await user.click(screen.getByRole("button", { name: /suspend user/i }));
+    const reason = screen.getByPlaceholderText(/reason for the suspension/i);
+    await user.type(reason, "Spam");
+    await user.click(screen.getByRole("button", { name: /1 day/i }));
+
+    await waitFor(() => expect(handle).toHaveBeenCalled());
+    expect(handle.mock.calls[0]![0]).toMatchObject({
+      reportId: "report-profile",
+      status: "actioned",
+    });
+  });
+
+  it("filters reports by tab status", async () => {
+    const user = userEvent.setup();
+    socialMocks.useReports.mockReturnValue(queryResult([]));
+    renderReportsPage(createFakeClient());
+
+    expect(socialMocks.useReports).toHaveBeenCalledWith(
+      "open",
+      expect.anything(),
+    );
+
+    await user.click(screen.getByRole("tab", { name: /actioned/i }));
+    expect(socialMocks.useReports).toHaveBeenCalledWith(
+      "actioned",
+      expect.anything(),
+    );
+
+    await user.click(screen.getByRole("tab", { name: /dismissed/i }));
+    expect(socialMocks.useReports).toHaveBeenCalledWith(
+      "dismissed",
+      expect.anything(),
+    );
+  });
+
+  it("links to the reported post", async () => {
+    socialMocks.useReports.mockReturnValue(queryResult([reportRow()]));
+    socialMocks.usePost.mockReturnValue(
+      queryResult({
+        id: "post-1",
+        author_id: "user-author",
+        body: "Buy cheap rare candies",
+        attachment: null,
+        created_at: "2024-05-01T00:00:00Z",
+        updated_at: "2024-05-01T00:00:00Z",
+        author_username: "spammy",
+        author_display_name: "Spammy",
+        author_avatar_species: null,
+        like_count: 0,
+        comment_count: 0,
+        liked_by_me: false,
+      }),
+    );
+    renderReportsPage(createFakeClient());
+
+    const link = screen.getByRole("link", { name: /view post/i });
+    expect(link).toHaveAttribute("href", "/post/post-1");
+  });
+
+  it("links to the post a reported comment belongs to", async () => {
+    socialMocks.useReports.mockReturnValue(
+      queryResult([
+        reportRow({
+          id: "report-comment",
+          target_type: "comment",
+          target_id: "comment-1",
+        }),
+      ]),
+    );
+    renderReportsPage(createFakeClient({ comment: commentRow() }));
+
+    const link = await screen.findByRole("link", { name: /view comment/i });
+    expect(link).toHaveAttribute("href", "/post/post-1");
   });
 });
