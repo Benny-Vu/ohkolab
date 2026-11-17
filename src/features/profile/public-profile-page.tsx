@@ -3,8 +3,13 @@ import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import {
   AlertCircleIcon,
+  BanIcon,
+  ConstructionIcon,
   CopyIcon,
+  EllipsisIcon,
   ExternalLinkIcon,
+  LoaderCircleIcon,
+  LogInIcon,
   UserRoundIcon,
 } from "lucide-react";
 
@@ -39,6 +44,24 @@ import {
   usePublicProfile,
   usePublicTeams,
 } from "@/features/profile/profile-queries";
+import { useAuth } from "@/lib/auth/use-auth";
+import type { Profile } from "@/lib/auth/types";
+import {
+  socialAvailability,
+  useFollowCounts,
+  useFollowers,
+  useFollowing,
+  useFollowState,
+  useToggleBlock,
+  useToggleFollow,
+  type SocialProfileSummary,
+} from "@/lib/social";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Team member details need the dex (battleTypes), so the row lives in its
 // own module and loads lazily when the team dialog opens.
@@ -263,6 +286,325 @@ function TeamsSection({
   );
 }
 
+function FollowListRow({
+  profile,
+  onClose,
+}: {
+  profile: SocialProfileSummary;
+  onClose: () => void;
+}) {
+  return (
+    <li>
+      <Link
+        to={`/u/${profile.username}`}
+        onClick={onClose}
+        className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent"
+      >
+        {profile.avatarSpecies ? (
+          <PokemonIcon species={profile.avatarSpecies} />
+        ) : (
+          <div className="grid size-[40px] shrink-0 place-content-center rounded-md bg-muted text-muted-foreground">
+            <UserRoundIcon className="size-4" />
+          </div>
+        )}
+        <span className="grid min-w-0">
+          <span className="truncate text-sm font-medium">
+            {profile.displayName ?? profile.username}
+          </span>
+          <span className="truncate text-xs text-muted-foreground">
+            @{profile.username}
+          </span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function FollowListDialog({
+  query,
+  title,
+  emptyText,
+  onClose,
+}: {
+  query: ReturnType<typeof useFollowers>;
+  title: string;
+  emptyText: string;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open onOpenChange={(open) => (!open ? onClose() : undefined)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        {query.isPending ? (
+          <div className="grid gap-2">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : (query.data ?? []).length === 0 ? (
+          <p className="text-sm text-muted-foreground">{emptyText}</p>
+        ) : (
+          <ul className="grid gap-1">
+            {(query.data ?? []).map((summary) => (
+              <FollowListRow
+                key={summary.id}
+                profile={summary}
+                onClose={onClose}
+              />
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FollowersDialog({
+  userId,
+  client,
+  onClose,
+}: {
+  userId: string;
+  client: AppSupabaseClient;
+  onClose: () => void;
+}) {
+  const query = useFollowers(userId, client);
+  return (
+    <FollowListDialog
+      query={query}
+      title="Followers"
+      emptyText="No followers yet."
+      onClose={onClose}
+    />
+  );
+}
+
+function FollowingDialog({
+  userId,
+  client,
+  onClose,
+}: {
+  userId: string;
+  client: AppSupabaseClient;
+  onClose: () => void;
+}) {
+  const query = useFollowing(userId, client);
+  return (
+    <FollowListDialog
+      query={query}
+      title="Following"
+      emptyText="Not following anyone yet."
+      onClose={onClose}
+    />
+  );
+}
+
+function ProfileSocialSection({
+  profile,
+  client,
+}: {
+  profile: Profile;
+  client: AppSupabaseClient;
+}) {
+  const auth = useAuth();
+  const isSelf = auth.user?.id === profile.id;
+  const followState = useFollowState(profile.id, client);
+  const toggleFollow = useToggleFollow(profile.id, client);
+  const toggleBlock = useToggleBlock(profile.id, client);
+  const countsQuery = useFollowCounts(profile.id, client);
+  const [listOpen, setListOpen] = useState<"followers" | "following" | null>(
+    null,
+  );
+  const [blockOpen, setBlockOpen] = useState(false);
+
+  const following = followState.data === true;
+  const counts = countsQuery.data;
+  const signInTo = `/login?returnTo=/u/${profile.username}`;
+
+  const handleToggleFollow = async () => {
+    const result = await toggleFollow.mutateAsync();
+    if (result.ok) {
+      toast.success(
+        following
+          ? `Unfollowed @${profile.username}.`
+          : `Following @${profile.username}.`,
+      );
+    } else {
+      toast.error(result.error.message);
+    }
+  };
+
+  const handleBlock = async () => {
+    const result = await toggleBlock.mutateAsync();
+    if (result.ok) {
+      setBlockOpen(false);
+      toast.success(`Blocked @${profile.username}.`);
+    } else {
+      toast.error(result.error.message);
+    }
+  };
+
+  return (
+    <Card size="sm">
+      <CardContent className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {!auth.user ? (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={signInTo}>
+                  <LogInIcon />
+                  Sign in to follow
+                </Link>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="More options"
+                  >
+                    <EllipsisIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to={signInTo}>
+                      <LogInIcon />
+                      Sign in to block
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : !isSelf ? (
+            <>
+              <Button
+                variant={following ? "outline" : "default"}
+                size="sm"
+                disabled={toggleFollow.isPending}
+                onClick={() => void handleToggleFollow()}
+              >
+                {toggleFollow.isPending ? (
+                  <LoaderCircleIcon className="animate-spin" />
+                ) : null}
+                {following ? "Unfollow" : "Follow"}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="More options"
+                  >
+                    <EllipsisIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => setBlockOpen(true)}
+                  >
+                    <BanIcon />
+                    Block user
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <button
+            type="button"
+            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            onClick={() => setListOpen("followers")}
+          >
+            {counts ? counts.followers : "…"} followers
+          </button>
+          <span aria-hidden="true" className="text-muted-foreground">
+            ·
+          </span>
+          <button
+            type="button"
+            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            onClick={() => setListOpen("following")}
+          >
+            {counts ? counts.following : "…"} following
+          </button>
+        </div>
+      </CardContent>
+
+      <Dialog open={blockOpen} onOpenChange={setBlockOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Block @{profile.username}?</DialogTitle>
+            <DialogDescription>
+              You will stop seeing each other's posts and profiles. You can
+              unblock them later from your profile page.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBlockOpen(false)}
+              disabled={toggleBlock.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleBlock()}
+              disabled={toggleBlock.isPending}
+            >
+              {toggleBlock.isPending ? (
+                <LoaderCircleIcon className="animate-spin" />
+              ) : (
+                <BanIcon />
+              )}
+              Block
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {listOpen === "followers" ? (
+        <FollowersDialog
+          userId={profile.id}
+          client={client}
+          onClose={() => setListOpen(null)}
+        />
+      ) : null}
+      {listOpen === "following" ? (
+        <FollowingDialog
+          userId={profile.id}
+          client={client}
+          onClose={() => setListOpen(null)}
+        />
+      ) : null}
+    </Card>
+  );
+}
+
+function PostsPlaceholder() {
+  return (
+    <Card
+      size="sm"
+      className="border-dashed"
+      data-testid="profile-posts-placeholder"
+    >
+      <CardContent className="flex items-center gap-3">
+        <ConstructionIcon className="size-5 shrink-0 text-muted-foreground" />
+        <div className="grid gap-0.5">
+          <p className="text-sm font-medium">Posts — coming soon</p>
+          <p className="text-sm text-muted-foreground">
+            This trainer's posts will appear here once the community feed lands.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function PublicProfilePage({
   client = supabase,
 }: {
@@ -334,6 +676,10 @@ export function PublicProfilePage({
             bio={profile.bio}
             createdAt={profile.createdAt}
           />
+          {socialAvailability(client) === "ready" ? (
+            <ProfileSocialSection profile={profile} client={client} />
+          ) : null}
+          <PostsPlaceholder />
           <TeamsSection
             userId={profile.id}
             username={profile.username}

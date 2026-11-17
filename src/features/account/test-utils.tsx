@@ -128,6 +128,7 @@ export function renderPage(
           route("reset-password"),
           route("auth/callback"),
           route("u/:username"),
+          route("admin/reports"),
         ],
       },
     ],
