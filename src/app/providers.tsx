@@ -18,7 +18,13 @@ export function Providers({ children }: { children: ReactNode }) {
       <AuthProvider>
         <TooltipProvider delayDuration={200}>
           {children}
-          <Toaster position="top-center" />
+          <Toaster
+            position="bottom-right"
+            duration={3000}
+            mobileOffset={{
+              bottom: "calc(56px + env(safe-area-inset-bottom))",
+            }}
+          />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

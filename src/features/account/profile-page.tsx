@@ -6,14 +6,13 @@ import {
   SaveIcon,
   Trash2Icon,
   TriangleAlertIcon,
-  UserRoundIcon,
 } from "lucide-react";
 import { lazy, Suspense, type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
-import { PokemonIcon, PokemonSprite } from "@/components/pokemon-sprite";
+import { UserAvatar } from "@/components/user-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -180,13 +179,12 @@ function ProfileEditor({ profile }: { profile: Profile }) {
         <CardContent>
           <form className="grid gap-4" onSubmit={handleSave} noValidate>
             <div className="flex items-center gap-4">
-              {avatarSpecies ? (
-                <PokemonSprite species={avatarSpecies} size={72} />
-              ) : (
-                <div className="grid size-[72px] place-content-center rounded-lg bg-muted text-center text-xs text-muted-foreground">
-                  No avatar
-                </div>
-              )}
+              <UserAvatar
+                username={username}
+                displayName={displayName}
+                avatarSpecies={avatarSpecies}
+                size="lg"
+              />
               <div className="grid min-w-0 flex-1 gap-2">
                 <Label htmlFor="avatar-species">Avatar species</Label>
                 <Suspense fallback={<Skeleton className="h-8 w-full" />}>
@@ -372,11 +370,12 @@ function BlockedUserRow({ profile }: { profile: Profile }) {
 
   return (
     <li className="flex items-center gap-3">
-      {profile.avatarSpecies ? (
-        <PokemonIcon species={profile.avatarSpecies} />
-      ) : (
-        <UserRoundIcon className="size-6 shrink-0 text-muted-foreground" />
-      )}
+      <UserAvatar
+        username={profile.username}
+        displayName={profile.displayName}
+        avatarSpecies={profile.avatarSpecies}
+        size="sm"
+      />
       <div className="min-w-0 flex-1">
         <Link
           to={`/u/${profile.username}`}

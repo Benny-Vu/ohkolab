@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 import { NotFoundPage } from "@/app/route-pages";
 import { Page } from "@/components/page";
-import { PokemonIcon } from "@/components/pokemon-sprite";
+import { UserAvatar } from "@/components/user-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -241,9 +241,12 @@ function ProfileContent({
   return (
     <div className="grid gap-1">
       <div className="flex items-center gap-2">
-        {profile.avatar_species ? (
-          <PokemonIcon species={profile.avatar_species} />
-        ) : null}
+        <UserAvatar
+          username={profile.username}
+          displayName={profile.display_name}
+          avatarSpecies={profile.avatar_species}
+          size="sm"
+        />
         <Link
           to={`/u/${profile.username}`}
           className="text-sm font-medium hover:underline"

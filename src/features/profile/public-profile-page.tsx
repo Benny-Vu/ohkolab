@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 
 import { Page } from "@/components/page";
-import { PokemonSprite, PokemonIcon } from "@/components/pokemon-sprite";
+import { PokemonIcon } from "@/components/pokemon-sprite";
+import { UserAvatar } from "@/components/user-avatar";
+import { formatJoined } from "@/lib/format-date";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -113,13 +115,12 @@ function ProfileHeader({
   return (
     <Card size="sm">
       <CardContent className="flex flex-wrap items-start gap-4">
-        {avatarSpecies ? (
-          <PokemonSprite species={avatarSpecies} size={72} />
-        ) : (
-          <div className="grid size-[72px] shrink-0 place-content-center rounded-lg bg-muted text-center text-xs text-muted-foreground">
-            No avatar
-          </div>
-        )}
+        <UserAvatar
+          username={username}
+          displayName={displayName}
+          avatarSpecies={avatarSpecies}
+          size="lg"
+        />
         <div className="grid min-w-0 flex-1 gap-1">
           <p className="min-w-0 truncate text-xl font-semibold">
             {displayName ?? username}
@@ -131,7 +132,7 @@ function ProfileHeader({
             <p className="min-w-0 whitespace-pre-wrap text-sm">{bio}</p>
           ) : null}
           <p className="min-w-0 text-xs text-muted-foreground">
-            Joined {new Date(createdAt).toLocaleDateString()}
+            {formatJoined(createdAt)}
           </p>
         </div>
       </CardContent>
@@ -305,13 +306,12 @@ function FollowListRow({
         onClick={onClose}
         className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent"
       >
-        {profile.avatarSpecies ? (
-          <PokemonIcon species={profile.avatarSpecies} />
-        ) : (
-          <div className="grid size-[40px] shrink-0 place-content-center rounded-md bg-muted text-muted-foreground">
-            <UserRoundIcon className="size-4" />
-          </div>
-        )}
+        <UserAvatar
+          username={profile.username}
+          displayName={profile.displayName}
+          avatarSpecies={profile.avatarSpecies}
+          size="sm"
+        />
         <span className="grid min-w-0">
           <span className="truncate text-sm font-medium">
             {profile.displayName ?? profile.username}

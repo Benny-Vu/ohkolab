@@ -2,7 +2,7 @@ import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { NAV_ITEMS } from "@/app/nav-items";
-import { renderAt } from "@/app/test-utils";
+import { createSignedInAuth, renderAt } from "@/app/test-utils";
 
 describe("AppLayout", () => {
   it("shows every destination in the header navigation and marks the current one", () => {
@@ -50,6 +50,19 @@ describe("AppLayout", () => {
       "aria-current",
       "page",
     );
+  });
+
+  it("labels the profile tab 'Profile' and shows the user's avatar when signed in", () => {
+    renderAt("/calc", createSignedInAuth());
+
+    const tabNav = screen.getAllByRole("navigation", { name: "Main" })[1]!;
+    const tabTrigger = within(tabNav).getByRole("button", {
+      name: "Account menu",
+    });
+    expect(tabTrigger).toHaveTextContent("Profile");
+    expect(
+      within(tabTrigger).getByRole("img", { name: "Pikachu" }),
+    ).toBeInTheDocument();
   });
 
   it("shows the fan-project line and legal links in the footer", () => {

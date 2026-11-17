@@ -23,9 +23,11 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <AppLayout />,
-    hydrateFallbackElement: <PageLoading />,
     children: [
       {
+        // The fallback lives here, below the shell route, so the header and
+        // tab bar stay mounted while the first lazy page hydrates.
+        hydrateFallbackElement: <PageLoading />,
         errorElement: <RouteError />,
         children: [
           ...homeRoutes,
