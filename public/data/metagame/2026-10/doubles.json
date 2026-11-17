@@ -3,7 +3,7 @@
   "regulation": "M-C",
   "period": "2026-10",
   "battles": 1649648,
-  "generatedAt": "2026-11-16T18:28:28.186Z",
+  "generatedAt": "2026-11-17T19:47:59.785Z",
   "source": {
     "id": "showdown-ladder",
     "label": "Pokémon Showdown ladder, October 2026, rating 1630+, via smogon.com/stats",
@@ -9732,8 +9732,8 @@
           "share": 0.0009
         },
         {
-          "name": "Nothing",
-          "share": 0.0005
+          "name": "Leftovers",
+          "share": 0.0004
         }
       ],
       "moves": [
@@ -14749,16 +14749,16 @@
           "share": 0.0016
         },
         {
-          "name": "Nothing",
-          "share": 0.0007
-        },
-        {
           "name": "Air Balloon",
           "share": 0.0007
         },
         {
           "name": "Psychic Seed",
           "share": 0.0006
+        },
+        {
+          "name": "Poison Barb",
+          "share": 0.0003
         }
       ],
       "moves": [
@@ -17181,10 +17181,6 @@
           "share": 0.1048
         },
         {
-          "name": "Nothing",
-          "share": 0.0504
-        },
-        {
           "name": "Passho Berry",
           "share": 0.0401
         },
@@ -17199,6 +17195,10 @@
         {
           "name": "Sitrus Berry",
           "share": 0.0138
+        },
+        {
+          "name": "Charti Berry",
+          "share": 0.0123
         }
       ],
       "moves": [
@@ -26123,16 +26123,16 @@
           "share": 0.0086
         },
         {
-          "name": "Nothing",
-          "share": 0.0083
-        },
-        {
           "name": "Choice Scarf",
           "share": 0.0073
         },
         {
           "name": "Expert Belt",
           "share": 0.0056
+        },
+        {
+          "name": "Rocky Helmet",
+          "share": 0.0049
         }
       ],
       "moves": [
@@ -26432,10 +26432,6 @@
           "share": 0.0007
         },
         {
-          "name": "Nothing",
-          "share": 0.0006
-        },
-        {
           "name": "Wacan Berry",
           "share": 0.0003
         },
@@ -26446,6 +26442,10 @@
         {
           "name": "Leftovers",
           "share": 0.0002
+        },
+        {
+          "name": "Starminite",
+          "share": 0.0001
         }
       ],
       "moves": [
@@ -27636,12 +27636,12 @@
           "share": 0.0046
         },
         {
-          "name": "Nothing",
-          "share": 0.0032
-        },
-        {
           "name": "Air Balloon",
           "share": 0.002
+        },
+        {
+          "name": "Red Card",
+          "share": 0.0013
         }
       ],
       "moves": [
@@ -27959,12 +27959,12 @@
           "share": 0.0228
         },
         {
-          "name": "(No Move)",
-          "share": 0.0183
-        },
-        {
           "name": "Sludge Wave",
           "share": 0.0153
+        },
+        {
+          "name": "Weather Ball",
+          "share": 0.0081
         }
       ],
       "natures": [
@@ -30903,10 +30903,6 @@
           "share": 0.0052
         },
         {
-          "name": "Nothing",
-          "share": 0.0027
-        },
-        {
           "name": "Leftovers",
           "share": 0.0017
         },
@@ -30924,6 +30920,10 @@
         },
         {
           "name": "Chimechite",
+          "share": 0.0005
+        },
+        {
+          "name": "Metronome",
           "share": 0.0005
         }
       ],
@@ -34884,8 +34884,8 @@
           "share": 0.0057
         },
         {
-          "name": "Nothing",
-          "share": 0.0017
+          "name": "Mystic Water",
+          "share": 0.0007
         }
       ],
       "moves": [
@@ -37593,16 +37593,16 @@
           "share": 0.0018
         },
         {
-          "name": "Nothing",
-          "share": 0.001
-        },
-        {
           "name": "Rocky Helmet",
           "share": 0.0009
         },
         {
           "name": "Choice Scarf",
           "share": 0.0007
+        },
+        {
+          "name": "Light Clay",
+          "share": 0.0006
         }
       ],
       "moves": [
@@ -38813,12 +38813,12 @@
           "share": 0.0094
         },
         {
-          "name": "Nothing",
-          "share": 0.0044
-        },
-        {
           "name": "Chople Berry",
           "share": 0.004
+        },
+        {
+          "name": "Never-Melt Ice",
+          "share": 0.0027
         }
       ],
       "moves": [
@@ -39694,10 +39694,6 @@
           "share": 0.6963
         },
         {
-          "name": "(No Move)",
-          "share": 0.3032
-        },
-        {
           "name": "Helping Hand",
           "share": 0.2681
         },
@@ -39728,6 +39724,10 @@
         {
           "name": "Dazzling Gleam",
           "share": 0.0568
+        },
+        {
+          "name": "Psych Up",
+          "share": 0.0549
         }
       ],
       "natures": [
@@ -40581,8 +40581,8 @@
           "share": 0.0383
         },
         {
-          "name": "(No Move)",
-          "share": 0.0332
+          "name": "Outrage",
+          "share": 0.0288
         }
       ],
       "natures": [
@@ -42624,10 +42624,6 @@
       ],
       "moves": [
         {
-          "name": "(No Move)",
-          "share": 1.2033
-        },
-        {
           "name": "Fake Out",
           "share": 0.9993
         },
@@ -42670,6 +42666,10 @@
         {
           "name": "Protect",
           "share": 0.033
+        },
+        {
+          "name": "Crunch",
+          "share": 0.0317
         }
       ],
       "natures": [
@@ -43549,23 +43549,19 @@
           "share": 0.0092
         },
         {
-          "name": "Nothing",
-          "share": 0.0058
-        },
-        {
           "name": "Leftovers",
           "share": 0.0051
         },
         {
           "name": "Psychic Seed",
           "share": 0.0043
+        },
+        {
+          "name": "Air Balloon",
+          "share": 0.004
         }
       ],
       "moves": [
-        {
-          "name": "(No Move)",
-          "share": 3
-        },
         {
           "name": "Transform",
           "share": 1

@@ -1,5 +1,7 @@
 // Ingests last month's Smogon chaos files into public/data/metagame/.
-// Run from the repo root: node scripts/metagame/ingest.ts [--period YYYY-MM]
+// Run from the repo root:
+//   node scripts/metagame/ingest.ts [--period YYYY-MM] [--force]
+// --force re-ingests a period that is already in the index.
 //
 // On any failure the existing snapshots stay untouched and the process
 // exits non-zero, so a failed monthly run simply keeps the last committed
@@ -56,10 +58,10 @@ async function fetchChaos(
 }
 
 async function main(): Promise<void> {
-  const period =
-    parsePeriodArg(process.argv.slice(2)) ?? previousPeriod(new Date());
+  const args = process.argv.slice(2);
+  const period = parsePeriodArg(args) ?? previousPeriod(new Date());
   const existing = await readIndex();
-  if (isIngested(existing, period)) {
+  if (!args.includes("--force") && isIngested(existing, period)) {
     console.log(`Period ${period} is already ingested; nothing to do.`);
     return;
   }

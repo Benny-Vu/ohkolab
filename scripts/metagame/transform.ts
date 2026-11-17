@@ -47,9 +47,25 @@ export function parseSpreadKey(key: string): ParsedSpread | null {
   };
 }
 
-/** Shares are rounded to four decimals; usage keeps source precision. */
+/** Shares are rounded to four decimals and clamped to 1; usage keeps source
+ * precision. Chaos counts can exceed the abilities total (Ditto's moves),
+ * so shares above 1 are clamped rather than emitted. */
 function roundShare(value: number): number {
-  return Math.round(value * 10000) / 10000;
+  return Math.min(1, Math.round(value * 10000) / 10000);
+}
+
+/** The chaos "no move" ("" id) and "no item" ("nothing" id) buckets are not
+ * real choices; drop them by exact id before ranking so list limits keep
+ * real entries. */
+function dropIds(
+  counts: Record<string, number>,
+  ids: readonly string[],
+): Record<string, number> {
+  const kept: Record<string, number> = {};
+  for (const [id, count] of Object.entries(counts)) {
+    if (!ids.includes(id)) kept[id] = count;
+  }
+  return kept;
 }
 
 /** The Pokémon's total weight: the sum of its Abilities values. */
@@ -136,8 +152,18 @@ export function buildPokemonUsage(
       LIST_LIMITS.abilities,
       names.ability,
     ),
-    items: toShares(entry.Items ?? {}, total, LIST_LIMITS.items, names.item),
-    moves: toShares(entry.Moves ?? {}, total, LIST_LIMITS.moves, names.move),
+    items: toShares(
+      dropIds(entry.Items ?? {}, ["nothing"]),
+      total,
+      LIST_LIMITS.items,
+      names.item,
+    ),
+    moves: toShares(
+      dropIds(entry.Moves ?? {}, [""]),
+      total,
+      LIST_LIMITS.moves,
+      names.move,
+    ),
     natures: natureShares(entry.Spreads ?? {}, total, LIST_LIMITS.natures),
     spreads: spreadShares(entry.Spreads ?? {}, total, LIST_LIMITS.spreads),
     teammates: toShares(

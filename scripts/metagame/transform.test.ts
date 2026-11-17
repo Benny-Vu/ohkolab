@@ -101,6 +101,12 @@ describe("toShares", () => {
   it("returns nothing when the total is zero", () => {
     expect(toShares({ a: 1 }, 0, 10, names.ability)).toEqual([]);
   });
+
+  it("clamps shares above 1", () => {
+    expect(toShares({ a: 1500 }, 1000, 10, names.ability)).toEqual([
+      { name: "Ability:a", share: 1 },
+    ]);
+  });
 });
 
 describe("natureShares", () => {
@@ -219,6 +225,22 @@ describe("buildSnapshot", () => {
       name: "Species:Rillaboom",
       share: 0.4,
     });
+  });
+
+  it("drops the no-move and no-item buckets before ranking", () => {
+    const [sneasler] = buildSnapshot(
+      "doubles",
+      "2026-10",
+      chaos,
+      names,
+      "now",
+      "url",
+    ).pokemon;
+    expect(sneasler.moves).toEqual([
+      { name: "Move:dire-claw", share: 0.9 },
+      { name: "Move:close-combat", share: 0.8 },
+    ]);
+    expect(sneasler.items).toEqual([{ name: "Item:grassy-seed", share: 0.7 }]);
   });
 
   it("keeps usage null when the source omits it", () => {
