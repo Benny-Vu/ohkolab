@@ -8,6 +8,7 @@ import { calcRoutes } from "@/features/calc/routes";
 import { homeRoutes } from "@/features/home/routes";
 import { legalRoutes } from "@/features/legal/routes";
 import { metagameRoutes } from "@/features/metagame/routes";
+import { postRoutes } from "@/features/post/routes";
 import { profileRoutes } from "@/features/profile/routes";
 import { teamBuilderRoutes } from "@/features/team-builder/routes";
 
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
           ...metagameRoutes,
           ...accountRoutes,
           ...adminRoutes,
+          ...postRoutes,
           ...profileRoutes,
           { path: "*", element: <NotFoundPage /> },
         ],

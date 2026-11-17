@@ -10,7 +10,7 @@ import { PublicProfilePage } from "@/features/profile/public-profile-page";
 import { createFakeAuth, TEST_PROFILE } from "@/features/account/test-utils";
 import { TEAMS_STORAGE_KEY } from "@/lib/team";
 import type { AppSupabaseClient } from "@/lib/supabase";
-import type { ProfileRow, TeamRow } from "@/lib/database.types";
+import type { FeedPostRow, ProfileRow, TeamRow } from "@/lib/database.types";
 import type { Team } from "@/types/team";
 
 const socialMocks = vi.hoisted(() => ({
@@ -28,9 +28,39 @@ const socialMocks = vi.hoisted(() => ({
   useHandleReport: vi.fn(),
   useRemoveContent: vi.fn(),
   useSuspendUser: vi.fn(),
+  useAuthorPosts: vi.fn(),
+}));
+
+const mutationsMocks = vi.hoisted(() => ({
+  useCreatePost: vi.fn(),
+  useUpdatePost: vi.fn(),
+  useDeletePost: vi.fn(),
+  useCreateComment: vi.fn(),
+  useDeleteComment: vi.fn(),
+  useCreateReport: vi.fn(),
+  useToggleLike: vi.fn(),
+  useToggleFollow: vi.fn(),
+  useToggleBlock: vi.fn(),
+}));
+
+const moderationMocks = vi.hoisted(() => ({
+  useRemoveContent: vi.fn(),
+  useHandleReport: vi.fn(),
+  useSuspendUser: vi.fn(),
+}));
+
+const queriesMocks = vi.hoisted(() => ({
+  useFeed: vi.fn(),
+  useAuthorPosts: vi.fn(),
+  usePost: vi.fn(),
+  useComments: vi.fn(),
+  useIsModerator: vi.fn(),
 }));
 
 vi.mock("@/lib/social", () => socialMocks);
+vi.mock("@/lib/social/mutations", () => mutationsMocks);
+vi.mock("@/lib/social/moderation", () => moderationMocks);
+vi.mock("@/lib/social/queries", () => queriesMocks);
 
 const queryResult = (data: unknown, extra: Record<string, unknown> = {}) => ({
   data,
@@ -48,6 +78,21 @@ const mutationResult = (
   }),
 ) => ({ mutateAsync, mutate: vi.fn(), isPending: false });
 
+const infiniteResult = (
+  pages: FeedPostRow[][],
+  extra: Record<string, unknown> = {},
+) => ({
+  data: { pages, pageParams: [null] },
+  isPending: false,
+  isError: false,
+  error: null,
+  refetch: vi.fn(),
+  fetchNextPage: vi.fn(async () => undefined),
+  hasNextPage: false,
+  isFetchingNextPage: false,
+  ...extra,
+});
+
 function stubSocial(overrides: Partial<typeof socialMocks> = {}) {
   socialMocks.useFollowState.mockReturnValue(queryResult(false));
   socialMocks.useToggleFollow.mockReturnValue(mutationResult());
@@ -58,6 +103,24 @@ function stubSocial(overrides: Partial<typeof socialMocks> = {}) {
   socialMocks.useFollowing.mockReturnValue(queryResult([]));
   socialMocks.useBlocks.mockReturnValue(queryResult([]));
   socialMocks.useToggleBlock.mockReturnValue(mutationResult());
+  socialMocks.useAuthorPosts.mockReturnValue(infiniteResult([]));
+  mutationsMocks.useCreatePost.mockReturnValue(mutationResult());
+  mutationsMocks.useUpdatePost.mockReturnValue(mutationResult());
+  mutationsMocks.useDeletePost.mockReturnValue(mutationResult());
+  mutationsMocks.useCreateComment.mockReturnValue(mutationResult());
+  mutationsMocks.useDeleteComment.mockReturnValue(mutationResult());
+  mutationsMocks.useCreateReport.mockReturnValue(mutationResult());
+  mutationsMocks.useToggleLike.mockReturnValue(mutationResult());
+  mutationsMocks.useToggleFollow.mockReturnValue(mutationResult());
+  mutationsMocks.useToggleBlock.mockReturnValue(mutationResult());
+  moderationMocks.useRemoveContent.mockReturnValue(mutationResult());
+  queriesMocks.useIsModerator.mockReturnValue({
+    data: false,
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  });
   Object.assign(socialMocks, overrides);
 }
 
@@ -84,6 +147,24 @@ function teamRow(overrides: Partial<TeamRow> = {}): TeamRow {
     is_public: true,
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-02T00:00:00Z",
+    ...overrides,
+  };
+}
+
+function postRow(overrides: Partial<FeedPostRow> = {}): FeedPostRow {
+  return {
+    id: "post-1",
+    author_id: "user-2",
+    body: "First post!",
+    attachment: null,
+    created_at: "2024-03-05T10:00:00Z",
+    updated_at: "2024-03-05T10:00:00Z",
+    author_username: "brock",
+    author_display_name: "Brock",
+    author_avatar_species: "Onix",
+    like_count: 2,
+    comment_count: 1,
+    liked_by_me: false,
     ...overrides,
   };
 }
@@ -548,15 +629,24 @@ describe("PublicProfilePage social section", () => {
     await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
   });
 
-  it("shows the posts placeholder", async () => {
+  it("shows the trainer's posts", async () => {
     const client = createFakeClient({
-      profile: profileRow({ id: "user-2", username: "brock" }),
+      profile: profileRow({ id: "user-2", username: "posty" }),
     });
-    renderSignedIn(client, "brock");
+    socialMocks.useAuthorPosts.mockReturnValue(infiniteResult([[postRow()]]));
+    renderSignedIn(client, "posty");
 
-    expect(
-      await screen.findByTestId("profile-posts-placeholder"),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/posts — coming soon/i)).toBeInTheDocument();
+    expect(await screen.findByText("First post!")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Brock" })).toBeInTheDocument();
+    expect(socialMocks.useAuthorPosts).toHaveBeenCalledWith("user-2", client);
+  });
+
+  it("shows an empty state when the trainer has no posts", async () => {
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "posty" }),
+    });
+    renderSignedIn(client, "posty");
+
+    expect(await screen.findByText("No posts yet.")).toBeInTheDocument();
   });
 });

@@ -18,7 +18,10 @@ const EXACT_TITLES: Record<string, string> = {
 };
 
 /** Page titles for parameterised routes, keyed by path prefix. */
-const PREFIX_TITLES: [prefix: string, title: string][] = [["/teams/", "Team"]];
+const PREFIX_TITLES: [prefix: string, title: string][] = [
+  ["/teams/", "Team"],
+  ["/post/", "Post"],
+];
 
 function withSite(title: string): string {
   return `${title} · ${SITE_NAME}`;

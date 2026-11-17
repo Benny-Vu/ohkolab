@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import {
   AlertCircleIcon,
   BanIcon,
-  ConstructionIcon,
   CopyIcon,
   EllipsisIcon,
   ExternalLinkIcon,
@@ -48,6 +47,7 @@ import { useAuth } from "@/lib/auth/use-auth";
 import type { Profile } from "@/lib/auth/types";
 import {
   socialAvailability,
+  useAuthorPosts,
   useFollowCounts,
   useFollowers,
   useFollowing,
@@ -56,6 +56,7 @@ import {
   useToggleFollow,
   type SocialProfileSummary,
 } from "@/lib/social";
+import { PostList } from "@/features/feed/post-list";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -585,23 +586,72 @@ function ProfileSocialSection({
   );
 }
 
-function PostsPlaceholder() {
-  return (
-    <Card
-      size="sm"
-      className="border-dashed"
-      data-testid="profile-posts-placeholder"
-    >
-      <CardContent className="flex items-center gap-3">
-        <ConstructionIcon className="size-5 shrink-0 text-muted-foreground" />
-        <div className="grid gap-0.5">
-          <p className="text-sm font-medium">Posts — coming soon</p>
-          <p className="text-sm text-muted-foreground">
-            This trainer's posts will appear here once the community feed lands.
-          </p>
+function PostsSection({
+  userId,
+  client,
+}: {
+  userId: string;
+  client: AppSupabaseClient;
+}) {
+  const postsQuery = useAuthorPosts(userId, client);
+
+  if (postsQuery.isPending) {
+    return (
+      <section className="grid gap-3">
+        <h2 className="text-lg font-semibold">Posts</h2>
+        <div className="grid gap-3" aria-label="Loading posts">
+          <Skeleton className="h-28 w-full rounded-xl" />
+          <Skeleton className="h-28 w-full rounded-xl" />
+          <Skeleton className="h-28 w-full rounded-xl" />
         </div>
-      </CardContent>
-    </Card>
+      </section>
+    );
+  }
+
+  if (postsQuery.isError) {
+    return (
+      <section className="grid gap-3">
+        <h2 className="text-lg font-semibold">Posts</h2>
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>Could not load posts</AlertTitle>
+          <AlertDescription>
+            Something went wrong while loading this trainer's posts. Check your
+            connection and try again.
+          </AlertDescription>
+        </Alert>
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void postsQuery.refetch()}
+          >
+            Try again
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  const posts = postsQuery.data?.pages.flat() ?? [];
+
+  return (
+    <section className="grid gap-3">
+      <h2 className="text-lg font-semibold">Posts</h2>
+      <PostList posts={posts} emptyMessage="No posts yet." />
+      {postsQuery.hasNextPage ? (
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void postsQuery.fetchNextPage()}
+            disabled={postsQuery.isFetchingNextPage}
+          >
+            {postsQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+          </Button>
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -614,6 +664,7 @@ export function PublicProfilePage({
   const normalized = normalizeUsername(username ?? "");
   const profileQuery = usePublicProfile(normalized, client);
   const profile = profileQuery.data ?? null;
+  const socialReady = socialAvailability(client) === "ready";
 
   return (
     <Page
@@ -676,10 +727,12 @@ export function PublicProfilePage({
             bio={profile.bio}
             createdAt={profile.createdAt}
           />
-          {socialAvailability(client) === "ready" ? (
+          {socialReady ? (
             <ProfileSocialSection profile={profile} client={client} />
           ) : null}
-          <PostsPlaceholder />
+          {socialReady ? (
+            <PostsSection userId={profile.id} client={client} />
+          ) : null}
           <TeamsSection
             userId={profile.id}
             username={profile.username}
