@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router";
 import { AppLayout } from "@/app/app-layout";
 import { NotFoundPage, PageLoading, RouteError } from "@/app/route-pages";
 import { accountRoutes } from "@/features/account/routes";
+import { adminRoutes } from "@/features/admin/routes";
 import { calcRoutes } from "@/features/calc/routes";
 import { homeRoutes } from "@/features/home/routes";
 import { legalRoutes } from "@/features/legal/routes";
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
           ...teamBuilderRoutes,
           ...metagameRoutes,
           ...accountRoutes,
+          ...adminRoutes,
           ...profileRoutes,
           { path: "*", element: <NotFoundPage /> },
         ],

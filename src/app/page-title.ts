@@ -5,6 +5,7 @@ const SITE_NAME = "OHKOLab";
 
 /** Page titles for routes without parameters, keyed by exact path. */
 const EXACT_TITLES: Record<string, string> = {
+  "/admin/reports": "Reports",
   "/calc": "Damage calculator",
   "/teams": "Teams",
   "/meta": "Metagame",
