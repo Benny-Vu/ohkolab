@@ -62,6 +62,57 @@ export function TermsPage() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="text-base leading-tight font-semibold">Groups</h2>
+          <p className="text-sm text-muted-foreground">
+            Groups are spaces that members create and run themselves. Group
+            owners and group moderators are responsible for what happens in
+            their group, including its posts and its members. We may remove a
+            group, or take away an owner's or moderator's role, if a group
+            breaks these terms.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base leading-tight font-semibold">
+            Notifications
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            We send you in-app notifications about activity on your content,
+            such as likes, comments and new followers, about group invitations,
+            and about moderation actions that affect you, such as a post being
+            removed. You can delete your notifications at any time.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base leading-tight font-semibold">
+            Removal notices and appeals
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            When we remove your content or suspend your account, we tell you
+            why. You can appeal a removal or suspension once per action. If we
+            agree with your appeal, we restore the removed content or end the
+            suspension.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base leading-tight font-semibold">Reporting</h2>
+          <p className="text-sm text-muted-foreground">
+            If you are signed in, you can report posts, comments and profiles
+            from the site itself. If you are not signed in, you can report
+            content by emailing{" "}
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="text-primary underline underline-offset-4"
+            >
+              {CONTACT_EMAIL}
+            </a>
+            .
+          </p>
+        </section>
+
+        <section className="space-y-2">
           <h2 className="text-base leading-tight font-semibold">
             Your content
           </h2>

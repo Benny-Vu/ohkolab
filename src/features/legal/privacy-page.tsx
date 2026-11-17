@@ -61,11 +61,47 @@ export function PrivacyPage() {
           </h2>
           <p className="text-sm text-muted-foreground">
             OHKOLab is adding community features: posts, comments, likes,
-            follows, reports and blocks. These features store the content and
-            interactions you create, such as your posts, comments, likes and
-            follows, so they can be shown to you and to other people. Reports
-            are seen by our moderators, and blocks hide another person's content
-            from you.
+            follows, reports, blocks, groups and notifications. These features
+            store the content and interactions you create, such as your posts,
+            comments, likes and follows, so they can be shown to you and to
+            other people. Reports are seen by our moderators, and blocks hide
+            another person's content from you.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base leading-tight font-semibold">Groups</h2>
+          <p className="text-sm text-muted-foreground">
+            Groups store their name, description, whether they are public or
+            invite-only, and their owner. For each member, we store their role
+            and membership status. Anyone can see a group's name and
+            description, and who belongs to a public group. In an invite-only
+            group, only members can see the member list. You can always see your
+            own memberships.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base leading-tight font-semibold">
+            Notifications
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Notifications store what happened, such as a like, comment, follow
+            or group invitation, who did it, when it happened, and whether you
+            have read it. Only you can see your notifications.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base leading-tight font-semibold">
+            Moderation and appeals
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            When content is removed or an account is suspended, we store what
+            was removed or suspended, the reason, which moderator handled it,
+            and when. If you appeal, we store your appeal message and its
+            outcome. Moderators can see moderation actions and appeals. You can
+            see actions that affect you and your own appeals.
           </p>
         </section>
 
@@ -123,9 +159,13 @@ export function PrivacyPage() {
             >
               profile page
             </Link>
-            . This permanently removes your account, your profile and your saved
-            teams from our servers. It does not remove data stored in your
-            browser; clear your browser's site data for that.
+            . This permanently removes your account, your profile, your saved
+            teams, your posts, comments, likes, follows, blocks, group
+            memberships and groups you own, your notifications and your appeals
+            from our servers. We keep records of moderation actions, but once
+            your account is deleted they no longer link to you. It does not
+            remove data stored in your browser; clear your browser's site data
+            for that.
           </p>
         </section>
 
