@@ -65,11 +65,13 @@ export function socialSucceed<T>(data?: T): SocialResult<T | undefined> {
  * - P0A01: too many posts in 10 minutes
  * - P0A02: too many comments in 10 minutes
  * - P0A03: the user is suspended
+ * - P0A04: too many reports in an hour
  */
 const CODE_MAP: Record<string, SocialErrorCode> = {
   P0A01: "rate_limited",
   P0A02: "rate_limited",
   P0A03: "suspended",
+  P0A04: "rate_limited",
   "22001": "too_long",
   "23514": "invalid_input",
   "42501": "forbidden",

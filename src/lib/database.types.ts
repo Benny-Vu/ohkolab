@@ -203,7 +203,8 @@ export type Database = {
       reports: {
         Row: {
           id: string;
-          reporter_id: string;
+          /** Null once the reporter's account is deleted; the report is kept. */
+          reporter_id: string | null;
           /** One of "post", "comment", "profile". */
           target_type: string;
           /** Id of the reported post, comment or profile. Not a foreign key. */
@@ -299,6 +300,11 @@ export type Database = {
       delete_own_account: {
         Args: never;
         Returns: undefined;
+      };
+      /** True when the first user has blocked the second. Used by policies. */
+      has_blocked: {
+        Args: { blocker_user_id: string; blocked_user_id: string };
+        Returns: boolean;
       };
       /** True when the calling user has the admin or moderator role. */
       is_moderator: {

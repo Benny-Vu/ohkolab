@@ -195,6 +195,28 @@ begin
 end;
 $$;
 
+-- True when blocker_user_id has blocked blocked_user_id. Security definer
+-- because the policies below need to see the other user's blocks, which the
+-- blocks policies hide. Used to stop a blocked user from following, liking
+-- or commenting on the posts of the user who blocked them.
+create or replace function public.has_blocked(blocker_user_id uuid, blocked_user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.blocks
+    where blocks.blocker_id = has_blocked.blocker_user_id
+      and blocks.blocked_id = has_blocked.blocked_user_id
+  );
+$$;
+
+revoke execute on function public.has_blocked(uuid, uuid) from public, anon, authenticated;
+-- The insert policies below call it on the writer's behalf.
+grant execute on function public.has_blocked(uuid, uuid) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- follows: public follow lists. Anyone can read them; only the follower can
 -- start or end a follow.
@@ -232,7 +254,7 @@ begin
 end;
 $$;
 
--- A user follows as themselves.
+-- A user follows as themselves, and not someone who has blocked them.
 do $$
 begin
   if not exists (
@@ -243,7 +265,10 @@ begin
     create policy "users start follows" on public.follows
       for insert
       to authenticated
-      with check (follower_id = (select auth.uid()));
+      with check (
+        follower_id = (select auth.uid())
+        and not public.has_blocked(followee_id, (select auth.uid()))
+      );
   end if;
 end;
 $$;
@@ -342,7 +367,8 @@ begin
 end;
 $$;
 
--- A user likes as themselves.
+-- A user likes as themselves, and not the posts of someone who has blocked
+-- them.
 do $$
 begin
   if not exists (
@@ -353,7 +379,14 @@ begin
     create policy "users like posts" on public.post_likes
       for insert
       to authenticated
-      with check (user_id = (select auth.uid()));
+      with check (
+        user_id = (select auth.uid())
+        and not exists (
+          select 1 from public.posts p
+          where p.id = post_id
+            and public.has_blocked(p.author_id, (select auth.uid()))
+        )
+      );
   end if;
 end;
 $$;
@@ -518,7 +551,7 @@ end;
 $$;
 
 -- Signed-in, not suspended users can comment on visible posts, only as
--- themselves.
+-- themselves, and not on the posts of someone who has blocked them.
 do $$
 begin
   if not exists (
@@ -535,6 +568,7 @@ begin
         and exists (
           select 1 from public.posts p
           where p.id = post_id
+            and not public.has_blocked(p.author_id, (select auth.uid()))
         )
       );
   end if;
@@ -591,7 +625,9 @@ $$;
 
 create table if not exists public.reports (
   id uuid primary key default gen_random_uuid(),
-  reporter_id uuid not null references public.profiles (id) on delete cascade,
+  -- Kept (as null) when the reporter's account is deleted, so the report and
+  -- its handling record survive.
+  reporter_id uuid references public.profiles (id) on delete set null,
   target_type text not null
     constraint reports_target_type_check check (target_type in ('post', 'comment', 'profile')),
   -- The id of the reported post, comment or profile. Deliberately not a
@@ -677,9 +713,45 @@ $$;
 --   P0A01 - posting too fast (more than 5 posts per 10 minutes)
 --   P0A02 - commenting too fast (more than 30 comments per 10 minutes)
 --   P0A03 - the account is suspended
+--   P0A04 - reporting too fast (more than 20 reports per hour)
 -- Security definer so the count sees every row, not just the rows the
 -- inserting user can read.
 -- ---------------------------------------------------------------------------
+
+create or replace function public.enforce_report_limits()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if (
+    select count(*) from public.reports
+    where reports.reporter_id = new.reporter_id
+      and reports.created_at > now() - interval '1 hour'
+  ) >= 20 then
+    raise exception 'Too many reports; wait a while'
+      using errcode = 'P0A04';
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.enforce_report_limits() from public, anon, authenticated;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_trigger
+    where tgrelid = 'public.reports'::regclass
+      and tgname = 'reports_enforce_limits'
+  ) then
+    create trigger reports_enforce_limits
+      before insert on public.reports
+      for each row execute function public.enforce_report_limits();
+  end if;
+end;
+$$;
 
 create or replace function public.enforce_post_limits()
 returns trigger
