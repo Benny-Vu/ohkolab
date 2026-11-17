@@ -1,12 +1,89 @@
-import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createElement, type ReactNode } from "react";
 
 import { createDefaultSet } from "@/data";
+import type { AuthContextValue } from "@/lib/auth/types";
+import { AuthContext, GUEST_AUTH } from "@/lib/auth/use-auth";
+import type { TeamRow } from "@/lib/database.types";
+import type { AppSupabaseClient } from "@/lib/supabase";
+import { setTeamsSyncClient } from "@/lib/team/active-store";
 import { createLocalTeamStore, TEAMS_STORAGE_KEY } from "@/lib/team/team-store";
 import { createTeamActions, useTeams } from "@/lib/team/use-teams";
 
+type LoadResult = { data: TeamRow[] | null; error: { message: string } | null };
+
+/** Minimal stand-in for the Supabase client behind the cloud team store. */
+function createFakeClient(
+  options: { rows?: TeamRow[]; loadError?: { message: string } | null } = {},
+) {
+  let loadResult: LoadResult = {
+    data: options.rows ?? [],
+    error: options.loadError ?? null,
+  };
+  const client = {
+    from() {
+      return {
+        select() {
+          return {
+            eq() {
+              return Promise.resolve(loadResult);
+            },
+          };
+        },
+        upsert() {
+          return Promise.resolve({ error: null });
+        },
+        delete() {
+          return { eq: () => Promise.resolve({ error: null }) };
+        },
+        insert() {
+          return Promise.resolve({ error: null });
+        },
+      };
+    },
+  };
+  return {
+    client: client as unknown as AppSupabaseClient,
+    setLoadResult(result: LoadResult) {
+      loadResult = result;
+    },
+  };
+}
+
+function row(partial: Partial<TeamRow> & { id: string }): TeamRow {
+  return {
+    user_id: "user-1",
+    name: "Test team",
+    data: [],
+    format: "doubles",
+    is_public: false,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
+    ...partial,
+  };
+}
+
+const SIGNED_IN_AUTH: AuthContextValue = {
+  ...GUEST_AUTH,
+  isConfigured: true,
+  user: { id: "user-1" } as unknown as AuthContextValue["user"],
+};
+
+function SignedInWrapper({ children }: { children?: ReactNode }) {
+  return createElement(
+    AuthContext.Provider,
+    { value: SIGNED_IN_AUTH },
+    children,
+  );
+}
+
 beforeEach(() => {
   localStorage.clear();
+});
+
+afterEach(() => {
+  setTeamsSyncClient(null);
 });
 
 describe("createTeamActions", () => {
@@ -75,6 +152,40 @@ describe("createTeamActions", () => {
     expect(actions.duplicate("missing")).toBeUndefined();
     expect(store.list()).toBe(before);
   });
+
+  it("restores a removed team as it was", () => {
+    const store = createLocalTeamStore();
+    const actions = createTeamActions(store);
+    const team = actions.create({ name: "Original", format: "doubles" });
+
+    actions.rename(team.id, "Renamed");
+    const renamed = store.get(team.id) ?? team;
+    actions.remove(team.id);
+    expect(store.get(team.id)).toBeUndefined();
+
+    actions.restore(renamed);
+    expect(store.get(team.id)).toEqual(renamed);
+  });
+
+  it("toggles a team's public flag and ignores no-op changes", () => {
+    const store = createLocalTeamStore();
+    const actions = createTeamActions(store);
+    const team = actions.create({ format: "doubles" });
+
+    actions.setPublic(team.id, true);
+    expect(store.get(team.id)?.isPublic).toBe(true);
+
+    const before = store.list();
+    actions.setPublic(team.id, true);
+    expect(store.list()).toBe(before);
+
+    actions.setPublic(team.id, false);
+    expect(store.get(team.id)?.isPublic).toBe(false);
+
+    const afterFalse = store.list();
+    actions.setPublic("missing", true);
+    expect(store.list()).toBe(afterFalse);
+  });
 });
 
 describe("useTeams", () => {
@@ -125,5 +236,69 @@ describe("useTeams", () => {
       "Elsewhere",
     ]);
     expect(localStorage.getItem(TEAMS_STORAGE_KEY)).toBeNull();
+  });
+
+  it("syncs from the cloud store for a signed-in user", async () => {
+    const { client } = createFakeClient({
+      rows: [row({ id: "t-1", name: "Cloud team" })],
+    });
+    setTeamsSyncClient(client);
+
+    const { result } = renderHook(() => useTeams(), {
+      wrapper: SignedInWrapper,
+    });
+
+    expect(result.current.sync.loading).toBe(true);
+    await waitFor(() => {
+      expect(result.current.sync.loading).toBe(false);
+    });
+    expect(result.current.teams.map((team) => team.name)).toEqual([
+      "Cloud team",
+    ]);
+    expect(result.current.sync.error).toBeNull();
+  });
+
+  it("surfaces cloud load errors and retries", async () => {
+    const { client, setLoadResult } = createFakeClient({
+      loadError: { message: "boom" },
+    });
+    setTeamsSyncClient(client);
+
+    const { result } = renderHook(() => useTeams(), {
+      wrapper: SignedInWrapper,
+    });
+
+    await waitFor(() => {
+      expect(result.current.sync.error).toBe(
+        "Something went wrong. Try again.",
+      );
+    });
+
+    setLoadResult({
+      data: [row({ id: "t-1", name: "Recovered" })],
+      error: null,
+    });
+    act(() => {
+      result.current.sync.retry();
+    });
+
+    await waitFor(() => {
+      expect(result.current.sync.error).toBeNull();
+    });
+    expect(result.current.teams.map((team) => team.name)).toEqual([
+      "Recovered",
+    ]);
+  });
+
+  it("reports no sync activity for guests", () => {
+    const { result } = renderHook(() => useTeams());
+
+    expect(result.current.sync.loading).toBe(false);
+    expect(result.current.sync.error).toBeNull();
+
+    act(() => {
+      result.current.sync.retry();
+    });
+    expect(result.current.teams).toEqual([]);
   });
 });
