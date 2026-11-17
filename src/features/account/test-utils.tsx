@@ -127,6 +127,8 @@ export function renderPage(
           route("profile"),
           route("reset-password"),
           route("auth/callback"),
+          route("u/:username"),
+          route("admin/reports"),
         ],
       },
     ],

@@ -1,6 +1,6 @@
 import { InfoIcon, LoaderCircleIcon } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 import {
   normalizeEmail,
   validateCurrentPassword,
@@ -31,19 +32,25 @@ type FieldErrors = Partial<
 >;
 
 /** Shows the failure's message under the field it belongs to, or as a form error. */
-function FieldError({ message }: { message?: string }) {
+function FieldError({ id, message }: { id?: string; message?: string }) {
   if (!message) return null;
   return (
-    <p className="text-sm text-destructive" role="alert">
+    <p id={id} className="text-sm text-destructive" role="alert">
       {message}
     </p>
   );
 }
 
-function FormError({ failure }: { failure: AuthFailure | null }) {
+function FormError({
+  id,
+  failure,
+}: {
+  id?: string;
+  failure: AuthFailure | null;
+}) {
   if (!failure) return null;
   return (
-    <p className="text-sm text-destructive" role="alert">
+    <p id={id} className="text-sm text-destructive" role="alert">
       {failure.message}
     </p>
   );
@@ -68,6 +75,14 @@ export function LoginPage() {
 
   if (!auth.loading && auth.user) {
     return <Navigate to={returnTo} replace />;
+  }
+
+  if (!auth.isConfigured) {
+    return (
+      <Page title="Sign in" width="narrow">
+        <UnconfiguredNotice />
+      </Page>
+    );
   }
 
   const busy = pending !== null;
@@ -256,8 +271,14 @@ export function LoginPage() {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     aria-invalid={fieldErrors.email ? true : undefined}
+                    aria-describedby={
+                      fieldErrors.email ? "signin-email-error" : undefined
+                    }
                   />
-                  <FieldError message={fieldErrors.email} />
+                  <FieldError
+                    id="signin-email-error"
+                    message={fieldErrors.email}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="signin-password">Password</Label>
@@ -268,11 +289,21 @@ export function LoginPage() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     aria-invalid={fieldErrors.password ? true : undefined}
+                    aria-describedby={
+                      fieldErrors.password ? "signin-password-error" : undefined
+                    }
                   />
-                  <FieldError message={fieldErrors.password} />
+                  <FieldError
+                    id="signin-password-error"
+                    message={fieldErrors.password}
+                  />
                 </div>
-                <FormError failure={formError} />
-                <Button type="submit" disabled={busy}>
+                <FormError id="signin-form-error" failure={formError} />
+                <Button
+                  type="submit"
+                  disabled={busy}
+                  aria-describedby={formError ? "signin-form-error" : undefined}
+                >
                   {pending === "signIn" ? (
                     <LoaderCircleIcon className="animate-spin" />
                   ) : (
@@ -311,8 +342,14 @@ export function LoginPage() {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     aria-invalid={fieldErrors.email ? true : undefined}
+                    aria-describedby={
+                      fieldErrors.email ? "signup-email-error" : undefined
+                    }
                   />
-                  <FieldError message={fieldErrors.email} />
+                  <FieldError
+                    id="signup-email-error"
+                    message={fieldErrors.email}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="signup-password">Password</Label>
@@ -323,8 +360,14 @@ export function LoginPage() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     aria-invalid={fieldErrors.password ? true : undefined}
+                    aria-describedby={
+                      fieldErrors.password ? "signup-password-error" : undefined
+                    }
                   />
-                  <FieldError message={fieldErrors.password} />
+                  <FieldError
+                    id="signup-password-error"
+                    message={fieldErrors.password}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-start gap-2">
@@ -337,18 +380,43 @@ export function LoginPage() {
                       aria-invalid={
                         fieldErrors.acceptedTerms ? true : undefined
                       }
+                      aria-describedby={
+                        fieldErrors.acceptedTerms
+                          ? "signup-terms-error"
+                          : undefined
+                      }
                     />
                     <Label
                       htmlFor="signup-terms"
                       className="font-normal leading-snug"
                     >
-                      I am 13 or older and accept the terms
+                      I am 13 or older and accept the{" "}
+                      <Link
+                        to="/terms"
+                        className="text-primary underline underline-offset-4"
+                      >
+                        terms
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        to="/privacy"
+                        className="text-primary underline underline-offset-4"
+                      >
+                        privacy policy
+                      </Link>
                     </Label>
                   </div>
-                  <FieldError message={fieldErrors.acceptedTerms} />
+                  <FieldError
+                    id="signup-terms-error"
+                    message={fieldErrors.acceptedTerms}
+                  />
                 </div>
-                <FormError failure={formError} />
-                <Button type="submit" disabled={busy}>
+                <FormError id="signup-form-error" failure={formError} />
+                <Button
+                  type="submit"
+                  disabled={busy}
+                  aria-describedby={formError ? "signup-form-error" : undefined}
+                >
                   {pending === "signUp" ? (
                     <LoaderCircleIcon className="animate-spin" />
                   ) : (

@@ -3,9 +3,13 @@ import { createBrowserRouter } from "react-router";
 import { AppLayout } from "@/app/app-layout";
 import { NotFoundPage, PageLoading, RouteError } from "@/app/route-pages";
 import { accountRoutes } from "@/features/account/routes";
+import { adminRoutes } from "@/features/admin/routes";
 import { calcRoutes } from "@/features/calc/routes";
 import { homeRoutes } from "@/features/home/routes";
+import { legalRoutes } from "@/features/legal/routes";
 import { metagameRoutes } from "@/features/metagame/routes";
+import { postRoutes } from "@/features/post/routes";
+import { profileRoutes } from "@/features/profile/routes";
 import { teamBuilderRoutes } from "@/features/team-builder/routes";
 
 /**
@@ -22,10 +26,14 @@ export const router = createBrowserRouter([
         errorElement: <RouteError />,
         children: [
           ...homeRoutes,
+          ...legalRoutes,
           ...calcRoutes,
           ...teamBuilderRoutes,
           ...metagameRoutes,
           ...accountRoutes,
+          ...adminRoutes,
+          ...postRoutes,
+          ...profileRoutes,
           { path: "*", element: <NotFoundPage /> },
         ],
       },

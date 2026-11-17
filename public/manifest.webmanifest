@@ -1,0 +1,16 @@
+{
+  "name": "OHKOLab",
+  "short_name": "OHKOLab",
+  "description": "Damage calculator, team builder and community for Pokémon Champions. Unofficial fan project.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0d14",
+  "theme_color": "#0b0d14",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 import { Link, NavLink, Outlet, ScrollRestoration } from "react-router";
 
+import { AccountMenu } from "@/app/account-menu";
 import { NAV_ITEMS } from "@/app/nav-items";
+import { usePageTitle } from "@/app/page-title";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +20,8 @@ function Wordmark() {
 
 /** App frame: header with desktop navigation, page content, phone tab bar. */
 export function AppLayout() {
+  usePageTitle();
+
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-40 border-b bg-background/90 pt-safe backdrop-blur">
@@ -42,6 +46,7 @@ export function AppLayout() {
           </nav>
           <div className="ml-auto flex items-center gap-1">
             <ThemeToggle />
+            <AccountMenu variant="header" />
           </div>
         </div>
       </header>
@@ -50,9 +55,19 @@ export function AppLayout() {
         <Outlet />
       </main>
 
-      <footer className="hidden border-t px-6 py-4 text-center text-xs text-muted-foreground md:block">
-        OHKOLab is an unofficial fan project, not affiliated with Nintendo, Game
-        Freak, Creatures or The Pokémon Company.
+      <footer className="border-t px-6 pt-4 pb-[calc(3.5rem+env(safe-area-inset-bottom))] text-center text-xs text-muted-foreground md:pb-4">
+        <p>
+          OHKOLab is an unofficial fan project, not affiliated with Nintendo,
+          Game Freak, Creatures or The Pokémon Company.
+        </p>
+        <p className="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <Link className="underline-offset-4 hover:underline" to="/terms">
+            Terms
+          </Link>
+          <Link className="underline-offset-4 hover:underline" to="/privacy">
+            Privacy
+          </Link>
+        </p>
       </footer>
 
       <nav
@@ -60,7 +75,7 @@ export function AppLayout() {
         className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-safe backdrop-blur md:hidden"
       >
         <ul className="mx-auto grid h-14 max-w-md grid-cols-5">
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.filter((item) => item.to !== "/profile").map((item) => (
             <li key={item.to}>
               <NavLink
                 to={item.to}
@@ -77,6 +92,9 @@ export function AppLayout() {
               </NavLink>
             </li>
           ))}
+          <li>
+            <AccountMenu variant="tab" />
+          </li>
         </ul>
       </nav>
 

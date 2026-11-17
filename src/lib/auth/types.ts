@@ -66,7 +66,7 @@ export type AuthResult<T = undefined> =
 export interface SignUpInput {
   email: string;
   password: string;
-  /** The "I am 13 or older and accept the terms" box. Sign-up fails without it. */
+  /** The "I am 13 or older and accept the terms and privacy policy" box. Sign-up fails without it. */
   acceptedTerms: boolean;
 }
 

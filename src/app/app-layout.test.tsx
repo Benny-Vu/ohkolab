@@ -1,55 +1,67 @@
-import { render, screen, within } from "@testing-library/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { AppLayout } from "@/app/app-layout";
 import { NAV_ITEMS } from "@/app/nav-items";
-import { Providers } from "@/app/providers";
-import { NotFoundPage } from "@/app/route-pages";
-
-function renderAt(path: string) {
-  const router = createMemoryRouter(
-    [
-      {
-        path: "/",
-        element: <AppLayout />,
-        children: [
-          { index: true, element: <p>home content</p> },
-          { path: "calc", element: <p>calc content</p> },
-          { path: "*", element: <NotFoundPage /> },
-        ],
-      },
-    ],
-    { initialEntries: [path] },
-  );
-  return render(
-    <Providers>
-      <RouterProvider router={router} />
-    </Providers>,
-  );
-}
+import { renderAt } from "@/app/test-utils";
 
 describe("AppLayout", () => {
-  it("shows every destination in both navigations and marks the current one", () => {
+  it("shows every destination in the header navigation and marks the current one", () => {
     renderAt("/calc");
     expect(screen.getByText("calc content")).toBeInTheDocument();
 
     const navs = screen.getAllByRole("navigation", { name: "Main" });
     expect(navs).toHaveLength(2);
-    for (const nav of navs) {
-      for (const item of NAV_ITEMS) {
-        expect(
-          within(nav).getByRole("link", { name: item.label }),
-        ).toHaveAttribute("href", item.to);
-      }
-      expect(within(nav).getByRole("link", { name: "Calc" })).toHaveAttribute(
-        "aria-current",
-        "page",
-      );
+    const header = navs[0]!;
+    for (const item of NAV_ITEMS) {
       expect(
-        within(nav).getByRole("link", { name: "Home" }),
-      ).not.toHaveAttribute("aria-current");
+        within(header).getByRole("link", { name: item.label }),
+      ).toHaveAttribute("href", item.to);
     }
+    expect(within(header).getByRole("link", { name: "Calc" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(
+      within(header).getByRole("link", { name: "Home" }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
+  it("shows the tab bar destinations with a sign-in entry for guests", () => {
+    renderAt("/calc");
+
+    const tabNav = screen.getAllByRole("navigation", { name: "Main" })[1]!;
+    for (const item of NAV_ITEMS.filter((item) => item.to !== "/profile")) {
+      expect(
+        within(tabNav).getByRole("link", { name: item.label }),
+      ).toHaveAttribute("href", item.to);
+    }
+    expect(
+      within(tabNav).queryByRole("link", { name: "Profile" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(tabNav).getByRole("link", { name: "Sign in" }),
+    ).toHaveAttribute("href", "/login");
+    expect(within(tabNav).getByRole("link", { name: "Calc" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("shows the fan-project line and legal links in the footer", () => {
+    renderAt("/");
+    expect(
+      screen.getByText(
+        "OHKOLab is an unofficial fan project, not affiliated with Nintendo, Game Freak, Creatures or The Pokémon Company.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute(
+      "href",
+      "/terms",
+    );
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
   });
 
   it("shows the not-found page for unknown addresses", () => {

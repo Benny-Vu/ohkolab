@@ -1,18 +1,19 @@
 import {
+  ExternalLinkIcon,
   LoaderCircleIcon,
   LogOutIcon,
   RefreshCwIcon,
   SaveIcon,
   Trash2Icon,
   TriangleAlertIcon,
+  UserRoundIcon,
 } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { lazy, Suspense, type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
-import { PokemonSprite } from "@/components/pokemon-sprite";
-import { SpeciesPicker } from "@/components/pokemon-editor";
+import { PokemonIcon, PokemonSprite } from "@/components/pokemon-sprite";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,10 +48,21 @@ import {
   validateUsername,
 } from "@/lib/auth/validation";
 import type { AuthFailure, Profile } from "@/lib/auth/types";
+import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
+import { useProfilesByIds } from "@/features/profile/profile-queries";
+import { socialAvailability, useBlocks, useToggleBlock } from "@/lib/social";
 
 type ProfileFieldErrors = Partial<
   Record<"username" | "displayName" | "bio" | "avatarSpecies", string>
 >;
+
+// The species picker pulls the full dex; keep it out of the /profile route
+// chunk and load it only when the avatar form renders.
+const SpeciesPicker = lazy(() =>
+  import("@/components/pokemon-editor/species-picker").then((m) => ({
+    default: m.SpeciesPicker,
+  })),
+);
 
 function ProfileSkeleton() {
   return (
@@ -76,19 +88,6 @@ function GuestPrompt() {
         </Button>
       </CardContent>
     </Card>
-  );
-}
-
-function UnconfiguredNotice() {
-  return (
-    <Alert>
-      <TriangleAlertIcon />
-      <AlertTitle>Accounts are unavailable</AlertTitle>
-      <AlertDescription>
-        Accounts are not available in this build. The tools still work without
-        one.
-      </AlertDescription>
-    </Alert>
   );
 }
 
@@ -190,11 +189,13 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               )}
               <div className="grid min-w-0 flex-1 gap-2">
                 <Label htmlFor="avatar-species">Avatar species</Label>
-                <SpeciesPicker
-                  value={avatarSpecies}
-                  onChange={(species) => setAvatarSpecies(species)}
-                  placeholder="Choose a Pokémon"
-                />
+                <Suspense fallback={<Skeleton className="h-8 w-full" />}>
+                  <SpeciesPicker
+                    value={avatarSpecies}
+                    onChange={(species) => setAvatarSpecies(species)}
+                    placeholder="Choose a Pokémon"
+                  />
+                </Suspense>
               </div>
             </div>
             <div className="grid gap-2">
@@ -354,6 +355,104 @@ function ProfileEditor({ profile }: { profile: Profile }) {
   );
 }
 
+function BlockedUserRow({ profile }: { profile: Profile }) {
+  const toggleBlock = useToggleBlock(profile.id);
+  const [busy, setBusy] = useState(false);
+
+  const handleUnblock = async () => {
+    setBusy(true);
+    const result = await toggleBlock.mutateAsync();
+    setBusy(false);
+    if (result.ok) {
+      toast.success(`Unblocked @${profile.username}.`);
+    } else {
+      toast.error(result.error.message);
+    }
+  };
+
+  return (
+    <li className="flex items-center gap-3">
+      {profile.avatarSpecies ? (
+        <PokemonIcon species={profile.avatarSpecies} />
+      ) : (
+        <UserRoundIcon className="size-6 shrink-0 text-muted-foreground" />
+      )}
+      <div className="min-w-0 flex-1">
+        <Link
+          to={`/u/${profile.username}`}
+          className="block truncate text-sm font-medium hover:underline"
+        >
+          {profile.displayName ?? profile.username}
+        </Link>
+        <Link
+          to={`/u/${profile.username}`}
+          className="block truncate text-xs text-muted-foreground hover:underline"
+        >
+          @{profile.username}
+        </Link>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          void handleUnblock();
+        }}
+        disabled={busy}
+      >
+        {busy ? <LoaderCircleIcon className="animate-spin" /> : null}
+        Unblock
+      </Button>
+    </li>
+  );
+}
+
+function BlockedUsersCard() {
+  const blocksQuery = useBlocks();
+  const ids = blocksQuery.data ?? [];
+  const profilesQuery = useProfilesByIds(ids);
+
+  if (socialAvailability() !== "ready") {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Blocked users</CardTitle>
+        <CardDescription>
+          Blocked trainers cannot follow you or interact with your posts.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {blocksQuery.isPending ? (
+          <div className="grid gap-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : ids.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            You haven't blocked anyone.
+          </p>
+        ) : profilesQuery.isPending ? (
+          <div className="grid gap-2">
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : profilesQuery.isError ? (
+          <p className="text-sm text-muted-foreground">
+            Blocked users could not be loaded. Try refreshing.
+          </p>
+        ) : (
+          <ul className="grid gap-2">
+            {profilesQuery.data.map((profile) => (
+              <BlockedUserRow key={profile.id} profile={profile} />
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function ProfilePage() {
   const auth = useAuth();
 
@@ -387,20 +486,33 @@ export function ProfilePage() {
       description={auth.profile ? `@${auth.profile.username}` : undefined}
       width="narrow"
       actions={
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            void auth.refreshProfile();
-          }}
-        >
-          <RefreshCwIcon />
-          Refresh
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {auth.profile ? (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to={`/u/${auth.profile.username}`}>
+                <ExternalLinkIcon />
+                Public page
+              </Link>
+            </Button>
+          ) : null}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              void auth.refreshProfile();
+            }}
+          >
+            <RefreshCwIcon />
+            Refresh
+          </Button>
+        </div>
       }
     >
       {auth.profile ? (
-        <ProfileEditor profile={auth.profile} />
+        <div className="grid gap-4">
+          <ProfileEditor profile={auth.profile} />
+          <BlockedUsersCard />
+        </div>
       ) : (
         <div className="grid gap-4">
           <Alert>

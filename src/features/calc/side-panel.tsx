@@ -99,7 +99,7 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
                     <Button
                       type="button"
                       variant="outline"
-                      size="icon-xs"
+                      size="icon-sm"
                       aria-label={`${label} ${STAT_LABELS[stat]} boost down`}
                       disabled={value <= MIN_STAGE}
                       onClick={() =>
@@ -119,7 +119,7 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
                     <Button
                       type="button"
                       variant="outline"
-                      size="icon-xs"
+                      size="icon-sm"
                       aria-label={`${label} ${STAT_LABELS[stat]} boost up`}
                       disabled={value >= MAX_STAGE}
                       onClick={() =>

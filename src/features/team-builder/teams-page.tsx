@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
-import { CopyIcon, DownloadIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import {
+  CopyIcon,
+  DownloadIcon,
+  PlusIcon,
+  Trash2Icon,
+  TriangleAlertIcon,
+} from "lucide-react";
 
 import { Page } from "@/components/page";
 import { PokemonSprite } from "@/components/pokemon-sprite";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -18,18 +25,13 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useBattleFormat } from "@/lib/preferences";
-import {
-  importTeam,
-  localTeamStore,
-  sortByUpdated,
-  useTeams,
-} from "@/lib/team";
+import { importTeam, sortByUpdated, useTeams } from "@/lib/team";
 import type { Team } from "@/types/team";
 
 export function TeamsPage() {
   const navigate = useNavigate();
   const [preferredFormat] = useBattleFormat();
-  const { teams, create, duplicate, remove } = useTeams();
+  const { teams, create, duplicate, remove, restore, sync } = useTeams();
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
 
@@ -66,7 +68,7 @@ export function TeamsPage() {
     toast(`Deleted "${team.name}".`, {
       action: {
         label: "Undo",
-        onClick: () => localTeamStore.save(team),
+        onClick: () => restore(team),
       },
     });
   }
@@ -118,7 +120,20 @@ export function TeamsPage() {
         </>
       }
     >
-      {sorted.length === 0 ? (
+      {sync.loading ? (
+        <p className="text-muted-foreground">Loading your teams…</p>
+      ) : sync.error ? (
+        <div className="grid gap-4">
+          <Alert>
+            <TriangleAlertIcon />
+            <AlertTitle>Teams could not be loaded</AlertTitle>
+            <AlertDescription>{sync.error}</AlertDescription>
+          </Alert>
+          <Button className="justify-self-start" onClick={() => sync.retry()}>
+            Retry
+          </Button>
+        </div>
+      ) : sorted.length === 0 ? (
         <p className="text-muted-foreground">
           No teams yet. Create one or import a Showdown paste to get started.
         </p>

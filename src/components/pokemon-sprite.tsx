@@ -1,4 +1,9 @@
-import { getItemIcon, getPokemonIcon, getSprite, type IconInfo } from "@/data";
+import {
+  getItemIcon,
+  getPokemonIcon,
+  getSprite,
+  type IconInfo,
+} from "@/data/sprites";
 import { cn } from "@/lib/utils";
 
 interface SpriteProps {

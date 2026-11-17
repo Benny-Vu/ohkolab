@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { LoginPage } from "@/features/account/login-page";
 import { createFakeAuth, renderPage } from "@/features/account/test-utils";
-import type { AuthContextValue } from "@/lib/auth/types";
+import type { AuthContextValue, AuthResult } from "@/lib/auth/types";
 
 describe("LoginPage", () => {
   it("redirects away when already signed in", () => {
@@ -129,7 +129,9 @@ describe("LoginPage", () => {
     expect(auth.calls.map((c) => c.name)).not.toContain("signUp");
 
     await user.click(
-      screen.getByLabelText("I am 13 or older and accept the terms"),
+      screen.getByLabelText(
+        "I am 13 or older and accept the terms and privacy policy",
+      ),
     );
     await user.click(screen.getByRole("button", { name: "Sign up" }));
 
@@ -162,7 +164,9 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText("Email"), "misty@example.com");
     await user.type(screen.getByLabelText("Password"), "staryu12345");
     await user.click(
-      screen.getByLabelText("I am 13 or older and accept the terms"),
+      screen.getByLabelText(
+        "I am 13 or older and accept the terms and privacy policy",
+      ),
     );
     await user.click(screen.getByRole("button", { name: "Sign up" }));
 
@@ -252,5 +256,140 @@ describe("LoginPage", () => {
     } as Partial<AuthContextValue>);
     renderPage(<LoginPage />, auth, { path: "/login" });
     expect(screen.getByRole("tab", { name: "Sign in" })).toBeInTheDocument();
+  });
+
+  it("shows the guest notice instead of the form when unconfigured", () => {
+    const auth = createFakeAuth({
+      isConfigured: false,
+      user: null,
+      session: null,
+      profile: null,
+    });
+    renderPage(<LoginPage />, auth, { path: "/login" });
+
+    expect(screen.getByText("Accounts are unavailable")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Accounts are not available in this build/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "Sign in" }),
+    ).not.toBeInTheDocument();
+    expect(auth.calls).toHaveLength(0);
+  });
+
+  it("marks an invalid email and links its error to the input", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth({ user: null, session: null, profile: null });
+    renderPage(<LoginPage />, auth, { path: "/login" });
+
+    await user.type(screen.getByLabelText("Email"), "not-an-email");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    const emailInput = screen.getByLabelText("Email");
+    expect(emailInput).toHaveAttribute("aria-invalid", "true");
+    expect(emailInput).toHaveAttribute(
+      "aria-describedby",
+      "signin-email-error",
+    );
+    expect(screen.getByText("Enter a valid email address.")).toHaveAttribute(
+      "id",
+      "signin-email-error",
+    );
+  });
+
+  it("links the sign-up checkbox text to the terms and privacy pages", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth({ user: null, session: null, profile: null });
+    renderPage(<LoginPage />, auth, { path: "/login" });
+
+    await user.click(screen.getByRole("tab", { name: "Sign up" }));
+
+    expect(screen.getByRole("link", { name: "terms" })).toHaveAttribute(
+      "href",
+      "/terms",
+    );
+    expect(
+      screen.getByRole("link", { name: "privacy policy" }),
+    ).toHaveAttribute("href", "/privacy");
+  });
+
+  it("marks the terms checkbox invalid when sign-up is missing it", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth({ user: null, session: null, profile: null });
+    renderPage(<LoginPage />, auth, { path: "/login" });
+
+    await user.click(screen.getByRole("tab", { name: "Sign up" }));
+    await user.type(screen.getByLabelText("Email"), "misty@example.com");
+    await user.type(screen.getByLabelText("Password"), "staryu12345");
+    await user.click(screen.getByRole("button", { name: "Sign up" }));
+
+    const checkbox = screen.getByLabelText(
+      "I am 13 or older and accept the terms and privacy policy",
+    );
+    expect(checkbox).toHaveAttribute("aria-invalid", "true");
+    expect(checkbox).toHaveAttribute("aria-describedby", "signup-terms-error");
+    expect(
+      screen.getByText(
+        "Confirm that you are 13 or older and accept the terms to create an account.",
+      ),
+    ).toHaveAttribute("id", "signup-terms-error");
+  });
+
+  it("links a form-level failure to the submit button", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth(
+      { user: null, session: null, profile: null },
+      {
+        signInWithPassword: {
+          code: "invalid_input",
+          message: "Wrong email or password.",
+        },
+      },
+    );
+    renderPage(<LoginPage />, auth, { path: "/login" });
+
+    await user.type(screen.getByLabelText("Email"), "ash@example.com");
+    await user.type(screen.getByLabelText("Password"), "pikachu123");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    const error = await screen.findByText("Wrong email or password.");
+    expect(error).toHaveAttribute("id", "signin-form-error");
+    expect(screen.getByRole("button", { name: "Sign in" })).toHaveAttribute(
+      "aria-describedby",
+      "signin-form-error",
+    );
+  });
+
+  it("disables the form and shows progress while signing in", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth({ user: null, session: null, profile: null });
+    let resolveSignIn!: (value: AuthResult) => void;
+    auth.signInWithPassword = () =>
+      new Promise<AuthResult>((resolve) => {
+        resolveSignIn = resolve;
+      });
+    renderPage(<LoginPage />, auth, { path: "/login" });
+
+    await user.type(screen.getByLabelText("Email"), "ash@example.com");
+    await user.type(screen.getByLabelText("Password"), "pikachu123");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    const submit = screen.getByRole("button", { name: "Sign in" });
+    expect(submit).toBeDisabled();
+    expect(submit.querySelector(".animate-spin")).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Forgot password?" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Continue with Google" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Continue with Discord" }),
+    ).toBeDisabled();
+
+    resolveSignIn({ ok: true, data: undefined });
+    await waitFor(() =>
+      expect(screen.getByText("home content")).toBeInTheDocument(),
+    );
   });
 });

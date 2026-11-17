@@ -1,0 +1,20 @@
+{
+  "latest": {
+    "singles": "/data/metagame/2026-10/singles.json",
+    "doubles": "/data/metagame/2026-10/doubles.json"
+  },
+  "snapshots": [
+    {
+      "format": "doubles",
+      "period": "2026-10",
+      "regulation": "M-C",
+      "path": "/data/metagame/2026-10/doubles.json"
+    },
+    {
+      "format": "singles",
+      "period": "2026-10",
+      "regulation": "M-C",
+      "path": "/data/metagame/2026-10/singles.json"
+    }
+  ]
+}
