@@ -159,6 +159,10 @@ describe("HomePage", () => {
     expect(await screen.findByText("Hello feed")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /latest/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /following/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Groups" })).toHaveAttribute(
+      "href",
+      "/groups",
+    );
   });
 
   it("shows the composer for signed-in users when ready", async () => {

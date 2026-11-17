@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
+import { useIsModerator } from "@/lib/social";
 import { cn } from "@/lib/utils";
 
 interface AccountMenuProps {
@@ -49,6 +50,7 @@ function AvatarChip({
 /** Account entry for the header and the phone tab bar. */
 export function AccountMenu({ variant }: AccountMenuProps) {
   const auth = useAuth();
+  const moderator = useIsModerator();
 
   async function handleSignOut() {
     const result = await auth.signOut();
@@ -147,6 +149,19 @@ export function AccountMenu({ variant }: AccountMenuProps) {
         <DropdownMenuItem asChild>
           <Link to="/profile">Profile</Link>
         </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/groups">Groups</Link>
+        </DropdownMenuItem>
+        {moderator.data === true && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link to="/admin/reports">Reports</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/admin/appeals">Moderation</Link>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => {

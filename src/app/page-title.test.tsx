@@ -17,6 +17,13 @@ describe("titleForPath", () => {
     expect(titleForPath("/teams/abc123")).toBe("Team · OHKOLab");
     expect(titleForPath("/meta")).toBe("Metagame · OHKOLab");
     expect(titleForPath("/profile")).toBe("Profile · OHKOLab");
+    expect(titleForPath("/notifications")).toBe("Notifications · OHKOLab");
+    expect(titleForPath("/groups")).toBe("Groups · OHKOLab");
+    expect(titleForPath("/groups/new")).toBe("Create a group · OHKOLab");
+    expect(titleForPath("/g/test-group")).toBe("Group · OHKOLab");
+    expect(titleForPath("/admin/reports")).toBe("Reports · OHKOLab");
+    expect(titleForPath("/admin/appeals")).toBe("Appeals · OHKOLab");
+    expect(titleForPath("/moderation/abc")).toBe("Moderation notice · OHKOLab");
     expect(titleForPath("/login")).toBe("Sign in · OHKOLab");
     expect(titleForPath("/auth/callback")).toBe("Signing in · OHKOLab");
     expect(titleForPath("/reset-password")).toBe("Reset password · OHKOLab");

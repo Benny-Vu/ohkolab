@@ -7,6 +7,7 @@ import {
   ConstructionIcon,
   LogInIcon,
   SwordsIcon,
+  UsersIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -139,10 +140,18 @@ function FeedHome() {
         onValueChange={(value) => setTab(value as "latest" | "following")}
         className="mt-6"
       >
-        <TabsList>
-          <TabsTrigger value="latest">Latest</TabsTrigger>
-          <TabsTrigger value="following">Following</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between gap-2">
+          <TabsList>
+            <TabsTrigger value="latest">Latest</TabsTrigger>
+            <TabsTrigger value="following">Following</TabsTrigger>
+          </TabsList>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/groups">
+              <UsersIcon aria-hidden />
+              Groups
+            </Link>
+          </Button>
+        </div>
 
         <TabsContent value="latest" className="mt-4">
           <FeedTabContent

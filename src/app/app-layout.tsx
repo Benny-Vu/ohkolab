@@ -4,6 +4,7 @@ import { AccountMenu } from "@/app/account-menu";
 import { NAV_ITEMS } from "@/app/nav-items";
 import { usePageTitle } from "@/app/page-title";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import { cn } from "@/lib/utils";
 
 function Wordmark() {
@@ -45,6 +46,7 @@ export function AppLayout() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-1">
+            <NotificationBell />
             <ThemeToggle />
             <AccountMenu variant="header" />
           </div>

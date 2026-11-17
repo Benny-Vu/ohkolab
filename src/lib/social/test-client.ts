@@ -4,7 +4,7 @@
  * and shared row factories. Nothing in the app imports this file.
  */
 
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import {
   QueryClient,
@@ -228,9 +228,14 @@ export async function runMutation<TVars, TData>(
   const { result } = renderHook(useHook, {
     wrapper: createWrapper(queryClient, options.auth ?? SIGNED_IN_AUTH),
   });
-  await act(async () => {
-    await result.current.mutateAsync(variables);
+  let resolved: SocialResult<TData> | undefined;
+  act(() => {
+    void result.current.mutateAsync(variables).then((value) => {
+      resolved = value;
+    });
   });
+  await waitFor(() => expect(resolved).toBeDefined());
+  await waitFor(() => expect(result.current.data).toBeDefined());
   return result.current.data;
 }
 
