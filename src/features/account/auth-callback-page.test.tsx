@@ -1,8 +1,12 @@
 import { screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AuthCallbackPage } from "@/features/account/auth-callback-page";
 import { createFakeAuth, renderPage } from "@/features/account/test-utils";
+
+afterEach(() => {
+  sessionStorage.clear();
+});
 
 describe("AuthCallbackPage", () => {
   it("completes the redirect once and navigates to the returnTo", async () => {
@@ -20,6 +24,28 @@ describe("AuthCallbackPage", () => {
     expect(auth.completeAuthRedirect).toHaveBeenCalledWith(
       window.location.href,
     );
+  });
+
+  it("shows a native redirect's failure without redoing the redirect", async () => {
+    // The deep-link listener in the app exchanges the code itself and only
+    // forwards failures here, through the session stash.
+    sessionStorage.setItem(
+      "ohkolab:auth:native-failure",
+      JSON.stringify({
+        code: "unknown",
+        message: "Sign-in could not be completed. Try again.",
+      }),
+    );
+    const auth = createFakeAuth();
+    auth.completeAuthRedirect = vi.fn();
+    renderPage(<AuthCallbackPage />, auth, { path: "/auth/callback" });
+
+    expect(
+      await screen.findByText("Sign-in could not be completed. Try again."),
+    ).toBeInTheDocument();
+    expect(auth.completeAuthRedirect).not.toHaveBeenCalled();
+    // The stash is consumed, so a reload shows the normal page again.
+    expect(sessionStorage.getItem("ohkolab:auth:native-failure")).toBeNull();
   });
 
   it("shows the failure message and a link to sign in", async () => {

@@ -14,11 +14,17 @@ import {
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import type { AuthFailure } from "@/lib/auth/types";
+import {
+  clearNativeAuthFailure,
+  readNativeAuthFailure,
+} from "@/lib/auth/native-auth";
 import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 
 /**
  * Finishes an OAuth, email-confirmation or password-reset redirect, then
  * sends the user on their way. The redirect runs exactly once per mount.
+ * In the native app the deep-link listener finishes the exchange itself and
+ * only forwards failures here, through the stash this page reads first.
  */
 export function AuthCallbackPage() {
   const auth = useAuth();
@@ -31,15 +37,34 @@ export function AuthCallbackPage() {
     if (started.current || !auth.isConfigured) return;
     started.current = true;
     let active = true;
-    auth
-      .completeAuthRedirect(window.location.href)
-      .then((result) => {
+    // In the native app the deep-link listener exchanges the code itself
+    // and only forwards failures here, through the session stash. Reading
+    // it off the synchronous effect path keeps React's cascading-render
+    // rule happy; when a failure was stashed, the redirect must not run
+    // again (it would report "link invalid" over the real reason).
+    void Promise.resolve()
+      .then(() => {
+        if (!active) return null;
+        const stored = readNativeAuthFailure();
+        if (stored) clearNativeAuthFailure();
+        return stored;
+      })
+      .then((nativeFailure) => {
         if (!active) return;
-        if (result.ok) {
-          navigate(result.data.returnTo, { replace: true });
-        } else {
-          setFailure(result.error);
+        if (nativeFailure) {
+          setFailure(nativeFailure);
+          return;
         }
+        return auth
+          .completeAuthRedirect(window.location.href)
+          .then((result) => {
+            if (!active) return;
+            if (result.ok) {
+              navigate(result.data.returnTo, { replace: true });
+            } else {
+              setFailure(result.error);
+            }
+          });
       })
       .catch(() => {
         if (active)
@@ -51,7 +76,7 @@ export function AuthCallbackPage() {
     return () => {
       active = false;
     };
-  }, [auth, navigate]);
+  }, [auth, navigate, t]);
 
   if (!auth.isConfigured) {
     return (

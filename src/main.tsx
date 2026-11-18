@@ -5,12 +5,32 @@ import { RouterProvider } from "react-router";
 import "@/index.css";
 import { Providers } from "@/app/providers";
 import { router } from "@/app/router";
+import { createAuthActions } from "@/lib/auth/auth-actions";
 import { initLocale } from "@/lib/i18n/locale";
 import { initSentry } from "@/lib/telemetry/sentry";
+import { supabase } from "@/lib/supabase";
 
 initSentry();
 // Mirrors the active locale onto <html lang> before the first paint.
 initLocale();
+
+// In the native app, sign-in runs in the system browser and returns through
+// the custom scheme; the listener that finishes that redirect lives in its
+// own chunk and is only loaded when the Capacitor bridge is present (the
+// same read `isNativeApp()` in `@/lib/platform` makes), so the web entry
+// never pays for it.
+const bridge = (
+  globalThis as {
+    Capacitor?: { isNativePlatform?: () => boolean };
+  }
+).Capacitor;
+if (bridge?.isNativePlatform?.() === true && supabase) {
+  void import("@/lib/auth/native-auth").then((nativeAuth) =>
+    nativeAuth.startNativeAuthListener({
+      completeAuthRedirect: createAuthActions(supabase).completeAuthRedirect,
+    }),
+  );
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
