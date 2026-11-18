@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
-import {
-  CopyIcon,
-  DownloadIcon,
-  PlusIcon,
-  Trash2Icon,
-  TriangleAlertIcon,
-} from "lucide-react";
+import { CopyIcon, DownloadIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { Page } from "@/components/page";
-import { PokemonSprite } from "@/components/pokemon-sprite";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -23,16 +23,94 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { TeamName } from "@/features/team-builder/team-name";
+import { formatDate } from "@/lib/format-date";
 import { useBattleFormat } from "@/lib/preferences";
 import { importTeam, sortByUpdated, useTeams } from "@/lib/team";
 import { track } from "@/lib/telemetry/analytics";
 import type { Team } from "@/types/team";
+import { MAX_TEAM_SIZE } from "@/types/team";
+
+function TeamCard({
+  team,
+  onDuplicate,
+  onDelete,
+  onRename,
+}: {
+  team: Team;
+  onDuplicate: (team: Team) => void;
+  onDelete: (team: Team) => void;
+  onRename: (name: string) => void;
+}) {
+  return (
+    <Card size="sm" className="flex flex-col">
+      <CardHeader>
+        <TeamName name={team.name} onRename={onRename} />
+        <p className="text-xs text-muted-foreground">
+          {team.format === "doubles" ? "Doubles" : "Singles"} ·{" "}
+          {team.members.length} Pokémon · Edited {formatDate(team.updatedAt)}
+        </p>
+      </CardHeader>
+      <CardContent className="flex-1">
+        <div className="grid grid-cols-6 gap-1">
+          {Array.from({ length: MAX_TEAM_SIZE }, (_, index) => {
+            const member = team.members[index];
+            if (!member) {
+              return (
+                <div
+                  key={index}
+                  aria-hidden="true"
+                  className="size-10 rounded-md border border-dashed"
+                />
+              );
+            }
+            return (
+              <div key={index} className="relative">
+                <PokemonSprite species={member.species} size={40} />
+                {member.item ? (
+                  <ItemIcon
+                    item={member.item}
+                    className="absolute right-0 bottom-0 size-4 rounded-sm bg-background"
+                  />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+      <CardFooter className="gap-2">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Duplicate ${team.name}`}
+          onClick={() => onDuplicate(team)}
+        >
+          <CopyIcon />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Delete ${team.name}`}
+          onClick={() => onDelete(team)}
+        >
+          <Trash2Icon />
+        </Button>
+        <span className="flex-1" />
+        <Button variant="outline" size="sm" asChild>
+          <Link to={`/teams/${team.id}`}>Open</Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
 
 export function TeamsPage() {
   const navigate = useNavigate();
   const [preferredFormat] = useBattleFormat();
-  const { teams, create, duplicate, remove, restore, sync } = useTeams();
+  const { teams, create, rename, duplicate, remove, restore, sync } =
+    useTeams();
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
 
@@ -103,12 +181,16 @@ export function TeamsPage() {
               </DialogHeader>
               <Textarea
                 aria-label="Showdown export"
+                className="font-mono text-xs"
                 value={importText}
                 onChange={(event) => setImportText(event.target.value)}
                 rows={10}
                 placeholder="Garchomp @ Life Orb&#10;Ability: Rough Skin&#10;Jolly Nature&#10;- Earthquake"
               />
               <DialogFooter>
+                <Button variant="outline" onClick={() => setImportOpen(false)}>
+                  Cancel
+                </Button>
                 <Button onClick={handleImport}>Import team</Button>
               </DialogFooter>
             </DialogContent>
@@ -127,70 +209,46 @@ export function TeamsPage() {
       }
     >
       {sync.loading ? (
-        <p className="text-muted-foreground">Loading your teams…</p>
-      ) : sync.error ? (
-        <div className="grid gap-4">
-          <Alert>
-            <TriangleAlertIcon />
-            <AlertTitle>Teams could not be loaded</AlertTitle>
-            <AlertDescription>{sync.error}</AlertDescription>
-          </Alert>
-          <Button className="justify-self-start" onClick={() => sync.retry()}>
-            Retry
-          </Button>
-        </div>
-      ) : sorted.length === 0 ? (
-        <p className="text-muted-foreground">
-          No teams yet. Create one or import a Showdown paste to get started.
-        </p>
-      ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sorted.map((team) => (
-            <Card key={team.id} className="flex flex-col">
-              <CardHeader>
-                <CardTitle>
-                  <Link to={`/teams/${team.id}`} className="hover:text-primary">
-                    {team.name}
-                  </Link>
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {team.format === "doubles" ? "Doubles" : "Singles"} ·{" "}
-                  {team.members.length} Pokémon
-                </p>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <div className="flex flex-wrap gap-1">
-                  {team.members.map((member, index) => (
-                    <PokemonSprite
-                      key={`${member.species}-${index}`}
-                      species={member.species}
-                      size={40}
-                    />
+          {Array.from({ length: 6 }, (_, index) => (
+            <Card key={index} size="sm">
+              <CardContent className="flex flex-col gap-3">
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-3 w-1/2" />
+                <div className="grid grid-cols-6 gap-1">
+                  {Array.from({ length: MAX_TEAM_SIZE }, (_, slot) => (
+                    <Skeleton key={slot} className="size-10" />
                   ))}
                 </div>
               </CardContent>
-              <div className="flex items-center justify-end gap-2 border-t bg-muted/50 p-4">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Duplicate ${team.name}`}
-                  onClick={() => handleDuplicate(team)}
-                >
-                  <CopyIcon />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Delete ${team.name}`}
-                  onClick={() => handleDelete(team)}
-                >
-                  <Trash2Icon />
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={`/teams/${team.id}`}>Open</Link>
-                </Button>
-              </div>
             </Card>
+          ))}
+        </div>
+      ) : sync.error ? (
+        <ErrorState
+          title="Teams could not be loaded"
+          description={sync.error}
+          action={
+            <Button variant="outline" size="sm" onClick={() => sync.retry()}>
+              Retry
+            </Button>
+          }
+        />
+      ) : sorted.length === 0 ? (
+        <EmptyState
+          title="No teams yet"
+          description="Create one or import a Showdown paste to get started."
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {sorted.map((team) => (
+            <TeamCard
+              key={team.id}
+              team={team}
+              onRename={(name) => rename(team.id, name)}
+              onDuplicate={handleDuplicate}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}
