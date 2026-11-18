@@ -80,8 +80,46 @@ function retryable(error: string): Response {
   return json(503, { error, retryable: true });
 }
 
+/**
+ * Browsers call this function from ohkolab.com, so it must answer CORS
+ * preflights itself. It is deployed with JWT verification OFF because the
+ * gateway rejected the credential-less preflight with 401; the user check
+ * below (userFromRequest, which asks Supabase Auth) is the authorization.
+ */
+const ALLOWED_ORIGINS = new Set([
+  "https://ohkolab.com",
+  "https://www.ohkolab.com",
+  "http://localhost:5173",
+  "http://localhost:4173",
+]);
+
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  if (!ALLOWED_ORIGINS.has(origin)) return {};
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
+}
+
 Deno.serve(async (req) => {
-  // The platform verified the JWT; confirm which user it belongs to.
+  const cors = corsHeaders(req);
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: cors });
+  }
+  const res = await handle(req);
+  const headers = new Headers(res.headers);
+  for (const [key, value] of Object.entries(cors)) headers.set(key, value);
+  return new Response(res.body, { status: res.status, headers });
+});
+
+async function handle(req: Request): Promise<Response> {
+  if (req.method !== "POST") return json(405, { error: "Use POST" });
+  // Confirm which signed-in user is calling (Supabase Auth checks the token).
   const user = await userFromRequest(req);
   if (!user) return json(401, { error: "Not signed in" });
 
@@ -343,4 +381,4 @@ Deno.serve(async (req) => {
   }
 
   return json(200, { status: "blocked" });
-});
+}

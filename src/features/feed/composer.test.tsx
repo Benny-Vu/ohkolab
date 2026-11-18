@@ -255,6 +255,18 @@ describe("Composer images", () => {
     expect(screen.getAllByRole("img", { name: /image \d/i })).toHaveLength(2);
   });
 
+  it("keeps spaces typed into an image description", async () => {
+    vi.stubEnv("VITE_IMAGE_POSTS", "true");
+    const user = userEvent.setup();
+    renderComposer();
+
+    await user.upload(await openFilePicker(user), [imageFile("one.png")]);
+    const description = await screen.findByLabelText("Describe image 1");
+    await user.type(description, "Garchomp vs Incineroar ");
+
+    expect(description).toHaveValue("Garchomp vs Incineroar ");
+  });
+
   it("rejects more than four images", async () => {
     vi.stubEnv("VITE_IMAGE_POSTS", "true");
     const user = userEvent.setup();
