@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LoaderCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { FeedPostRow } from "@/lib/database.types";
+import type { FeedPostRow, PostImageRow } from "@/lib/database.types";
 import { useRemoveGroupPost } from "@/lib/groups/mutations";
+import { usePostImages } from "@/lib/social/images";
 import { MODERATION_REASON_MAX } from "@/lib/social/validation";
 import { PostCard } from "@/features/feed/post-card";
 
@@ -27,13 +28,30 @@ interface GroupPostListProps {
 /**
  * The group feed's post list: the shared PostCard plus, for group owners and
  * moderators, a "Remove from group" action in the post menu that asks for a
- * reason and calls the remove_group_post RPC.
+ * reason and calls the remove_group_post RPC. The posts' images are fetched
+ * in one batched query (only with the VITE_IMAGE_POSTS flag on), like the
+ * main feed's post list.
  */
 export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
   const removeGroupPost = useRemoveGroupPost();
   const [removingPostId, setRemovingPostId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const postIds = useMemo(() => posts.map((post) => post.id), [posts]);
+  const imagesQuery = usePostImages(postIds);
+  const imagesByPost = useMemo(() => {
+    const map = new Map<string, PostImageRow[]>();
+    for (const row of imagesQuery.data ?? []) {
+      const list = map.get(row.post_id);
+      if (list) {
+        list.push(row);
+      } else {
+        map.set(row.post_id, [row]);
+      }
+    }
+    return map;
+  }, [imagesQuery.data]);
 
   const removing = removingPostId !== null;
 
@@ -65,6 +83,7 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
           <li key={post.id}>
             <PostCard
               post={post}
+              images={imagesByPost.get(post.id) ?? []}
               onRemoveFromGroup={
                 canModerate
                   ? () => {

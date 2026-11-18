@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { LoaderCircleIcon, ShieldOffIcon } from "lucide-react";
 
 import type { PostImageDisplay } from "@/lib/social/images";
@@ -85,12 +86,12 @@ export function PostImageGrid({ images, className }: PostImageGridProps) {
                   <ShieldOffIcon className="size-3.5 shrink-0" aria-hidden />
                   <span>
                     Image removed by automatic screening.{" "}
-                    <a
-                      href="/notifications"
+                    <Link
+                      to="/notifications"
                       className="text-primary underline-offset-4 hover:underline"
                     >
                       See the notice
-                    </a>
+                    </Link>
                   </span>
                 </>
               )}

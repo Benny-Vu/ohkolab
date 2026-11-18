@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
+import { MemoryRouter } from "react-router";
 
 import type { PostImageDisplay } from "@/lib/social/images";
 import { PostImageGrid } from "@/features/feed/post-images";
@@ -84,7 +85,11 @@ describe("PostImageGrid", () => {
   });
 
   it("links the author's rejection notice to the notifications list", () => {
-    render(<PostImageGrid images={[rejected()]} />);
+    render(
+      <MemoryRouter>
+        <PostImageGrid images={[rejected()]} />
+      </MemoryRouter>,
+    );
 
     expect(
       screen.getByText(/Image removed by automatic screening/),
