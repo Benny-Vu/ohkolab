@@ -29,8 +29,12 @@ function isNoise(event: Sentry.Event): boolean {
     return false;
   }
   return values.some((value) => {
-    const message = value.type ?? value.value ?? "";
-    return NOISE_PATTERNS.some((pattern) => pattern.test(message));
+    // Sentry wraps some errors as { type: "Error", value: "ResizeObserver
+    // loop..." }; test both fields so the type never masks the message.
+    const fields = [value.type ?? "", value.value ?? ""];
+    return fields.some((field) =>
+      NOISE_PATTERNS.some((pattern) => pattern.test(field)),
+    );
   });
 }
 
@@ -68,15 +72,56 @@ function scrubBreadcrumbs(event: Sentry.Event): void {
   if (!breadcrumbs) {
     return;
   }
-  event.breadcrumbs = breadcrumbs.map((crumb) => {
-    if (crumb.category === "navigation" && typeof crumb.data?.to === "string") {
-      return {
-        ...crumb,
-        data: { to: routeTemplate(crumb.data.to) },
-      };
+  event.breadcrumbs = breadcrumbs.flatMap((crumb) => {
+    if (crumb.category === "console") {
+      // Console output can hold arbitrary user data; drop it entirely.
+      return [];
     }
-    return crumb;
+    if (crumb.category === "fetch" || crumb.category === "xhr") {
+      const data = crumb.data as Record<string, unknown> | undefined;
+      const url = typeof data?.url === "string" ? data.url : undefined;
+      if (!url) {
+        return [crumb];
+      }
+      const scrubbed: Record<string, unknown> = {
+        url: scrubRequestUrl(url),
+      };
+      if (typeof data?.method === "string") {
+        scrubbed.method = data.method;
+      }
+      if (typeof data?.status_code === "number") {
+        scrubbed.status_code = data.status_code;
+      }
+      return [{ ...crumb, data: scrubbed }];
+    }
+    if (crumb.category === "navigation" && typeof crumb.data?.to === "string") {
+      return [
+        {
+          ...crumb,
+          data: { to: routeTemplate(crumb.data.to) },
+        },
+      ];
+    }
+    return [crumb];
   });
+}
+
+/**
+ * Keeps a request URL's origin and path but drops the query string and
+ * hash, which hold filters, ids and search text. App-origin paths become
+ * route templates; other origins (Supabase REST) keep their real path.
+ */
+function scrubRequestUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const path =
+      parsed.origin === window.location.origin
+        ? routeTemplate(parsed.pathname)
+        : parsed.pathname;
+    return `${parsed.origin}${path}`;
+  } catch {
+    return routeTemplate(url);
+  }
 }
 
 function scrubRequest(event: Sentry.Event): void {
@@ -124,6 +169,10 @@ export function initSentry(): void {
     tracesSampleRate: 0,
     environment: config.telemetryEnabled ? "production" : "development",
     beforeSend: (event) => {
+      // Consent may have been withdrawn after start-up; check it on every event.
+      if (!getTelemetryConsent().crashes) {
+        return null;
+      }
       if (isNoise(event) || isRepeated(event)) {
         return null;
       }

@@ -1,11 +1,32 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import * as Sentry from "@sentry/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AuthProvider } from "@/lib/auth/auth-provider";
 import { AuthContext, GUEST_AUTH, useAuth } from "@/lib/auth/use-auth";
 import type { AuthContextValue, Profile, Session } from "@/lib/auth/types";
+import {
+  overrideTelemetryConfig,
+  type TelemetryConfig,
+} from "@/lib/telemetry/config";
 import type { ProfileRow } from "@/lib/database.types";
 import type { AppSupabaseClient } from "@/lib/supabase";
+
+vi.mock("@sentry/react", () => ({
+  init: vi.fn(),
+  captureException: vi.fn(),
+  setUser: vi.fn(),
+}));
+
+const CRASH_ENABLED: TelemetryConfig = {
+  sentryDsn: "https://abc123@example.com/1",
+  posthogKey: null,
+  posthogHost: null,
+  appVersion: "1.2.3",
+  telemetryEnabled: true,
+  crashEnabled: true,
+  analyticsEnabled: false,
+};
 
 const PROFILE_ROW: ProfileRow = {
   id: "user-1",
@@ -330,5 +351,68 @@ describe("GUEST_AUTH", () => {
     expect((await GUEST_AUTH.updateProfile({ bio: "Hello!" })).ok).toBe(false);
     expect((await GUEST_AUTH.deleteAccount()).ok).toBe(false);
     await expect(GUEST_AUTH.refreshProfile()).resolves.toBeUndefined();
+  });
+});
+
+describe("AuthProvider crash-report user id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    overrideTelemetryConfig(null);
+  });
+
+  it("attaches the account id when crash reporting is on", async () => {
+    overrideTelemetryConfig(CRASH_ENABLED);
+    const fake = createFakeClient();
+    renderWithProvider(fake.client);
+
+    await signInAs(fake, SESSION as unknown as Session);
+
+    await waitFor(() => {
+      expect(Sentry.setUser).toHaveBeenCalledWith({ id: "user-1" });
+    });
+  });
+
+  it("clears the user on sign-out", async () => {
+    overrideTelemetryConfig(CRASH_ENABLED);
+    const fake = createFakeClient();
+    renderWithProvider(fake.client);
+
+    await signInAs(fake, SESSION as unknown as Session);
+    await waitFor(() => {
+      expect(Sentry.setUser).toHaveBeenCalledWith({ id: "user-1" });
+    });
+
+    await signInAs(fake, null);
+    await waitFor(() => {
+      expect(Sentry.setUser).toHaveBeenCalledWith(null);
+    });
+  });
+
+  it("does not attach the id when crash reporting is disabled", async () => {
+    overrideTelemetryConfig({ ...CRASH_ENABLED, crashEnabled: false });
+    const fake = createFakeClient();
+    renderWithProvider(fake.client);
+
+    await signInAs(fake, SESSION as unknown as Session);
+    await act(async () => {
+      fake.resolveFetch({ data: PROFILE_ROW, error: null });
+    });
+
+    expect(Sentry.setUser).not.toHaveBeenCalled();
+  });
+
+  it("does not attach the id when the user opted out of crash reports", async () => {
+    overrideTelemetryConfig(CRASH_ENABLED);
+    localStorage.setItem("ohkolab:telemetry", "off");
+    const fake = createFakeClient();
+    renderWithProvider(fake.client);
+
+    await signInAs(fake, SESSION as unknown as Session);
+    await act(async () => {
+      fake.resolveFetch({ data: PROFILE_ROW, error: null });
+    });
+
+    expect(Sentry.setUser).not.toHaveBeenCalled();
   });
 });

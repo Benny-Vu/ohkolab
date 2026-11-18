@@ -14,11 +14,14 @@ import { fail } from "@/lib/auth/errors";
 import { createProviderCheck } from "@/lib/auth/provider-status";
 import type { AuthContextValue, Profile, Session } from "@/lib/auth/types";
 import { AuthContext } from "@/lib/auth/use-auth";
+import { getTelemetryConfig } from "@/lib/telemetry/config";
+import { getTelemetryConsent } from "@/lib/telemetry/consent";
 import {
   supabase,
   supabaseConfig,
   type AppSupabaseClient,
 } from "@/lib/supabase";
+import * as Sentry from "@sentry/react";
 
 const defaultCheckProvider = createProviderCheck(supabaseConfig);
 
@@ -78,6 +81,14 @@ export function AuthProvider({
   const session = sessionState.session;
   const user = session?.user ?? null;
   const userId = user?.id ?? null;
+
+  // Crash reports carry only the account id, so a crash can be matched to
+  // that user's feedback. Cleared again on sign-out.
+  useEffect(() => {
+    if (!getTelemetryConfig().crashEnabled) return;
+    if (!getTelemetryConsent().crashes) return;
+    Sentry.setUser(userId ? { id: userId } : null);
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;

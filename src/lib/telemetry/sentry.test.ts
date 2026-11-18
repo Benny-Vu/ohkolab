@@ -108,3 +108,167 @@ describe("isExpectedError", () => {
     expect(isExpectedError("not even an error")).toBe(false);
   });
 });
+
+describe("beforeSend", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    overrideTelemetryConfig(null);
+  });
+
+  function getBeforeSend(): (
+    event: Sentry.Event,
+    hint: unknown,
+  ) => Sentry.Event | null {
+    overrideTelemetryConfig(ENABLED);
+    initSentry();
+    const beforeSend = vi.mocked(Sentry.init).mock.calls[0]?.[0]?.beforeSend;
+    if (typeof beforeSend !== "function") {
+      throw new Error("beforeSend was not captured");
+    }
+    return beforeSend as unknown as (
+      event: Sentry.Event,
+      hint: unknown,
+    ) => Sentry.Event | null;
+  }
+
+  it("returns null when consent was withdrawn after start-up", () => {
+    const beforeSend = getBeforeSend();
+    localStorage.setItem("ohkolab:telemetry", "off");
+    const result = beforeSend({ event_id: "e-consent" } as Sentry.Event, {});
+    expect(result).toBeNull();
+  });
+
+  it("filters ResizeObserver noise wrapped as { type: 'Error' }", () => {
+    const beforeSend = getBeforeSend();
+    const event = {
+      event_id: "e-noise",
+      exception: {
+        values: [
+          {
+            type: "Error",
+            value:
+              "ResizeObserver loop completed with undelivered notifications",
+          },
+        ],
+      },
+    } as Sentry.Event;
+    expect(beforeSend(event, {})).toBeNull();
+  });
+
+  it("keeps a real error that is neither noise nor repeated", () => {
+    const beforeSend = getBeforeSend();
+    const event = {
+      event_id: "e-real",
+      exception: {
+        values: [{ type: "TypeError", value: "unique crash 8f3k2" }],
+      },
+    } as Sentry.Event;
+    const result = beforeSend(event, {});
+    expect(result).not.toBeNull();
+    expect(result?.exception?.values?.[0]?.value).toBe("unique crash 8f3k2");
+  });
+});
+
+describe("scrubBreadcrumbs", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    overrideTelemetryConfig(null);
+  });
+
+  function getBeforeSend(): (
+    event: Sentry.Event,
+    hint: unknown,
+  ) => Sentry.Event | null {
+    overrideTelemetryConfig(ENABLED);
+    initSentry();
+    const beforeSend = vi.mocked(Sentry.init).mock.calls[0]?.[0]?.beforeSend;
+    if (typeof beforeSend !== "function") {
+      throw new Error("beforeSend was not captured");
+    }
+    return beforeSend as unknown as (
+      event: Sentry.Event,
+      hint: unknown,
+    ) => Sentry.Event | null;
+  }
+
+  it("drops the query string from fetch breadcrumbs", () => {
+    const beforeSend = getBeforeSend();
+    const event = {
+      event_id: "e-fetch",
+      breadcrumbs: [
+        {
+          category: "fetch",
+          data: {
+            url: `https://ohkolab.supabase.co/rest/v1/profiles?username=eq.alice&select=*`,
+            method: "GET",
+            status_code: 200,
+          },
+        },
+      ],
+    } as unknown as Sentry.Event;
+    const result = beforeSend(event, {});
+    const crumb = result?.breadcrumbs?.[0];
+    expect(crumb?.data).toEqual({
+      url: "https://ohkolab.supabase.co/rest/v1/profiles",
+      method: "GET",
+      status_code: 200,
+    });
+    expect(JSON.stringify(crumb?.data)).not.toContain("alice");
+  });
+
+  it("templates app-origin request URLs", () => {
+    const beforeSend = getBeforeSend();
+    const event = {
+      event_id: "e-app-fetch",
+      breadcrumbs: [
+        {
+          category: "fetch",
+          data: {
+            url: `${window.location.origin}/u/alice?tab=teams`,
+            method: "GET",
+            status_code: 200,
+          },
+        },
+      ],
+    } as unknown as Sentry.Event;
+    const result = beforeSend(event, {});
+    const crumb = result?.breadcrumbs?.[0];
+    expect(crumb?.data).toEqual({
+      url: `${window.location.origin}/u/:username`,
+      method: "GET",
+      status_code: 200,
+    });
+  });
+
+  it("drops console breadcrumbs entirely", () => {
+    const beforeSend = getBeforeSend();
+    const event = {
+      event_id: "e-console",
+      breadcrumbs: [
+        {
+          category: "console",
+          data: { arguments: ["user alice said something private"] },
+        },
+      ],
+    } as unknown as Sentry.Event;
+    const result = beforeSend(event, {});
+    expect(result?.breadcrumbs).toEqual([]);
+  });
+
+  it("still templates navigation breadcrumbs", () => {
+    const beforeSend = getBeforeSend();
+    const event = {
+      event_id: "e-nav",
+      breadcrumbs: [
+        {
+          category: "navigation",
+          data: { to: "/u/alice" },
+        },
+      ],
+    } as unknown as Sentry.Event;
+    const result = beforeSend(event, {});
+    expect(result?.breadcrumbs?.[0]?.data).toEqual({ to: "/u/:username" });
+  });
+});

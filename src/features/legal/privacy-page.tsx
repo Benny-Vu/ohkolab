@@ -108,11 +108,12 @@ export function PrivacyPage() {
               <strong className="font-medium">Crash reports.</strong> When
               something breaks, the app sends a report to Sentry (hosted in the
               EU). It contains the error, the page you were on, your app
-              version, browser and screen size, and a random session id. It
-              never contains your posts, comments, bio, team details beyond
-              Pokémon and move names, username, display name, email, password,
-              auth tokens or IP address. Crash reports are kept for about 30
-              days.
+              version, browser and screen size, a random session id and, when
+              you are signed in, your account id (a random code, not your name
+              or email). It never contains your posts, comments, bio, team
+              details beyond Pokémon and move names, username, display name,
+              email, password, auth tokens or IP address. Crash reports are kept
+              for about 30 days.
             </li>
             <li>
               <strong className="font-medium">Usage statistics.</strong> We use
@@ -126,7 +127,8 @@ export function PrivacyPage() {
             You can turn crash reports and usage statistics off with the switch
             below. Turning them off stops both immediately. If your browser
             sends a Global Privacy Control or Do Not Track signal, we honour it
-            and treat it as off.
+            by turning usage statistics off; crash reports stay on unless you
+            use the switch.
           </p>
           <TelemetrySwitch />
         </section>
