@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PostImageRow } from "@/lib/database.types";
@@ -605,8 +605,31 @@ describe("useAttachPostImages", () => {
     }
     expect(registry.current.has("row-1")).toBe(true);
 
-    clearScreenFailure("row-1");
+    act(() => clearScreenFailure("row-1"));
     expect(registry.current.has("row-1")).toBe(false);
+  });
+});
+
+describe("useFailedScreenings", () => {
+  it("re-renders with a new snapshot when a failure is noted or cleared", () => {
+    let renders = 0;
+    const { result } = renderHook(() => {
+      renders += 1;
+      return useFailedScreenings();
+    });
+    const before = result.current;
+    const rendersBefore = renders;
+
+    act(() => noteScreenFailure("img-a"));
+    expect(result.current).not.toBe(before);
+    expect(result.current.has("img-a")).toBe(true);
+    expect(before.has("img-a")).toBe(false);
+    expect(renders).toBeGreaterThan(rendersBefore);
+
+    const noted = result.current;
+    act(() => clearScreenFailure("img-a"));
+    expect(result.current).not.toBe(noted);
+    expect(result.current.has("img-a")).toBe(false);
   });
 });
 

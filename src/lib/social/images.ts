@@ -360,30 +360,34 @@ export async function screenImageWithRetry(
  * offer "Try again". Not persisted: a page reload falls back to the plain
  * "Checking image…" notice until the 24-hour rule below kicks in.
  */
-const screenFailures = new Set<string>();
+// Replaced (never mutated) on every change: useSyncExternalStore compares
+// snapshots by identity, so an in-place change would not re-render.
+let screenFailures: ReadonlySet<string> = new Set<string>();
 const screenFailureListeners = new Set<() => void>();
 
-function emitScreenFailures(): void {
+function setScreenFailures(next: ReadonlySet<string>): void {
+  screenFailures = next;
   for (const listener of screenFailureListeners) listener();
 }
 
 /** Records that an image's screening could not be completed. */
 export function noteScreenFailure(imageId: string): void {
   if (screenFailures.has(imageId)) return;
-  screenFailures.add(imageId);
-  emitScreenFailures();
+  setScreenFailures(new Set([...screenFailures, imageId]));
 }
 
 /** Forgets a failed screening (it succeeded on retry, or the row is gone). */
 export function clearScreenFailure(imageId: string): void {
-  if (screenFailures.delete(imageId)) emitScreenFailures();
+  if (!screenFailures.has(imageId)) return;
+  const next = new Set(screenFailures);
+  next.delete(imageId);
+  setScreenFailures(next);
 }
 
 /** Forgets every failed screening (tests reset the module state). */
 export function clearAllScreenFailures(): void {
   if (screenFailures.size === 0) return;
-  screenFailures.clear();
-  emitScreenFailures();
+  setScreenFailures(new Set<string>());
 }
 
 /** The currently failed image ids, reactive for the UI. */
