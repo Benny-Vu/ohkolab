@@ -11,6 +11,7 @@ const EXACT_TITLES: Record<string, string> = {
   "/admin/feedback": "Feedback",
   "/admin/reports": "Reports",
   "/calc": "Damage calculator",
+  "/dev/styleguide": "Styleguide",
   "/groups": "Groups",
   "/groups/new": "Create a group",
   "/notifications": "Notifications",
