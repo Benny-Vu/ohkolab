@@ -31,8 +31,9 @@ describe("PrivacyPage", () => {
     expect(
       screen.getByText(`Last updated ${LAST_UPDATED}`),
     ).toBeInTheDocument();
+    expect(screen.getByText(/no advertising/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/no advertising and no analytics/),
+      screen.getByText(/cookieless usage statistics and crash reports/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/email address/)).toBeInTheDocument();
   });
@@ -51,5 +52,31 @@ describe("PrivacyPage", () => {
       "href",
       "/profile",
     );
+  });
+
+  it("describes telemetry, renders the opt-out switch and links the providers", () => {
+    renderPrivacyPage();
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Crash reports and usage statistics",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Feedback" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("switch", {
+        name: /share anonymous usage statistics and crash reports/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("link", { name: "privacy policy" }).length,
+    ).toBeGreaterThanOrEqual(2);
+    const policyLinks = screen
+      .getAllByRole("link", { name: "privacy policy" })
+      .map((link) => link.getAttribute("href"));
+    expect(policyLinks).toContain("https://sentry.io/privacy/");
+    expect(policyLinks).toContain("https://posthog.com/privacy/");
   });
 });
