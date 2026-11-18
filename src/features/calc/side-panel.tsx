@@ -1,17 +1,18 @@
 import { useId, type Dispatch } from "react";
 import { MinusIcon, PlusIcon } from "lucide-react";
 
+import { Picker, type PickerOption } from "@/components/picker";
 import { PokemonEditor } from "@/components/pokemon-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { CALC_SIDE_LABELS } from "@/features/calc/side-labels";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import {
   MAX_HP_PERCENT,
   MAX_STAGE,
   MIN_HP_PERCENT,
   MIN_STAGE,
-  SIDE_LABELS,
   megaFormeOf,
   type CalcAction,
   type CalcSide,
@@ -37,8 +38,14 @@ const STATUS_OPTIONS: Record<StatusName, string> = {
   tox: "Toxic",
 };
 
-const fieldClass =
-  "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
+/** Status choices for the picker, with None first. */
+const STATUS_PICKER_OPTIONS: PickerOption[] = [
+  { value: "", label: "None" },
+  ...STATUS_NAMES.map((status) => ({
+    value: status,
+    label: STATUS_OPTIONS[status],
+  })),
+];
 
 function stageText(value: number): string {
   return value > 0 ? `+${value}` : String(value);
@@ -53,9 +60,8 @@ interface SidePanelProps {
 /** One side of the calculator: its set plus its state in battle. */
 export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
   const titleId = useId();
-  const statusId = useId();
   const hpId = useId();
-  const label = SIDE_LABELS[side];
+  const label = CALC_SIDE_LABELS[side];
   const megaForme = megaFormeOf(calcSide.set);
   const critSlots = calcSide.set.moves
     .map((move, slot) => ({ move, slot }))
@@ -141,30 +147,21 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <label
-            className="grid gap-1 text-xs text-muted-foreground"
-            htmlFor={statusId}
-          >
-            Status
-            <select
-              id={statusId}
-              className={fieldClass}
+          <div className="grid gap-1">
+            <span className="text-xs text-muted-foreground">Status</span>
+            <Picker
+              options={STATUS_PICKER_OPTIONS}
               value={calcSide.status ?? ""}
-              onChange={(event) => {
-                const status = STATUS_NAMES.find(
-                  (name) => name === event.target.value,
-                );
-                dispatch({ type: "setStatus", side, status: status ?? null });
-              }}
-            >
-              <option value="">None</option>
-              {STATUS_NAMES.map((status) => (
-                <option key={status} value={status}>
-                  {STATUS_OPTIONS[status]}
-                </option>
-              ))}
-            </select>
-          </label>
+              onValueChange={(value) =>
+                dispatch({
+                  type: "setStatus",
+                  side,
+                  status: STATUS_NAMES.find((name) => name === value) ?? null,
+                })
+              }
+              aria-label={`${label} status`}
+            />
+          </div>
           <label
             className="grid gap-1 text-xs text-muted-foreground"
             htmlFor={hpId}
@@ -211,7 +208,7 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
                 key={slot}
                 className="flex items-center justify-between gap-2"
               >
-                <span className="min-w-0 truncate text-sm">{move}</span>
+                <span className="text-sm">{move}</span>
                 <Switch
                   size="sm"
                   checked={calcSide.crits[slot] ?? false}
