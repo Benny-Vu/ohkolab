@@ -198,6 +198,7 @@ export function parseCalcState(raw: unknown): CalcState {
     weather: oneOf(raw.weather, WEATHERS),
     terrain: oneOf(raw.terrain, TERRAINS),
     gravity: raw.gravity === true,
+    trickRoom: raw.trickRoom === true,
     selected: parseSelection(raw.selected, defaults.selected),
   };
 }

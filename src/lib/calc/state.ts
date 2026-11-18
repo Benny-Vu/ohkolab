@@ -63,6 +63,8 @@ export interface CalcState {
   weather: Weather | null;
   terrain: Terrain | null;
   gravity: boolean;
+  /** Trick Room reverses the turn order of equal-priority moves. */
+  trickRoom: boolean;
   /** The move whose full result is shown. */
   selected: MoveSelection;
 }
@@ -79,6 +81,7 @@ export type CalcAction =
   | { type: "setWeather"; weather: Weather | null }
   | { type: "setTerrain"; terrain: Terrain | null }
   | { type: "setGravity"; on: boolean }
+  | { type: "setTrickRoom"; on: boolean }
   | { type: "setSideFlag"; side: SideId; flag: SideFlag; on: boolean }
   | { type: "setSpikes"; side: SideId; layers: number }
   | { type: "swapSides" }
@@ -153,6 +156,7 @@ export function createDefaultCalcState(): CalcState {
     weather: null,
     terrain: null,
     gravity: false,
+    trickRoom: false,
     selected: { side: "p1", slot: 0 },
   };
 }
@@ -233,6 +237,8 @@ export function calcReducer(state: CalcState, action: CalcAction): CalcState {
       return { ...state, terrain: action.terrain };
     case "setGravity":
       return { ...state, gravity: action.on };
+    case "setTrickRoom":
+      return { ...state, trickRoom: action.on };
     case "setSideFlag":
       return withFieldSide(state, action.side, { [action.flag]: action.on });
     case "setSpikes":

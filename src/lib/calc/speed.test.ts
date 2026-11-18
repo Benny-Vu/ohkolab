@@ -182,4 +182,10 @@ describe("fasterSide", () => {
     expect(fasterSide({ p1: 80, p2: 169 })).toBe("p2");
     expect(fasterSide({ p1: 100, p2: 100 })).toBe("tie");
   });
+
+  it("names the slower side under Trick Room, keeping ties", () => {
+    expect(fasterSide({ p1: 169, p2: 80 }, true)).toBe("p2");
+    expect(fasterSide({ p1: 80, p2: 169 }, true)).toBe("p1");
+    expect(fasterSide({ p1: 100, p2: 100 }, true)).toBe("tie");
+  });
 });

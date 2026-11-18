@@ -237,7 +237,10 @@ function SpeedLine({
   state: CalcState;
 }) {
   const speeds = { p1: sideSpeed(state, "p1"), p2: sideSpeed(state, "p2") };
-  const first = fasterSide({ p1: speeds.p1.final, p2: speeds.p2.final });
+  const first = fasterSide(
+    { p1: speeds.p1.final, p2: speeds.p2.final },
+    state.trickRoom,
+  );
   const speedText = (id: SideId) =>
     `${names[id]} ${speeds[id].final}${
       speeds[id].modifiers.length > 0
@@ -256,6 +259,14 @@ function SpeedLine({
       <span className="font-medium text-accent-brand-text">
         {first === "tie" ? "Speed tie" : `${names[first]} moves first`}
       </span>
+      {state.trickRoom ? (
+        <>
+          <span aria-hidden="true" className="text-muted-foreground">
+            {"\u00b7"}
+          </span>
+          <span className="text-muted-foreground">Trick Room</span>
+        </>
+      ) : null}
     </p>
   );
 }

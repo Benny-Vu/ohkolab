@@ -41,6 +41,8 @@ export interface FieldState {
   weather: Weather | null;
   terrain: Terrain | null;
   gravity: boolean;
+  /** Trick Room reverses the turn order of equal-priority moves. */
+  trickRoom: boolean;
   attackerSide: SideState;
   defenderSide: SideState;
 }
@@ -103,6 +105,7 @@ export function emptyField(format: BattleFormat = "doubles"): FieldState {
     weather: null,
     terrain: null,
     gravity: false,
+    trickRoom: false,
     attackerSide: emptySide(),
     defenderSide: emptySide(),
   };

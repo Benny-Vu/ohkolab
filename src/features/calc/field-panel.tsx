@@ -307,6 +307,14 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
                 aria-label="Gravity"
               />
             </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm">Trick Room</span>
+              <Switch
+                checked={state.trickRoom}
+                onCheckedChange={(on) => dispatch({ type: "setTrickRoom", on })}
+                aria-label="Trick Room"
+              />
+            </div>
             {SIDE_IDS.map((side) => (
               <DoublesConditions
                 key={side}
@@ -393,14 +401,24 @@ export function FieldPanel({ state, dispatch }: FieldPanelProps) {
           More conditions
         </Button>
         {showRare ? (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm">Gravity</span>
-            <Switch
-              checked={state.gravity}
-              onCheckedChange={(on) => dispatch({ type: "setGravity", on })}
-              aria-label="Gravity"
-            />
-          </div>
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm">Gravity</span>
+              <Switch
+                checked={state.gravity}
+                onCheckedChange={(on) => dispatch({ type: "setGravity", on })}
+                aria-label="Gravity"
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm">Trick Room</span>
+              <Switch
+                checked={state.trickRoom}
+                onCheckedChange={(on) => dispatch({ type: "setTrickRoom", on })}
+                aria-label="Trick Room"
+              />
+            </div>
+          </>
         ) : null}
       </div>
     </Panel>

@@ -3,6 +3,7 @@ import { battleSet } from "@/lib/calc/battle";
 import {
   MAX_STAGE,
   MIN_STAGE,
+  otherSide,
   type CalcState,
   type SideId,
 } from "@/lib/calc/state";
@@ -128,8 +129,15 @@ export function sideSpeed(state: CalcState, id: SideId): SideSpeed {
   };
 }
 
-/** The side that moves first at equal priority, or "tie". */
-export function fasterSide(speeds: Record<SideId, number>): SideId | "tie" {
+/**
+ * The side that moves first at equal priority, or "tie". Under Trick Room
+ * the slower side moves first; equal Speed stays a tie.
+ */
+export function fasterSide(
+  speeds: Record<SideId, number>,
+  trickRoom = false,
+): SideId | "tie" {
   if (speeds.p1 === speeds.p2) return "tie";
-  return speeds.p1 > speeds.p2 ? "p1" : "p2";
+  const faster = speeds.p1 > speeds.p2 ? "p1" : "p2";
+  return trickRoom ? otherSide(faster) : faster;
 }

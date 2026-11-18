@@ -71,6 +71,7 @@ export function toFieldState(
     weather: state.weather,
     terrain: state.terrain,
     gravity: state.gravity,
+    trickRoom: state.trickRoom,
     attackerSide: sideConditions(state.fieldSides[attacker], format),
     defenderSide: sideConditions(state.fieldSides[otherSide(attacker)], format),
   };

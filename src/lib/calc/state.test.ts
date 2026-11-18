@@ -38,6 +38,7 @@ describe("default state", () => {
       weather: null,
       terrain: null,
       gravity: false,
+      trickRoom: false,
       selected: { side: "p1", slot: 0 },
     });
   });
@@ -234,17 +235,19 @@ describe("calcReducer: moves", () => {
 });
 
 describe("calcReducer: field", () => {
-  it("sets weather, terrain and gravity", () => {
+  it("sets weather, terrain, gravity and Trick Room", () => {
     const state = reduce(
       createDefaultCalcState(),
       { type: "setWeather", weather: "Rain" },
       { type: "setTerrain", terrain: "Grassy" },
       { type: "setGravity", on: true },
+      { type: "setTrickRoom", on: true },
     );
     expect(state).toMatchObject({
       weather: "Rain",
       terrain: "Grassy",
       gravity: true,
+      trickRoom: true,
     });
     expect(
       calcReducer(state, { type: "setWeather", weather: null }).weather,
@@ -275,6 +278,7 @@ describe("calcReducer: actions", () => {
       { type: "setBoost", side: "p1", stat: "atk", value: 1 },
       { type: "setSideFlag", side: "p1", flag: "tailwind", on: true },
       { type: "setWeather", weather: "Sun" },
+      { type: "setTrickRoom", on: true },
       { type: "selectMove", side: "p1", slot: 2 },
     );
     const swapped = calcReducer(start, { type: "swapSides" });
@@ -285,6 +289,7 @@ describe("calcReducer: actions", () => {
     expect(swapped.fieldSides.p1.tailwind).toBe(false);
     expect(swapped.selected).toEqual({ side: "p2", slot: 2 });
     expect(swapped.weather).toBe("Sun");
+    expect(swapped.trickRoom).toBe(true);
     expect(calcReducer(swapped, { type: "swapSides" })).toEqual(start);
   });
 
