@@ -411,82 +411,82 @@ function ProfileSocialActions({
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-            {!auth.user ? (
-              <>
-                <Button variant="outline" size="sm" asChild>
+        {!auth.user ? (
+          <>
+            <Button variant="outline" size="sm" asChild>
+              <Link to={signInTo}>
+                <LogInIcon />
+                Sign in to follow
+              </Link>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="More options"
+                >
+                  <EllipsisIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
                   <Link to={signInTo}>
                     <LogInIcon />
-                    Sign in to follow
+                    Sign in to block
                   </Link>
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="More options"
-                    >
-                      <EllipsisIcon />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link to={signInTo}>
-                        <LogInIcon />
-                        Sign in to block
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : !isSelf ? (
-              <>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : !isSelf ? (
+          <>
+            <Button
+              variant={following ? "outline" : "default"}
+              size="sm"
+              disabled={toggleFollow.isPending}
+              onClick={() => void handleToggleFollow()}
+            >
+              {toggleFollow.isPending ? (
+                <LoaderCircleIcon className="animate-spin" />
+              ) : null}
+              {following ? "Unfollow" : "Follow"}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
-                  variant={following ? "outline" : "default"}
-                  size="sm"
-                  disabled={toggleFollow.isPending}
-                  onClick={() => void handleToggleFollow()}
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="More options"
                 >
-                  {toggleFollow.isPending ? (
-                    <LoaderCircleIcon className="animate-spin" />
-                  ) : null}
-                  {following ? "Unfollow" : "Follow"}
+                  <EllipsisIcon />
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="More options"
-                    >
-                      <EllipsisIcon />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setBlockOpen(true)}
-                    >
-                      <BanIcon />
-                      Block user
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setReportOpen(true)}>
-                      <FlagIcon />
-                      Report user
-                    </DropdownMenuItem>
-                    {isModerator ? (
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onSelect={() => setSuspendOpen(true)}
-                      >
-                        <BanIcon />
-                        Suspend user
-                      </DropdownMenuItem>
-                    ) : null}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : null}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setBlockOpen(true)}
+                >
+                  <BanIcon />
+                  Block user
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setReportOpen(true)}>
+                  <FlagIcon />
+                  Report user
+                </DropdownMenuItem>
+                {isModerator ? (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => setSuspendOpen(true)}
+                  >
+                    <BanIcon />
+                    Suspend user
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : null}
       </div>
 
       <Dialog open={blockOpen} onOpenChange={setBlockOpen}>

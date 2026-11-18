@@ -16,10 +16,7 @@ interface PostListProps {
 export function PostList({ posts, emptyMessage, emptyAction }: PostListProps) {
   if (posts.length === 0) {
     return (
-      <EmptyState
-        title={emptyMessage ?? "No posts yet"}
-        action={emptyAction}
-      />
+      <EmptyState title={emptyMessage ?? "No posts yet"} action={emptyAction} />
     );
   }
   return (

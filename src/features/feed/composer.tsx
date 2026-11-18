@@ -69,9 +69,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
           rows={1}
           disabled={createPost.isPending}
           className={
-            expanded
-              ? "min-h-16"
-              : "min-h-9 resize-none overflow-hidden py-2"
+            expanded ? "min-h-16" : "min-h-9 resize-none overflow-hidden py-2"
           }
         />
         <Button

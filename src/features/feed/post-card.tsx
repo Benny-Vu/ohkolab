@@ -292,73 +292,73 @@ export function PostCard({
           </Button>
         )}
         <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="icon-xs"
-                  variant="ghost"
-                  aria-label="Post options"
-                  className="ml-auto"
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label="Post options"
+              className="ml-auto"
+            >
+              <MoreHorizontalIcon aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {isOwn ? (
+              <>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setEditBody(post.body);
+                    setEditing(true);
+                  }}
                 >
-                  <MoreHorizontalIcon aria-hidden />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isOwn ? (
-                  <>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setEditBody(post.body);
-                        setEditing(true);
-                      }}
-                    >
-                      <PencilIcon aria-hidden />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setConfirmDelete(true)}
-                    >
-                      <Trash2Icon aria-hidden />
-                      Delete
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem onSelect={() => setReporting(true)}>
-                      <FlagIcon aria-hidden />
-                      Report post
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setBlocking(true)}>
-                      <BanIcon aria-hidden />
-                      Block @{post.author_username}
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {onRemoveFromGroup && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => onRemoveFromGroup()}
-                    >
-                      <ShieldOffIcon aria-hidden />
-                      Remove from group
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {isModerator && !isOwn && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setRemoving(true)}
-                    >
-                      <Trash2Icon aria-hidden />
-                      Remove post
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
+                  <PencilIcon aria-hidden />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setConfirmDelete(true)}
+                >
+                  <Trash2Icon aria-hidden />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem onSelect={() => setReporting(true)}>
+                  <FlagIcon aria-hidden />
+                  Report post
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setBlocking(true)}>
+                  <BanIcon aria-hidden />
+                  Block @{post.author_username}
+                </DropdownMenuItem>
+              </>
+            )}
+            {onRemoveFromGroup && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => onRemoveFromGroup()}
+                >
+                  <ShieldOffIcon aria-hidden />
+                  Remove from group
+                </DropdownMenuItem>
+              </>
+            )}
+            {isModerator && !isOwn && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setRemoving(true)}
+                >
+                  <Trash2Icon aria-hidden />
+                  Remove post
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
         </DropdownMenu>
       </div>
 

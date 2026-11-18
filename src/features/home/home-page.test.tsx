@@ -167,9 +167,7 @@ describe("HomePage", () => {
     expect(
       screen.getByRole("link", { name: /team builder/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /metagame/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /metagame/i })).toBeInTheDocument();
     expect(
       screen.queryByRole("radio", { name: /latest/i }),
     ).not.toBeInTheDocument();
@@ -251,9 +249,7 @@ describe("HomePage", () => {
     queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
     renderHome();
 
-    expect(
-      await screen.findByText(/no posts yet/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/no posts yet/i)).toBeInTheDocument();
   });
 
   it("shows an error with retry when the feed fails", async () => {

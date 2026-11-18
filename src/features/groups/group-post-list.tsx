@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LoaderCircleIcon, ShieldOffIcon } from "lucide-react";
+import { LoaderCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -26,8 +26,8 @@ interface GroupPostListProps {
 
 /**
  * The group feed's post list: the shared PostCard plus, for group owners and
- * moderators, a "Remove from group" action that asks for a reason and calls
- * the remove_group_post RPC.
+ * moderators, a "Remove from group" action in the post menu that asks for a
+ * reason and calls the remove_group_post RPC.
  */
 export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
   const removeGroupPost = useRemoveGroupPost();
@@ -49,7 +49,7 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
       reason: trimmed,
     });
     if (result.ok) {
-      toast.success("Post removed from the group.");
+      toast.success("Post removed from the group");
       setRemovingPostId(null);
       setReason("");
       setError(null);
@@ -62,24 +62,19 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
     <>
       <ul className="grid gap-3">
         {posts.map((post) => (
-          <li key={post.id} className="relative">
-            <PostCard post={post} />
-            {canModerate && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                className="absolute right-11 bottom-4 text-muted-foreground"
-                aria-label="Remove from group"
-                onClick={() => {
-                  setRemovingPostId(post.id);
-                  setReason("");
-                  setError(null);
-                }}
-              >
-                <ShieldOffIcon aria-hidden />
-              </Button>
-            )}
+          <li key={post.id}>
+            <PostCard
+              post={post}
+              onRemoveFromGroup={
+                canModerate
+                  ? () => {
+                      setRemovingPostId(post.id);
+                      setReason("");
+                      setError(null);
+                    }
+                  : undefined
+              }
+            />
           </li>
         ))}
       </ul>

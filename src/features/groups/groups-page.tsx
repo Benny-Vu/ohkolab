@@ -1,25 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import {
-  ConstructionIcon,
-  LoaderCircleIcon,
-  PlusIcon,
-  SearchIcon,
-  UsersIcon,
-} from "lucide-react";
+import { LoaderCircleIcon, PlusIcon, SearchIcon } from "lucide-react";
 
 import { Page } from "@/components/page";
+import { EmptyState } from "@/components/empty-state";
+import { SegmentedControl } from "@/components/segmented-control";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth/use-auth";
 import {
   useMyGroups,
@@ -55,38 +44,37 @@ export function GroupsPage() {
         ) : null
       }
     >
-      <Tabs
+      <SegmentedControl
+        aria-label="Groups sections"
+        options={[
+          { value: "mine", label: "My groups" },
+          { value: "discover", label: "Discover" },
+        ]}
         value={tab}
         onValueChange={(value) => setTab(value as "mine" | "discover")}
-      >
-        <TabsList>
-          <TabsTrigger value="mine">My groups</TabsTrigger>
-          <TabsTrigger value="discover">Discover</TabsTrigger>
-        </TabsList>
+      />
 
-        <TabsContent value="mine" className="mt-4">
+      {tab === "mine" ? (
+        <div className="mt-4">
           {user ? (
             <GroupList
               query={myGroups}
-              emptyMessage="You have not joined any groups yet. Find one on Discover."
+              emptyTitle="No groups yet"
+              emptyDescription="You have not joined any groups yet. Find one on Discover."
             />
           ) : (
-            <Card size="sm" className="border-dashed p-6 text-center">
-              <UsersIcon
-                className="mx-auto size-6 text-muted-foreground"
-                aria-hidden
-              />
-              <p className="mt-2 text-sm text-muted-foreground">
-                Sign in to see your groups.
-              </p>
-              <Button asChild size="sm" className="mt-3">
-                <Link to="/login?returnTo=/groups">Sign in</Link>
-              </Button>
-            </Card>
+            <EmptyState
+              title="Sign in to see your groups"
+              action={
+                <Button asChild size="sm">
+                  <Link to="/login?returnTo=/groups">Sign in</Link>
+                </Button>
+              }
+            />
           )}
-        </TabsContent>
-
-        <TabsContent value="discover" className="mt-4">
+        </div>
+      ) : (
+        <div className="mt-4">
           <div className="mb-4 flex items-center gap-2">
             <div className="relative w-full">
               <SearchIcon
@@ -111,30 +99,34 @@ export function GroupsPage() {
           </div>
           <GroupList
             query={publicGroups}
-            emptyMessage={
+            emptyTitle={
+              search.trim() === "" ? "No public groups yet" : "No groups found"
+            }
+            emptyDescription={
               search.trim() === ""
-                ? "No public groups yet. Create the first one!"
+                ? "Create the first one."
                 : `No groups match "${search.trim()}".`
             }
           />
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
     </Page>
   );
 }
 
 interface GroupListProps {
   query: ReturnType<typeof useMyGroups> | ReturnType<typeof usePublicGroups>;
-  emptyMessage: string;
+  emptyTitle: string;
+  emptyDescription: string;
 }
 
-function GroupList({ query, emptyMessage }: GroupListProps) {
+function GroupList({ query, emptyTitle, emptyDescription }: GroupListProps) {
   if (query.isPending) {
     return (
       <div className="grid gap-3" aria-label="Loading groups">
-        <Skeleton className="h-20 w-full rounded-xl" />
-        <Skeleton className="h-20 w-full rounded-xl" />
-        <Skeleton className="h-20 w-full rounded-xl" />
+        <Skeleton className="h-20 w-full rounded-md" />
+        <Skeleton className="h-20 w-full rounded-md" />
+        <Skeleton className="h-20 w-full rounded-md" />
       </div>
     );
   }
@@ -142,15 +134,7 @@ function GroupList({ query, emptyMessage }: GroupListProps) {
   const groups = query.data ?? [];
 
   if (groups.length === 0) {
-    return (
-      <Card size="sm" className="border-dashed p-6 text-center">
-        <ConstructionIcon
-          className="mx-auto size-6 text-muted-foreground"
-          aria-hidden
-        />
-        <p className="mt-2 text-sm text-muted-foreground">{emptyMessage}</p>
-      </Card>
-    );
+    return <EmptyState title={emptyTitle} description={emptyDescription} />;
   }
 
   return (
@@ -168,21 +152,21 @@ function GroupCard({ group }: { group: GroupSummary }) {
   return (
     <Link
       to={`/g/${group.slug}`}
-      className="group block rounded-xl focus-visible:outline-2"
+      className="group block rounded-md focus-visible:outline-2"
     >
-      <Card className="transition-colors group-hover:border-primary/60">
-        <CardHeader>
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <CardTitle className="truncate">{group.name}</CardTitle>
-            <Badge variant="secondary">
-              {group.visibility === "invite_only" ? "Invite only" : "Public"}
-            </Badge>
-          </div>
-          <CardDescription className="line-clamp-2">
-            {group.description ?? "No description yet."}
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="rounded-md border bg-card p-4 transition-colors group-hover:border-primary/60">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="font-heading truncate text-base font-semibold">
+            {group.name}
+          </span>
+          <Badge variant="secondary">
+            {group.visibility === "invite_only" ? "Invite only" : "Public"}
+          </Badge>
+        </div>
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          {group.description ?? "No description yet."}
+        </p>
+      </div>
     </Link>
   );
 }

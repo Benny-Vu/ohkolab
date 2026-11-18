@@ -227,10 +227,7 @@ function MyGroupsRail() {
   const groups = myGroups.data ?? [];
 
   return (
-    <section
-      aria-label="Your groups"
-      className="rounded-lg border bg-card p-4"
-    >
+    <section aria-label="Your groups" className="rounded-lg border bg-card p-4">
       <h2 className="font-heading text-sm font-semibold">Your groups</h2>
       {groups.length > 0 ? (
         <ul className="mt-2 grid gap-1.5">

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   CheckIcon,
-  ConstructionIcon,
   LoaderCircleIcon,
   LogInIcon,
   ShieldCheckIcon,
@@ -14,6 +13,10 @@ import {
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
+import { SegmentedControl } from "@/components/segmented-control";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +36,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
 import {
@@ -82,8 +84,8 @@ export function GroupPage() {
     return (
       <Page title="Group">
         <div className="grid gap-3" aria-label="Loading group">
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full rounded-md" />
+          <Skeleton className="h-64 w-full rounded-md" />
         </div>
       </Page>
     );
@@ -92,18 +94,15 @@ export function GroupPage() {
   if (groupQuery.isError || !groupQuery.data) {
     return (
       <Page title="Group not found" width="narrow">
-        <Card size="sm" className="border-dashed p-6 text-center">
-          <ConstructionIcon
-            className="mx-auto size-6 text-muted-foreground"
-            aria-hidden
-          />
-          <p className="mt-2 text-sm text-muted-foreground">
-            This group does not exist or is not visible.
-          </p>
-          <Button asChild size="sm" className="mt-3">
-            <Link to="/groups">Browse groups</Link>
-          </Button>
-        </Card>
+        <EmptyState
+          title="Group not found"
+          description="This group does not exist or is not visible."
+          action={
+            <Button asChild size="sm">
+              <Link to="/groups">Browse groups</Link>
+            </Button>
+          }
+        />
       </Page>
     );
   }
@@ -162,24 +161,20 @@ function GroupDetail({ slug }: { slug: string }) {
           canModerate={canModerate}
         />
       ) : isInvited ? (
-        <Card size="sm" className="border-dashed p-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            You have been invited to this group. Accept to see the feed and
-            post.
-          </p>
-        </Card>
+        <EmptyState
+          title="You have been invited"
+          description="Accept to see the feed and post."
+        />
       ) : group.visibility === "invite_only" ? (
-        <Card size="sm" className="border-dashed p-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            This group is invite-only. Ask a moderator for an invitation.
-          </p>
-        </Card>
+        <EmptyState
+          title="Invite only"
+          description="This group is invite-only. Ask a moderator for an invitation."
+        />
       ) : (
-        <Card size="sm" className="border-dashed p-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Join this group to see the feed and post.
-          </p>
-        </Card>
+        <EmptyState
+          title="Members only"
+          description="Join this group to see the feed and post."
+        />
       )}
     </Page>
   );
@@ -236,7 +231,7 @@ function MembershipActions({
           size="sm"
           onClick={async () => {
             const result = await acceptInvite.mutateAsync({ groupId });
-            if (result.ok) toast.success("Welcome to the group!");
+            if (result.ok) toast.success("Joined the group");
             else toast.error(result.error.message);
           }}
           disabled={acceptInvite.isPending}
@@ -249,7 +244,7 @@ function MembershipActions({
           variant="outline"
           onClick={async () => {
             const result = await declineInvite.mutateAsync({ groupId });
-            if (result.ok) toast("Invitation declined.");
+            if (result.ok) toast("Invitation declined");
             else toast.error(result.error.message);
           }}
           disabled={declineInvite.isPending}
@@ -268,7 +263,7 @@ function MembershipActions({
         variant="outline"
         onClick={async () => {
           const result = await leaveGroup.mutateAsync({ groupId });
-          if (result.ok) toast("You left the group.");
+          if (result.ok) toast("You left the group");
           else toast.error(result.error.message);
         }}
         disabled={leaveGroup.isPending}
@@ -289,7 +284,7 @@ function MembershipActions({
       onClick={async () => {
         const result = await joinGroup.mutateAsync({ groupId });
         if (result.ok) {
-          toast.success("Welcome to the group!");
+          toast.success("Joined the group");
           track("group_joined", { visibility });
         } else {
           toast.error(result.error.message);
@@ -315,31 +310,35 @@ function GroupTabs({ groupId, slug, ownerId, canModerate }: GroupTabsProps) {
   const isOwner = user?.id === ownerId;
   const [tab, setTab] = useState<"feed" | "members" | "settings">("feed");
 
-  return (
-    <Tabs
-      value={tab}
-      onValueChange={(value) =>
-        setTab(value as "feed" | "members" | "settings")
-      }
-    >
-      <TabsList>
-        <TabsTrigger value="feed">Feed</TabsTrigger>
-        <TabsTrigger value="members">Members</TabsTrigger>
-        {isOwner && <TabsTrigger value="settings">Settings</TabsTrigger>}
-      </TabsList>
+  const options = [
+    { value: "feed", label: "Feed" },
+    { value: "members", label: "Members" },
+    ...(isOwner ? [{ value: "settings", label: "Settings" }] : []),
+  ];
 
-      <TabsContent value="feed" className="mt-4">
-        <GroupFeedTab groupId={groupId} canModerate={canModerate} />
-      </TabsContent>
-      <TabsContent value="members" className="mt-4">
-        <MembersTab groupId={groupId} canModerate={canModerate} />
-      </TabsContent>
-      {isOwner && (
-        <TabsContent value="settings" className="mt-4">
+  return (
+    <div>
+      <SegmentedControl
+        aria-label="Group sections"
+        options={options}
+        value={tab}
+        onValueChange={(value) =>
+          setTab(value as "feed" | "members" | "settings")
+        }
+      />
+
+      <div className="mt-4">
+        {tab === "feed" && (
+          <GroupFeedTab groupId={groupId} canModerate={canModerate} />
+        )}
+        {tab === "members" && (
+          <MembersTab groupId={groupId} canModerate={canModerate} />
+        )}
+        {tab === "settings" && isOwner && (
           <SettingsTab groupId={groupId} slug={slug} />
-        </TabsContent>
-      )}
-    </Tabs>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -356,28 +355,27 @@ function GroupFeedTab({
   if (feed.isPending) {
     return (
       <div className="grid gap-3" aria-label="Loading posts">
-        <Skeleton className="h-28 w-full rounded-xl" />
-        <Skeleton className="h-28 w-full rounded-xl" />
-        <Skeleton className="h-28 w-full rounded-xl" />
+        <Skeleton className="h-28 w-full rounded-md" />
+        <Skeleton className="h-28 w-full rounded-md" />
+        <Skeleton className="h-28 w-full rounded-md" />
       </div>
     );
   }
 
   if (feed.isError) {
     return (
-      <Card size="sm" className="border-dashed p-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          Could not load the group feed.
-        </p>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-3"
-          onClick={() => void feed.refetch()}
-        >
-          Try again
-        </Button>
-      </Card>
+      <ErrorState
+        title="Could not load the group feed"
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void feed.refetch()}
+          >
+            Try again
+          </Button>
+        }
+      />
     );
   }
 
@@ -387,15 +385,10 @@ function GroupFeedTab({
     <div className="grid gap-4">
       {user && <Composer groupId={groupId} />}
       {posts.length === 0 ? (
-        <Card size="sm" className="border-dashed p-6 text-center">
-          <ConstructionIcon
-            className="mx-auto size-6 text-muted-foreground"
-            aria-hidden
-          />
-          <p className="mt-2 text-sm text-muted-foreground">
-            No posts in this group yet. Start the conversation!
-          </p>
-        </Card>
+        <EmptyState
+          title="No posts yet"
+          description="Start the conversation."
+        />
       ) : (
         <GroupPostList posts={posts} canModerate={canModerate} />
       )}
@@ -440,7 +433,7 @@ function MembersTab({
       username: trimmed,
     });
     if (result.ok) {
-      toast.success(`Invitation sent to @${trimmed}.`);
+      toast.success(`Invitation sent to @${trimmed}`);
       setInviteUsername("");
       setInviteError(null);
     } else {
@@ -494,13 +487,11 @@ function MembersTab({
 
       {membersQuery.isPending ? (
         <div className="grid gap-3" aria-label="Loading members">
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-md" />
+          <Skeleton className="h-16 w-full rounded-md" />
         </div>
       ) : members.length === 0 ? (
-        <Card size="sm" className="border-dashed p-6 text-center">
-          <p className="text-sm text-muted-foreground">No members yet.</p>
-        </Card>
+        <EmptyState title="No members yet" />
       ) : (
         <ul className="grid gap-3">
           {members.map((member) => (
@@ -546,9 +537,15 @@ function MemberRow({
   const canRemove = canModerate && !isSelf && member.role !== "owner";
 
   return (
-    <Card size="sm">
-      <CardContent className="flex flex-wrap items-center justify-between gap-3">
+    <div className="rounded-md border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
+          <UserAvatar
+            username={member.profile?.username ?? member.userId}
+            displayName={member.profile?.displayName ?? null}
+            avatarSpecies={member.profile?.avatarSpecies ?? null}
+            size="sm"
+          />
           <Link
             to={`/u/${member.profile?.username ?? member.userId}`}
             className="truncate font-medium hover:underline"
@@ -580,8 +577,8 @@ function MemberRow({
                 if (result.ok)
                   toast.success(
                     member.role === "moderator"
-                      ? "Demoted to member."
-                      : "Promoted to moderator.",
+                      ? "Demoted to member"
+                      : "Promoted to moderator",
                   );
                 else toast.error(result.error.message);
               }}
@@ -599,7 +596,7 @@ function MemberRow({
                     groupId,
                     userId: member.userId,
                   });
-                  if (result.ok) toast("Member removed.");
+                  if (result.ok) toast("Member removed");
                   else toast.error(result.error.message);
                 }}
                 disabled={onRemove.isPending}
@@ -610,8 +607,8 @@ function MemberRow({
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -653,7 +650,7 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
       visibility,
     });
     if (result.ok) {
-      toast.success("Group updated.");
+      toast.success("Group updated");
       setError(null);
       setSaved(true);
     } else {
@@ -668,7 +665,7 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
       slug: group.slug,
     });
     if (result.ok) {
-      toast("Group deleted.");
+      toast("Group deleted");
       void navigate("/groups");
     } else {
       setDeleteError(result.error.message);
@@ -734,7 +731,7 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           {saved && (
-            <p className="text-sm text-muted-foreground">Changes saved.</p>
+            <p className="text-sm text-muted-foreground">Changes saved</p>
           )}
           <div>
             <Button size="sm" onClick={save} disabled={!canSave}>

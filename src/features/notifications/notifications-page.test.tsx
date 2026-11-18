@@ -131,9 +131,7 @@ describe("NotificationsPage", () => {
       createFakeAuth({ user: null, session: null, profile: null }),
     );
 
-    expect(
-      screen.getByText("Sign in to see your notifications."),
-    ).toBeVisible();
+    expect(screen.getByText("Sign in to see your notifications")).toBeVisible();
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",
       "/login?returnTo=/notifications",

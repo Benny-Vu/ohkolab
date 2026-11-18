@@ -341,9 +341,7 @@ describe("PublicProfilePage", () => {
     });
     renderProfilePage(client, "misty");
 
-    await user.click(
-      await screen.findByRole("radio", { name: "Teams" }),
-    );
+    await user.click(await screen.findByRole("radio", { name: "Teams" }));
 
     expect(await screen.findByText("Champion team")).toBeInTheDocument();
     expect(screen.getAllByText("Misty")).toHaveLength(2);
@@ -370,9 +368,7 @@ describe("PublicProfilePage", () => {
     });
     renderProfilePage(client, "brock");
 
-    await user.click(
-      await screen.findByRole("radio", { name: "Teams" }),
-    );
+    await user.click(await screen.findByRole("radio", { name: "Teams" }));
 
     expect(
       await screen.findByText("Could not load teams", {}, { timeout: 4000 }),
@@ -397,9 +393,7 @@ describe("PublicProfilePage", () => {
     });
     renderProfilePage(client, "tracey");
 
-    await user.click(
-      await screen.findByRole("radio", { name: "Teams" }),
-    );
+    await user.click(await screen.findByRole("radio", { name: "Teams" }));
 
     expect(await screen.findByText("No public teams yet")).toBeInTheDocument();
     expect(screen.getByText("T")).toBeInTheDocument();
@@ -419,9 +413,7 @@ describe("PublicProfilePage", () => {
     });
     renderProfilePage(client, "copyu");
 
-    await user.click(
-      await screen.findByRole("radio", { name: "Teams" }),
-    );
+    await user.click(await screen.findByRole("radio", { name: "Teams" }));
     await user.click(await screen.findByRole("button", { name: "View" }));
 
     expect(

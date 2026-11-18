@@ -22,7 +22,9 @@ export function TrendingStrip() {
       aria-label="Trending in doubles"
       className="rounded-lg border bg-card p-3"
     >
-      <h2 className="font-heading text-sm font-semibold">Trending in doubles</h2>
+      <h2 className="font-heading text-sm font-semibold">
+        Trending in doubles
+      </h2>
       <ul className="mt-2 grid grid-cols-3 gap-2">
         {top.map((entry) => {
           const percent = entry.usage === null ? 0 : entry.usage * 100;
