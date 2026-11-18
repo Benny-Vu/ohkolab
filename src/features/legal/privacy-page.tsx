@@ -8,6 +8,7 @@ import {
   LegalText,
 } from "@/features/legal/legal-page";
 import { CONTACT_EMAIL, LAST_UPDATED } from "@/features/legal/legal-info";
+import { useT } from "@/lib/i18n/t";
 import { imagePostsEnabled } from "@/lib/social";
 
 // The image-post text (approved by the owner on 2026-11-18) is shown only when
@@ -36,6 +37,7 @@ const SECTIONS = [
 ];
 
 export function PrivacyPage() {
+  const t = useT();
   return (
     <LegalPage
       title="Privacy Policy"
@@ -242,8 +244,8 @@ export function PrivacyPage() {
             </li>
             <li>
               whether you have turned crash reports and usage statistics off,
-              and
             </li>
+            <li>{t("privacy.languageChoice")}, and</li>
             <li>your sign-in session, which keeps you signed in.</li>
           </LegalList>
           <LegalText>

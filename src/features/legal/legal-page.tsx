@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
 import { Page } from "@/components/page";
+import { getLocale } from "@/lib/i18n/locale";
+import { t } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 
 export interface LegalSection {
@@ -19,7 +21,9 @@ interface LegalPageProps {
 /**
  * Reading layout for the legal pages: a 680px column with a clear heading
  * scale and, on desktop, a table of contents rail. The text itself lives in
- * the page components; this frame only sets the layout.
+ * the page components; this frame only sets the layout. In Japanese mode the
+ * pages stay English (the official versions) and carry one Japanese notice
+ * line at the top.
  */
 export function LegalPage({
   title,
@@ -27,6 +31,7 @@ export function LegalPage({
   sections,
   children,
 }: LegalPageProps) {
+  const japanese = getLocale() === "ja";
   return (
     <Page title={title} description={description} width="narrow">
       <div className="flex gap-10">
@@ -50,7 +55,17 @@ export function LegalPage({
             ))}
           </ul>
         </nav>
-        <div className="min-w-0 flex-1">{children}</div>
+        <div className="min-w-0 flex-1">
+          {japanese && (
+            <p
+              lang="ja"
+              className="mb-6 rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground"
+            >
+              {t("legal.japaneseNotice")}
+            </p>
+          )}
+          {children}
+        </div>
       </div>
     </Page>
   );

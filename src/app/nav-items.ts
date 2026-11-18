@@ -7,9 +7,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import type { TranslationKey } from "@/lib/i18n/en";
+
 export interface NavItem {
   to: string;
-  label: string;
+  labelKey: TranslationKey;
   icon: LucideIcon;
   /** Match the path exactly (used for the home tab). */
   end?: boolean;
@@ -17,9 +19,9 @@ export interface NavItem {
 
 /** The five destinations shown in the header on desktop and the tab bar on phones. */
 export const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Home", icon: HouseIcon, end: true },
-  { to: "/calc", label: "Calc", icon: CalculatorIcon },
-  { to: "/teams", label: "Teams", icon: SwordsIcon },
-  { to: "/meta", label: "Meta", icon: ChartColumnIcon },
-  { to: "/profile", label: "Profile", icon: CircleUserIcon },
+  { to: "/", labelKey: "nav.home", icon: HouseIcon, end: true },
+  { to: "/calc", labelKey: "nav.calc", icon: CalculatorIcon },
+  { to: "/teams", labelKey: "nav.teams", icon: SwordsIcon },
+  { to: "/meta", labelKey: "nav.meta", icon: ChartColumnIcon },
+  { to: "/profile", labelKey: "nav.profile", icon: CircleUserIcon },
 ];
