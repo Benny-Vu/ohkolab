@@ -120,9 +120,29 @@ export function offensiveCoverage(
   });
 }
 
+/**
+ * A warning's words, as a translation key plus its params: the page that
+ * renders the warning passes both to `t()`, so each locale can word the
+ * sentence its own way. `teams.warnSetProblem` embeds the data layer's
+ * validation sentence, which stays as-is.
+ */
+export type TeamWarningMessage =
+  | {
+      key: "teams.warnDuplicateSpecies";
+      params: { name: string; count: number };
+    }
+  | {
+      key: "teams.warnDuplicateItem";
+      params: { name: string; count: number };
+    }
+  | {
+      key: "teams.warnSetProblem";
+      params: { name: string; problem: string };
+    };
+
 export interface TeamWarning {
   kind: "duplicate-species" | "duplicate-item" | "set";
-  message: string;
+  message: TeamWarningMessage;
   /** Positions of the members concerned, in team order. */
   members: number[];
 }
@@ -156,7 +176,10 @@ export function teamWarnings(members: readonly PokemonSet[]): TeamWarning[] {
     if (positions.length < 2) continue;
     warnings.push({
       kind: "duplicate-species",
-      message: `${species} is on the team ${positions.length} times.`,
+      message: {
+        key: "teams.warnDuplicateSpecies",
+        params: { name: species, count: positions.length },
+      },
       members: positions,
     });
   }
@@ -166,7 +189,10 @@ export function teamWarnings(members: readonly PokemonSet[]): TeamWarning[] {
     if (positions.length < 2) continue;
     warnings.push({
       kind: "duplicate-item",
-      message: `${item} is held by ${positions.length} Pokémon.`,
+      message: {
+        key: "teams.warnDuplicateItem",
+        params: { name: item, count: positions.length },
+      },
       members: positions,
     });
   }
@@ -175,7 +201,10 @@ export function teamWarnings(members: readonly PokemonSet[]): TeamWarning[] {
     for (const problem of validateSet(member)) {
       warnings.push({
         kind: "set",
-        message: `${memberLabel(member)}: ${problem}`,
+        message: {
+          key: "teams.warnSetProblem",
+          params: { name: memberLabel(member), problem },
+        },
         members: [index],
       });
     }

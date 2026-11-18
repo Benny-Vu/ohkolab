@@ -9,18 +9,20 @@ function set(species: string, patch: Partial<PokemonSet> = {}): PokemonSet {
 }
 
 describe("defensiveWeakSpots", () => {
-  it("calls out shared weaknesses in words", () => {
+  it("calls out shared weaknesses as structured spots", () => {
     const members = [set("Garchomp"), set("Dragonite"), set("Salamence")];
-    expect(defensiveWeakSpots(members)).toContain(
-      "3 Pokémon weak to Ice, no resist",
-    );
+    expect(defensiveWeakSpots(members)).toContainEqual({
+      type: "Ice",
+      weak: 3,
+      noResist: true,
+    });
   });
 
   it("drops the no-resist note when something resists", () => {
     const members = [set("Garchomp"), set("Dragonite"), set("Incineroar")];
     const spots = defensiveWeakSpots(members);
-    expect(spots).toContain("2 Pokémon weak to Ice");
-    expect(spots).not.toContain("2 Pokémon weak to Ice, no resist");
+    expect(spots).toContainEqual({ type: "Ice", weak: 2, noResist: false });
+    expect(spots).not.toContainEqual({ type: "Ice", weak: 2, noResist: true });
   });
 
   it("ignores types only one Pokémon is weak to", () => {

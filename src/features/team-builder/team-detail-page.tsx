@@ -62,7 +62,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { calcStats, createDefaultSet, validateSet } from "@/data";
+import {
+  calcStats,
+  createDefaultSet,
+  useDisplayName,
+  validateSet,
+} from "@/data";
 import { SpeedTiers } from "@/features/team-builder/speed-tiers";
 import { TypeHeatMap } from "@/features/team-builder/type-heat-map";
 import { statLabel } from "@/components/stat-labels";
@@ -94,6 +99,7 @@ export function TeamDetailPage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
   const t = useT();
+  const display = useDisplayName();
   const {
     teams,
     rename,
@@ -598,7 +604,9 @@ export function TeamDetailPage() {
                       <AlertTitle>
                         {t(WARNING_TITLE_KEYS[warning.kind])}
                       </AlertTitle>
-                      <AlertDescription>{warning.message}</AlertDescription>
+                      <AlertDescription>
+                        {t(warning.message.key, warning.message.params)}
+                      </AlertDescription>
                     </Alert>
                   ))}
                 </div>
@@ -606,8 +614,16 @@ export function TeamDetailPage() {
               {weakSpots.length > 0 && (
                 <div className="flex flex-col gap-1">
                   {weakSpots.map((spot) => (
-                    <p key={spot} className="text-sm">
-                      {spot}
+                    <p key={spot.type} className="text-sm">
+                      {spot.noResist
+                        ? t("teams.weakSpotNoResist", {
+                            count: spot.weak,
+                            type: display("type", spot.type),
+                          })
+                        : t("teams.weakSpot", {
+                            count: spot.weak,
+                            type: display("type", spot.type),
+                          })}
                     </p>
                   ))}
                 </div>

@@ -8,7 +8,7 @@ import { KoLabel } from "@/components/ko-label";
 import { TypeBadge } from "@/components/type-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getMove } from "@/data";
+import { getMove, useDisplayName } from "@/data";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import type { Translate } from "@/components/stat-labels";
@@ -22,7 +22,7 @@ import {
   resolveSelection,
   type MoveOutcome,
 } from "@/lib/calc/results";
-import { fasterSide, sideSpeed } from "@/lib/calc/speed";
+import { fasterSide, sideSpeed, type SpeedModifier } from "@/lib/calc/speed";
 import {
   SIDE_IDS,
   otherSide,
@@ -265,6 +265,26 @@ function DirectionContent({
   );
 }
 
+/** One Speed modifier in words: a stage as "+1", the rest localized. */
+function modifierText(
+  modifier: SpeedModifier,
+  t: Translate,
+  display: ReturnType<typeof useDisplayName>,
+): string {
+  switch (modifier.kind) {
+    case "stage":
+      return modifier.stage > 0 ? `+${modifier.stage}` : `${modifier.stage}`;
+    case "tailwind":
+      return t("calc.speedTailwind");
+    case "ability":
+      return display("ability", modifier.ability);
+    case "item":
+      return display("item", modifier.item);
+    case "paralysis":
+      return t("calc.speedParalysis");
+  }
+}
+
 function SpeedLine({
   names,
   state,
@@ -273,6 +293,7 @@ function SpeedLine({
   state: CalcState;
 }) {
   const t = useT();
+  const display = useDisplayName();
   const speeds = { p1: sideSpeed(state, "p1"), p2: sideSpeed(state, "p2") };
   const first = fasterSide(
     { p1: speeds.p1.final, p2: speeds.p2.final },
@@ -281,7 +302,9 @@ function SpeedLine({
   const speedText = (id: SideId) =>
     `${names[id]} ${speeds[id].final}${
       speeds[id].modifiers.length > 0
-        ? ` (${speeds[id].modifiers.join(", ")})`
+        ? ` (${speeds[id].modifiers
+            .map((modifier) => modifierText(modifier, t, display))
+            .join(", ")})`
         : ""
     }`;
 
@@ -303,7 +326,7 @@ function SpeedLine({
           <span aria-hidden="true" className="text-muted-foreground">
             {"\u00b7"}
           </span>
-          <span className="text-muted-foreground">Trick Room</span>
+          <span className="text-muted-foreground">{t("calc.trickRoom")}</span>
         </>
       ) : null}
     </p>

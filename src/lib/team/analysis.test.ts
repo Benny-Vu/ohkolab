@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createDefaultSet } from "@/data";
+import { t } from "@/lib/i18n/t";
 import {
   attackingTypes,
   battleTypes,
@@ -275,12 +276,18 @@ describe("teamWarnings", () => {
     ).toEqual([
       {
         kind: "duplicate-species",
-        message: "Garchomp is on the team 3 times.",
+        message: {
+          key: "teams.warnDuplicateSpecies",
+          params: { name: "Garchomp", count: 3 },
+        },
         members: [0, 2, 4],
       },
       {
         kind: "duplicate-species",
-        message: "Rotom is on the team 2 times.",
+        message: {
+          key: "teams.warnDuplicateSpecies",
+          params: { name: "Rotom", count: 2 },
+        },
         members: [1, 3],
       },
     ]);
@@ -297,7 +304,10 @@ describe("teamWarnings", () => {
     ).toEqual([
       {
         kind: "duplicate-item",
-        message: "Life Orb is held by 2 Pokémon.",
+        message: {
+          key: "teams.warnDuplicateItem",
+          params: { name: "Life Orb", count: 2 },
+        },
         members: [0, 2],
       },
     ]);
@@ -316,19 +326,50 @@ describe("teamWarnings", () => {
     expect(warnings).toEqual([
       {
         kind: "set",
-        message: "Kitty: Incineroar cannot have the ability Levitate.",
+        message: {
+          key: "teams.warnSetProblem",
+          params: {
+            name: "Kitty",
+            problem: "Incineroar cannot have the ability Levitate.",
+          },
+        },
         members: [1],
       },
       {
         kind: "set",
-        message: "Kitty: 96 Stat Points spent; the limit is 66.",
+        message: {
+          key: "teams.warnSetProblem",
+          params: {
+            name: "Kitty",
+            problem: "96 Stat Points spent; the limit is 66.",
+          },
+        },
         members: [1],
       },
       {
         kind: "set",
-        message: "Missingno: Missingno is not in Pokémon Champions.",
+        message: {
+          key: "teams.warnSetProblem",
+          params: {
+            name: "Missingno",
+            problem: "Missingno is not in Pokémon Champions.",
+          },
+        },
         members: [2],
       },
     ]);
+  });
+
+  it("words the warnings in English through t()", () => {
+    const warnings = teamWarnings([
+      set("Garchomp"),
+      set("Garchomp", { item: "Life Orb" }),
+      set("Pikachu", { item: "Life Orb" }),
+    ]);
+    const sentences = warnings.map((warning) =>
+      t(warning.message.key, warning.message.params),
+    );
+    expect(sentences).toContain("Garchomp is on the team 2 times.");
+    expect(sentences).toContain("Life Orb is held by 2 Pokémon.");
   });
 });

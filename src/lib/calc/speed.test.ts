@@ -119,7 +119,12 @@ describe("sideSpeed", () => {
     expect(sideSpeed(state, "p1")).toEqual({
       stat: 169,
       final: 379,
-      modifiers: ["+1", "Tailwind", "Choice Scarf", "paralysis"],
+      modifiers: [
+        { kind: "stage", stage: 1 },
+        { kind: "tailwind" },
+        { kind: "item", item: "Choice Scarf" },
+        { kind: "paralysis" },
+      ],
     });
     // The other side has its own Tailwind and status.
     expect(sideSpeed(state, "p2").modifiers).toEqual([]);
@@ -133,7 +138,7 @@ describe("sideSpeed", () => {
       value: -1,
     });
     const speed = sideSpeed(state, "p2");
-    expect(speed.modifiers).toEqual(["-1"]);
+    expect(speed.modifiers).toEqual([{ kind: "stage", stage: -1 }]);
     expect(speed.final).toBe(applyStage(speed.stat, -1));
   });
 
@@ -168,7 +173,7 @@ describe("sideSpeed", () => {
     expect(sideSpeed(rain, "p1")).toEqual({
       stat,
       final: stat * 2,
-      modifiers: ["Swift Swim"],
+      modifiers: [{ kind: "ability", ability: "Swift Swim" }],
     });
 
     const sun = calcReducer(dry, { type: "setWeather", weather: "Sun" });
