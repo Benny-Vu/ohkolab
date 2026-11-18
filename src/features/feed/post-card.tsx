@@ -38,6 +38,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { DamageMeter } from "@/components/damage-meter";
 import { KoLabel } from "@/components/ko-label";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import { useTeams } from "@/lib/team";
 import {
   useDeletePost,
@@ -85,6 +86,7 @@ export function PostCard({
 }: PostCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
   const toggleLike = useToggleLike(post.id);
   const toggleBlock = useToggleBlock(post.author_id);
   const deletePost = useDeletePost();
@@ -128,7 +130,7 @@ export function PostCard({
       format: team.format,
       members: team.members,
     });
-    toast.success(`Copied "${created.name}" to your teams.`);
+    toast.success(t("postCard.copiedTeam", { name: created.name }));
   }
 
   function handleOpenInCalc() {
@@ -145,7 +147,7 @@ export function PostCard({
     });
     if (result.ok) {
       setEditing(false);
-      toast.success("Post updated.");
+      toast.success(t("postCard.updatedToast"));
     } else {
       toast.error(result.error.message);
     }
@@ -155,7 +157,7 @@ export function PostCard({
     const result = await deletePost.mutateAsync(post.id);
     if (result.ok) {
       setConfirmDelete(false);
-      toast.success("Post deleted.");
+      toast.success(t("postCard.deletedToast"));
     } else {
       toast.error(result.error.message);
     }
@@ -165,7 +167,7 @@ export function PostCard({
     const result = await toggleBlock.mutateAsync();
     if (result.ok) {
       setBlocking(false);
-      toast.success(`Blocked @${post.author_username}.`);
+      toast.success(t("postCard.blockedToast", { name: post.author_username }));
     } else {
       toast.error(result.error.message);
     }
@@ -174,7 +176,7 @@ export function PostCard({
   async function handleRemove() {
     const reason = removeReason.trim();
     if (reason === "") {
-      toast.error("Enter a reason for the removal.");
+      toast.error(t("postCard.enterReason"));
       return;
     }
     const result = await removeContent.mutateAsync({
@@ -185,7 +187,7 @@ export function PostCard({
     if (result.ok) {
       setRemoving(false);
       setRemoveReason("");
-      toast.success("Post removed.");
+      toast.success(t("postCard.removedToast"));
     } else {
       toast.error(result.error.message);
     }
@@ -222,7 +224,7 @@ export function PostCard({
           {editing ? (
             <div className="mt-2 grid gap-2">
               <Textarea
-                aria-label="Edit post"
+                aria-label={t("postCard.editAria")}
                 value={editBody}
                 onChange={(event) => setEditBody(event.target.value)}
                 rows={3}
@@ -236,7 +238,7 @@ export function PostCard({
                   {updatePost.isPending && (
                     <LoaderCircleIcon className="animate-spin" aria-hidden />
                   )}
-                  Save
+                  {t("common.save")}
                 </Button>
                 <Button
                   size="sm"
@@ -244,7 +246,7 @@ export function PostCard({
                   onClick={() => setEditing(false)}
                   disabled={updatePost.isPending}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </div>
             </div>
@@ -272,11 +274,11 @@ export function PostCard({
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button size="xs" variant="outline" onClick={handleCopyTeam}>
                   <CopyIcon aria-hidden />
-                  Copy to my teams
+                  {t("postCard.copyTeam")}
                 </Button>
                 <Button size="xs" variant="outline" onClick={handleOpenInCalc}>
                   <ExternalLinkIcon aria-hidden />
-                  Open in calc
+                  {t("postCard.openInCalc")}
                 </Button>
               </div>
             </div>
@@ -286,7 +288,10 @@ export function PostCard({
             <div className="mt-3 rounded-md border bg-surface-sunken p-3">
               <div className="flex items-center gap-2">
                 <p className="min-w-0 truncate text-sm font-medium">
-                  {calcResult.attacker} vs {calcResult.defender}
+                  {t("postCard.vs", {
+                    a: calcResult.attacker,
+                    b: calcResult.defender,
+                  })}
                 </p>
                 {(() => {
                   const ko = koResultOf(calcResult.koText);
@@ -307,7 +312,10 @@ export function PostCard({
                     : `${calcResult.minPercent} - ${calcResult.maxPercent}%`}
                 </span>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  {calcResult.min}-{calcResult.max} damage
+                  {t("postCard.damageRange", {
+                    min: calcResult.min,
+                    max: calcResult.max,
+                  })}
                 </span>
               </div>
               <DamageMeter
@@ -333,7 +341,7 @@ export function PostCard({
           onClick={handleLike}
           disabled={toggleLike.isPending}
           aria-pressed={liked}
-          aria-label={liked ? "Unlike" : "Like"}
+          aria-label={liked ? t("postCard.unlike") : t("postCard.like")}
           className="text-muted-foreground tabular-nums"
         >
           <HeartIcon
@@ -346,7 +354,12 @@ export function PostCard({
           <Button
             size="xs"
             variant="ghost"
-            aria-label={`${post.comment_count} ${post.comment_count === 1 ? "comment" : "comments"}`}
+            aria-label={t(
+              post.comment_count === 1
+                ? "postCard.commentAriaOne"
+                : "postCard.commentAriaMany",
+              { n: post.comment_count },
+            )}
             onClick={() => navigate(`/post/${post.id}`)}
             className="text-muted-foreground tabular-nums"
           >
@@ -359,7 +372,7 @@ export function PostCard({
             <Button
               size="icon-xs"
               variant="ghost"
-              aria-label="Post options"
+              aria-label={t("postCard.options")}
               className="ml-auto"
             >
               <MoreHorizontalIcon aria-hidden />
@@ -375,25 +388,25 @@ export function PostCard({
                   }}
                 >
                   <PencilIcon aria-hidden />
-                  Edit
+                  {t("common.edit")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
                   onSelect={() => setConfirmDelete(true)}
                 >
                   <Trash2Icon aria-hidden />
-                  Delete
+                  {t("common.delete")}
                 </DropdownMenuItem>
               </>
             ) : (
               <>
                 <DropdownMenuItem onSelect={() => setReporting(true)}>
                   <FlagIcon aria-hidden />
-                  Report post
+                  {t("postCard.reportPost")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setBlocking(true)}>
                   <BanIcon aria-hidden />
-                  Block @{post.author_username}
+                  {t("postCard.blockUser", { name: post.author_username })}
                 </DropdownMenuItem>
               </>
             )}
@@ -405,7 +418,7 @@ export function PostCard({
                   onSelect={() => onRemoveFromGroup()}
                 >
                   <ShieldOffIcon aria-hidden />
-                  Remove from group
+                  {t("postCard.removeFromGroup")}
                 </DropdownMenuItem>
               </>
             )}
@@ -417,7 +430,7 @@ export function PostCard({
                   onSelect={() => setRemoving(true)}
                 >
                   <Trash2Icon aria-hidden />
-                  Remove post
+                  {t("postCard.removePost")}
                 </DropdownMenuItem>
               </>
             )}
@@ -435,15 +448,14 @@ export function PostCard({
       <Dialog open={removing} onOpenChange={setRemoving}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Remove this post?</DialogTitle>
+            <DialogTitle>{t("postCard.removeTitle")}</DialogTitle>
             <DialogDescription>
-              The post is removed for everyone and the author is notified with
-              your reason.
+              {t("postCard.removeDescription")}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            aria-label="Reason for the removal"
-            placeholder="Reason for the removal"
+            aria-label={t("postCard.reason")}
+            placeholder={t("postCard.reason")}
             value={removeReason}
             onChange={(event) => setRemoveReason(event.target.value)}
           />
@@ -453,7 +465,7 @@ export function PostCard({
               onClick={() => setRemoving(false)}
               disabled={removeContent.isPending}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -463,7 +475,7 @@ export function PostCard({
               {removeContent.isPending && (
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               )}
-              Remove post
+              {t("postCard.removePost")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -472,9 +484,9 @@ export function PostCard({
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete post?</DialogTitle>
+            <DialogTitle>{t("postCard.deleteTitle")}</DialogTitle>
             <DialogDescription>
-              This cannot be undone. The post and its comments will be removed.
+              {t("postCard.deleteDescription")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -483,7 +495,7 @@ export function PostCard({
               onClick={() => setConfirmDelete(false)}
               disabled={deletePost.isPending}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -493,7 +505,7 @@ export function PostCard({
               {deletePost.isPending && (
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               )}
-              Delete
+              {t("common.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -502,10 +514,11 @@ export function PostCard({
       <Dialog open={blocking} onOpenChange={setBlocking}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Block @{post.author_username}?</DialogTitle>
+            <DialogTitle>
+              {t("postCard.blockTitle", { name: post.author_username })}
+            </DialogTitle>
             <DialogDescription>
-              You will no longer see their posts in your Following feed. You can
-              unblock them from your account page.
+              {t("postCard.blockDescription")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -514,7 +527,7 @@ export function PostCard({
               onClick={() => setBlocking(false)}
               disabled={toggleBlock.isPending}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -524,7 +537,7 @@ export function PostCard({
               {toggleBlock.isPending && (
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               )}
-              Block
+              {t("postCard.block")}
             </Button>
           </DialogFooter>
         </DialogContent>

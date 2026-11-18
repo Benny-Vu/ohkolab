@@ -230,7 +230,7 @@ describe("GroupPage", () => {
     renderGroupPage();
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Group" }),
+      screen.getByRole("heading", { level: 1, name: "Loading group" }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Loading group")).toBeInTheDocument();
   });
@@ -378,8 +378,8 @@ describe("GroupPage", () => {
 
     expect(screen.getByText("Lance")).toBeInTheDocument();
     expect(screen.getByText("Brock")).toBeInTheDocument();
-    expect(screen.getAllByText("owner").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("moderator").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Owner").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Moderator").length).toBeGreaterThan(0);
   });
 
   it("hides the settings tab from plain members", () => {

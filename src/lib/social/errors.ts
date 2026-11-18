@@ -2,7 +2,12 @@
  * Error mapping for the social data layer: database errors become a small set
  * of codes with user-facing messages, so Phase 2 screens can react to
  * rate limits, suspensions and missing tables without parsing Postgres.
+ * The messages come from the dictionaries (`social.errors.*`), so they
+ * follow the active locale.
  */
+
+import type { TranslationKey } from "@/lib/i18n/en";
+import { t } from "@/lib/i18n/t";
 
 export type SocialErrorCode =
   | "not_configured"
@@ -25,26 +30,25 @@ export interface SocialFailure {
 export type SocialResult<T> =
   { ok: true; data: T } | { ok: false; error: SocialFailure };
 
-const MESSAGES: Record<SocialErrorCode, string> = {
-  not_configured: "The community feed is not available right now.",
-  not_installed: "The community feed is not set up yet. Try again later.",
-  not_signed_in: "Sign in to use the community feed.",
-  rate_limited:
-    "You are posting too quickly. Wait a few minutes and try again.",
-  suspended: "This account cannot post right now.",
-  too_long: "That is too long. Shorten it and try again.",
-  not_found: "That is no longer available.",
-  forbidden: "You cannot do that.",
-  invalid_input: "That input is not valid.",
-  network: "Could not reach the server. Check your connection and try again.",
-  unknown: "Something went wrong. Try again.",
+const MESSAGE_KEYS: Record<SocialErrorCode, TranslationKey> = {
+  not_configured: "social.errors.not_configured",
+  not_installed: "social.errors.not_installed",
+  not_signed_in: "social.errors.not_signed_in",
+  rate_limited: "social.errors.rate_limited",
+  suspended: "social.errors.suspended",
+  too_long: "social.errors.too_long",
+  not_found: "social.errors.not_found",
+  forbidden: "social.errors.forbidden",
+  invalid_input: "social.errors.invalid_input",
+  network: "social.errors.network",
+  unknown: "social.errors.unknown",
 };
 
 export function socialFailure(
   code: SocialErrorCode,
   message?: string,
 ): SocialFailure {
-  return { code, message: message ?? MESSAGES[code] };
+  return { code, message: message ?? t(MESSAGE_KEYS[code]) };
 }
 
 export function socialFail<T = never>(

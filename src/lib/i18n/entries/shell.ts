@@ -40,6 +40,7 @@ export const shellEn = {
   "common.back": "Back",
   "common.close": "Close",
   "common.search": "Search",
+  "common.signIn": "Sign in",
   "common.signOut": "Sign out",
   "common.signedOut": "Signed out",
 } as const;
@@ -81,6 +82,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "common.back": "戻る",
   "common.close": "閉じる",
   "common.search": "検索",
+  "common.signIn": "サインイン",
   "common.signOut": "サインアウト",
   "common.signedOut": "サインアウトしました",
 };

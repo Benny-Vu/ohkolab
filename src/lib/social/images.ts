@@ -19,6 +19,7 @@ import {
 
 import { useAuth } from "@/lib/auth/use-auth";
 import type { PostImageRow } from "@/lib/database.types";
+import { t } from "@/lib/i18n/t";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 
 import {
@@ -174,22 +175,16 @@ export async function prepareImage(
   pipeline: ImagePipeline = browserPipeline,
 ): Promise<SocialResult<PreparedImage>> {
   if (file.size > IMAGE_MAX_INPUT_BYTES) {
-    return socialFail(
-      "invalid_input",
-      "Images must be under 15 MB. Pick a smaller file.",
-    );
+    return socialFail("invalid_input", t("social.images.tooBig"));
   }
   if (!file.type.startsWith("image/")) {
-    return socialFail("invalid_input", "That file is not an image.");
+    return socialFail("invalid_input", t("social.images.notImage"));
   }
   let bitmap: ImageBitmapLike;
   try {
     bitmap = await pipeline.createBitmap(file as File);
   } catch {
-    return socialFail(
-      "invalid_input",
-      "That file could not be read as an image.",
-    );
+    return socialFail("invalid_input", t("social.images.unreadable"));
   }
   try {
     const size = scaledDimensions(bitmap.width, bitmap.height);
@@ -198,20 +193,14 @@ export async function prepareImage(
     canvas.height = size.height;
     const context = canvas.getContext("2d");
     if (!context) {
-      return socialFail(
-        "unknown",
-        "Your browser could not process this image. Try another one.",
-      );
+      return socialFail("unknown", t("social.images.noCanvas"));
     }
     context.drawImage(bitmap, 0, 0, size.width, size.height);
     const blob = await new Promise<Blob | null>((resolve) => {
       canvas.toBlob(resolve, "image/webp", IMAGE_WEBP_QUALITY);
     });
     if (!blob || blob.type !== "image/webp") {
-      return socialFail(
-        "invalid_input",
-        "This image could not be converted. Try another one.",
-      );
+      return socialFail("invalid_input", t("social.images.unconvertible"));
     }
     return socialSucceed({ blob, width: size.width, height: size.height });
   } finally {
@@ -369,7 +358,7 @@ export function useAttachPostImages(
       if (input.images.length > IMAGE_POSTS_MAX) {
         return socialFail(
           "invalid_input",
-          `A post can have at most ${IMAGE_POSTS_MAX} images.`,
+          t("social.images.tooMany", { n: IMAGE_POSTS_MAX }),
         );
       }
       const outcomes: ImageAttachOutcome[] = [];

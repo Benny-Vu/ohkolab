@@ -1,8 +1,11 @@
 /**
  * Pure display logic for notifications: the verb-phrase sentence and target
  * link for each notification type, plus actor labels. No I/O, no React.
+ * The sentences come from the dictionaries and follow the actor's name, so
+ * the Japanese phrases begin with the subject particle.
  */
 
+import { t } from "@/lib/i18n/t";
 import type {
   NotificationActor,
   NotificationItem,
@@ -16,10 +19,10 @@ export interface NotificationSentence {
   to: string | null;
 }
 
-/** The actor's display name, or "Someone" when the account was deleted. */
+/** The actor's display name, or the localized "Someone" for deleted accounts. */
 export function actorLabel(actor: NotificationActor | null): string {
   if (!actor) {
-    return "Someone";
+    return t("notifications.someone");
   }
   return actor.displayName ?? actor.username;
 }
@@ -38,21 +41,24 @@ export function describeNotification(
   switch (item.type) {
     case "like":
       return {
-        text: "liked your post",
+        text: t("notifications.like"),
         to: item.postId ? `/post/${item.postId}` : null,
       };
     case "comment":
       return {
-        text: "commented on your post",
+        text: t("notifications.comment"),
         to: item.postId ? `/post/${item.postId}` : null,
       };
     case "follow":
-      return { text: "followed you", to: actorProfilePath(item.actor) };
+      return {
+        text: t("notifications.follow"),
+        to: actorProfilePath(item.actor),
+      };
     case "moderation":
       return describeModeration(item);
     case "appeal":
       return {
-        text: "reviewed your appeal",
+        text: t("notifications.appeal"),
         to: item.moderationActionId
           ? `/moderation/${item.moderationActionId}`
           : null,
@@ -60,12 +66,12 @@ export function describeNotification(
     case "group_invite":
       return {
         text: item.group
-          ? `invited you to ${item.group.name}`
-          : "invited you to a group",
+          ? t("notifications.groupInvite", { group: item.group.name })
+          : t("notifications.groupInviteUnnamed"),
         to: item.group ? `/g/${item.group.slug}` : null,
       };
     default:
-      return { text: "sent you a notification", to: null };
+      return { text: t("notifications.default"), to: null };
   }
 }
 
@@ -74,16 +80,25 @@ function describeModeration(item: NotificationItem): NotificationSentence {
   const target = action?.id ?? item.moderationActionId;
   const to = target ? `/moderation/${target}` : null;
   if (!action) {
-    return { text: "took a moderation action", to };
+    return { text: t("notifications.moderationGeneric"), to };
   }
   if (action.action === "remove" && action.targetType === "post") {
-    return { text: `removed your post: ${action.reason}`, to };
+    return {
+      text: t("notifications.moderationPost", { reason: action.reason }),
+      to,
+    };
   }
   if (action.action === "remove" && action.targetType === "comment") {
-    return { text: `removed your comment: ${action.reason}`, to };
+    return {
+      text: t("notifications.moderationComment", { reason: action.reason }),
+      to,
+    };
   }
   if (action.action === "suspend") {
-    return { text: `suspended your account: ${action.reason}`, to };
+    return {
+      text: t("notifications.moderationSuspend", { reason: action.reason }),
+      to,
+    };
   }
-  return { text: "took a moderation action", to };
+  return { text: t("notifications.moderationGeneric"), to };
 }

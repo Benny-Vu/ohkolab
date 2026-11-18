@@ -15,6 +15,7 @@ import { Picker } from "@/components/picker";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useTeams } from "@/lib/team";
+import { useT } from "@/lib/i18n/t";
 import { useCreatePost } from "@/lib/social/mutations";
 import {
   IMAGE_ALT_MAX,
@@ -50,6 +51,7 @@ interface ImageDraft {
  */
 export function Composer({ groupId }: { groupId?: string | null }) {
   const { user } = useAuth();
+  const t = useT();
   const { teams } = useTeams();
   const createPost = useCreatePost();
   const attachImages = useAttachPostImages();
@@ -79,7 +81,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
     if (files.length === 0) return;
     const room = IMAGE_POSTS_MAX - imageDrafts.length;
     if (files.length > room) {
-      toast.error(`A post can have at most ${IMAGE_POSTS_MAX} images.`);
+      toast.error(t("composer.tooManyImages", { n: IMAGE_POSTS_MAX }));
     }
     const accepted = files.slice(0, Math.max(0, room));
     if (accepted.length === 0) return;
@@ -153,7 +155,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
         in_group: Boolean(groupId),
       });
       if (!imagesOn || drafts.length === 0 || !result.data) {
-        toast.success("Posted.");
+        toast.success(t("composer.posted"));
         return;
       }
       const attach = await attachImages.mutateAsync({
@@ -174,13 +176,9 @@ export function Composer({ groupId }: { groupId?: string | null }) {
       }
       const uploaded = attach.data.filter((outcome) => outcome.uploaded);
       if (uploaded.length === 0) return;
-      toast.success(
-        "Posted. Your images will appear once they have been checked.",
-      );
+      toast.success(t("composer.postedImages"));
       if (uploaded.some((outcome) => !outcome.screened)) {
-        toast.info(
-          "An image is still being checked — it will appear once it is approved.",
-        );
+        toast.info(t("composer.imageChecking"));
       }
     } else {
       toast.error(result.error.message);
@@ -188,7 +186,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
   }
 
   const pickerOptions = [
-    { value: "none", label: "No attachment" },
+    { value: "none", label: t("composer.noAttachment") },
     ...teams.map((team) => ({ value: team.name, label: team.name })),
   ];
 
@@ -196,8 +194,8 @@ export function Composer({ groupId }: { groupId?: string | null }) {
     <div ref={rootRef} className="rounded-md border bg-card p-3">
       <div className="flex items-start gap-2">
         <Textarea
-          aria-label="Write a post"
-          placeholder="Share a team, a result or a question…"
+          aria-label={t("composer.aria")}
+          placeholder={t("composer.placeholder")}
           value={body}
           onChange={(event) => setBody(event.target.value)}
           onFocus={() => setExpanded(true)}
@@ -236,14 +234,14 @@ export function Composer({ groupId }: { groupId?: string | null }) {
           ) : (
             <SendIcon aria-hidden />
           )}
-          Post
+          {t("composer.post")}
         </Button>
       </div>
       {expanded && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {teams.length > 0 && (
             <Picker
-              aria-label="Attach a team"
+              aria-label={t("composer.attachTeam")}
               options={pickerOptions}
               value={attachment ? attachment.name : "none"}
               onValueChange={(value) => {
@@ -256,7 +254,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                 );
                 if (team) setAttachment(teamAttachment(team));
               }}
-              placeholder="Attach a team"
+              placeholder={t("composer.attachTeam")}
               className="w-auto max-w-56"
             />
           )}
@@ -267,7 +265,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                 type="file"
                 accept="image/*"
                 multiple
-                aria-label="Choose images"
+                aria-label={t("composer.chooseImages")}
                 className="hidden"
                 onChange={handleFilesSelected}
               />
@@ -285,7 +283,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                 ) : (
                   <ImageIcon aria-hidden />
                 )}
-                Add images
+                {t("composer.addImages")}
               </Button>
             </>
           )}
@@ -299,12 +297,17 @@ export function Composer({ groupId }: { groupId?: string | null }) {
             {body.length}/{POST_BODY_MAX}
           </span>
           {attachment && (
-            <span className="sr-only">{`Attached team: ${attachment.name}`}</span>
+            <span className="sr-only">
+              {t("composer.attachedTeamSr", { name: attachment.name })}
+            </span>
           )}
         </div>
       )}
       {imageDrafts.length > 0 && (
-        <ul className="mt-2 grid gap-2" aria-label="Images to attach">
+        <ul
+          className="mt-2 grid gap-2"
+          aria-label={t("composer.imagesToAttach")}
+        >
           {imageDrafts.map((draft, index) => (
             <li
               key={draft.key}
@@ -312,14 +315,14 @@ export function Composer({ groupId }: { groupId?: string | null }) {
             >
               <img
                 src={draft.previewUrl}
-                alt={draft.alt || `Image ${index + 1}`}
+                alt={draft.alt || t("composer.imageAlt", { n: index + 1 })}
                 className="size-12 shrink-0 rounded object-cover"
               />
               <Input
                 value={draft.alt}
                 maxLength={IMAGE_ALT_MAX}
-                placeholder="Add description (optional)"
-                aria-label={`Describe image ${index + 1}`}
+                placeholder={t("composer.addDescription")}
+                aria-label={t("composer.describeImage", { n: index + 1 })}
                 onChange={(event) => setDraftAlt(draft.key, event.target.value)}
                 className="text-sm"
               />
@@ -327,7 +330,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                 <Button
                   size="icon-xs"
                   variant="ghost"
-                  aria-label={`Move image ${index + 1} left`}
+                  aria-label={t("composer.moveLeft", { n: index + 1 })}
                   disabled={index === 0}
                   onClick={() => moveDraft(draft.key, -1)}
                 >
@@ -336,7 +339,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                 <Button
                   size="icon-xs"
                   variant="ghost"
-                  aria-label={`Move image ${index + 1} right`}
+                  aria-label={t("composer.moveRight", { n: index + 1 })}
                   disabled={index === imageDrafts.length - 1}
                   onClick={() => moveDraft(draft.key, 1)}
                 >
@@ -345,7 +348,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                 <Button
                   size="icon-xs"
                   variant="ghost"
-                  aria-label={`Remove image ${index + 1}`}
+                  aria-label={t("composer.removeImage", { n: index + 1 })}
                   onClick={() => removeDraft(draft.key)}
                 >
                   <XIcon aria-hidden />
@@ -357,7 +360,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
       )}
       {attachment && (
         <p className="mt-2 text-xs text-muted-foreground">
-          {`Team "${attachment.name}" will be attached to this post.`}
+          {t("composer.attachedTeam", { name: attachment.name })}
         </p>
       )}
     </div>

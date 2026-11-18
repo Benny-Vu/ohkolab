@@ -21,8 +21,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT, type TranslationParams } from "@/lib/i18n/t";
 import { useCreateReport } from "@/lib/social/mutations";
 import { REPORT_DETAILS_MAX, REPORT_REASONS } from "@/lib/social/validation";
+import type { TranslationKey } from "@/lib/i18n/en";
 
 export type ReportTargetType = "post" | "comment" | "profile";
 
@@ -33,17 +35,23 @@ interface ReportDialogProps {
   targetId: string;
 }
 
-const REASON_LABELS: Record<(typeof REPORT_REASONS)[number], string> = {
-  spam: "Spam",
-  harassment: "Harassment or bullying",
-  inappropriate: "Inappropriate content",
-  other: "Something else",
+const REASON_LABELS: Record<(typeof REPORT_REASONS)[number], TranslationKey> = {
+  spam: "report.reasonSpam",
+  harassment: "report.reasonHarassment",
+  inappropriate: "report.reasonInappropriate",
+  other: "report.reasonOther",
 };
 
-const EMAIL_SUBJECTS: Record<ReportTargetType, string> = {
-  post: "Report a post",
-  comment: "Report a comment",
-  profile: "Report a profile",
+const TARGET_LABELS: Record<ReportTargetType, TranslationKey> = {
+  post: "report.targetPost",
+  comment: "report.targetComment",
+  profile: "report.targetProfile",
+};
+
+const EMAIL_SUBJECTS: Record<ReportTargetType, TranslationKey> = {
+  post: "report.emailSubjectPost",
+  comment: "report.emailSubjectComment",
+  profile: "report.emailSubjectProfile",
 };
 
 function contentUrl(targetType: ReportTargetType, targetId: string): string {
@@ -69,12 +77,15 @@ export function ReportDialog({
   targetId,
 }: ReportDialogProps) {
   const { user } = useAuth();
+  const t = useT();
   const createReport = useCreateReport();
   const [reason, setReason] = useState<(typeof REPORT_REASONS)[number] | "">(
     "",
   );
   const [details, setDetails] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const targetLabel = () => t(TARGET_LABELS[targetType]) as TranslationParams;
 
   function reset() {
     setReason("");
@@ -84,7 +95,7 @@ export function ReportDialog({
 
   async function submit() {
     if (reason === "") {
-      setError("Choose a reason for the report.");
+      setError(t("report.chooseReasonError"));
       return;
     }
     const normalized = normalizeDetails(details);
@@ -95,7 +106,7 @@ export function ReportDialog({
       details: normalized ?? undefined,
     });
     if (result.ok) {
-      toast.success("Report sent. Our moderators will take a look.");
+      toast.success(t("report.sent"));
       reset();
       onOpenChange(false);
     } else {
@@ -104,7 +115,7 @@ export function ReportDialog({
   }
 
   if (user === null) {
-    const subject = encodeURIComponent(EMAIL_SUBJECTS[targetType]);
+    const subject = encodeURIComponent(t(EMAIL_SUBJECTS[targetType]));
     const body = encodeURIComponent(
       `Please review this ${targetType}:\n${contentUrl(targetType, targetId)}`,
     );
@@ -112,10 +123,11 @@ export function ReportDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Report {targetType}</DialogTitle>
+            <DialogTitle>
+              {t("report.title", { target: targetLabel() })}
+            </DialogTitle>
             <DialogDescription>
-              You need an account to report {targetType}s directly. You can also
-              send the report to the moderators by email.
+              {t("report.signedOutDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
@@ -129,14 +141,14 @@ export function ReportDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="button" asChild>
               <a
                 href={`mailto:contact@ohkolab.com?subject=${subject}&body=${body}`}
               >
                 <MailIcon aria-hidden />
-                Report by email
+                {t("report.byEmail")}
               </a>
             </Button>
           </DialogFooter>
@@ -149,14 +161,14 @@ export function ReportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Report {targetType}</DialogTitle>
-          <DialogDescription>
-            Tell us what is wrong. Moderators review every report.
-          </DialogDescription>
+          <DialogTitle>
+            {t("report.title", { target: targetLabel() })}
+          </DialogTitle>
+          <DialogDescription>{t("report.description")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="report-reason">Reason</Label>
+            <Label htmlFor="report-reason">{t("report.reasonLabel")}</Label>
             <Select
               value={reason === "" ? undefined : reason}
               onValueChange={(value) => {
@@ -164,26 +176,31 @@ export function ReportDialog({
                 setError(null);
               }}
             >
-              <SelectTrigger id="report-reason" aria-label="Report reason">
-                <SelectValue placeholder="Choose a reason" />
+              <SelectTrigger
+                id="report-reason"
+                aria-label={t("report.reasonAria")}
+              >
+                <SelectValue
+                  placeholder={t("report.chooseReasonPlaceholder")}
+                />
               </SelectTrigger>
               <SelectContent>
                 {REPORT_REASONS.map((candidate) => (
                   <SelectItem key={candidate} value={candidate}>
-                    {REASON_LABELS[candidate]}
+                    {t(REASON_LABELS[candidate])}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="report-details">Details (optional)</Label>
+            <Label htmlFor="report-details">{t("report.detailsLabel")}</Label>
             <Textarea
               id="report-details"
               value={details}
               onChange={(event) => setDetails(event.target.value)}
               rows={3}
-              placeholder="Anything that helps moderators understand the report."
+              placeholder={t("report.detailsPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
               {details.length}/{REPORT_DETAILS_MAX}
@@ -198,7 +215,7 @@ export function ReportDialog({
             onClick={() => onOpenChange(false)}
             disabled={createReport.isPending}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             type="button"
@@ -208,7 +225,7 @@ export function ReportDialog({
             {createReport.isPending && (
               <LoaderCircleIcon className="animate-spin" aria-hidden />
             )}
-            Submit report
+            {t("report.submit")}
           </Button>
         </DialogFooter>
       </DialogContent>

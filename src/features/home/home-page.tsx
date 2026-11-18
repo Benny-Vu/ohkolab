@@ -16,6 +16,7 @@ import { SegmentedControl } from "@/components/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useMyGroups } from "@/lib/groups/queries";
+import { useT } from "@/lib/i18n/t";
 import { socialAvailability } from "@/lib/social/availability";
 import { useFeed } from "@/lib/social/queries";
 import { Composer } from "@/features/feed/composer";
@@ -34,27 +35,6 @@ interface Tool {
   icon: LucideIcon;
 }
 
-const TOOLS: Tool[] = [
-  {
-    to: "/calc",
-    title: "Damage calculator",
-    description: "Check damage ranges and KO chances with Champions mechanics.",
-    icon: CalculatorIcon,
-  },
-  {
-    to: "/teams",
-    title: "Team builder",
-    description: "Build a team of six, check its type coverage and export it.",
-    icon: SwordsIcon,
-  },
-  {
-    to: "/meta",
-    title: "Metagame",
-    description: "Usage, common sets and speed tiers for singles and doubles.",
-    icon: ChartColumnIcon,
-  },
-];
-
 /**
  * Home screen: the community feed once the social layer is ready, with the
  * tools intro as the fallback.
@@ -67,18 +47,38 @@ export function HomePage() {
 }
 
 function ToolsIntro() {
+  const t = useT();
+  const tools: Tool[] = [
+    {
+      to: "/calc",
+      title: t("home.calcTitle"),
+      description: t("home.calcDescription"),
+      icon: CalculatorIcon,
+    },
+    {
+      to: "/teams",
+      title: t("home.teamsTitle"),
+      description: t("home.teamsDescription"),
+      icon: SwordsIcon,
+    },
+    {
+      to: "/meta",
+      title: t("home.metaTitle"),
+      description: t("home.metaDescription"),
+      icon: ChartColumnIcon,
+    },
+  ];
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
       <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
         <span className="text-primary">OHKO</span>Lab
       </h1>
       <p className="mt-2 max-w-xl text-muted-foreground">
-        Tools and community for Pokémon Champions: calculate damage, build teams
-        and follow the metagame.
+        {t("home.introTagline")}
       </p>
 
       <ul className="mt-8 grid gap-3">
-        {TOOLS.map((tool) => (
+        {tools.map((tool) => (
           <li key={tool.to}>
             <Link
               to={tool.to}
@@ -108,8 +108,7 @@ function ToolsIntro() {
       </ul>
 
       <p className="mt-8 text-xs text-muted-foreground md:hidden">
-        OHKOLab is an unofficial fan project, not affiliated with Nintendo, Game
-        Freak, Creatures or The Pokémon Company.
+        {t("footer.disclaimer")}
       </p>
     </div>
   );
@@ -117,6 +116,7 @@ function ToolsIntro() {
 
 function FeedHome() {
   const { user } = useAuth();
+  const t = useT();
   const [tab, setTab] = useState<"latest" | "following">("latest");
 
   return (
@@ -138,18 +138,18 @@ function FeedHome() {
 
         <div className="flex items-center justify-between gap-2">
           <SegmentedControl
-            aria-label="Feed"
+            aria-label={t("home.feedAria")}
             value={tab}
             onValueChange={(value) => setTab(value as "latest" | "following")}
             options={[
-              { value: "latest", label: "Latest" },
-              { value: "following", label: "Following" },
+              { value: "latest", label: t("home.latest") },
+              { value: "following", label: t("home.following") },
             ]}
           />
           <Button asChild variant="outline" size="sm">
             <Link to="/groups">
               <UsersIcon aria-hidden />
-              Groups
+              {t("home.groups")}
             </Link>
           </Button>
         </div>
@@ -158,20 +158,20 @@ function FeedHome() {
           {tab === "latest" ? (
             <FeedTabContent
               tab="latest"
-              emptyTitle="No posts yet"
-              emptyDescription="Be the first to post."
+              emptyTitle={t("home.emptyLatestTitle")}
+              emptyDescription={t("home.emptyLatestDescription")}
             />
           ) : user ? (
             <FeedTabContent
               tab="following"
-              emptyTitle="No posts from people you follow yet"
+              emptyTitle={t("home.emptyFollowingTitle")}
             />
           ) : (
             <EmptyState
-              title="Sign in to see posts from trainers you follow"
+              title={t("home.signInToFollow")}
               action={
                 <Button asChild size="sm">
-                  <Link to="/login?returnTo=/">Sign in</Link>
+                  <Link to="/login?returnTo=/">{t("common.signIn")}</Link>
                 </Button>
               }
             />
@@ -187,24 +187,24 @@ function FeedHome() {
 }
 
 function SignedOutIntro() {
+  const t = useT();
   return (
     <section className="mb-4 rounded-md border bg-card p-4">
       <h1 className="font-heading text-xl font-bold">
         <span className="text-primary">OHKO</span>Lab
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        A community for Pokémon Champions players. Share teams, talk strategy
-        and follow the trainers you rate.
+        {t("home.signedOutIntro")}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button asChild size="sm">
           <Link to="/calc">
-            Damage calculator
+            {t("home.calcTitle")}
             <ArrowRightIcon aria-hidden />
           </Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link to="/meta">Metagame</Link>
+          <Link to="/meta">{t("home.metaTitle")}</Link>
         </Button>
       </div>
     </section>
@@ -223,29 +223,37 @@ function RightRail({ signedIn }: { signedIn: boolean }) {
 }
 
 function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
+  const t = useT();
   const myGroups = useMyGroups();
   const groups = myGroups.data ?? [];
 
   if (!signedIn) {
     return (
       <section
-        aria-label="Your groups"
+        aria-label={t("home.yourGroups")}
         className="rounded-md border bg-card p-4"
       >
-        <h2 className="font-heading text-sm font-semibold">Your groups</h2>
+        <h2 className="font-heading text-sm font-semibold">
+          {t("home.yourGroups")}
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Sign in to join groups
+          {t("home.signInToJoinGroups")}
         </p>
         <Button asChild size="sm" variant="outline" className="mt-3">
-          <Link to="/login?returnTo=/">Sign in</Link>
+          <Link to="/login?returnTo=/">{t("common.signIn")}</Link>
         </Button>
       </section>
     );
   }
 
   return (
-    <section aria-label="Your groups" className="rounded-md border bg-card p-4">
-      <h2 className="font-heading text-sm font-semibold">Your groups</h2>
+    <section
+      aria-label={t("home.yourGroups")}
+      className="rounded-md border bg-card p-4"
+    >
+      <h2 className="font-heading text-sm font-semibold">
+        {t("home.yourGroups")}
+      </h2>
       {groups.length > 0 ? (
         <ul className="mt-2 grid gap-1.5">
           {groups.slice(0, 5).map((group) => (
@@ -257,7 +265,9 @@ function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm text-muted-foreground">No groups yet</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {t("home.noGroupsYet")}
+        </p>
       )}
     </section>
   );
@@ -274,11 +284,12 @@ function FeedTabContent({
   emptyTitle,
   emptyDescription,
 }: FeedTabContentProps) {
+  const t = useT();
   const feed = useFeed(tab);
 
   if (feed.isPending) {
     return (
-      <div className="grid gap-3" aria-label="Loading posts">
+      <div className="grid gap-3" aria-label={t("home.loadingPosts")}>
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
@@ -289,7 +300,7 @@ function FeedTabContent({
   if (feed.isError) {
     return (
       <ErrorState
-        title="Could not load the feed"
+        title={t("home.feedErrorTitle")}
         description={feed.error.message}
         action={
           <Button
@@ -297,7 +308,7 @@ function FeedTabContent({
             size="sm"
             onClick={() => void feed.refetch()}
           >
-            Try again
+            {t("common.retry")}
           </Button>
         }
       />
@@ -319,7 +330,9 @@ function FeedTabContent({
           onClick={() => void feed.fetchNextPage()}
           disabled={feed.isFetchingNextPage}
         >
-          {feed.isFetchingNextPage ? "Loading…" : "Load more"}
+          {feed.isFetchingNextPage
+            ? t("common.loading")
+            : t("notifications.loadMore")}
         </Button>
       )}
     </div>

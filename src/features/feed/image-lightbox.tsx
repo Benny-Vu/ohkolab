@@ -4,6 +4,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useT } from "@/lib/i18n/t";
 import type { PostImageDisplay } from "@/lib/social/images";
 
 interface ImageLightboxProps {
@@ -17,22 +18,25 @@ interface ImageLightboxProps {
  * and on a tap or click on the image itself.
  */
 export function ImageLightbox({ image, onClose }: ImageLightboxProps) {
+  const t = useT();
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton
         className="top-auto bottom-auto translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-3xl max-sm:inset-4 max-sm:rounded-lg max-sm:border-0"
       >
-        <DialogTitle className="sr-only">Image</DialogTitle>
+        <DialogTitle className="sr-only">
+          {t("image.lightboxTitle")}
+        </DialogTitle>
         <button
           type="button"
-          aria-label="Close image"
+          aria-label={t("image.closeImage")}
           onClick={onClose}
           className="block w-full cursor-zoom-out"
         >
           <img
             src={image.url ?? undefined}
-            alt={image.alt ?? "Post image"}
+            alt={image.alt ?? t("image.postImage")}
             className="max-h-[75vh] w-full object-contain"
           />
         </button>

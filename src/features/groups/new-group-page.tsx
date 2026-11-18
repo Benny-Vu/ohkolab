@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import { useCreateGroup } from "@/lib/groups/mutations";
 import {
   GROUP_DESCRIPTION_MAX,
@@ -45,6 +46,7 @@ import {
  */
 export function NewGroupPage() {
   const { user } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const createGroup = useCreateGroup();
 
@@ -57,12 +59,12 @@ export function NewGroupPage() {
 
   if (!user) {
     return (
-      <Page title="Create a group" width="narrow">
+      <Page title={t("groups.newTitle")} width="narrow">
         <EmptyState
-          title="Sign in to create a group"
+          title={t("groups.signInToCreate")}
           action={
             <Button asChild size="sm">
-              <Link to="/login?returnTo=/groups/new">Sign in</Link>
+              <Link to="/login?returnTo=/groups/new">{t("common.signIn")}</Link>
             </Button>
           }
         />
@@ -94,7 +96,7 @@ export function NewGroupPage() {
       visibility,
     });
     if (result.ok) {
-      toast.success("Group created");
+      toast.success(t("groups.newCreatedToast"));
       void navigate(`/g/${result.data.slug}`);
     } else {
       setError(result.error.message);
@@ -103,20 +105,18 @@ export function NewGroupPage() {
 
   return (
     <Page
-      title="Create a group"
-      description="Groups have their own feed, members and moderators."
+      title={t("groups.newTitle")}
+      description={t("groups.newPageDescription")}
       width="narrow"
     >
       <Card>
         <CardHeader>
-          <CardTitle>New group</CardTitle>
-          <CardDescription>
-            You will be the owner and can invite members right away.
-          </CardDescription>
+          <CardTitle>{t("groups.newCardTitle")}</CardTitle>
+          <CardDescription>{t("groups.newCardDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="group-name">Name</Label>
+            <Label htmlFor="group-name">{t("groups.nameLabel")}</Label>
             <Input
               id="group-name"
               value={name}
@@ -127,7 +127,7 @@ export function NewGroupPage() {
                   setSlug(slugFromName(event.target.value));
                 }
               }}
-              placeholder="Elite Four Fans"
+              placeholder={t("groups.newNamePlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
               {name.trim().length}/{GROUP_NAME_MAX}
@@ -135,7 +135,7 @@ export function NewGroupPage() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="group-slug">Address</Label>
+            <Label htmlFor="group-slug">{t("groups.newAddressLabel")}</Label>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">/g/</span>
               <Input
@@ -151,20 +151,21 @@ export function NewGroupPage() {
               />
             </div>
             <p id="group-slug-hint" className="text-xs text-muted-foreground">
-              Lowercase letters, digits and hyphens. 3 to {GROUP_SLUG_MAX}{" "}
-              characters. Must be unused.
+              {t("groups.newSlugHint", { max: GROUP_SLUG_MAX })}
             </p>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="group-description">Description (optional)</Label>
+            <Label htmlFor="group-description">
+              {t("groups.newDescriptionOptional")}
+            </Label>
             <Textarea
               id="group-description"
               value={description}
               rows={3}
               maxLength={GROUP_DESCRIPTION_MAX}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="What is this group about?"
+              placeholder={t("groups.newDescriptionPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
               {description.trim().length}/{GROUP_DESCRIPTION_MAX}
@@ -172,20 +173,25 @@ export function NewGroupPage() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="group-visibility">Visibility</Label>
+            <Label htmlFor="group-visibility">
+              {t("groups.visibilityLabel")}
+            </Label>
             <Select
               value={visibility}
               onValueChange={(value) => setVisibility(value as GroupVisibility)}
             >
-              <SelectTrigger id="group-visibility" aria-label="Visibility">
+              <SelectTrigger
+                id="group-visibility"
+                aria-label={t("groups.newVisibilityAria")}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="public">
-                  Public — anyone can join and find it
+                  {t("groups.publicOption")}
                 </SelectItem>
                 <SelectItem value="invite_only">
-                  Invite only — members join by invitation
+                  {t("groups.inviteOnlyOption")}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -198,7 +204,7 @@ export function NewGroupPage() {
               {createGroup.isPending && (
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               )}
-              Create group
+              {t("groups.createGroup")}
             </Button>
             <Button
               type="button"
@@ -206,7 +212,7 @@ export function NewGroupPage() {
               asChild
               disabled={createGroup.isPending}
             >
-              <Link to="/groups">Cancel</Link>
+              <Link to="/groups">{t("common.cancel")}</Link>
             </Button>
           </div>
         </CardContent>
