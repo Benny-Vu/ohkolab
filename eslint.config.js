@@ -23,7 +23,8 @@ export default defineConfig([
     "dist",
     ".claude",
     "supabase/functions",
-    "android/app/src/main/assets/public",
+    // Native project: Gradle output and copied web assets, no app source.
+    "android",
   ]),
   {
     files: ["**/*.{ts,tsx}"],
