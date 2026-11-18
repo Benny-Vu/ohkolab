@@ -6,8 +6,9 @@ import { PokemonEditor } from "@/components/pokemon-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { CALC_SIDE_LABELS } from "@/features/calc/side-labels";
 import { Panel, PanelTitle } from "@/features/calc/panel";
+import { calcSideLabel } from "@/features/calc/side-labels";
+import { statLabel } from "@/features/calc/stat-labels";
 import {
   MAX_HP_PERCENT,
   MAX_STAGE,
@@ -18,34 +19,26 @@ import {
   type CalcSide,
   type SideId,
 } from "@/lib/calc/state";
+import { useT } from "@/lib/i18n/t";
 import {
   STATUS_NAMES,
   type BoostStatId,
   type StatusName,
 } from "@/types/battle";
-import { STAT_LABELS } from "@/types/pokemon";
+import type { TranslationKey } from "@/lib/i18n/en";
 
 /** The stats a Pokémon can raise or lower in battle. */
 const BOOST_STATS: BoostStatId[] = ["atk", "def", "spa", "spd", "spe"];
 
-/** Friendly names for the status conditions. */
-const STATUS_OPTIONS: Record<StatusName, string> = {
-  slp: "Sleep",
-  psn: "Poison",
-  brn: "Burn",
-  frz: "Freeze",
-  par: "Paralysis",
-  tox: "Toxic",
+/** Friendly names for the status conditions, as translation keys. */
+const STATUS_LABEL_KEYS: Record<StatusName, TranslationKey> = {
+  slp: "calc.statusSlp",
+  psn: "calc.statusPsn",
+  brn: "calc.statusBrn",
+  frz: "calc.statusFrz",
+  par: "calc.statusPar",
+  tox: "calc.statusTox",
 };
-
-/** Status choices for the picker, with None first. */
-const STATUS_PICKER_OPTIONS: PickerOption[] = [
-  { value: "", label: "None" },
-  ...STATUS_NAMES.map((status) => ({
-    value: status,
-    label: STATUS_OPTIONS[status],
-  })),
-];
 
 function stageText(value: number): string {
   return value > 0 ? `+${value}` : String(value);
@@ -59,15 +52,24 @@ interface SidePanelProps {
 
 /** One side of the calculator: its set plus its state in battle. */
 export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
+  const t = useT();
   const titleId = useId();
   const hpId = useId();
-  const label = CALC_SIDE_LABELS[side];
+  const label = calcSideLabel(t, side);
   const megaForme = megaFormeOf(calcSide.set);
   const critSlots = calcSide.set.moves
     .map((move, slot) => ({ move, slot }))
     .filter(
       (entry): entry is { move: string; slot: number } => entry.move !== null,
     );
+
+  const statusPickerOptions: PickerOption[] = [
+    { value: "", label: t("calc.none") },
+    ...STATUS_NAMES.map((status) => ({
+      value: status,
+      label: t(STATUS_LABEL_KEYS[status]),
+    })),
+  ];
 
   return (
     <Panel labelledBy={titleId}>
@@ -82,7 +84,7 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
         <div className="grid gap-1.5">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-muted-foreground">
-              Stat boosts
+              {t("calc.statBoosts")}
             </span>
             <Button
               type="button"
@@ -90,7 +92,7 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
               size="xs"
               onClick={() => dispatch({ type: "clearBoosts", side })}
             >
-              Clear
+              {t("calc.clear")}
             </Button>
           </div>
           <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-x-6">
@@ -98,15 +100,18 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
               const value = calcSide.boosts[stat];
               return (
                 <div key={stat} className="flex items-center gap-2">
-                  <span className="w-8 text-xs text-muted-foreground">
-                    {STAT_LABELS[stat]}
+                  <span className="w-10 text-xs text-muted-foreground">
+                    {statLabel(t, stat)}
                   </span>
                   <div className="ml-auto flex items-center gap-1">
                     <Button
                       type="button"
                       variant="outline"
                       size="icon-sm"
-                      aria-label={`${label} ${STAT_LABELS[stat]} boost down`}
+                      aria-label={t("calc.boostDown", {
+                        side: label,
+                        stat: statLabel(t, stat),
+                      })}
                       disabled={value <= MIN_STAGE}
                       onClick={() =>
                         dispatch({
@@ -126,7 +131,10 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
                       type="button"
                       variant="outline"
                       size="icon-sm"
-                      aria-label={`${label} ${STAT_LABELS[stat]} boost up`}
+                      aria-label={t("calc.boostUp", {
+                        side: label,
+                        stat: statLabel(t, stat),
+                      })}
                       disabled={value >= MAX_STAGE}
                       onClick={() =>
                         dispatch({
@@ -148,9 +156,11 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
 
         <div className="grid grid-cols-2 gap-2">
           <div className="grid gap-1">
-            <span className="text-xs text-muted-foreground">Status</span>
+            <span className="text-xs text-muted-foreground">
+              {t("calc.status")}
+            </span>
             <Picker
-              options={STATUS_PICKER_OPTIONS}
+              options={statusPickerOptions}
               value={calcSide.status ?? ""}
               onValueChange={(value) =>
                 dispatch({
@@ -159,14 +169,14 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
                   status: STATUS_NAMES.find((name) => name === value) ?? null,
                 })
               }
-              aria-label={`${label} status`}
+              aria-label={t("calc.statusAria", { side: label })}
             />
           </div>
           <label
             className="grid gap-1 text-xs text-muted-foreground"
             htmlFor={hpId}
           >
-            Current HP %
+            {t("calc.currentHp")}
             <Input
               id={hpId}
               type="number"
@@ -187,13 +197,13 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
         {megaForme ? (
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm">
-              Mega Evolution{" "}
+              {t("calc.megaEvolution")}{" "}
               <span className="text-muted-foreground">({megaForme})</span>
             </span>
             <Switch
               checked={calcSide.mega}
               onCheckedChange={(on) => dispatch({ type: "setMega", side, on })}
-              aria-label={`${label} Mega Evolution`}
+              aria-label={t("calc.megaAria", { side: label })}
             />
           </div>
         ) : null}
@@ -201,7 +211,7 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
         {critSlots.length > 0 ? (
           <div className="grid gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">
-              Critical hits
+              {t("calc.criticalHits")}
             </span>
             {critSlots.map(({ move, slot }) => (
               <div
@@ -215,7 +225,7 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
                   onCheckedChange={(on) =>
                     dispatch({ type: "setCrit", side, slot, on })
                   }
-                  aria-label={`${label} ${move} critical hit`}
+                  aria-label={t("calc.critAria", { side: label, move })}
                 />
               </div>
             ))}

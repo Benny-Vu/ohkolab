@@ -1,11 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { Providers } from "@/app/providers";
 import { TeamDetailPage } from "@/features/team-builder/team-detail-page";
 import { TeamsPage } from "@/features/team-builder/teams-page";
+import { setLocale } from "@/lib/i18n/locale";
 
 function renderTeams() {
   const router = createMemoryRouter(
@@ -89,5 +90,29 @@ describe("team builder pages", () => {
     expect(screen.queryByText("Name this team")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Undo" }));
     expect(await screen.findByText("Name this team")).toBeInTheDocument();
+  });
+});
+
+describe("team builder pages in Japanese", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    setLocale("ja");
+  });
+
+  afterEach(() => {
+    setLocale("en");
+  });
+
+  it("renders the teams page in Japanese", () => {
+    renderTeams();
+
+    expect(screen.getByRole("heading", { name: "構築" })).toBeInTheDocument();
+    expect(screen.getByText("構築がまだありません")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "新規構築" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "インポート" }),
+    ).toBeInTheDocument();
   });
 });

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { PencilIcon } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 import { DEFAULT_TEAM_NAME } from "@/lib/team";
 
@@ -16,6 +17,7 @@ interface TeamNameProps {
  * instead of the "Untitled team" placeholder.
  */
 export function TeamName({ name, onRename, className }: TeamNameProps) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -33,7 +35,7 @@ export function TeamName({ name, onRename, className }: TeamNameProps) {
   if (editing) {
     return (
       <Input
-        aria-label="Team name"
+        aria-label={t("teams.nameLabel")}
         autoFocus
         className={cn("h-7 w-full", className)}
         value={draft}
@@ -59,7 +61,7 @@ export function TeamName({ name, onRename, className }: TeamNameProps) {
         className,
       )}
     >
-      <span className="truncate">{unnamed ? "Name this team" : name}</span>
+      <span className="truncate">{unnamed ? t("teams.nameThis") : name}</span>
       <PencilIcon className="size-3.5 shrink-0 opacity-60" />
     </button>
   );

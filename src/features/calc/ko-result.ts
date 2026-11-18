@@ -1,4 +1,25 @@
 import type { KoLabelResult } from "@/components/ko-label";
+import type { Translate } from "@/features/calc/stat-labels";
+
+/**
+ * Localizes the calculator's own fallback summaries ("Not a KO", ...). KO
+ * text from the calc library ("guaranteed 2HKO", ...) is data-derived and
+ * passes through unchanged.
+ */
+export function summaryText(summary: string, t: Translate): string {
+  switch (summary) {
+    case "Not a KO":
+      return t("calc.summaryNotAKo");
+    case "No effect":
+      return t("calc.summaryNoEffect");
+    case "Status move":
+      return t("calc.summaryStatusMove");
+    case "Cannot be calculated":
+      return t("calc.summaryCannotCalc");
+    default:
+      return summary;
+  }
+}
 
 /**
  * Turns the calc library's KO text into a label for `KoLabel`. Returns null

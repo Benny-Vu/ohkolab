@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { TeamName } from "@/features/team-builder/team-name";
 import { formatDate } from "@/lib/format-date";
+import { useT } from "@/lib/i18n/t";
 import { useBattleFormat } from "@/lib/preferences";
 import { importTeam, sortByUpdated, useTeams } from "@/lib/team";
 import { track } from "@/lib/telemetry/analytics";
@@ -44,13 +45,21 @@ function TeamCard({
   onDelete: (team: Team) => void;
   onRename: (name: string) => void;
 }) {
+  const t = useT();
   return (
     <Card size="sm" className="flex flex-col">
       <CardHeader>
         <TeamName name={team.name} onRename={onRename} />
         <p className="text-xs text-muted-foreground">
-          {team.format === "doubles" ? "Doubles" : "Singles"} ·{" "}
-          {team.members.length} Pokémon · Edited {formatDate(team.updatedAt)}
+          {t("teams.cardMeta", {
+            format: t(
+              team.format === "doubles"
+                ? "calc.formatDoubles"
+                : "calc.formatSingles",
+            ),
+            count: team.members.length,
+            date: formatDate(team.updatedAt),
+          })}
         </p>
       </CardHeader>
       <CardContent className="flex-1">
@@ -84,7 +93,7 @@ function TeamCard({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={`Duplicate ${team.name}`}
+          aria-label={t("teams.duplicateNamed", { name: team.name })}
           onClick={() => onDuplicate(team)}
         >
           <CopyIcon />
@@ -92,14 +101,14 @@ function TeamCard({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={`Delete ${team.name}`}
+          aria-label={t("teams.deleteNamed", { name: team.name })}
           onClick={() => onDelete(team)}
         >
           <Trash2Icon />
         </Button>
         <span className="flex-1" />
         <Button variant="outline" size="sm" asChild>
-          <Link to={`/teams/${team.id}`}>Open</Link>
+          <Link to={`/teams/${team.id}`}>{t("teams.open")}</Link>
         </Button>
       </CardFooter>
     </Card>
@@ -108,6 +117,7 @@ function TeamCard({
 
 export function TeamsPage() {
   const navigate = useNavigate();
+  const t = useT();
   const [preferredFormat] = useBattleFormat();
   const { teams, create, rename, duplicate, remove, restore, sync } =
     useTeams();
@@ -117,7 +127,7 @@ export function TeamsPage() {
   function handleImport(): void {
     const imported = importTeam(importText);
     if (imported.sets.length === 0) {
-      toast.error("No importable Pokémon found in that paste.");
+      toast.error(t("teams.importEmptyError"));
       return;
     }
     const team = create({
@@ -131,26 +141,27 @@ export function TeamsPage() {
     });
     setImportOpen(false);
     setImportText("");
-    const suffix =
+    toast.success(
       imported.warnings.length > 0
-        ? ` (${imported.warnings.length} warning${
-            imported.warnings.length === 1 ? "" : "s"
-          })`
-        : "";
-    toast.success(`Imported ${imported.sets.length} Pokémon${suffix}.`);
+        ? t("teams.importedWithWarnings", {
+            count: imported.sets.length,
+            warningCount: imported.warnings.length,
+          })
+        : t("teams.imported", { count: imported.sets.length }),
+    );
     navigate(`/teams/${team.id}`);
   }
 
   function handleDuplicate(team: Team): void {
     const copy = duplicate(team.id);
-    if (copy) toast.success(`Duplicated "${team.name}".`);
+    if (copy) toast.success(t("teams.duplicated", { name: team.name }));
   }
 
   function handleDelete(team: Team): void {
     remove(team.id);
-    toast(`Deleted "${team.name}".`, {
+    toast(t("teams.deleted", { name: team.name }), {
       action: {
-        label: "Undo",
+        label: t("teams.undo"),
         onClick: () => restore(team),
       },
     });
@@ -160,27 +171,26 @@ export function TeamsPage() {
 
   return (
     <Page
-      title="Teams"
-      description="Build, save and analyse your Pokémon Champions teams."
+      title={t("teams.title")}
+      description={t("teams.description")}
       actions={
         <>
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <DownloadIcon />
-                Import
+                {t("teams.import")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Import a team</DialogTitle>
+                <DialogTitle>{t("teams.importTitle")}</DialogTitle>
                 <DialogDescription>
-                  Paste a Pokémon Showdown team export. Up to six Pokémon are
-                  imported.
+                  {t("teams.importDescription")}
                 </DialogDescription>
               </DialogHeader>
               <Textarea
-                aria-label="Showdown export"
+                aria-label={t("teams.showdownExport")}
                 className="font-mono text-xs"
                 value={importText}
                 onChange={(event) => setImportText(event.target.value)}
@@ -189,9 +199,9 @@ export function TeamsPage() {
               />
               <DialogFooter>
                 <Button variant="outline" onClick={() => setImportOpen(false)}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
-                <Button onClick={handleImport}>Import team</Button>
+                <Button onClick={handleImport}>{t("teams.importTeam")}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -203,7 +213,7 @@ export function TeamsPage() {
             }}
           >
             <PlusIcon />
-            New team
+            {t("teams.newTeam")}
           </Button>
         </>
       }
@@ -226,18 +236,18 @@ export function TeamsPage() {
         </div>
       ) : sync.error ? (
         <ErrorState
-          title="Teams could not be loaded"
+          title={t("teams.loadError")}
           description={sync.error}
           action={
             <Button variant="outline" size="sm" onClick={() => sync.retry()}>
-              Retry
+              {t("teams.retry")}
             </Button>
           }
         />
       ) : sorted.length === 0 ? (
         <EmptyState
-          title="No teams yet"
-          description="Create one or import a Showdown paste to get started."
+          title={t("teams.empty")}
+          description={t("teams.emptyDescription")}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

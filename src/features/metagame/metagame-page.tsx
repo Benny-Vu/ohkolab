@@ -30,22 +30,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormatToggle } from "@/features/metagame/format-toggle";
+import { statLabel } from "@/features/calc/stat-labels";
 import {
   useMetagameIndex,
   useMetagameSnapshot,
 } from "@/features/metagame/use-metagame";
 import {
   formatAttribution,
-  formatBattles,
   formatPeriod,
   formatShare,
 } from "@/lib/metagame/format";
 import { findSnapshot, listSnapshots } from "@/lib/metagame/snapshots";
 import type { PokemonUsage } from "@/lib/metagame/types";
+import { formatNumber } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/t";
 import { useBattleFormat } from "@/lib/preferences";
 import { track } from "@/lib/telemetry/analytics";
 import { useTeams } from "@/lib/team/use-teams";
-import { STAT_IDS, STAT_LABELS } from "@/types/pokemon";
+import { STAT_IDS } from "@/types/pokemon";
 
 // Speed tiers need the dex (calcStat), so the section lives in its own
 // module and loads lazily; the /meta route chunk stays dex-free.
@@ -112,8 +114,9 @@ function SortButton({
 }
 
 function ShareList({ shares }: { shares: { name: string; share: number }[] }) {
+  const t = useT();
   if (shares.length === 0) {
-    return <p className="text-sm text-muted-foreground">No data.</p>;
+    return <p className="text-sm text-muted-foreground">{t("meta.noData")}</p>;
   }
   return (
     <ul className="space-y-1.5">
@@ -136,8 +139,9 @@ function ShareList({ shares }: { shares: { name: string; share: number }[] }) {
 }
 
 function SpreadList({ spreads }: { spreads: PokemonUsage["spreads"] }) {
+  const t = useT();
   if (spreads.length === 0) {
-    return <p className="text-sm text-muted-foreground">No data.</p>;
+    return <p className="text-sm text-muted-foreground">{t("meta.noData")}</p>;
   }
   return (
     <ul className="space-y-1.5">
@@ -150,7 +154,7 @@ function SpreadList({ spreads }: { spreads: PokemonUsage["spreads"] }) {
             <span className="font-medium">{spread.nature}</span>{" "}
             <span className="text-muted-foreground">
               {STAT_IDS.map(
-                (stat) => `${STAT_LABELS[stat]} ${spread.statPoints[stat]}`,
+                (stat) => `${statLabel(t, stat)} ${spread.statPoints[stat]}`,
               ).join(" / ")}
             </span>
           </span>
@@ -180,36 +184,39 @@ function PokemonDetail({
   onOpenInCalc: (pokemon: PokemonUsage) => void;
   onAddToTeam: (pokemon: PokemonUsage) => void;
 }) {
+  const t = useT();
   return (
     <div className="space-y-4">
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">Moves</h3>
+        <h3 className="text-sm font-semibold">{t("meta.moves")}</h3>
         <ShareList shares={pokemon.moves} />
       </section>
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">Items</h3>
+        <h3 className="text-sm font-semibold">{t("meta.items")}</h3>
         <ShareList shares={pokemon.items} />
       </section>
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">Abilities</h3>
+        <h3 className="text-sm font-semibold">{t("meta.abilities")}</h3>
         <ShareList shares={pokemon.abilities} />
       </section>
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">Teammates</h3>
+        <h3 className="text-sm font-semibold">{t("meta.teammates")}</h3>
         <ShareList shares={pokemon.teammates} />
       </section>
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">Spreads</h3>
+        <h3 className="text-sm font-semibold">{t("meta.spreads")}</h3>
         <SpreadList spreads={pokemon.spreads} />
       </section>
       <DialogFooter>
         <Button variant="outline" onClick={onClose}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button variant="secondary" onClick={() => onAddToTeam(pokemon)}>
-          Add to a team
+          {t("meta.addToTeam")}
         </Button>
-        <Button onClick={() => onOpenInCalc(pokemon)}>Open in calc</Button>
+        <Button onClick={() => onOpenInCalc(pokemon)}>
+          {t("meta.openInCalc")}
+        </Button>
       </DialogFooter>
     </div>
   );
@@ -217,6 +224,7 @@ function PokemonDetail({
 
 export function MetagamePage() {
   const [format] = useBattleFormat();
+  const t = useT();
   const navigate = useNavigate();
   const index = useMetagameIndex();
   const { create } = useTeams();
@@ -266,7 +274,7 @@ export function MetagamePage() {
     if (set) {
       navigate("/calc", { state: { attacker: set } });
     } else {
-      toast.error("Could not build a set from this usage entry.");
+      toast.error(t("meta.setBuildFailed"));
     }
   };
 
@@ -274,7 +282,7 @@ export function MetagamePage() {
     const { usageToSet } = await import("@/lib/metagame/sets");
     const set = usageToSet(pokemon);
     if (!set) {
-      toast.error("Could not build a set from this usage entry.");
+      toast.error(t("meta.setBuildFailed"));
       return;
     }
     const team = create({
@@ -296,11 +304,11 @@ export function MetagamePage() {
   } else if (index.isError) {
     content = (
       <ErrorState
-        title="Could not load metagame data"
-        description="The metagame index could not be loaded."
+        title={t("meta.loadError")}
+        description={t("meta.loadErrorIndex")}
         action={
           <Button variant="outline" size="sm" onClick={() => index.refetch()}>
-            Retry
+            {t("meta.retry")}
           </Button>
         }
       />
@@ -308,8 +316,8 @@ export function MetagamePage() {
   } else if (choice === null) {
     content = (
       <EmptyState
-        title="No data for this format yet"
-        description="Usage snapshots appear here once the ladder data is published."
+        title={t("meta.emptyTitle")}
+        description={t("meta.emptyDescription")}
       />
     );
   } else if (snapshot.isPending) {
@@ -322,15 +330,15 @@ export function MetagamePage() {
   } else if (snapshot.isError) {
     content = (
       <ErrorState
-        title="Could not load metagame data"
-        description="The snapshot for this month could not be loaded."
+        title={t("meta.loadError")}
+        description={t("meta.loadErrorSnapshot")}
         action={
           <Button
             variant="outline"
             size="sm"
             onClick={() => snapshot.refetch()}
           >
-            Retry
+            {t("meta.retry")}
           </Button>
         }
       />
@@ -346,10 +354,10 @@ export function MetagamePage() {
       <div className="space-y-6">
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
           <p className="text-sm text-muted-foreground">
-            {formatBattles(data.battles)} battles
+            {t("meta.battles", { count: formatNumber(data.battles) })}
           </p>
           <p className="text-sm text-muted-foreground">
-            Regulation{" "}
+            {t("meta.regulation")}{" "}
             <span className="font-medium text-foreground">
               {data.regulation}
             </span>
@@ -358,29 +366,31 @@ export function MetagamePage() {
         <section className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-base leading-tight font-semibold">
-              Usage ranking
+              {t("meta.usageRanking")}
             </h2>
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search Pokémon"
-              aria-label="Search Pokémon"
+              placeholder={t("meta.searchPokemon")}
+              aria-label={t("meta.searchPokemon")}
               className="w-full sm:w-48"
             />
           </div>
           {data.pokemon.length === 0 ? (
-            <EmptyState title="No usage data" />
+            <EmptyState title={t("meta.noUsageData")} />
           ) : visible.length === 0 ? (
             <EmptyState
-              title="No matches"
-              description={`No Pokémon match "${search.trim()}".`}
+              title={t("meta.noMatches")}
+              description={t("meta.noMatchesDescription", {
+                query: search.trim(),
+              })}
               action={
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setSearch("")}
                 >
-                  Clear search
+                  {t("meta.clearSearch")}
                 </Button>
               }
             />
@@ -400,7 +410,7 @@ export function MetagamePage() {
                       }
                     >
                       <SortButton
-                        label="Rank"
+                        label={t("meta.rank")}
                         active={sort.key === "rank"}
                         dir={sort.dir}
                         onClick={() => toggleSort("rank")}
@@ -416,7 +426,7 @@ export function MetagamePage() {
                       }
                     >
                       <SortButton
-                        label="Pokémon"
+                        label={t("meta.pokemon")}
                         active={sort.key === "name"}
                         dir={sort.dir}
                         onClick={() => toggleSort("name")}
@@ -433,7 +443,7 @@ export function MetagamePage() {
                       }
                     >
                       <SortButton
-                        label="Usage"
+                        label={t("meta.usage")}
                         active={sort.key === "usage"}
                         dir={sort.dir}
                         onClick={() => toggleSort("usage")}
@@ -496,7 +506,7 @@ export function MetagamePage() {
 
   return (
     <Page
-      title="Metagame"
+      title={t("meta.title")}
       description={
         snapshot.data ? formatPeriod(snapshot.data.period) : undefined
       }
@@ -513,8 +523,8 @@ export function MetagamePage() {
             onValueChange={(value) => {
               if (value) setPeriod(value);
             }}
-            placeholder="Month"
-            aria-label="Month"
+            placeholder={t("meta.month")}
+            aria-label={t("meta.month")}
             className="w-36"
             disabled={monthOptions.length === 0}
           />
@@ -537,7 +547,10 @@ export function MetagamePage() {
                   <span>{selected.species}</span>
                 </DialogTitle>
                 <DialogDescription>
-                  Rank #{selected.rank} · {formatShare(selected.usage)} usage
+                  {t("meta.rankUsage", {
+                    rank: selected.rank,
+                    usage: formatShare(selected.usage),
+                  })}
                 </DialogDescription>
               </DialogHeader>
               <PokemonDetail
