@@ -4,6 +4,15 @@
  */
 export { getAbility, listAbilities, type AbilityInfo } from "@/data/abilities";
 export { calculateDamage } from "@/data/damage";
+export {
+  displayName,
+  loadJapaneseNames,
+  matchesDisplayName,
+  useDisplayName,
+  useJapaneseNames,
+  type JapaneseNames,
+  type NameKind,
+} from "@/data/display-names";
 export { getItem, listItems, listItemsFor, type ItemInfo } from "@/data/items";
 export {
   getLearnableMoves,
