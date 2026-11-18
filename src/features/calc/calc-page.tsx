@@ -22,6 +22,7 @@ import { ResultsPanel } from "@/features/calc/results-panel";
 import { SidePanel } from "@/features/calc/side-panel";
 import { useCalcState } from "@/features/calc/use-calc-state";
 import { useIsWide } from "@/features/calc/use-is-wide";
+import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { sideNames } from "@/lib/calc/battle";
 import {
@@ -70,10 +71,13 @@ function StickyResultBar({
   selection,
 }: StickyResultBarProps) {
   const t = useT();
+  const [locale] = useLocale();
   const result = selection?.outcome.result ?? null;
   const summary = selection ? outcomeSummary(selection.outcome) : null;
   const ko = summary ? koResultOf(summary) : null;
-  const shortKo = ko === "GUARANTEED 2HKO" ? "2HKO" : ko;
+  // English shortens "GUARANTEED 2HKO" to fit the phone bar. Japanese must
+  // not: its "2HKO" label is 乱数2発 (possible), while 確定2発 is short anyway.
+  const shortKo = locale === "en" && ko === "GUARANTEED 2HKO" ? "2HKO" : ko;
 
   return (
     <Sheet>
