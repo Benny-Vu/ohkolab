@@ -5,6 +5,7 @@ import { AccountMenu } from "@/app/account-menu";
 import { NAV_ITEMS } from "@/app/nav-items";
 import { usePageTitle, usePageView } from "@/app/page-title";
 import { SearchPalette } from "@/app/search-palette";
+import { useNativeApp } from "@/app/use-native-app";
 import { LanguageSwitch } from "@/components/language-switch";
 import { Wordmark } from "@/components/wordmark";
 import { OnboardingDialog } from "@/features/account/onboarding-dialog";
@@ -17,6 +18,8 @@ import { cn } from "@/lib/utils";
 export function AppLayout() {
   usePageTitle();
   usePageView();
+  // Native app glue (back button, status bar, splash, external links); no-op on the web.
+  useNativeApp();
   const t = useT();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -56,7 +59,8 @@ export function AppLayout() {
         </div>
       </header>
 
-      <main className="flex-1 pb-14 md:pb-0">
+      {/* The phone tab bar is 56px plus the gesture-navigation inset. */}
+      <main className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <Outlet />
       </main>
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launch splash: the dark page background with the monogram centred.
+     Shown by the launch theme on Android below 12; on 12+ the system uses
+     windowSplashScreenBackground / windowSplashScreenAnimatedIcon from
+     values/styles.xml with the same colours. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_background" />
+    <item
+        android:drawable="@drawable/ic_logo"
+        android:gravity="center"
+        android:width="120dp"
+        android:height="115dp" />
+</layer-list>
