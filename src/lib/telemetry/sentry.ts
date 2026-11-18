@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/react";
 
+import { platformName } from "@/lib/platform";
 import { getTelemetryConfig } from "@/lib/telemetry/config";
 import { getTelemetryConsent } from "@/lib/telemetry/consent";
 import { routeTemplate } from "@/lib/telemetry/route-template";
@@ -168,6 +169,9 @@ export function initSentry(): void {
     release: config.appVersion ?? undefined,
     tracesSampleRate: 0,
     environment: config.telemetryEnabled ? "production" : "development",
+    // Tags every event with the platform it came from ("android" or "ios"
+    // inside a native app shell, "web" in a browser).
+    initialScope: { tags: { platform: platformName() } },
     beforeSend: (event) => {
       // Consent may have been withdrawn after start-up; check it on every event.
       if (!getTelemetryConsent().crashes) {

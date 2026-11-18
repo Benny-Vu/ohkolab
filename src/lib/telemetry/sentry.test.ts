@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   overrideTelemetryConfig,
@@ -33,6 +33,10 @@ describe("initSentry", () => {
     overrideTelemetryConfig(null);
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("does not initialize when the DSN is missing", () => {
     overrideTelemetryConfig({
       ...ENABLED,
@@ -59,6 +63,23 @@ describe("initSentry", () => {
     expect(options?.dsn).toBe(ENABLED.sentryDsn);
     expect(options?.release).toBe("1.2.3");
     expect(typeof options?.beforeSend).toBe("function");
+    // Outside a native shell the platform tag is the web default.
+    expect(options?.initialScope).toMatchObject({
+      tags: { platform: "web" },
+    });
+  });
+
+  it("tags events with the Android platform inside the native app shell", () => {
+    vi.stubGlobal("Capacitor", {
+      getPlatform: () => "android",
+      isNativePlatform: () => true,
+    });
+    overrideTelemetryConfig(ENABLED);
+    initSentry();
+    const options = vi.mocked(Sentry.init).mock.calls[0]?.[0];
+    expect(options?.initialScope).toMatchObject({
+      tags: { platform: "android" },
+    });
   });
 });
 
