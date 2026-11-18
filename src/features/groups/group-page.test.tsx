@@ -46,9 +46,20 @@ vi.mock("@/features/feed/composer", () => ({
   ),
 }));
 vi.mock("@/features/feed/post-card", () => ({
-  PostCard: ({ post }: { post: FeedPostRow }) => (
+  PostCard: ({
+    post,
+    onRemoveFromGroup,
+  }: {
+    post: FeedPostRow;
+    onRemoveFromGroup?: () => void;
+  }) => (
     <article>
       <p>{post.body}</p>
+      {onRemoveFromGroup && (
+        <button type="button" onClick={onRemoveFromGroup}>
+          Remove from group
+        </button>
+      )}
     </article>
   ),
 }));
@@ -260,7 +271,7 @@ describe("GroupPage", () => {
     const user = userEvent.setup();
     renderGroupPage();
 
-    await user.click(screen.getByRole("tab", { name: /settings/i }));
+    await user.click(screen.getByRole("radio", { name: /settings/i }));
 
     expect(screen.getByText("Danger zone")).toBeInTheDocument();
     expect(
@@ -293,7 +304,7 @@ describe("GroupPage", () => {
     stubQueries(groupSummary({ visibility: "invite_only" }), null);
     renderGroupPage();
 
-    expect(screen.getByText("Invite only")).toBeInTheDocument();
+    expect(screen.getAllByText("Invite only").length).toBeGreaterThan(0);
     expect(screen.getByText(/this group is invite-only/i)).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /join/i }),
@@ -351,7 +362,7 @@ describe("GroupPage", () => {
     const user = userEvent.setup();
     renderGroupPage();
 
-    await user.click(screen.getByRole("tab", { name: /members/i }));
+    await user.click(screen.getByRole("radio", { name: /members/i }));
 
     expect(screen.getByText("Lance")).toBeInTheDocument();
     expect(screen.getByText("Brock")).toBeInTheDocument();
@@ -363,7 +374,7 @@ describe("GroupPage", () => {
     renderGroupPage();
 
     expect(
-      screen.queryByRole("tab", { name: /settings/i }),
+      screen.queryByRole("radio", { name: /settings/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -375,7 +386,7 @@ describe("GroupPage", () => {
     const user = userEvent.setup();
     renderGroupPage();
 
-    await user.click(screen.getByRole("tab", { name: /settings/i }));
+    await user.click(screen.getByRole("radio", { name: /settings/i }));
 
     expect(screen.getByText("Group settings")).toBeInTheDocument();
   });
@@ -383,7 +394,7 @@ describe("GroupPage", () => {
   it("hides the invite form from plain members", async () => {
     const user = userEvent.setup();
     renderGroupPage();
-    await user.click(screen.getByRole("tab", { name: /members/i }));
+    await user.click(screen.getByRole("radio", { name: /members/i }));
 
     expect(screen.queryByText("Invite a member")).not.toBeInTheDocument();
   });
@@ -392,7 +403,7 @@ describe("GroupPage", () => {
     stubQueries(groupSummary(), membership({ role: "moderator" }));
     const user = userEvent.setup();
     renderGroupPage();
-    await user.click(screen.getByRole("tab", { name: /members/i }));
+    await user.click(screen.getByRole("radio", { name: /members/i }));
 
     expect(screen.getByText("Invite a member")).toBeInTheDocument();
   });
@@ -450,7 +461,7 @@ describe("GroupPage", () => {
     const user = userEvent.setup();
     renderGroupPage();
 
-    await user.click(screen.getByRole("tab", { name: /members/i }));
+    await user.click(screen.getByRole("radio", { name: /members/i }));
     const input = screen.getByLabelText("Username to invite");
     await user.type(input, "misty");
     await user.click(screen.getByRole("button", { name: /^invite$/i }));
@@ -495,7 +506,7 @@ describe("GroupPage", () => {
     const user = userEvent.setup();
     renderGroupPage();
 
-    await user.click(screen.getByRole("tab", { name: /members/i }));
+    await user.click(screen.getByRole("radio", { name: /members/i }));
 
     expect(
       screen.getByRole("button", { name: /make moderator/i }),
@@ -512,7 +523,7 @@ describe("GroupPage", () => {
     const user = userEvent.setup();
     renderGroupPage();
 
-    await user.click(screen.getByRole("tab", { name: /members/i }));
+    await user.click(screen.getByRole("radio", { name: /members/i }));
 
     expect(
       screen.queryByRole("button", { name: /make moderator/i }),
@@ -532,7 +543,7 @@ describe("GroupPage", () => {
     const user = userEvent.setup();
     renderGroupPage();
 
-    await user.click(screen.getByRole("tab", { name: /settings/i }));
+    await user.click(screen.getByRole("radio", { name: /settings/i }));
     const name = screen.getByLabelText("Name");
     await user.clear(name);
     await user.type(name, "Elite Five");
@@ -556,7 +567,7 @@ describe("GroupPage", () => {
     const user = userEvent.setup();
     renderGroupPage();
 
-    await user.click(screen.getByRole("tab", { name: /settings/i }));
+    await user.click(screen.getByRole("radio", { name: /settings/i }));
 
     const deleteButton = screen.getByRole("button", { name: /delete group/i });
     expect(deleteButton).toBeDisabled();
@@ -579,7 +590,7 @@ describe("GroupPage", () => {
     const user = userEvent.setup();
     renderGroupPage();
 
-    await user.click(screen.getByRole("tab", { name: /settings/i }));
+    await user.click(screen.getByRole("radio", { name: /settings/i }));
     const confirm = screen.getByLabelText("Type the group address to confirm");
     await user.type(confirm, "elite-four-fans");
     await user.click(screen.getByRole("button", { name: /delete group/i }));

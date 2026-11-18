@@ -324,10 +324,11 @@ describe("PublicProfilePage", () => {
 
     await user.click(screen.getByRole("button", { name: "Try again" }));
 
-    expect(await screen.findByText("Red")).toBeInTheDocument();
+    expect(await screen.findAllByText("Red")).toHaveLength(2);
   });
 
   it("shows the profile and their public teams", async () => {
+    const user = userEvent.setup();
     const client = createFakeClient({
       profile: profileRow({
         id: "user-misty",
@@ -340,15 +341,14 @@ describe("PublicProfilePage", () => {
     });
     renderProfilePage(client, "misty");
 
+    await user.click(await screen.findByRole("radio", { name: "Teams" }));
+
     expect(await screen.findByText("Champion team")).toBeInTheDocument();
-    expect(screen.getByText("Misty")).toBeInTheDocument();
-    expect(screen.getAllByText("@misty")).toHaveLength(2);
+    expect(screen.getAllByText("Misty")).toHaveLength(2);
+    expect(screen.getAllByText("@misty")).toHaveLength(1);
     expect(screen.getByText("Water Pokémon master.")).toBeInTheDocument();
     expect(screen.getByText("Joined March 2024")).toBeInTheDocument();
     expect(screen.getByAltText("Pikachu")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Public teams" }),
-    ).toBeInTheDocument();
     expect(screen.getByText(/Doubles · 2 Pokémon/)).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Garchomp" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Incineroar" })).toBeInTheDocument();
@@ -368,6 +368,8 @@ describe("PublicProfilePage", () => {
     });
     renderProfilePage(client, "brock");
 
+    await user.click(await screen.findByRole("radio", { name: "Teams" }));
+
     expect(
       await screen.findByText("Could not load teams", {}, { timeout: 4000 }),
     ).toBeInTheDocument();
@@ -378,6 +380,7 @@ describe("PublicProfilePage", () => {
   });
 
   it("shows a profile without an avatar or public teams", async () => {
+    const user = userEvent.setup();
     const client = createFakeClient({
       profile: profileRow({
         id: "user-tracey",
@@ -390,10 +393,12 @@ describe("PublicProfilePage", () => {
     });
     renderProfilePage(client, "tracey");
 
-    expect(await screen.findByText("No public teams yet.")).toBeInTheDocument();
+    await user.click(await screen.findByRole("radio", { name: "Teams" }));
+
+    expect(await screen.findByText("No public teams yet")).toBeInTheDocument();
     expect(screen.getByText("T")).toBeInTheDocument();
-    expect(screen.getByText("tracey")).toBeInTheDocument();
-    expect(screen.getAllByText("@tracey")).toHaveLength(2);
+    expect(screen.getAllByText("tracey")).toHaveLength(2);
+    expect(screen.getAllByText("@tracey")).toHaveLength(1);
   });
 
   it("copies a public team into the visitor's teams", async () => {
@@ -408,6 +413,7 @@ describe("PublicProfilePage", () => {
     });
     renderProfilePage(client, "copyu");
 
+    await user.click(await screen.findByRole("radio", { name: "Teams" }));
     await user.click(await screen.findByRole("button", { name: "View" }));
 
     expect(
@@ -718,6 +724,6 @@ describe("PublicProfilePage social section", () => {
     });
     renderSignedIn(client, "posty");
 
-    expect(await screen.findByText("No posts yet.")).toBeInTheDocument();
+    expect(await screen.findByText("No posts yet")).toBeInTheDocument();
   });
 });

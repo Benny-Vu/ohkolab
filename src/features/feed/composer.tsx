@@ -3,13 +3,7 @@ import { LoaderCircleIcon, SendIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Picker } from "@/components/picker";
 import { Textarea } from "@/components/ui/textarea";
 import { useTeams } from "@/lib/team";
 import { useCreatePost } from "@/lib/social/mutations";
@@ -19,8 +13,8 @@ import { teamAttachment, teamAttachmentJson } from "@/features/feed/attachment";
 import type { TeamAttachment } from "@/features/feed/attachment";
 
 /**
- * Post composer for the community feed. Signed-in users write a short post and
- * can attach one of their teams as a snapshot. Pass `groupId` to post into a
+ * Post composer for the community feed. One quiet line until focused, then the
+ * full composer with the team picker and counter. Pass `groupId` to post into a
  * group instead of the main feed.
  */
 export function Composer({ groupId }: { groupId?: string | null }) {
@@ -28,6 +22,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
   const createPost = useCreatePost();
   const [body, setBody] = useState("");
   const [attachment, setAttachment] = useState<TeamAttachment | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const trimmed = useMemo(() => body.trim(), [body]);
   const canPost =
@@ -43,6 +38,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
     if (result.ok) {
       setBody("");
       setAttachment(null);
+      setExpanded(false);
       toast.success("Posted.");
       track("post_created", {
         attachment: attachment ? "team" : "none",
@@ -53,55 +49,36 @@ export function Composer({ groupId }: { groupId?: string | null }) {
     }
   }
 
+  const pickerOptions = [
+    { value: "none", label: "No attachment" },
+    ...teams.map((team) => ({ value: team.name, label: team.name })),
+  ];
+
   return (
-    <div className="rounded-xl border bg-card p-4">
-      <Textarea
-        aria-label="Write a post"
-        placeholder="Share a team, a result or a question…"
-        value={body}
-        onChange={(event) => setBody(event.target.value)}
-        rows={3}
-        disabled={createPost.isPending}
-      />
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {teams.length > 0 && (
-          <Select
-            value={attachment ? attachment.name : "none"}
-            onValueChange={(value) => {
-              if (value === "none") {
-                setAttachment(null);
-                return;
-              }
-              const team = teams.find((candidate) => candidate.name === value);
-              if (team) setAttachment(teamAttachment(team));
-            }}
-          >
-            <SelectTrigger
-              aria-label="Attach a team"
-              className="w-auto max-w-56"
-            >
-              <SelectValue placeholder="Attach a team" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No attachment</SelectItem>
-              {teams.map((team) => (
-                <SelectItem key={team.id} value={team.name}>
-                  {team.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        <span
+    <div className="rounded-md border bg-card p-3">
+      <div className="flex items-start gap-2">
+        <Textarea
+          aria-label="Write a post"
+          placeholder="Share a team, a result or a question…"
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          onFocus={() => setExpanded(true)}
+          onBlur={() => {
+            if (body.trim() === "" && !attachment) setExpanded(false);
+          }}
+          rows={1}
+          disabled={createPost.isPending}
           className={
-            body.length > POST_BODY_MAX
-              ? "ml-auto text-xs text-destructive"
-              : "ml-auto text-xs text-muted-foreground"
+            expanded ? "min-h-16" : "min-h-9 resize-none overflow-hidden py-2"
           }
+        />
+        <Button
+          type="button"
+          size="sm"
+          onClick={submit}
+          disabled={!canPost}
+          className="mt-0.5 shrink-0"
         >
-          {body.length}/{POST_BODY_MAX}
-        </span>
-        <Button type="button" size="sm" onClick={submit} disabled={!canPost}>
           {createPost.isPending ? (
             <LoaderCircleIcon className="animate-spin" aria-hidden />
           ) : (
@@ -109,10 +86,42 @@ export function Composer({ groupId }: { groupId?: string | null }) {
           )}
           Post
         </Button>
-        {attachment && (
-          <span className="sr-only">{`Attached team: ${attachment.name}`}</span>
-        )}
       </div>
+      {expanded && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {teams.length > 0 && (
+            <Picker
+              aria-label="Attach a team"
+              options={pickerOptions}
+              value={attachment ? attachment.name : "none"}
+              onValueChange={(value) => {
+                if (value === "none" || value === "") {
+                  setAttachment(null);
+                  return;
+                }
+                const team = teams.find(
+                  (candidate) => candidate.name === value,
+                );
+                if (team) setAttachment(teamAttachment(team));
+              }}
+              placeholder="Attach a team"
+              className="w-auto max-w-56"
+            />
+          )}
+          <span
+            className={
+              body.length > POST_BODY_MAX
+                ? "ml-auto text-xs text-destructive"
+                : "ml-auto text-xs text-muted-foreground"
+            }
+          >
+            {body.length}/{POST_BODY_MAX}
+          </span>
+          {attachment && (
+            <span className="sr-only">{`Attached team: ${attachment.name}`}</span>
+          )}
+        </div>
+      )}
       {attachment && (
         <p className="mt-2 text-xs text-muted-foreground">
           {`Team "${attachment.name}" will be attached to this post.`}

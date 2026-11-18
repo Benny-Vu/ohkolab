@@ -7,18 +7,11 @@
 
 import { Link } from "react-router";
 import { toast } from "sonner";
-import {
-  AlertCircleIcon,
-  BellIcon,
-  CheckIcon,
-  LogInIcon,
-  Trash2Icon,
-  UserIcon,
-} from "lucide-react";
+import { CheckIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
@@ -98,38 +91,35 @@ export function NotificationsPage() {
       }
     >
       {!user ? (
-        <Card size="sm" className="border-dashed p-6 text-center">
-          <LogInIcon
-            className="mx-auto size-6 text-muted-foreground"
-            aria-hidden
-          />
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to see your notifications.
-          </p>
-          <Button asChild size="sm" className="mt-3">
-            <Link to="/login?returnTo=/notifications">Sign in</Link>
-          </Button>
-        </Card>
+        <EmptyState
+          title="Sign in to see your notifications"
+          description="Likes, comments, follows and moderation updates show up here."
+          action={
+            <Button asChild size="sm">
+              <Link to="/login?returnTo=/notifications">Sign in</Link>
+            </Button>
+          }
+        />
       ) : notifications.isPending ? (
         <div className="grid gap-3" aria-label="Loading notifications">
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-md" />
+          <Skeleton className="h-16 w-full rounded-md" />
+          <Skeleton className="h-16 w-full rounded-md" />
         </div>
       ) : notifications.isError ? (
-        <Alert variant="destructive">
-          <AlertCircleIcon aria-hidden />
-          <AlertTitle>Could not load notifications</AlertTitle>
-          <AlertDescription>{notifications.error.message}</AlertDescription>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={() => void notifications.refetch()}
-          >
-            Try again
-          </Button>
-        </Alert>
+        <ErrorState
+          title="Could not load notifications"
+          description={notifications.error.message}
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void notifications.refetch()}
+            >
+              Try again
+            </Button>
+          }
+        />
       ) : (
         <NotificationsList
           items={notifications.data?.pages.flat() ?? []}
@@ -163,16 +153,10 @@ function NotificationsList({
 }: NotificationsListProps) {
   if (items.length === 0) {
     return (
-      <Card size="sm" className="border-dashed p-6 text-center">
-        <BellIcon
-          className="mx-auto size-6 text-muted-foreground"
-          aria-hidden
-        />
-        <p className="mt-2 text-sm text-muted-foreground">
-          No notifications yet. When someone likes your post or follows you, it
-          shows up here.
-        </p>
-      </Card>
+      <EmptyState
+        title="No notifications yet"
+        description="When someone likes your post or follows you, it shows up here."
+      />
     );
   }
 
@@ -215,11 +199,10 @@ function NotificationRowCard({
   const isUnread = item.readAt === null;
 
   return (
-    <Card
-      size="sm"
+    <div
       className={cn(
-        "flex items-start gap-3 p-4",
-        isUnread && "border-primary bg-muted",
+        "flex items-start gap-3 rounded-md border bg-card p-4",
+        isUnread && "border-accent-brand/40 bg-muted",
       )}
     >
       {item.actor ? (
@@ -231,8 +214,8 @@ function NotificationRowCard({
           className="mt-0.5"
         />
       ) : (
-        <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
-          <UserIcon className="size-5" aria-hidden />
+        <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
+          {actorLabel(item.actor).charAt(0).toUpperCase()}
         </span>
       )}
       <div className="min-w-0 flex-1">
@@ -266,6 +249,12 @@ function NotificationRowCard({
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {isUnread && (
+          <span
+            aria-hidden
+            className="mt-0.5 size-2 shrink-0 rounded-full bg-accent-brand"
+          />
+        )}
+        {isUnread && (
           <Button
             variant="ghost"
             size="icon-sm"
@@ -284,6 +273,6 @@ function NotificationRowCard({
           <Trash2Icon aria-hidden />
         </Button>
       </div>
-    </Card>
+    </div>
   );
 }
