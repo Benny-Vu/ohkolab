@@ -9,6 +9,7 @@ import {
   getAbility,
   getSpecies,
   useDisplayName,
+  useDisplayDescription,
   type AbilityInfo,
 } from "@/data";
 import { useT } from "@/lib/i18n/t";
@@ -41,6 +42,7 @@ function AbilityOptions({
 }) {
   const t = useT();
   const display = useDisplayName();
+  const describe = useDisplayDescription();
   const groups = useMemo<OptionGroup<AbilityInfo>[]>(() => {
     const names = species ? getSpecies(species)?.abilities : undefined;
     return [
@@ -58,17 +60,20 @@ function AbilityOptions({
     [display],
   );
   const renderAbility = useCallback(
-    (ability: AbilityInfo) => (
-      <span className="grid min-w-0 flex-1 gap-0.5">
-        <span className="truncate">{display("ability", ability.name)}</span>
-        {ability.shortDesc ? (
-          <span className="line-clamp-2 text-xs text-muted-foreground">
-            {ability.shortDesc}
-          </span>
-        ) : null}
-      </span>
-    ),
-    [display],
+    (ability: AbilityInfo) => {
+      const description = describe("ability", ability.name);
+      return (
+        <span className="grid min-w-0 flex-1 gap-0.5">
+          <span className="truncate">{display("ability", ability.name)}</span>
+          {description ? (
+            <span className="line-clamp-2 text-xs text-muted-foreground">
+              {description}
+            </span>
+          ) : null}
+        </span>
+      );
+    },
+    [describe, display],
   );
 
   return (
