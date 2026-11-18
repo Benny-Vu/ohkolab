@@ -3,7 +3,12 @@
  * returns an error message to show the user, or null when the value is fine.
  * The profile limits are also enforced by check constraints in
  * `supabase/migrations/` and must stay in step with them.
+ *
+ * The messages render through the i18n dictionaries, so the English strings
+ * come from `@/lib/i18n` — the English values must match what the lib tests
+ * assert.
  */
+import { t } from "@/lib/i18n/t";
 
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 20;
@@ -17,7 +22,10 @@ export const PASSWORD_MAX_LENGTH = 72;
 const USERNAME_PATTERN = /^[a-z0-9_]+$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const USERNAME_RULES = `${USERNAME_MIN_LENGTH} to ${USERNAME_MAX_LENGTH} characters: lowercase letters, digits and underscores.`;
+/** The username rules, localized, for the hints under the fields. */
+export function usernameRules(): string {
+  return t("auth.usernameRules");
+}
 
 /** Usernames are stored lowercase, which is what makes them unique regardless of case. */
 export function normalizeUsername(input: string): string {
@@ -26,15 +34,15 @@ export function normalizeUsername(input: string): string {
 
 /** Checks an already normalized username. */
 export function validateUsername(username: string): string | null {
-  if (username.length === 0) return "Choose a username.";
+  if (username.length === 0) return t("auth.errUsernameChoose");
   if (username.length < USERNAME_MIN_LENGTH) {
-    return `Username must be at least ${USERNAME_MIN_LENGTH} characters.`;
+    return t("auth.errUsernameMin", { min: USERNAME_MIN_LENGTH });
   }
   if (username.length > USERNAME_MAX_LENGTH) {
-    return `Username must be at most ${USERNAME_MAX_LENGTH} characters.`;
+    return t("auth.errUsernameMax", { max: USERNAME_MAX_LENGTH });
   }
   if (!USERNAME_PATTERN.test(username)) {
-    return "Username can only contain lowercase letters, digits and underscores.";
+    return t("auth.errUsernamePattern");
   }
   return null;
 }
@@ -49,21 +57,21 @@ export function normalizeOptionalText(
 
 export function validateDisplayName(displayName: string | null): string | null {
   if (displayName !== null && displayName.length > DISPLAY_NAME_MAX_LENGTH) {
-    return `Display name must be at most ${DISPLAY_NAME_MAX_LENGTH} characters.`;
+    return t("auth.errDisplayNameMax", { max: DISPLAY_NAME_MAX_LENGTH });
   }
   return null;
 }
 
 export function validateBio(bio: string | null): string | null {
   if (bio !== null && bio.length > BIO_MAX_LENGTH) {
-    return `Bio must be at most ${BIO_MAX_LENGTH} characters.`;
+    return t("auth.errBioMax", { max: BIO_MAX_LENGTH });
   }
   return null;
 }
 
 export function validateAvatarSpecies(species: string | null): string | null {
   if (species !== null && species.length > AVATAR_SPECIES_MAX_LENGTH) {
-    return "That Pokémon cannot be used as an avatar.";
+    return t("auth.errAvatarSpecies");
   }
   return null;
 }
@@ -73,24 +81,24 @@ export function normalizeEmail(input: string): string {
 }
 
 export function validateEmail(email: string): string | null {
-  if (email.length === 0) return "Enter your email address.";
-  if (!EMAIL_PATTERN.test(email)) return "Enter a valid email address.";
+  if (email.length === 0) return t("auth.errEmailEmpty");
+  if (!EMAIL_PATTERN.test(email)) return t("auth.errEmailInvalid");
   return null;
 }
 
 /** For signing in: only checks that something was typed. */
 export function validateCurrentPassword(password: string): string | null {
-  return password.length === 0 ? "Enter your password." : null;
+  return password.length === 0 ? t("auth.errPasswordEmpty") : null;
 }
 
 /** For choosing a password (sign-up, reset). */
 export function validateNewPassword(password: string): string | null {
-  if (password.length === 0) return "Choose a password.";
+  if (password.length === 0) return t("auth.errPasswordChoose");
   if (password.length < PASSWORD_MIN_LENGTH) {
-    return `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
+    return t("auth.errPasswordMin", { min: PASSWORD_MIN_LENGTH });
   }
   if (new TextEncoder().encode(password).length > PASSWORD_MAX_LENGTH) {
-    return `Password must be at most ${PASSWORD_MAX_LENGTH} characters.`;
+    return t("auth.errPasswordMax", { max: PASSWORD_MAX_LENGTH });
   }
   return null;
 }

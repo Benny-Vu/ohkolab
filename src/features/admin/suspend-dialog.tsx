@@ -19,12 +19,13 @@ import {
   useSuspendUser,
 } from "@/lib/social/moderation";
 import { MODERATION_REASON_MAX } from "@/lib/social/validation";
+import { useT } from "@/lib/i18n/t";
 
 const SUSPEND_PRESETS = [
-  { label: "1 day", days: 1 },
-  { label: "7 days", days: 7 },
-  { label: "30 days", days: 30 },
-  { label: "Permanent", days: PERMANENT_SUSPENSION_DAYS },
+  { labelKey: "moderation.duration1", days: 1 },
+  { labelKey: "moderation.duration7", days: 7 },
+  { labelKey: "moderation.duration30", days: 30 },
+  { labelKey: "moderation.durationPermanent", days: PERMANENT_SUSPENSION_DAYS },
 ] as const;
 
 /**
@@ -44,6 +45,7 @@ export function SuspendDialog({
   onOpenChange: (open: boolean) => void;
   onSuspended?: () => void;
 }) {
+  const t = useT();
   const [reason, setReason] = useState("");
   const suspendUser = useSuspendUser(client);
   const busy = suspendUser.isPending;
@@ -51,7 +53,7 @@ export function SuspendDialog({
   const suspend = async (days: number) => {
     const trimmed = reason.trim();
     if (trimmed === "") {
-      toast.error("Enter a reason for the suspension.");
+      toast.error(t("moderation.enterSuspendReason"));
       return;
     }
     const result = await suspendUser.mutateAsync({
@@ -60,7 +62,7 @@ export function SuspendDialog({
       reason: trimmed,
     });
     if (result.ok) {
-      toast.success("User suspended.");
+      toast.success(t("moderation.suspendedToast"));
       setReason("");
       onOpenChange(false);
       onSuspended?.();
@@ -73,17 +75,15 @@ export function SuspendDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Suspend user</DialogTitle>
+          <DialogTitle>{t("publicProfile.suspendUser")}</DialogTitle>
           <DialogDescription>
-            Temporarily prevent this user from posting, commenting and
-            interacting. Choose a duration and give a reason; the user is
-            notified and can appeal.
+            {t("moderation.suspendDescription")}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2">
           <Textarea
-            aria-label="Reason for the suspension"
-            placeholder="Reason for the suspension"
+            aria-label={t("moderation.suspendReasonAria")}
+            placeholder={t("moderation.suspendReasonAria")}
             value={reason}
             maxLength={MODERATION_REASON_MAX}
             onChange={(event) => setReason(event.target.value)}
@@ -98,7 +98,7 @@ export function SuspendDialog({
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           {SUSPEND_PRESETS.map((preset) => (
             <Button
@@ -114,7 +114,7 @@ export function SuspendDialog({
               ) : (
                 <CalendarClockIcon />
               )}
-              {preset.label}
+              {t(preset.labelKey)}
             </Button>
           ))}
         </DialogFooter>

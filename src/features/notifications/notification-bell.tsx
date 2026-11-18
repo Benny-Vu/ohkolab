@@ -8,11 +8,13 @@ import { BellIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import { formatUnreadBadge } from "@/lib/notifications/badge";
 import { useUnreadNotificationCount } from "@/lib/notifications/queries";
 
 export function NotificationBell() {
   const { user } = useAuth();
+  const t = useT();
   const { data } = useUnreadNotificationCount();
   const badge = user ? formatUnreadBadge(data ?? 0) : "";
 
@@ -20,7 +22,11 @@ export function NotificationBell() {
     <Button variant="ghost" size="icon" asChild>
       <Link
         to="/notifications"
-        aria-label={badge ? `Notifications, ${badge} unread` : "Notifications"}
+        aria-label={
+          badge
+            ? t("notifications.bellAriaUnread", { badge })
+            : t("notifications.title")
+        }
         className="relative"
       >
         <BellIcon aria-hidden />

@@ -9,6 +9,7 @@ import {
   remainingStatPoints,
   withStatPoints,
 } from "@/components/pokemon-editor/stat-points";
+import { statLabel } from "@/components/stat-labels";
 import { NumberStepper } from "@/components/number-stepper";
 import { PokemonSprite } from "@/components/pokemon-sprite";
 import { StatBar } from "@/components/stat-bar";
@@ -20,9 +21,11 @@ import {
   MAX_SP_PER_STAT,
   MAX_SP_TOTAL,
   resolveBattleForme,
+  useDisplayName,
 } from "@/data";
+import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
-import { STAT_IDS, STAT_LABELS, type PokemonSet } from "@/types/pokemon";
+import { STAT_IDS, type PokemonSet } from "@/types/pokemon";
 
 export interface PokemonEditorProps {
   value: PokemonSet;
@@ -43,6 +46,8 @@ export function PokemonEditor({
   className,
 }: PokemonEditorProps) {
   const id = useId();
+  const t = useT();
+  const display = useDisplayName();
   const update = (patch: Partial<PokemonSet>) =>
     onChange({ ...value, ...patch });
 
@@ -74,7 +79,9 @@ export function PokemonEditor({
             ))}
           </div>
           {battleForme !== value.species ? (
-            <p className="text-xs text-muted-foreground">{battleForme}</p>
+            <p className="text-xs text-muted-foreground">
+              {display("species", battleForme)}
+            </p>
           ) : null}
         </div>
       </div>
@@ -84,7 +91,7 @@ export function PokemonEditor({
           className="grid gap-1 text-xs text-muted-foreground"
           htmlFor={`${id}-item`}
         >
-          Item
+          {t("pokemonEditor.item")}
           <ItemPicker
             id={`${id}-item`}
             value={value.item}
@@ -96,7 +103,7 @@ export function PokemonEditor({
           className="grid gap-1 text-xs text-muted-foreground"
           htmlFor={`${id}-ability`}
         >
-          Ability
+          {t("pokemonEditor.ability")}
           <AbilityPicker
             id={`${id}-ability`}
             value={value.ability}
@@ -108,7 +115,7 @@ export function PokemonEditor({
           className="grid gap-1 text-xs text-muted-foreground sm:col-span-2"
           htmlFor={`${id}-nature`}
         >
-          Nature
+          {t("pokemonEditor.nature")}
           <NaturePicker
             id={`${id}-nature`}
             value={value.nature}
@@ -119,10 +126,12 @@ export function PokemonEditor({
 
       <fieldset className="grid min-w-0 gap-2">
         <legend className="flex w-full items-baseline justify-between gap-2 text-xs text-muted-foreground">
-          Stat Points
+          {t("pokemonEditor.statPoints")}
           <span className="flex items-baseline gap-2">
             {remaining > 0 ? (
-              <span className="tabular-nums">{remaining} left</span>
+              <span className="tabular-nums">
+                {t("pokemonEditor.spLeft", { n: remaining })}
+              </span>
             ) : null}
             <span aria-live="polite" className="font-mono tabular-nums">
               {spent} / {MAX_SP_TOTAL}
@@ -132,6 +141,7 @@ export function PokemonEditor({
         <div className="grid gap-1.5">
           {STAT_IDS.map((stat) => {
             const sp = value.statPoints[stat];
+            const label = statLabel(t, stat);
             return (
               <div
                 key={stat}
@@ -140,10 +150,12 @@ export function PokemonEditor({
                 <div className="grid min-w-0 gap-1">
                   <div className="flex items-baseline justify-between gap-1">
                     <span className="text-xs text-muted-foreground">
-                      {STAT_LABELS[stat]}
+                      {label}
                     </span>
                     <span className="font-mono text-sm tabular-nums">
-                      <span className="sr-only">{`Final ${STAT_LABELS[stat]} `}</span>
+                      <span className="sr-only">
+                        {t("pokemonEditor.finalStat", { stat: label })}{" "}
+                      </span>
                       {finalStats[stat]}
                     </span>
                   </div>
@@ -162,7 +174,7 @@ export function PokemonEditor({
                   }
                   max={MAX_SP_PER_STAT}
                   remaining={remaining}
-                  label={STAT_LABELS[stat]}
+                  label={label}
                 />
               </div>
             );
@@ -171,14 +183,16 @@ export function PokemonEditor({
       </fieldset>
 
       <fieldset className="@container grid min-w-0 gap-2">
-        <legend className="text-xs text-muted-foreground">Moves</legend>
+        <legend className="text-xs text-muted-foreground">
+          {t("pokemonEditor.moves")}
+        </legend>
         {/* Two columns only when the editor itself is wide enough (team
             builder); the calc's narrow side columns get one chip per row. */}
         <div className="grid gap-2 @md:grid-cols-2">
           {value.moves.map((move, index) => (
             <MovePicker
               key={index}
-              label={`Move ${index + 1}`}
+              label={t("pokemonEditor.moveSlot", { n: index + 1 })}
               value={move}
               species={value.species}
               exclude={value.moves.filter((_, slot) => slot !== index)}

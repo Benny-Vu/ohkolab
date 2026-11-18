@@ -16,6 +16,7 @@ import {
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { useAuth } from "@/lib/auth";
 import { useIsModerator } from "@/lib/social";
+import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 
 interface AccountMenuProps {
@@ -26,13 +27,14 @@ interface AccountMenuProps {
 /** Account entry for the header and the phone tab bar. */
 export function AccountMenu({ variant }: AccountMenuProps) {
   const auth = useAuth();
+  const t = useT();
   const moderator = useIsModerator();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   async function handleSignOut() {
     const result = await auth.signOut();
     if (result.ok) {
-      toast.success("Signed out.");
+      toast.success(t("profile.signedOutToast"));
     } else {
       toast.error(result.error.message);
     }
@@ -60,7 +62,7 @@ export function AccountMenu({ variant }: AccountMenuProps) {
         <Button variant="ghost" asChild>
           <Link to="/login">
             <LogInIcon aria-hidden />
-            Sign in
+            {t("common.signIn")}
           </Link>
         </Button>
       );
@@ -76,7 +78,7 @@ export function AccountMenu({ variant }: AccountMenuProps) {
         }
       >
         <LogInIcon aria-hidden className="size-5" />
-        Sign in
+        {t("common.signIn")}
       </NavLink>
     );
   }
@@ -88,7 +90,11 @@ export function AccountMenu({ variant }: AccountMenuProps) {
       <DropdownMenu>
         {variant === "header" ? (
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Account menu">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("account.menuAria")}
+            >
               <UserAvatar
                 username={profile?.username ?? ""}
                 displayName={profile?.displayName ?? null}
@@ -99,7 +105,7 @@ export function AccountMenu({ variant }: AccountMenuProps) {
           </DropdownMenuTrigger>
         ) : (
           <DropdownMenuTrigger
-            aria-label="Account menu"
+            aria-label={t("account.menuAria")}
             className="flex h-full min-w-0 flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground aria-expanded:text-primary"
           >
             <UserAvatar
@@ -108,7 +114,7 @@ export function AccountMenu({ variant }: AccountMenuProps) {
               avatarSpecies={profile?.avatarSpecies ?? null}
               size="sm"
             />
-            <span className="max-w-full truncate">Profile</span>
+            <span className="max-w-full truncate">{t("nav.profile")}</span>
           </DropdownMenuTrigger>
         )}
         <DropdownMenuContent
@@ -117,33 +123,37 @@ export function AccountMenu({ variant }: AccountMenuProps) {
           className="w-56"
         >
           <DropdownMenuLabel className="truncate">
-            {profile ? (profile.displayName ?? profile.username) : "Account"}
+            {profile
+              ? (profile.displayName ?? profile.username)
+              : t("profile.accountSection")}
           </DropdownMenuLabel>
           {profile && (
             <DropdownMenuItem asChild>
-              <Link to={`/u/${profile.username}`}>Public page</Link>
+              <Link to={`/u/${profile.username}`}>
+                {t("profile.publicPage")}
+              </Link>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem asChild>
-            <Link to="/profile">Profile</Link>
+            <Link to="/profile">{t("nav.profile")}</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to="/groups">Groups</Link>
+            <Link to="/groups">{t("groups.homeTitle")}</Link>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setFeedbackOpen(true)}>
             <MessageSquareIcon aria-hidden />
-            Send feedback
+            {t("footer.sendFeedback")}
           </DropdownMenuItem>
           {moderator.data === true && (
             <>
               <DropdownMenuItem asChild>
-                <Link to="/admin/reports">Reports</Link>
+                <Link to="/admin/reports">{t("pageTitle.reports")}</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/admin/appeals">Moderation</Link>
+                <Link to="/admin/appeals">{t("account.moderationItem")}</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/admin/feedback">Feedback</Link>
+                <Link to="/admin/feedback">{t("pageTitle.feedback")}</Link>
               </DropdownMenuItem>
             </>
           )}
@@ -154,7 +164,7 @@ export function AccountMenu({ variant }: AccountMenuProps) {
             }}
           >
             <LogOutIcon aria-hidden />
-            Sign out
+            {t("common.signOut")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

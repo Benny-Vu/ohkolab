@@ -14,6 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { FeedPostRow, PostImageRow } from "@/lib/database.types";
+import { useT } from "@/lib/i18n/t";
 import { useRemoveGroupPost } from "@/lib/groups/mutations";
 import { usePostImages } from "@/lib/social/images";
 import { MODERATION_REASON_MAX } from "@/lib/social/validation";
@@ -33,6 +34,7 @@ interface GroupPostListProps {
  * main feed's post list.
  */
 export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
+  const t = useT();
   const removeGroupPost = useRemoveGroupPost();
   const [removingPostId, setRemovingPostId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -59,7 +61,7 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
     if (removingPostId === null) return;
     const trimmed = reason.trim();
     if (trimmed === "") {
-      setError("Enter a reason for the removal.");
+      setError(t("postCard.enterReason"));
       return;
     }
     const result = await removeGroupPost.mutateAsync({
@@ -67,7 +69,7 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
       reason: trimmed,
     });
     if (result.ok) {
-      toast.success("Post removed from the group");
+      toast.success(t("groups.removedToast"));
       setRemovingPostId(null);
       setReason("");
       setError(null);
@@ -109,14 +111,15 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Remove post from group</DialogTitle>
+            <DialogTitle>{t("groups.removeTitle")}</DialogTitle>
             <DialogDescription>
-              The post is hidden from the group, the reason is recorded and the
-              author is notified.
+              {t("groups.removeDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
-            <Label htmlFor="group-removal-reason">Reason</Label>
+            <Label htmlFor="group-removal-reason">
+              {t("groups.reasonLabel")}
+            </Label>
             <Textarea
               id="group-removal-reason"
               value={reason}
@@ -126,7 +129,7 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
                 setReason(event.target.value);
                 setError(null);
               }}
-              placeholder="Why is this post being removed?"
+              placeholder={t("groups.reasonPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
               {reason.trim().length}/{MODERATION_REASON_MAX}
@@ -140,7 +143,7 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
               onClick={() => setRemovingPostId(null)}
               disabled={removeGroupPost.isPending}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -151,7 +154,7 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
               {removeGroupPost.isPending && (
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               )}
-              Remove post
+              {t("postCard.removePost")}
             </Button>
           </DialogFooter>
         </DialogContent>

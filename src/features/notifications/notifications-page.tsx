@@ -17,6 +17,7 @@ import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth/use-auth";
 import { formatRelativeTime } from "@/features/feed/relative-time";
+import { useT } from "@/lib/i18n/t";
 import {
   useNotifications,
   useUnreadNotificationCount,
@@ -36,6 +37,7 @@ import { cn } from "@/lib/utils";
 
 export function NotificationsPage() {
   const { user } = useAuth();
+  const t = useT();
   const notifications = useNotifications();
   const unread = useUnreadNotificationCount();
   const markRead = useMarkNotificationRead();
@@ -47,7 +49,7 @@ export function NotificationsPage() {
   async function handleMarkRead(id: string) {
     const result = await markRead.mutateAsync(id);
     if (result.ok) {
-      toast.success("Notification marked as read");
+      toast.success(t("notifications.markedRead"));
     } else {
       toast.error(result.error.message);
     }
@@ -56,7 +58,7 @@ export function NotificationsPage() {
   async function handleMarkAllRead() {
     const result = await markAllRead.mutateAsync();
     if (result.ok) {
-      toast.success("All notifications marked as read");
+      toast.success(t("notifications.allMarkedRead"));
     } else {
       toast.error(result.error.message);
     }
@@ -65,7 +67,7 @@ export function NotificationsPage() {
   async function handleDelete(id: string) {
     const result = await deleteNotification.mutateAsync(id);
     if (result.ok) {
-      toast.success("Notification deleted");
+      toast.success(t("notifications.deletedToast"));
     } else {
       toast.error(result.error.message);
     }
@@ -73,8 +75,8 @@ export function NotificationsPage() {
 
   return (
     <Page
-      title="Notifications"
-      description="Likes, comments, follows and moderation updates."
+      title={t("notifications.title")}
+      description={t("notifications.description")}
       width="narrow"
       actions={
         user && unreadCount > 0 ? (
@@ -85,30 +87,32 @@ export function NotificationsPage() {
             disabled={markAllRead.isPending}
           >
             <CheckIcon aria-hidden />
-            Mark all as read
+            {t("notifications.markAllAsRead")}
           </Button>
         ) : undefined
       }
     >
       {!user ? (
         <EmptyState
-          title="Sign in to see your notifications"
-          description="Likes, comments, follows and moderation updates show up here."
+          title={t("notifications.signedOutTitle")}
+          description={t("notifications.signedOutDescription")}
           action={
             <Button asChild size="sm">
-              <Link to="/login?returnTo=/notifications">Sign in</Link>
+              <Link to="/login?returnTo=/notifications">
+                {t("common.signIn")}
+              </Link>
             </Button>
           }
         />
       ) : notifications.isPending ? (
-        <div className="grid gap-3" aria-label="Loading notifications">
+        <div className="grid gap-3" aria-label={t("notifications.loadingAria")}>
           <Skeleton className="h-16 w-full rounded-md" />
           <Skeleton className="h-16 w-full rounded-md" />
           <Skeleton className="h-16 w-full rounded-md" />
         </div>
       ) : notifications.isError ? (
         <ErrorState
-          title="Could not load notifications"
+          title={t("notifications.errorTitle")}
           description={notifications.error.message}
           action={
             <Button
@@ -116,7 +120,7 @@ export function NotificationsPage() {
               size="sm"
               onClick={() => void notifications.refetch()}
             >
-              Try again
+              {t("common.retry")}
             </Button>
           }
         />
@@ -151,11 +155,12 @@ function NotificationsList({
   isFetchingNextPage,
   onLoadMore,
 }: NotificationsListProps) {
+  const t = useT();
   if (items.length === 0) {
     return (
       <EmptyState
-        title="No notifications yet"
-        description="When someone likes your post or follows you, it shows up here."
+        title={t("notifications.emptyTitle")}
+        description={t("notifications.emptyDescription")}
       />
     );
   }
@@ -176,7 +181,9 @@ function NotificationsList({
           onClick={onLoadMore}
           disabled={isFetchingNextPage}
         >
-          {isFetchingNextPage ? "Loading…" : "Load more"}
+          {isFetchingNextPage
+            ? t("common.loading")
+            : t("notifications.loadMore")}
         </Button>
       )}
     </div>
@@ -194,9 +201,11 @@ function NotificationRowCard({
   onMarkRead,
   onDelete,
 }: NotificationRowCardProps) {
+  const t = useT();
   const sentence = describeNotification(item);
   const profilePath = actorProfilePath(item.actor);
   const isUnread = item.readAt === null;
+  const actor = actorLabel(item.actor);
 
   return (
     <div
@@ -215,7 +224,7 @@ function NotificationRowCard({
         />
       ) : (
         <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
-          {actorLabel(item.actor).charAt(0).toUpperCase()}
+          {actor.charAt(0).toUpperCase()}
         </span>
       )}
       <div className="min-w-0 flex-1">
@@ -225,12 +234,10 @@ function NotificationRowCard({
               to={profilePath}
               className="font-medium text-foreground hover:underline"
             >
-              {actorLabel(item.actor)}
+              {actor}
             </Link>
           ) : (
-            <span className="font-medium text-foreground">
-              {actorLabel(item.actor)}
-            </span>
+            <span className="font-medium text-foreground">{actor}</span>
           )}{" "}
           {sentence.to ? (
             <Link
@@ -258,7 +265,7 @@ function NotificationRowCard({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Mark ${actorLabel(item.actor)}'s notification as read`}
+            aria-label={t("notifications.markRead", { name: actor })}
             onClick={() => onMarkRead(item.id)}
           >
             <CheckIcon aria-hidden />
@@ -267,7 +274,7 @@ function NotificationRowCard({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={`Delete notification from ${actorLabel(item.actor)}`}
+          aria-label={t("notifications.delete", { name: actor })}
           onClick={() => onDelete(item.id)}
         >
           <Trash2Icon aria-hidden />

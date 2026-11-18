@@ -42,10 +42,11 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import {
   BIO_MAX_LENGTH,
   DISPLAY_NAME_MAX_LENGTH,
-  USERNAME_RULES,
+  usernameRules,
   normalizeOptionalText,
   normalizeUsername,
   validateBio,
@@ -53,6 +54,7 @@ import {
   validateUsername,
 } from "@/lib/auth/validation";
 import type { AuthFailure, Profile } from "@/lib/auth/types";
+import { LanguageSwitch } from "@/components/language-switch";
 import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 import { TelemetrySwitch } from "@/features/feedback/telemetry-switch";
 import { useProfilesByIds } from "@/features/profile/profile-queries";
@@ -80,17 +82,16 @@ function ProfileSkeleton() {
 }
 
 function GuestPrompt() {
+  const t = useT();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>You are browsing as a guest</CardTitle>
-        <CardDescription>
-          Sign in to save teams, keep your profile and more.
-        </CardDescription>
+        <CardTitle>{t("profile.guestTitle")}</CardTitle>
+        <CardDescription>{t("profile.guestDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <Button asChild>
-          <Link to="/login">Sign in</Link>
+          <Link to="/login">{t("common.signIn")}</Link>
         </Button>
       </CardContent>
     </Card>
@@ -123,6 +124,7 @@ function SettingsSection({
 /** The signed-in profile editor. */
 function ProfileEditor({ profile }: { profile: Profile }) {
   const auth = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [username, setUsername] = useState(profile.username);
   const [displayName, setDisplayName] = useState(profile.displayName ?? "");
@@ -163,7 +165,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
     });
     setPending(null);
     if (result.ok) {
-      toast.success("Profile saved.");
+      toast.success(t("profile.savedToast"));
     } else if (result.error.field) {
       setFieldErrors((prev) => ({
         ...prev,
@@ -179,7 +181,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
     const result = await auth.signOut();
     setPending(null);
     if (result.ok) {
-      toast.success("Signed out.");
+      toast.success(t("profile.signedOutToast"));
       navigate("/", { replace: true });
     } else {
       setFormError(result.error);
@@ -191,7 +193,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
     const result = await auth.deleteAccount();
     setPending(null);
     if (result.ok) {
-      toast.success("Account deleted.");
+      toast.success(t("profile.deletedToast"));
       navigate("/", { replace: true });
     } else {
       setFormError(result.error);
@@ -202,8 +204,8 @@ function ProfileEditor({ profile }: { profile: Profile }) {
   return (
     <div className="grid gap-6">
       <SettingsSection
-        title="Profile"
-        description="How you appear to other players."
+        title={t("nav.profile")}
+        description={t("profile.howYouAppear")}
       >
         <Card>
           <CardContent>
@@ -216,18 +218,20 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   size="lg"
                 />
                 <div className="grid min-w-0 flex-1 gap-2">
-                  <Label htmlFor="avatar-species">Avatar species</Label>
+                  <Label htmlFor="avatar-species">
+                    {t("profile.avatarSpecies")}
+                  </Label>
                   <Suspense fallback={<Skeleton className="h-8 w-full" />}>
                     <SpeciesPicker
                       value={avatarSpecies}
                       onChange={(species) => setAvatarSpecies(species)}
-                      placeholder="Choose a Pokémon"
+                      placeholder={t("pokemonEditor.chooseSpecies")}
                     />
                   </Suspense>
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">{t("profile.usernameLabel")}</Label>
                 <Input
                   id="username"
                   value={username}
@@ -240,11 +244,13 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   </p>
                 ) : null}
                 <p className="text-xs text-muted-foreground">
-                  {USERNAME_RULES}
+                  {usernameRules()}
                 </p>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="display-name">Display name</Label>
+                <Label htmlFor="display-name">
+                  {t("profile.displayNameLabel")}
+                </Label>
                 <Input
                   id="display-name"
                   value={displayName}
@@ -257,11 +263,13 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   </p>
                 ) : null}
                 <p className="text-xs text-muted-foreground">
-                  Optional. At most {DISPLAY_NAME_MAX_LENGTH} characters.
+                  {t("profile.displayNameHint", {
+                    max: DISPLAY_NAME_MAX_LENGTH,
+                  })}
                 </p>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="bio">{t("profile.bioLabel")}</Label>
                 <Textarea
                   id="bio"
                   value={bio}
@@ -274,7 +282,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   </p>
                 ) : null}
                 <p className="text-xs text-muted-foreground">
-                  Optional. At most {BIO_MAX_LENGTH} characters.
+                  {t("profile.bioHint", { max: BIO_MAX_LENGTH })}
                 </p>
               </div>
               {formError ? (
@@ -289,7 +297,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   ) : (
                     <SaveIcon />
                   )}
-                  Save changes
+                  {t("profile.saveChanges")}
                 </Button>
                 <Button
                   type="button"
@@ -304,7 +312,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                     setFormError(null);
                   }}
                 >
-                  Reset
+                  {t("profile.reset")}
                 </Button>
               </div>
             </form>
@@ -312,11 +320,11 @@ function ProfileEditor({ profile }: { profile: Profile }) {
         </Card>
       </SettingsSection>
 
-      <SettingsSection title="Account">
+      <SettingsSection title={t("profile.accountSection")}>
         <Card>
           <CardHeader>
-            <CardTitle>Session</CardTitle>
-            <CardDescription>Sign out on this device.</CardDescription>
+            <CardTitle>{t("profile.sessionTitle")}</CardTitle>
+            <CardDescription>{t("profile.signOutDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleSignOut} disabled={busy}>
@@ -325,20 +333,19 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               ) : (
                 <LogOutIcon />
               )}
-              Sign out
+              {t("common.signOut")}
             </Button>
           </CardContent>
         </Card>
       </SettingsSection>
 
-      <SettingsSection title="Privacy">
+      <SettingsSection title={t("profile.privacyTitle")}>
         <div className="grid gap-4">
           <Card>
             <CardHeader>
-              <CardTitle>Crash reports and usage statistics</CardTitle>
+              <CardTitle>{t("profile.telemetryTitle")}</CardTitle>
               <CardDescription>
-                Anonymous, cookieless telemetry that helps us find and fix
-                problems. Turning it off stops both immediately.
+                {t("profile.telemetryDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -349,13 +356,20 @@ function ProfileEditor({ profile }: { profile: Profile }) {
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Danger zone">
+      <SettingsSection title={t("language.label")}>
+        <Card>
+          <CardContent>
+            <LanguageSwitch />
+          </CardContent>
+        </Card>
+      </SettingsSection>
+
+      <SettingsSection title={t("profile.dangerZone")}>
         <Card className="border-destructive/50">
           <CardHeader>
-            <CardTitle>Delete account</CardTitle>
+            <CardTitle>{t("profile.deleteAccountTitle")}</CardTitle>
             <CardDescription>
-              Deleting your account removes your profile and saved teams
-              forever. This cannot be undone.
+              {t("profile.deleteAccountDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -363,21 +377,22 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               <DialogTrigger asChild>
                 <Button variant="destructive" disabled={busy}>
                   <Trash2Icon />
-                  Delete account
+                  {t("profile.deleteAccountTitle")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Delete your account</DialogTitle>
+                  <DialogTitle>{t("profile.deleteDialogTitle")}</DialogTitle>
                   <DialogDescription>
-                    This permanently deletes your account, your profile and all
-                    your saved teams. There is no undo. Type your username (
-                    <span className="font-medium">{profile.username}</span>) to
-                    confirm.
+                    {t("profile.deleteDialogPrefix")}
+                    <span className="font-medium">{profile.username}</span>
+                    {t("profile.deleteDialogSuffix")}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-2">
-                  <Label htmlFor="delete-confirm">Confirm username</Label>
+                  <Label htmlFor="delete-confirm">
+                    {t("profile.confirmUsername")}
+                  </Label>
                   <Input
                     id="delete-confirm"
                     value={deleteConfirm}
@@ -391,7 +406,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                     onClick={() => setDeleteOpen(false)}
                     disabled={busy}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     variant="destructive"
@@ -406,7 +421,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                     ) : (
                       <Trash2Icon />
                     )}
-                    Delete forever
+                    {t("profile.deleteForever")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -419,6 +434,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
 }
 
 function BlockedUserRow({ profile }: { profile: Profile }) {
+  const t = useT();
   const toggleBlock = useToggleBlock(profile.id);
   const [busy, setBusy] = useState(false);
 
@@ -464,13 +480,14 @@ function BlockedUserRow({ profile }: { profile: Profile }) {
         disabled={busy}
       >
         {busy ? <LoaderCircleIcon className="animate-spin" /> : null}
-        Unblock
+        {t("profile.unblock")}
       </Button>
     </li>
   );
 }
 
 function BlockedUsersCard() {
+  const t = useT();
   const blocksQuery = useBlocks();
   const ids = blocksQuery.data ?? [];
   const profilesQuery = useProfilesByIds(ids);
@@ -482,9 +499,9 @@ function BlockedUsersCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Blocked users</CardTitle>
+        <CardTitle>{t("profile.blockedUsersTitle")}</CardTitle>
         <CardDescription>
-          Blocked trainers cannot follow you or interact with your posts.
+          {t("profile.blockedUsersDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -495,7 +512,7 @@ function BlockedUsersCard() {
           </div>
         ) : ids.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            You haven't blocked anyone.
+            {t("profile.noBlocks")}
           </p>
         ) : profilesQuery.isPending ? (
           <div className="grid gap-2">
@@ -503,7 +520,7 @@ function BlockedUsersCard() {
           </div>
         ) : profilesQuery.isError ? (
           <p className="text-sm text-muted-foreground">
-            Blocked users could not be loaded. Try refreshing.
+            {t("profile.blocksLoadFailed")}
           </p>
         ) : (
           <ul className="grid gap-2">
@@ -519,10 +536,11 @@ function BlockedUsersCard() {
 
 export function ProfilePage() {
   const auth = useAuth();
+  const t = useT();
 
   if (auth.loading) {
     return (
-      <Page title="Profile" width="narrow">
+      <Page title={t("nav.profile")} width="narrow">
         <ProfileSkeleton />
       </Page>
     );
@@ -530,7 +548,7 @@ export function ProfilePage() {
 
   if (!auth.isConfigured) {
     return (
-      <Page title="Profile" width="narrow">
+      <Page title={t("nav.profile")} width="narrow">
         <UnconfiguredNotice />
       </Page>
     );
@@ -538,7 +556,7 @@ export function ProfilePage() {
 
   if (!auth.user) {
     return (
-      <Page title="Profile" width="narrow">
+      <Page title={t("nav.profile")} width="narrow">
         <GuestPrompt />
       </Page>
     );
@@ -546,7 +564,7 @@ export function ProfilePage() {
 
   return (
     <Page
-      title="Profile"
+      title={t("nav.profile")}
       description={auth.profile ? `@${auth.profile.username}` : undefined}
       width="narrow"
       actions={
@@ -554,7 +572,7 @@ export function ProfilePage() {
           <Button variant="ghost" size="sm" asChild>
             <Link to={`/u/${auth.profile.username}`}>
               <ExternalLinkIcon />
-              Public page
+              {t("profile.publicPage")}
             </Link>
           </Button>
         ) : undefined
@@ -566,10 +584,8 @@ export function ProfilePage() {
         <div className="grid gap-4">
           <Alert>
             <TriangleAlertIcon />
-            <AlertTitle>Profile could not be loaded</AlertTitle>
-            <AlertDescription>
-              Your profile could not be loaded. Try refreshing.
-            </AlertDescription>
+            <AlertTitle>{t("profile.loadFailedTitle")}</AlertTitle>
+            <AlertDescription>{t("profile.loadFailedBody")}</AlertDescription>
           </Alert>
           <Button
             className="justify-self-start"
@@ -578,7 +594,7 @@ export function ProfilePage() {
             }}
           >
             <RefreshCwIcon />
-            Try again
+            {t("common.retry")}
           </Button>
         </div>
       )}

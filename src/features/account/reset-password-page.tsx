@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import { validateNewPassword } from "@/lib/auth/validation";
 import type { AuthFailure } from "@/lib/auth/types";
 import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
@@ -22,6 +23,7 @@ import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 /** The page the password-reset email links to: choose a new password. */
 export function ResetPasswordPage() {
   const auth = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -32,7 +34,7 @@ export function ResetPasswordPage() {
 
   if (!auth.isConfigured) {
     return (
-      <Page title="Choose a new password" width="narrow">
+      <Page title={t("reset.title")} width="narrow">
         <UnconfiguredNotice />
       </Page>
     );
@@ -46,7 +48,7 @@ export function ResetPasswordPage() {
     setFormError(null);
     if (error) return;
     if (confirmPassword !== password) {
-      setConfirmError("Passwords do not match.");
+      setConfirmError(t("reset.mismatch"));
       return;
     }
 
@@ -54,7 +56,7 @@ export function ResetPasswordPage() {
     const result = await auth.updatePassword(password);
     setPending(false);
     if (result.ok) {
-      toast.success("Password updated.");
+      toast.success(t("reset.updatedToast"));
       navigate("/", { replace: true });
     } else if (result.error.field === "password") {
       setPasswordError(result.error.message);
@@ -64,19 +66,16 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <Page title="Choose a new password" width="narrow">
+    <Page title={t("reset.title")} width="narrow">
       <Card>
         <CardHeader>
-          <CardTitle>Choose a new password</CardTitle>
-          <CardDescription>
-            This sets the password for your account. You stay signed in
-            afterwards.
-          </CardDescription>
+          <CardTitle>{t("reset.title")}</CardTitle>
+          <CardDescription>{t("reset.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-4" onSubmit={handleSubmit} noValidate>
             <div className="grid gap-2">
-              <Label htmlFor="new-password">New password</Label>
+              <Label htmlFor="new-password">{t("reset.newPassword")}</Label>
               <Input
                 id="new-password"
                 type="password"
@@ -99,7 +98,9 @@ export function ResetPasswordPage() {
               ) : null}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="confirm-password">Confirm password</Label>
+              <Label htmlFor="confirm-password">
+                {t("reset.confirmPassword")}
+              </Label>
               <Input
                 id="confirm-password"
                 type="password"
@@ -140,14 +141,14 @@ export function ResetPasswordPage() {
               ) : (
                 <KeyRoundIcon />
               )}
-              Update password
+              {t("reset.update")}
             </Button>
             <Button
               asChild
               variant="link"
               className="h-auto justify-self-start p-0"
             >
-              <Link to="/login">Back to sign in</Link>
+              <Link to="/login">{t("login.backToSignIn")}</Link>
             </Button>
           </form>
         </CardContent>

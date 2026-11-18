@@ -3,6 +3,7 @@ import {
   useTelemetryConsent,
   setTelemetryEnabled,
 } from "@/lib/telemetry/consent";
+import { useT } from "@/lib/i18n/t";
 
 /**
  * The telemetry opt-out switch: one control for anonymous usage statistics
@@ -10,6 +11,7 @@ import {
  */
 
 export function TelemetrySwitch() {
+  const t = useT();
   const consent = useTelemetryConsent();
 
   return (
@@ -17,14 +19,11 @@ export function TelemetrySwitch() {
       <Switch
         checked={consent.enabled}
         onCheckedChange={(checked) => setTelemetryEnabled(checked)}
-        aria-label="Share anonymous usage statistics and crash reports"
+        aria-label={t("feedback.telemetryAria")}
         className="mt-0.5"
       />
       <span className="text-sm text-muted-foreground">
-        Share anonymous usage statistics and crash reports. Usage statistics are
-        cookieless and never include what you write or your teams; crash reports
-        contain only the error and the page it happened on. You can turn this
-        off at any time.
+        {t("feedback.telemetryBody")}
       </span>
     </label>
   );

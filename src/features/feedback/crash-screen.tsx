@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Page } from "@/components/page";
+import { useT } from "@/lib/i18n/t";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 
 /**
@@ -24,19 +25,17 @@ export function CrashScreen({
   onReload,
   onGoHome,
 }: CrashScreenProps) {
+  const t = useT();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
-    <Page title="Something went wrong" width="narrow">
+    <Page title={t("crash.title")} width="narrow">
       <div className="flex flex-col items-center gap-6 py-12 text-center">
-        <p className="text-sm text-muted-foreground">
-          Something broke on our side. Your data is safe. You can reload the
-          page, go back to the feed, or tell us what happened so we can fix it
-          faster.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("crash.body")}</p>
         {crashId ? (
           <p className="text-xs text-muted-foreground">
-            Crash reference: <span className="font-mono">{crashId}</span>
+            {t("crash.referencePrefix")}
+            {<span className="font-mono">{crashId}</span>}
           </p>
         ) : null}
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -44,7 +43,7 @@ export function CrashScreen({
             onClick={() => (onReload ? onReload() : window.location.reload())}
           >
             <RefreshCwIcon className="size-4" />
-            Reload
+            {t("crash.reload")}
           </Button>
           <Button
             variant="outline"
@@ -53,10 +52,10 @@ export function CrashScreen({
             }
           >
             <HomeIcon className="size-4" />
-            Go home
+            {t("crash.goHome")}
           </Button>
           <Button variant="outline" onClick={() => setFeedbackOpen(true)}>
-            Tell us what happened
+            {t("crash.tellUs")}
           </Button>
         </div>
       </div>

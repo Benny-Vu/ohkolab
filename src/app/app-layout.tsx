@@ -5,16 +5,19 @@ import { AccountMenu } from "@/app/account-menu";
 import { NAV_ITEMS } from "@/app/nav-items";
 import { usePageTitle, usePageView } from "@/app/page-title";
 import { SearchPalette } from "@/app/search-palette";
+import { LanguageSwitch } from "@/components/language-switch";
 import { Wordmark } from "@/components/wordmark";
 import { OnboardingDialog } from "@/features/account/onboarding-dialog";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { NotificationBell } from "@/features/notifications/notification-bell";
+import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 
 /** App frame: desktop header, page content, phone top bar and tab bar. */
 export function AppLayout() {
   usePageTitle();
   usePageView();
+  const t = useT();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
@@ -24,7 +27,10 @@ export function AppLayout() {
           <Link to="/" aria-label="OHKOLab home">
             <Wordmark />
           </Link>
-          <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+          <nav
+            aria-label={t("nav.main")}
+            className="hidden items-center gap-1 md:flex"
+          >
             {NAV_ITEMS.filter((item) => item.to !== "/profile").map((item) => (
               <NavLink
                 key={item.to}
@@ -38,7 +44,7 @@ export function AppLayout() {
                   )
                 }
               >
-                {item.label}
+                {t(item.labelKey)}
               </NavLink>
             ))}
           </nav>
@@ -55,27 +61,24 @@ export function AppLayout() {
       </main>
 
       <footer className="border-t px-6 pt-4 pb-[calc(3.5rem+env(safe-area-inset-bottom))] text-center text-xs text-muted-foreground md:pb-4">
-        <p>
-          OHKOLab is an unofficial fan project, not affiliated with Nintendo,
-          Game Freak, Creatures or The Pokémon Company.
-        </p>
+        <p>{t("footer.disclaimer")}</p>
         <p className="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
           <Link className="underline-offset-4 hover:underline" to="/terms">
-            Terms
+            {t("footer.terms")}
           </Link>
           <Link className="underline-offset-4 hover:underline" to="/privacy">
-            Privacy
+            {t("footer.privacy")}
           </Link>
           <button
             type="button"
             className="underline-offset-4 hover:underline"
             onClick={() => setFeedbackOpen(true)}
           >
-            Send feedback
+            {t("footer.sendFeedback")}
           </button>
         </p>
         <p className="mt-2">
-          OHKOLab is made by{" "}
+          {t("footer.madeBy")}{" "}
           <a
             className="font-medium underline-offset-4 hover:underline"
             href="https://github.com/vu-forge"
@@ -85,10 +88,14 @@ export function AppLayout() {
             Vu Forge
           </a>
         </p>
+        <p className="mt-2">{t("footer.japaneseNames")}</p>
+        <div className="mt-3 flex justify-center">
+          <LanguageSwitch />
+        </div>
       </footer>
 
       <nav
-        aria-label="Main"
+        aria-label={t("nav.main")}
         className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-safe backdrop-blur md:hidden"
       >
         <ul className="mx-auto grid h-14 max-w-md grid-cols-5">
@@ -106,7 +113,7 @@ export function AppLayout() {
                 }
               >
                 <item.icon className="size-5" aria-hidden />
-                {item.label}
+                {t(item.labelKey)}
               </NavLink>
             </li>
           ))}

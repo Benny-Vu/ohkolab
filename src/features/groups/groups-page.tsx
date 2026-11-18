@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import {
   useMyGroups,
   usePublicGroups,
@@ -22,6 +23,7 @@ import {
  */
 export function GroupsPage() {
   const { user } = useAuth();
+  const t = useT();
   const [tab, setTab] = useState<"mine" | "discover">(
     user ? "mine" : "discover",
   );
@@ -31,24 +33,24 @@ export function GroupsPage() {
 
   return (
     <Page
-      title="Groups"
-      description="Communities for teams, formats and everything Champions."
+      title={t("groups.homeTitle")}
+      description={t("groups.homeDescription")}
       actions={
         user ? (
           <Button asChild size="sm">
             <Link to="/groups/new">
               <PlusIcon aria-hidden />
-              Create group
+              {t("groups.createGroup")}
             </Link>
           </Button>
         ) : null
       }
     >
       <SegmentedControl
-        aria-label="Groups sections"
+        aria-label={t("groups.sectionsAriaGroups")}
         options={[
-          { value: "mine", label: "My groups" },
-          { value: "discover", label: "Discover" },
+          { value: "mine", label: t("groups.myGroups") },
+          { value: "discover", label: t("groups.discover") },
         ]}
         value={tab}
         onValueChange={(value) => setTab(value as "mine" | "discover")}
@@ -59,15 +61,15 @@ export function GroupsPage() {
           {user ? (
             <GroupList
               query={myGroups}
-              emptyTitle="No groups yet"
-              emptyDescription="You have not joined any groups yet. Find one on Discover."
+              emptyTitle={t("groups.noGroupsYetTitle")}
+              emptyDescription={t("groups.noGroupsYetDescription")}
             />
           ) : (
             <EmptyState
-              title="Sign in to see your groups"
+              title={t("groups.signInToSeeGroups")}
               action={
                 <Button asChild size="sm">
-                  <Link to="/login?returnTo=/groups">Sign in</Link>
+                  <Link to="/login?returnTo=/groups">{t("common.signIn")}</Link>
                 </Button>
               }
             />
@@ -83,8 +85,8 @@ export function GroupsPage() {
               />
               <Input
                 type="search"
-                aria-label="Search groups by name"
-                placeholder="Search groups by name"
+                aria-label={t("groups.searchAria")}
+                placeholder={t("groups.searchAria")}
                 className="pl-9"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -100,12 +102,16 @@ export function GroupsPage() {
           <GroupList
             query={publicGroups}
             emptyTitle={
-              search.trim() === "" ? "No public groups yet" : "No groups found"
+              search.trim() === ""
+                ? t("groups.noPublicGroups")
+                : t("groups.noMatchesTitle")
             }
             emptyDescription={
               search.trim() === ""
-                ? "Create the first one."
-                : `No groups match "${search.trim()}".`
+                ? t("groups.createFirst")
+                : t("groups.noMatchesDescription", {
+                    query: search.trim(),
+                  })
             }
           />
         </div>
@@ -121,9 +127,10 @@ interface GroupListProps {
 }
 
 function GroupList({ query, emptyTitle, emptyDescription }: GroupListProps) {
+  const t = useT();
   if (query.isPending) {
     return (
-      <div className="grid gap-3" aria-label="Loading groups">
+      <div className="grid gap-3" aria-label={t("groups.loadingGroups")}>
         <Skeleton className="h-20 w-full rounded-md" />
         <Skeleton className="h-20 w-full rounded-md" />
         <Skeleton className="h-20 w-full rounded-md" />
@@ -149,6 +156,7 @@ function GroupList({ query, emptyTitle, emptyDescription }: GroupListProps) {
 }
 
 function GroupCard({ group }: { group: GroupSummary }) {
+  const t = useT();
   return (
     <Link
       to={`/g/${group.slug}`}
@@ -160,11 +168,13 @@ function GroupCard({ group }: { group: GroupSummary }) {
             {group.name}
           </span>
           <Badge variant="secondary">
-            {group.visibility === "invite_only" ? "Invite only" : "Public"}
+            {group.visibility === "invite_only"
+              ? t("groups.inviteOnly")
+              : t("groups.publicBadge")}
           </Badge>
         </div>
         <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-          {group.description ?? "No description yet."}
+          {group.description ?? t("groups.noDescription")}
         </p>
       </div>
     </Link>

@@ -10,6 +10,7 @@ import {
   singlesSnapshotFixture,
   snapshotFixture,
 } from "@/lib/metagame/fixture";
+import { setLocale } from "@/lib/i18n/locale";
 import { setBattleFormat } from "@/lib/preferences";
 import { MetagamePage } from "@/features/metagame/metagame-page";
 
@@ -285,5 +286,45 @@ describe("MetagamePage", () => {
     await user.click(screen.getByRole("button", { name: /Sneasler/ }));
     await user.click(screen.getByRole("button", { name: "Add to a team" }));
     expect(await screen.findByTestId("team-stub")).toBeInTheDocument();
+  });
+});
+
+describe("MetagamePage in Japanese", () => {
+  beforeEach(() => {
+    setLocale("ja");
+  });
+
+  afterEach(() => {
+    setLocale("en");
+  });
+
+  it("renders the page frame and ranking labels in Japanese", async () => {
+    mockFetch();
+    renderMetagame();
+
+    expect(await screen.findByText(/1,649,648バトル/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "環境" })).toBeInTheDocument();
+    expect(screen.getByText("使用率ランキング")).toBeInTheDocument();
+    expect(screen.getByText("レギュレーション")).toBeInTheDocument();
+    expect(await screen.findByText("素早さライン")).toBeInTheDocument();
+  });
+
+  it("renders the Pokémon detail dialog in Japanese", async () => {
+    const user = userEvent.setup();
+    mockFetch();
+    renderMetagame();
+    await screen.findByText(/1,649,648バトル/);
+
+    await user.click(screen.getByRole("button", { name: /Sneasler/ }));
+
+    expect(await screen.findByText("順位#1 · 使用率41.2%")).toBeInTheDocument();
+    expect(screen.getByText("技")).toBeInTheDocument();
+    expect(screen.getByText("もちもの")).toBeInTheDocument();
+    expect(screen.getByText("特性")).toBeInTheDocument();
+    expect(screen.getByText("同時選出")).toBeInTheDocument();
+    expect(screen.getByText("ステータス配分")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "計算機で開く" }),
+    ).toBeInTheDocument();
   });
 });

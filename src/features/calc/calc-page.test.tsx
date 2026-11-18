@@ -1,11 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { Providers } from "@/app/providers";
 import { createDefaultSet } from "@/data";
 import { CalcPage } from "@/features/calc/calc-page";
+import { setLocale } from "@/lib/i18n/locale";
 
 const DIRECTION_ARROW = "\u2192";
 
@@ -199,5 +200,56 @@ describe("CalcPage", () => {
     await openResults(user);
 
     expect(document.querySelector("select")).toBeNull();
+  });
+});
+
+describe("CalcPage in Japanese", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    setLocale("ja");
+  });
+
+  afterEach(() => {
+    setLocale("en");
+  });
+
+  it("renders the page frame and section labels in Japanese", () => {
+    renderCalc();
+
+    expect(
+      screen.getByRole("heading", { name: "ダメージ計算" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "攻撃側" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "防御側" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: "フィールド" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "リセット" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "攻守入れ替え" }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the field panel in Japanese", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    await user.click(screen.getByRole("radio", { name: "フィールド" }));
+
+    expect(
+      screen.getByRole("heading", { name: "フィールド" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "シングル" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "ダブル" })).toBeChecked();
+    expect(screen.getByRole("combobox", { name: "天候" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("combobox", { name: "フィールド" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "その他の条件" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("ダブル専用")).toBeInTheDocument();
   });
 });

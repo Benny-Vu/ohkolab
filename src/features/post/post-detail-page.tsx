@@ -11,6 +11,7 @@ import { Page } from "@/components/page";
 import { NotFoundPage } from "@/features/system/not-found-page";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import { useCreateComment, useDeleteComment } from "@/lib/social/mutations";
 import { useComments, usePost } from "@/lib/social/queries";
 import { usePostImages } from "@/lib/social/images";
@@ -26,6 +27,7 @@ import { ReportDialog } from "@/features/feed/report-dialog";
 export function PostDetailPage() {
   const { postId } = useParams<{ postId: string }>();
   const { user } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const postQuery = usePost(postId ?? "");
   const commentsQuery = useComments(postId ?? "");
@@ -39,8 +41,8 @@ export function PostDetailPage() {
 
   if (postQuery.isPending) {
     return (
-      <Page title="Post" width="narrow">
-        <div className="grid gap-3" aria-label="Loading post">
+      <Page title={t("postDetail.title")} width="narrow">
+        <div className="grid gap-3" aria-label={t("postDetail.loadingAria")}>
           <Skeleton className="h-28 w-full rounded-md" />
           <Skeleton className="h-28 w-full rounded-md" />
         </div>
@@ -50,9 +52,9 @@ export function PostDetailPage() {
 
   if (postQuery.isError) {
     return (
-      <Page title="Post" width="narrow">
+      <Page title={t("postDetail.title")} width="narrow">
         <ErrorState
-          title="Could not load post"
+          title={t("postDetail.errorTitle")}
           description={postQuery.error.message}
           action={
             <Button
@@ -60,7 +62,7 @@ export function PostDetailPage() {
               size="sm"
               onClick={() => void postQuery.refetch()}
             >
-              Try again
+              {t("common.retry")}
             </Button>
           }
         />
@@ -84,7 +86,7 @@ export function PostDetailPage() {
     });
     if (result.ok) {
       setCommentBody("");
-      toast.success("Comment posted");
+      toast.success(t("postDetail.commentPosted"));
     } else {
       toast.error(result.error.message);
     }
@@ -95,7 +97,7 @@ export function PostDetailPage() {
       commentId,
       postId: post.id,
     });
-    if (result.ok) toast.success("Comment deleted");
+    if (result.ok) toast.success(t("postDetail.commentDeleted"));
     else toast.error(result.error.message);
   };
 
@@ -105,7 +107,7 @@ export function PostDetailPage() {
     !createComment.isPending;
 
   return (
-    <Page title="Post" width="narrow">
+    <Page title={t("postDetail.title")} width="narrow">
       <Button
         variant="ghost"
         size="sm"
@@ -113,20 +115,20 @@ export function PostDetailPage() {
         onClick={() => navigate(-1)}
       >
         <ArrowLeftIcon aria-hidden />
-        Back
+        {t("common.back")}
       </Button>
 
       <div className="mt-4 grid gap-4">
         <PostCard post={post} hideCommentLink images={imagesQuery.data ?? []} />
 
-        <section aria-label="Comments" className="grid gap-3">
-          <h2 className="text-sm font-semibold">Comments</h2>
+        <section aria-label={t("postDetail.comments")} className="grid gap-3">
+          <h2 className="text-sm font-semibold">{t("postDetail.comments")}</h2>
 
           {user ? (
             <div className="rounded-md border bg-card p-4">
               <Textarea
-                aria-label="Write a comment"
-                placeholder="Add a comment…"
+                aria-label={t("postDetail.writeComment")}
+                placeholder={t("postDetail.commentPlaceholder")}
                 value={commentBody}
                 onChange={(event) => setCommentBody(event.target.value)}
                 rows={2}
@@ -146,7 +148,7 @@ export function PostDetailPage() {
                   ) : (
                     <SendIcon aria-hidden />
                   )}
-                  Comment
+                  {t("postDetail.comment")}
                 </Button>
               </div>
             </div>
@@ -156,18 +158,22 @@ export function PostDetailPage() {
                 to={`/login?returnTo=/post/${post.id}`}
                 className="text-primary underline-offset-4 hover:underline"
               >
-                Sign in
+                {t("common.signIn")}
               </Link>{" "}
-              to join the conversation.
+              {t("postDetail.joinConversation")}
             </p>
           )}
 
           {commentsQuery.isPending && (
-            <p className="text-sm text-muted-foreground">Loading comments…</p>
+            <p className="text-sm text-muted-foreground">
+              {t("postDetail.loadingComments")}
+            </p>
           )}
 
           {comments.length === 0 && !commentsQuery.isPending ? (
-            <p className="text-sm text-muted-foreground">No comments yet</p>
+            <p className="text-sm text-muted-foreground">
+              {t("postDetail.noComments")}
+            </p>
           ) : (
             <ul className="grid gap-2">
               {comments.map((comment) => (
@@ -188,7 +194,7 @@ export function PostDetailPage() {
                     >
                       {comment.author?.displayName ??
                         comment.author?.username ??
-                        "Deleted user"}
+                        t("postDetail.deletedUser")}
                     </Link>
                     <span className="text-xs text-muted-foreground">
                       {formatRelativeTime(comment.createdAt)}
@@ -201,7 +207,7 @@ export function PostDetailPage() {
                         onClick={() => handleDeleteComment(comment.id)}
                         disabled={deleteComment.isPending}
                       >
-                        Delete
+                        {t("common.delete")}
                       </Button>
                     )}
                     {comment.authorId !== user?.id && user && (
@@ -211,7 +217,7 @@ export function PostDetailPage() {
                         className="ml-auto"
                         onClick={() => setReportedCommentId(comment.id)}
                       >
-                        Report
+                        {t("postDetail.report")}
                       </Button>
                     )}
                   </div>

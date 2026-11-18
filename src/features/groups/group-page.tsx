@@ -38,6 +38,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
+import type { TranslationKey } from "@/lib/i18n/en";
 import {
   useAcceptInvite,
   useDeclineInvite,
@@ -78,12 +80,13 @@ import { track } from "@/lib/telemetry/analytics";
  */
 export function GroupPage() {
   const { slug } = useParams<{ slug: string }>();
+  const t = useT();
   const groupQuery = useGroupBySlug(slug ?? "");
 
   if (groupQuery.isPending) {
     return (
-      <Page title="Group">
-        <div className="grid gap-3" aria-label="Loading group">
+      <Page title={t("groups.loadingAria")}>
+        <div className="grid gap-3" aria-label={t("groups.loadingAria")}>
           <Skeleton className="h-32 w-full rounded-md" />
           <Skeleton className="h-64 w-full rounded-md" />
         </div>
@@ -93,13 +96,13 @@ export function GroupPage() {
 
   if (groupQuery.isError || !groupQuery.data) {
     return (
-      <Page title="Group not found" width="narrow">
+      <Page title={t("groups.notFoundTitle")} width="narrow">
         <EmptyState
-          title="Group not found"
-          description="This group does not exist or is not visible."
+          title={t("groups.notFoundTitle")}
+          description={t("groups.notFoundDescription")}
           action={
             <Button asChild size="sm">
-              <Link to="/groups">Browse groups</Link>
+              <Link to="/groups">{t("groups.browse")}</Link>
             </Button>
           }
         />
@@ -112,6 +115,7 @@ export function GroupPage() {
 
 function GroupDetail({ slug }: { slug: string }) {
   const { user } = useAuth();
+  const t = useT();
   const groupQuery = useGroupBySlug(slug);
   const groupId = groupQuery.data?.id ?? "";
   const membershipQuery = useMyGroupMembership(user ? groupId : "");
@@ -144,12 +148,19 @@ function GroupDetail({ slug }: { slug: string }) {
     >
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Badge variant="secondary">
-          {group.visibility === "invite_only" ? "Invite only" : "Public"}
+          {group.visibility === "invite_only"
+            ? t("groups.inviteOnly")
+            : t("groups.publicBadge")}
         </Badge>
         <span className="text-sm text-muted-foreground">
           {memberCount === null
-            ? "Members"
-            : `${memberCount} ${memberCount === 1 ? "member" : "members"}`}
+            ? t("groups.membersLabel")
+            : t(
+                memberCount === 1
+                  ? "groups.memberCountOne"
+                  : "groups.memberCountMany",
+                { n: memberCount },
+              )}
         </span>
       </div>
 
@@ -162,18 +173,18 @@ function GroupDetail({ slug }: { slug: string }) {
         />
       ) : isInvited ? (
         <EmptyState
-          title="You have been invited"
-          description="Accept to see the feed and post."
+          title={t("groups.invitedTitle")}
+          description={t("groups.invitedDescription")}
         />
       ) : group.visibility === "invite_only" ? (
         <EmptyState
-          title="Invite only"
-          description="This group is invite-only. Ask a moderator for an invitation."
+          title={t("groups.inviteOnlyTitle")}
+          description={t("groups.inviteOnlyDescription")}
         />
       ) : (
         <EmptyState
-          title="Members only"
-          description="Join this group to see the feed and post."
+          title={t("groups.membersOnlyTitle")}
+          description={t("groups.membersOnlyDescription")}
         />
       )}
     </Page>
@@ -198,6 +209,7 @@ function MembershipActions({
   isOwner,
 }: MembershipActionsProps) {
   const { user } = useAuth();
+  const t = useT();
   const joinGroup = useJoinGroup();
   const leaveGroup = useLeaveGroup();
   const acceptInvite = useAcceptInvite();
@@ -208,7 +220,7 @@ function MembershipActions({
       <Button asChild size="sm" variant="outline">
         <Link to={`/login?returnTo=/g/${slug}`}>
           <LogInIcon aria-hidden />
-          Sign in to join
+          {t("groups.signInToJoin")}
         </Link>
       </Button>
     );
@@ -218,7 +230,7 @@ function MembershipActions({
     return (
       <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <ShieldCheckIcon className="size-4" aria-hidden />
-        You own this group
+        {t("groups.youOwn")}
       </span>
     );
   }
@@ -226,31 +238,33 @@ function MembershipActions({
   if (isInvited) {
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground">Invited</span>
+        <span className="text-sm text-muted-foreground">
+          {t("groups.invitedBadge")}
+        </span>
         <Button
           size="sm"
           onClick={async () => {
             const result = await acceptInvite.mutateAsync({ groupId });
-            if (result.ok) toast.success("Joined the group");
+            if (result.ok) toast.success(t("groups.joinedToast"));
             else toast.error(result.error.message);
           }}
           disabled={acceptInvite.isPending}
         >
           <CheckIcon aria-hidden />
-          Accept
+          {t("groups.accept")}
         </Button>
         <Button
           size="sm"
           variant="outline"
           onClick={async () => {
             const result = await declineInvite.mutateAsync({ groupId });
-            if (result.ok) toast("Invitation declined");
+            if (result.ok) toast(t("groups.declinedToast"));
             else toast.error(result.error.message);
           }}
           disabled={declineInvite.isPending}
         >
           <XIcon aria-hidden />
-          Decline
+          {t("groups.decline")}
         </Button>
       </div>
     );
@@ -263,13 +277,13 @@ function MembershipActions({
         variant="outline"
         onClick={async () => {
           const result = await leaveGroup.mutateAsync({ groupId });
-          if (result.ok) toast("You left the group");
+          if (result.ok) toast(t("groups.leftToast"));
           else toast.error(result.error.message);
         }}
         disabled={leaveGroup.isPending}
       >
         <UserMinusIcon aria-hidden />
-        Leave
+        {t("groups.leave")}
       </Button>
     );
   }
@@ -284,7 +298,7 @@ function MembershipActions({
       onClick={async () => {
         const result = await joinGroup.mutateAsync({ groupId });
         if (result.ok) {
-          toast.success("Joined the group");
+          toast.success(t("groups.joinedToast"));
           track("group_joined", { visibility });
         } else {
           toast.error(result.error.message);
@@ -293,7 +307,7 @@ function MembershipActions({
       disabled={joinGroup.isPending}
     >
       <UserPlusIcon aria-hidden />
-      Join
+      {t("groups.join")}
     </Button>
   );
 }
@@ -307,19 +321,20 @@ interface GroupTabsProps {
 
 function GroupTabs({ groupId, slug, ownerId, canModerate }: GroupTabsProps) {
   const { user } = useAuth();
+  const t = useT();
   const isOwner = user?.id === ownerId;
   const [tab, setTab] = useState<"feed" | "members" | "settings">("feed");
 
   const options = [
-    { value: "feed", label: "Feed" },
-    { value: "members", label: "Members" },
-    ...(isOwner ? [{ value: "settings", label: "Settings" }] : []),
+    { value: "feed", label: t("groups.feed") },
+    { value: "members", label: t("groups.members") },
+    ...(isOwner ? [{ value: "settings", label: t("groups.settings") }] : []),
   ];
 
   return (
     <div>
       <SegmentedControl
-        aria-label="Group sections"
+        aria-label={t("groups.sectionsAria")}
         options={options}
         value={tab}
         onValueChange={(value) =>
@@ -350,11 +365,12 @@ function GroupFeedTab({
   canModerate: boolean;
 }) {
   const { user } = useAuth();
+  const t = useT();
   const feed = useGroupFeed(groupId);
 
   if (feed.isPending) {
     return (
-      <div className="grid gap-3" aria-label="Loading posts">
+      <div className="grid gap-3" aria-label={t("home.loadingPosts")}>
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
@@ -365,14 +381,14 @@ function GroupFeedTab({
   if (feed.isError) {
     return (
       <ErrorState
-        title="Could not load the group feed"
+        title={t("groups.feedError")}
         action={
           <Button
             variant="outline"
             size="sm"
             onClick={() => void feed.refetch()}
           >
-            Try again
+            {t("common.retry")}
           </Button>
         }
       />
@@ -386,8 +402,8 @@ function GroupFeedTab({
       {user && <Composer groupId={groupId} />}
       {posts.length === 0 ? (
         <EmptyState
-          title="No posts yet"
-          description="Start the conversation."
+          title={t("groups.emptyFeedTitle")}
+          description={t("groups.emptyFeedDescription")}
         />
       ) : (
         <GroupPostList posts={posts} canModerate={canModerate} />
@@ -398,7 +414,9 @@ function GroupFeedTab({
           onClick={() => void feed.fetchNextPage()}
           disabled={feed.isFetchingNextPage}
         >
-          {feed.isFetchingNextPage ? "Loading…" : "Load more"}
+          {feed.isFetchingNextPage
+            ? t("common.loading")
+            : t("notifications.loadMore")}
         </Button>
       )}
     </div>
@@ -413,6 +431,7 @@ function MembersTab({
   canModerate: boolean;
 }) {
   const { user } = useAuth();
+  const t = useT();
   const membersQuery = useGroupMembers(groupId);
   const inviteMember = useInviteMember();
   const setMemberRole = useSetMemberRole();
@@ -425,7 +444,7 @@ function MembersTab({
   async function submitInvite() {
     const trimmed = inviteUsername.trim();
     if (trimmed === "") {
-      setInviteError("Enter a username.");
+      setInviteError(t("groups.enterUsername"));
       return;
     }
     const result = await inviteMember.mutateAsync({
@@ -433,7 +452,7 @@ function MembersTab({
       username: trimmed,
     });
     if (result.ok) {
-      toast.success(`Invitation sent to @${trimmed}`);
+      toast.success(t("groups.inviteSent", { name: trimmed }));
       setInviteUsername("");
       setInviteError(null);
     } else {
@@ -446,15 +465,13 @@ function MembersTab({
       {canModerate && (
         <Card size="sm">
           <CardHeader>
-            <CardTitle>Invite a member</CardTitle>
-            <CardDescription>
-              Invite-only and public groups both invite by username.
-            </CardDescription>
+            <CardTitle>{t("groups.inviteTitle")}</CardTitle>
+            <CardDescription>{t("groups.inviteDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-2">
             <div className="flex gap-2">
               <Input
-                aria-label="Username to invite"
+                aria-label={t("groups.usernameToInvite")}
                 placeholder="username"
                 value={inviteUsername}
                 onChange={(event) => {
@@ -475,7 +492,7 @@ function MembersTab({
                 ) : (
                   <UserPlusIcon aria-hidden />
                 )}
-                Invite
+                {t("groups.invite")}
               </Button>
             </div>
             {inviteError && (
@@ -486,12 +503,12 @@ function MembersTab({
       )}
 
       {membersQuery.isPending ? (
-        <div className="grid gap-3" aria-label="Loading members">
+        <div className="grid gap-3" aria-label={t("groups.loadingMembers")}>
           <Skeleton className="h-16 w-full rounded-md" />
           <Skeleton className="h-16 w-full rounded-md" />
         </div>
       ) : members.length === 0 ? (
-        <EmptyState title="No members yet" />
+        <EmptyState title={t("groups.noMembers")} />
       ) : (
         <ul className="grid gap-3">
           {members.map((member) => (
@@ -529,12 +546,18 @@ function MemberRow({
   onSetRole,
   onRemove,
 }: MemberRowProps) {
+  const t = useT();
   const canChangeRole =
     canModerate &&
     !isSelf &&
     member.role !== "owner" &&
     member.status === "active";
   const canRemove = canModerate && !isSelf && member.role !== "owner";
+  const roleLabels: Record<string, TranslationKey> = {
+    owner: "groups.roleOwner",
+    moderator: "groups.roleModerator",
+    member: "groups.roleMember",
+  };
 
   return (
     <div className="rounded-md border bg-card p-4">
@@ -552,14 +575,14 @@ function MemberRow({
           >
             {member.profile?.displayName ??
               member.profile?.username ??
-              "Member"}
+              t("groups.memberFallback")}
           </Link>
           <Badge variant="outline" className="capitalize">
-            {member.role}
+            {t(roleLabels[member.role] ?? "groups.roleMember")}
           </Badge>
           {member.status !== "active" && (
             <Badge variant="secondary" className="capitalize">
-              {member.status}
+              {t("groups.statusInvited")}
             </Badge>
           )}
         </div>
@@ -577,15 +600,17 @@ function MemberRow({
                 if (result.ok)
                   toast.success(
                     member.role === "moderator"
-                      ? "Demoted to member"
-                      : "Promoted to moderator",
+                      ? t("groups.demotedToast")
+                      : t("groups.promotedToast"),
                   );
                 else toast.error(result.error.message);
               }}
               disabled={onSetRole.isPending}
             >
               <ShieldCheckIcon aria-hidden />
-              {member.role === "moderator" ? "Make member" : "Make moderator"}
+              {member.role === "moderator"
+                ? t("groups.makeMember")
+                : t("groups.makeModerator")}
             </Button>
             {canRemove && (
               <Button
@@ -596,13 +621,13 @@ function MemberRow({
                     groupId,
                     userId: member.userId,
                   });
-                  if (result.ok) toast("Member removed");
+                  if (result.ok) toast(t("groups.memberRemovedToast"));
                   else toast.error(result.error.message);
                 }}
                 disabled={onRemove.isPending}
               >
                 <UserMinusIcon aria-hidden />
-                Remove
+                {t("common.remove")}
               </Button>
             )}
           </div>
@@ -613,6 +638,7 @@ function MemberRow({
 }
 
 function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
+  const t = useT();
   const groupQuery = useGroupBySlug(slug);
   const updateGroup = useUpdateGroup();
   const deleteGroup = useDeleteGroup();
@@ -650,7 +676,7 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
       visibility,
     });
     if (result.ok) {
-      toast.success("Group updated");
+      toast.success(t("groups.updatedToast"));
       setError(null);
       setSaved(true);
     } else {
@@ -665,7 +691,7 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
       slug: group.slug,
     });
     if (result.ok) {
-      toast("Group deleted");
+      toast(t("groups.deletedToast"));
       void navigate("/groups");
     } else {
       setDeleteError(result.error.message);
@@ -676,14 +702,14 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
     <div className="grid gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>Group settings</CardTitle>
+          <CardTitle>{t("groups.settingsTitle")}</CardTitle>
           <CardDescription>
-            The address (/g/{group.slug}) cannot change after creation.
+            {t("groups.settingsDescription", { slug: group.slug })}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="settings-name">Name</Label>
+            <Label htmlFor="settings-name">{t("groups.nameLabel")}</Label>
             <Input
               id="settings-name"
               value={name}
@@ -695,7 +721,9 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="settings-description">Description</Label>
+            <Label htmlFor="settings-description">
+              {t("groups.descriptionLabel")}
+            </Label>
             <Textarea
               id="settings-description"
               value={description}
@@ -708,7 +736,9 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="settings-visibility">Visibility</Label>
+            <Label htmlFor="settings-visibility">
+              {t("groups.visibilityLabel")}
+            </Label>
             <Select
               value={visibility}
               onValueChange={(value) => {
@@ -716,29 +746,34 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
                 setSaved(false);
               }}
             >
-              <SelectTrigger id="settings-visibility" aria-label="Visibility">
+              <SelectTrigger
+                id="settings-visibility"
+                aria-label={t("groups.visibilityLabel")}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="public">
-                  Public — anyone can join and find it
+                  {t("groups.publicOption")}
                 </SelectItem>
                 <SelectItem value="invite_only">
-                  Invite only — members join by invitation
+                  {t("groups.inviteOnlyOption")}
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           {saved && (
-            <p className="text-sm text-muted-foreground">Changes saved</p>
+            <p className="text-sm text-muted-foreground">
+              {t("groups.changesSaved")}
+            </p>
           )}
           <div>
             <Button size="sm" onClick={save} disabled={!canSave}>
               {updateGroup.isPending && (
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               )}
-              Save changes
+              {t("groups.saveChanges")}
             </Button>
           </div>
         </CardContent>
@@ -746,16 +781,13 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
 
       <Card className="border-destructive/50">
         <CardHeader>
-          <CardTitle>Danger zone</CardTitle>
-          <CardDescription>
-            Deleting the group removes its feed, posts and members forever. This
-            cannot be undone.
-          </CardDescription>
+          <CardTitle>{t("groups.dangerZone")}</CardTitle>
+          <CardDescription>{t("groups.dangerDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
           <div className="grid gap-2">
             <Label htmlFor="delete-group-confirm">
-              Type the group address to confirm
+              {t("groups.typeSlugToConfirm")}
             </Label>
             <Input
               id="delete-group-confirm"
@@ -786,7 +818,7 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               )}
               <Trash2Icon aria-hidden />
-              Delete group
+              {t("groups.deleteGroup")}
             </Button>
           </div>
         </CardContent>

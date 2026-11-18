@@ -2,6 +2,7 @@ import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { NAV_ITEMS } from "@/app/nav-items";
+import { t } from "@/lib/i18n/t";
 import { createSignedInAuth, renderAt } from "@/app/test-utils";
 
 describe("AppLayout", () => {
@@ -14,7 +15,7 @@ describe("AppLayout", () => {
     const header = navs[0]!;
     for (const item of NAV_ITEMS.filter((item) => item.to !== "/profile")) {
       expect(
-        within(header).getByRole("link", { name: item.label }),
+        within(header).getByRole("link", { name: t(item.labelKey) }),
       ).toHaveAttribute("href", item.to);
     }
     expect(
@@ -40,7 +41,7 @@ describe("AppLayout", () => {
     const tabNav = screen.getAllByRole("navigation", { name: "Main" })[1]!;
     for (const item of NAV_ITEMS.filter((item) => item.to !== "/profile")) {
       expect(
-        within(tabNav).getByRole("link", { name: item.label }),
+        within(tabNav).getByRole("link", { name: t(item.labelKey) }),
       ).toHaveAttribute("href", item.to);
     }
     expect(

@@ -65,7 +65,10 @@ import {
 import { calcStats, createDefaultSet, validateSet } from "@/data";
 import { SpeedTiers } from "@/features/team-builder/speed-tiers";
 import { TypeHeatMap } from "@/features/team-builder/type-heat-map";
+import { statLabel } from "@/components/stat-labels";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
+import type { TranslationKey } from "@/lib/i18n/en";
 import { track } from "@/lib/telemetry/analytics";
 import {
   battleTypes,
@@ -77,19 +80,20 @@ import {
 } from "@/lib/team";
 import type { TeamWarning } from "@/lib/team";
 import type { BattleFormat } from "@/types/battle";
-import { STAT_IDS, STAT_LABELS } from "@/types/pokemon";
+import { STAT_IDS } from "@/types/pokemon";
 import type { PokemonSet } from "@/types/pokemon";
 import { MAX_TEAM_SIZE } from "@/types/team";
 
-const WARNING_TITLES: Record<TeamWarning["kind"], string> = {
-  "duplicate-species": "Duplicate species",
-  "duplicate-item": "Duplicate item",
-  set: "Set problems",
+const WARNING_TITLE_KEYS: Record<TeamWarning["kind"], TranslationKey> = {
+  "duplicate-species": "teams.warningDuplicateSpecies",
+  "duplicate-item": "teams.warningDuplicateItem",
+  set: "teams.warningSet",
 };
 
 export function TeamDetailPage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
+  const t = useT();
   const {
     teams,
     rename,
@@ -120,22 +124,25 @@ export function TeamDetailPage() {
   if (!team) {
     if (sync.loading) {
       return (
-        <Page title="Teams" description="Loading your teams…">
-          <p className="text-muted-foreground">Loading your teams…</p>
+        <Page title={t("teams.title")} description={t("teams.loading")}>
+          <p className="text-muted-foreground">{t("teams.loading")}</p>
         </Page>
       );
     }
     if (sync.error) {
       return (
-        <Page title="Teams" description="Your teams could not be loaded.">
+        <Page
+          title={t("teams.title")}
+          description={t("teams.loadErrorDescription")}
+        >
           <div className="grid gap-4">
             <Alert>
               <TriangleAlertIcon />
-              <AlertTitle>Teams could not be loaded</AlertTitle>
+              <AlertTitle>{t("teams.loadError")}</AlertTitle>
               <AlertDescription>{sync.error}</AlertDescription>
             </Alert>
             <Button className="justify-self-start" onClick={() => sync.retry()}>
-              Retry
+              {t("teams.retry")}
             </Button>
           </div>
         </Page>
@@ -143,11 +150,11 @@ export function TeamDetailPage() {
     }
     return (
       <Page
-        title="Team not found"
-        description="This team may have been deleted."
+        title={t("teams.notFound")}
+        description={t("teams.notFoundDescription")}
       >
         <Button asChild variant="outline">
-          <Link to="/teams">Back to teams</Link>
+          <Link to="/teams">{t("teams.backToTeams")}</Link>
         </Button>
       </Page>
     );
@@ -198,7 +205,7 @@ export function TeamDetailPage() {
   const commitRename = () => {
     const trimmed = nameDraft.trim();
     if (!trimmed) {
-      setNameError("Name cannot be empty.");
+      setNameError(t("teams.nameEmpty"));
       return;
     }
     if (trimmed !== team.name) rename(team.id, trimmed);
@@ -208,7 +215,7 @@ export function TeamDetailPage() {
   const handleDuplicate = () => {
     const copy = duplicate(team.id);
     if (copy) {
-      toast.success(`Duplicated as "${copy.name}".`);
+      toast.success(t("teams.duplicated", { name: copy.name }));
       navigate(`/teams/${copy.id}`);
     }
   };
@@ -216,9 +223,9 @@ export function TeamDetailPage() {
   const handleDelete = () => {
     remove(team.id);
     navigate("/teams");
-    toast(`Deleted "${team.name}".`, {
+    toast(t("teams.deleted", { name: team.name }), {
       action: {
-        label: "Undo",
+        label: t("teams.undo"),
         onClick: () => restore(team),
       },
     });
@@ -230,20 +237,23 @@ export function TeamDetailPage() {
         format: team.format,
         size: team.members.length,
       });
-      toast.success("Copied to clipboard.");
+      toast.success(t("calc.copied"));
     });
   };
 
   return (
     <Page
       title={team.name}
-      description={`${team.members.length} of ${MAX_TEAM_SIZE} Pokémon`}
+      description={t("teams.memberCount", {
+        count: team.members.length,
+        max: MAX_TEAM_SIZE,
+      })}
       actions={
         <>
           <Button asChild variant="ghost" size="sm">
             <Link to="/teams">
               <ArrowLeftIcon />
-              Teams
+              {t("teams.title")}
             </Link>
           </Button>
           <ToggleGroup
@@ -255,8 +265,12 @@ export function TeamDetailPage() {
               if (value) setFormat(team.id, value as BattleFormat);
             }}
           >
-            <ToggleGroupItem value="singles">Singles</ToggleGroupItem>
-            <ToggleGroupItem value="doubles">Doubles</ToggleGroupItem>
+            <ToggleGroupItem value="singles">
+              {t("calc.formatSingles")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="doubles">
+              {t("calc.formatDoubles")}
+            </ToggleGroupItem>
           </ToggleGroup>
           {user && (
             <div className="flex items-center gap-2">
@@ -272,14 +286,14 @@ export function TeamDetailPage() {
                     });
                   }
                 }}
-                aria-label="Public team"
+                aria-label={t("teams.publicTeam")}
               />
-              <Label htmlFor="team-public">Public</Label>
+              <Label htmlFor="team-public">{t("teams.public")}</Label>
             </div>
           )}
           {inlineEditing ? (
             <Input
-              aria-label="Team name"
+              aria-label={t("teams.nameLabel")}
               autoFocus
               className="w-44!"
               value={inlineDraft}
@@ -297,7 +311,7 @@ export function TeamDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Rename team"
+                  aria-label={t("teams.renameTeam")}
                   onClick={() => {
                     setInlineDraft(team.name);
                     setInlineEditing(true);
@@ -306,7 +320,7 @@ export function TeamDetailPage() {
                   <PencilIcon />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Rename</TooltipContent>
+              <TooltipContent>{t("teams.rename")}</TooltipContent>
             </Tooltip>
           )}
           <Button
@@ -316,21 +330,21 @@ export function TeamDetailPage() {
             onClick={() => setExportOpen(true)}
           >
             <DownloadIcon />
-            Export
+            {t("teams.export")}
           </Button>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Export team"
+                aria-label={t("teams.exportTeam")}
                 className="md:hidden"
                 onClick={() => setExportOpen(true)}
               >
                 <DownloadIcon />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Export</TooltipContent>
+            <TooltipContent>{t("teams.export")}</TooltipContent>
           </Tooltip>
           <Button
             variant="ghost"
@@ -339,48 +353,52 @@ export function TeamDetailPage() {
             onClick={handleDuplicate}
           >
             <CopyIcon />
-            Duplicate
+            {t("teams.duplicate")}
           </Button>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Duplicate team"
+                aria-label={t("teams.duplicateTeam")}
                 className="md:hidden"
                 onClick={handleDuplicate}
               >
                 <CopyIcon />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Duplicate</TooltipContent>
+            <TooltipContent>{t("teams.duplicate")}</TooltipContent>
           </Tooltip>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="More actions">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("teams.moreActions")}
+              >
                 <MoreHorizontalIcon />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => openRename()}>
                 <PencilIcon aria-hidden />
-                Rename
+                {t("teams.rename")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
                 onSelect={() => handleDelete()}
               >
                 <Trash2Icon aria-hidden />
-                Delete team
+                {t("teams.deleteTeam")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Rename team</DialogTitle>
+                <DialogTitle>{t("teams.renameTitle")}</DialogTitle>
                 <DialogDescription>
-                  Choose a new name for this team.
+                  {t("teams.renameDescription")}
                 </DialogDescription>
               </DialogHeader>
               <form
@@ -393,7 +411,7 @@ export function TeamDetailPage() {
                 className="grid gap-2"
               >
                 <Input
-                  aria-label="Team name"
+                  aria-label={t("teams.nameLabel")}
                   aria-invalid={nameError ? true : undefined}
                   value={nameDraft}
                   onChange={(event) => setNameDraft(event.target.value)}
@@ -406,10 +424,10 @@ export function TeamDetailPage() {
               </form>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setRenameOpen(false)}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button type="submit" form="rename-team-form">
-                  Save
+                  {t("common.save")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -417,24 +435,24 @@ export function TeamDetailPage() {
           <Dialog open={exportOpen} onOpenChange={setExportOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Export team</DialogTitle>
+                <DialogTitle>{t("teams.exportTitle")}</DialogTitle>
                 <DialogDescription>
-                  Copy this Showdown export to share the team.
+                  {t("teams.exportDescription")}
                 </DialogDescription>
               </DialogHeader>
               <Textarea
-                aria-label="Showdown export"
+                aria-label={t("teams.showdownExport")}
                 readOnly
                 rows={10}
                 value={exportText}
               />
               <DialogFooter>
                 <Button variant="outline" onClick={() => setExportOpen(false)}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button onClick={copyExport}>
                   <ClipboardCopyIcon />
-                  Copy
+                  {t("calc.copy")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -452,11 +470,11 @@ export function TeamDetailPage() {
                   key={index}
                   type="button"
                   onClick={openAdd}
-                  aria-label="Add Pokémon"
+                  aria-label={t("teams.addPokemon")}
                   className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                 >
                   <PlusIcon className="size-5" />
-                  Add Pokémon
+                  {t("teams.addPokemon")}
                 </button>
               );
             }
@@ -465,8 +483,8 @@ export function TeamDetailPage() {
             const finalStats = calcStats(member);
             const meta = [member.item, member.ability]
               .filter(Boolean)
-              .join(" · ");
-            const moves = member.moves.filter(Boolean).join(" · ");
+              .join(" Â· ");
+            const moves = member.moves.filter(Boolean).join(" Â· ");
             return (
               <Card key={index} size="sm">
                 <CardContent className="flex flex-col gap-2">
@@ -500,7 +518,7 @@ export function TeamDetailPage() {
                       <div key={stat} className="flex flex-col gap-1">
                         <span className="flex items-baseline justify-between gap-1">
                           <span className="text-[9px] text-muted-foreground">
-                            {STAT_LABELS[stat]}
+                            {statLabel(t, stat)}
                           </span>
                           <span className="font-mono text-[10px] tabular-nums">
                             {finalStats[stat]}
@@ -519,7 +537,7 @@ export function TeamDetailPage() {
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    aria-label={`Move ${label} up`}
+                    aria-label={t("teams.moveUp", { name: label })}
                     disabled={index === 0}
                     onClick={() => moveMember(team.id, index, index - 1)}
                   >
@@ -528,7 +546,7 @@ export function TeamDetailPage() {
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    aria-label={`Move ${label} down`}
+                    aria-label={t("teams.moveDown", { name: label })}
                     disabled={index === team.members.length - 1}
                     onClick={() => moveMember(team.id, index, index + 1)}
                   >
@@ -537,7 +555,7 @@ export function TeamDetailPage() {
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    aria-label={`Edit ${label}`}
+                    aria-label={t("teams.editMember", { name: label })}
                     onClick={() => openEdit(index)}
                   >
                     <PencilIcon />
@@ -549,13 +567,13 @@ export function TeamDetailPage() {
                       navigate("/calc", { state: { attacker: member } })
                     }
                   >
-                    Calc
+                    {t("nav.calc")}
                   </Button>
                   <span className="flex-1" />
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    aria-label={`Remove ${label}`}
+                    aria-label={t("teams.removeMember", { name: label })}
                     onClick={() => removeMember(team.id, index)}
                   >
                     <Trash2Icon />
@@ -569,7 +587,7 @@ export function TeamDetailPage() {
         {team.members.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Team analysis</CardTitle>
+              <CardTitle>{t("teams.analysis")}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {warnings.length > 0 && (
@@ -577,7 +595,9 @@ export function TeamDetailPage() {
                   {warnings.map((warning, index) => (
                     <Alert key={index} variant="destructive">
                       <TriangleAlertIcon />
-                      <AlertTitle>{WARNING_TITLES[warning.kind]}</AlertTitle>
+                      <AlertTitle>
+                        {t(WARNING_TITLE_KEYS[warning.kind])}
+                      </AlertTitle>
                       <AlertDescription>{warning.message}</AlertDescription>
                     </Alert>
                   ))}
@@ -594,8 +614,12 @@ export function TeamDetailPage() {
               )}
               <Tabs defaultValue="defense">
                 <TabsList>
-                  <TabsTrigger value="defense">Defense</TabsTrigger>
-                  <TabsTrigger value="offense">Offense</TabsTrigger>
+                  <TabsTrigger value="defense">
+                    {t("teams.defense")}
+                  </TabsTrigger>
+                  <TabsTrigger value="offense">
+                    {t("teams.offense")}
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="defense">
                   <TypeHeatMap members={team.members} mode="defense" />
@@ -605,7 +629,7 @@ export function TeamDetailPage() {
                 </TabsContent>
               </Tabs>
               <div className="flex flex-col gap-2">
-                <h3 className="text-sm font-medium">Speed tiers</h3>
+                <h3 className="text-sm font-medium">{t("teams.speedTiers")}</h3>
                 <SpeedTiers members={team.members} />
               </div>
             </CardContent>
@@ -623,24 +647,24 @@ export function TeamDetailPage() {
         <SheetContent className="w-full! sm:max-w-xl!">
           <SheetHeader>
             <SheetTitle>
-              {editorIndex === null ? "Add Pokémon" : "Edit Pokémon"}
+              {editorIndex === null
+                ? t("teams.addPokemon")
+                : t("teams.editPokemon")}
             </SheetTitle>
-            <SheetDescription>
-              Pick a species, item, moves and stat points.
-            </SheetDescription>
+            <SheetDescription>{t("teams.editorDescription")}</SheetDescription>
           </SheetHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-4">
             {draft && <PokemonEditor value={draft} onChange={setDraft} />}
           </div>
           <SheetFooter className="flex-row! items-center justify-end gap-2">
             <Button variant="outline" onClick={() => setEditorOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={saveDraft}
               disabled={!draft || validateSet(draft).length > 0}
             >
-              Save
+              {t("common.save")}
             </Button>
           </SheetFooter>
         </SheetContent>

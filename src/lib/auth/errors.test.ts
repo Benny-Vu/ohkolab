@@ -7,7 +7,7 @@ import {
   notConfigured,
   succeed,
 } from "@/lib/auth/errors";
-import { USERNAME_RULES } from "@/lib/auth/validation";
+import { usernameRules } from "@/lib/auth/validation";
 
 describe("failure, fail and succeed", () => {
   it("uses the default message for a code", () => {
@@ -79,7 +79,7 @@ describe("describeError", () => {
     });
     expect(describeError({ code: "23514" })).toEqual({
       code: "invalid_input",
-      message: `Those profile details were not accepted. Username: ${USERNAME_RULES}`,
+      message: `Those profile details were not accepted. Username: ${usernameRules()}`,
     });
   });
 

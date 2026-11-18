@@ -103,6 +103,12 @@ export interface OptionListProps<T> {
   getName: (option: T) => string;
   /** Extra text an option can be found by (types, description...). */
   getKeywords?: (option: T) => readonly string[];
+  /**
+   * The same entries' names in the active locale's language (the Japanese
+   * names), so a query written in that script finds them. Empty until the
+   * Japanese names chunk loads; the English name still matches meanwhile.
+   */
+  getAltNames?: (option: T) => readonly string[];
   /** Accessible name of an option, when its content reads poorly as plain text. */
   getLabel?: (option: T) => string;
   renderOption: (option: T) => ReactNode;
@@ -150,6 +156,7 @@ export function OptionList<T>({
   groups,
   getName,
   getKeywords,
+  getAltNames,
   getLabel,
   renderOption,
   selected,
@@ -167,9 +174,15 @@ export function OptionList<T>({
     () =>
       groups.map((group) => ({
         heading: group.heading,
-        options: searchOptions(group.options, query, getName, getKeywords),
+        options: searchOptions(
+          group.options,
+          query,
+          getName,
+          getKeywords,
+          getAltNames,
+        ),
       })),
-    [groups, query, getName, getKeywords],
+    [groups, query, getName, getKeywords, getAltNames],
   );
   const total = matches.reduce((sum, group) => sum + group.options.length, 0);
   const visible = takeFirst(matches, limit);

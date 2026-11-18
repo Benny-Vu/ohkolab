@@ -1,5 +1,5 @@
 import { XIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   Combobox,
@@ -13,8 +13,11 @@ import {
   getMove,
   getSpecies,
   listMoves,
+  useDisplayName,
   type MoveInfo,
 } from "@/data";
+import { useT } from "@/lib/i18n/t";
+import type { TranslationKey } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 import type { MoveCategory } from "@/types/pokemon";
 
@@ -36,10 +39,10 @@ export interface MovePickerProps {
   id?: string;
 }
 
-const CATEGORY_SHORT: Record<MoveCategory, string> = {
-  Physical: "Phys",
-  Special: "Spec",
-  Status: "Status",
+const CATEGORY_KEY: Record<MoveCategory, TranslationKey> = {
+  Physical: "calc.categoryPhysical",
+  Special: "calc.categorySpecial",
+  Status: "calc.categoryStatus",
 };
 
 const NO_MOVES: readonly string[] = [];
@@ -77,17 +80,17 @@ function useLearnableMoves(species: string | undefined) {
 const getName = (move: MoveInfo) => move.name;
 const getKeywords = (move: MoveInfo) => [move.type, move.category];
 
-function renderMove(move: MoveInfo) {
+function renderMove(move: MoveInfo, name: string, category: string) {
   return (
     <>
       <TypeBadge
         type={move.type}
         className="w-15 min-w-0 shrink-0 px-0 text-[10px]"
       />
-      <span className="min-w-0 flex-1 truncate">{move.name}</span>
+      <span className="min-w-0 flex-1 truncate">{name}</span>
       <span className="w-10 shrink-0 text-xs text-muted-foreground">
         <span aria-hidden>{CATEGORY_SHORT[move.category]}</span>
-        <span className="sr-only">{move.category}</span>
+        <span className="sr-only">{category}</span>
       </span>
       <span className="w-7 shrink-0 text-right text-xs tabular-nums">
         <span className="sr-only">Power </span>
@@ -101,18 +104,11 @@ function renderMove(move: MoveInfo) {
   );
 }
 
-const columnTitles = (
-  <div
-    aria-hidden
-    className="flex items-center gap-2 px-3 pt-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
-  >
-    <span className="flex-1">Move</span>
-    <span className="w-10">Cat.</span>
-    <span className="w-7 text-right">Pow.</span>
-    <span className="w-9 text-right">Acc.</span>
-    <span className="w-4" />
-  </div>
-);
+const CATEGORY_SHORT: Record<MoveCategory, string> = {
+  Physical: "Phys",
+  Special: "Spec",
+  Status: "Status",
+};
 
 function MoveOptions({
   selected,
@@ -125,6 +121,8 @@ function MoveOptions({
   exclude: readonly (string | null)[];
   onSelect: (move: string) => void;
 }) {
+  const t = useT();
+  const display = useDisplayName();
   const learnable = useLearnableMoves(species);
   const speciesName = species
     ? (getSpecies(species)?.name ?? species)
@@ -138,36 +136,67 @@ function MoveOptions({
     const excluded = new Set(excludeKey === "" ? [] : excludeKey.split("\n"));
     const offered = listMoves().filter((move) => !excluded.has(move.name));
     if (learnable === null) {
-      return [{ heading: "All moves (loading learnset…)", options: offered }];
+      return [
+        { heading: t("pokemonEditor.allMovesLoading"), options: offered },
+      ];
     }
     if (learnable.length === 0) {
-      return [{ heading: "All moves", options: offered }];
+      return [{ heading: t("pokemonEditor.allMoves"), options: offered }];
     }
     const known = new Set(learnable);
     return [
       {
-        heading: `Learned by ${speciesName}`,
+        heading: t("pokemonEditor.learnedBy", {
+          name: display("species", speciesName ?? ""),
+        }),
         options: offered.filter((move) => known.has(move.name)),
       },
       {
-        heading: "Other moves",
+        heading: t("pokemonEditor.otherMoves"),
         options: offered.filter((move) => !known.has(move.name)),
       },
     ];
-  }, [excludeKey, learnable, speciesName]);
+  }, [excludeKey, learnable, speciesName, t, display]);
+
+  const getAltNames = useCallback(
+    (move: MoveInfo) => [display("move", move.name)],
+    [display],
+  );
+  const renderOption = useCallback(
+    (move: MoveInfo) =>
+      renderMove(
+        move,
+        display("move", move.name),
+        t(CATEGORY_KEY[move.category]),
+      ),
+    [display, t],
+  );
 
   return (
     <OptionList
-      label="Search moves"
-      placeholder="Search moves or type…"
+      label={t("pokemonEditor.searchMoves")}
+      placeholder={t("pokemonEditor.searchMovesPlaceholder")}
       groups={groups}
       getName={getName}
       getKeywords={getKeywords}
-      renderOption={renderMove}
+      getAltNames={getAltNames}
+      getLabel={(move) => display("move", move.name)}
+      renderOption={renderOption}
       selected={selected}
       onSelect={onSelect}
-      emptyText="No move found."
-      header={columnTitles}
+      emptyText={t("pokemonEditor.noMove")}
+      header={
+        <div
+          aria-hidden
+          className="flex items-center gap-2 px-3 pt-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
+        >
+          <span className="flex-1">{t("pokemonEditor.move")}</span>
+          <span className="w-10">Cat.</span>
+          <span className="w-7 text-right">Pow.</span>
+          <span className="w-9 text-right">Acc.</span>
+          <span className="w-4" />
+        </div>
+      }
     />
   );
 }
@@ -181,19 +210,22 @@ export function MovePicker({
   onChange,
   species,
   exclude = NO_MOVES,
-  label = "Move",
+  label,
   placeholder,
   clearable = true,
   className,
   id,
 }: MovePickerProps) {
+  const t = useT();
+  const display = useDisplayName();
+  const chosenLabel = label ?? t("pokemonEditor.move");
   const known = value ? getMove(value) : undefined;
 
   return (
     <div className={cn("flex min-w-0 items-center gap-1", className)}>
       <Combobox
         id={id}
-        label={label}
+        label={chosenLabel}
         // Let the trigger give up width to the clear button beside it.
         className="shrink"
         onIntent={() => {
@@ -221,18 +253,18 @@ export function MovePicker({
               />
             ) : null}
             <span className="min-w-0 flex-1 truncate text-left">
-              {known?.name ?? value}
+              {known ? display("move", known.name) : value}
             </span>
             {known && known.basePower > 0 ? (
               <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                <span className="sr-only">Power </span>
+                <span className="sr-only">{t("pokemonEditor.power")} </span>
                 {known.basePower}
               </span>
             ) : null}
           </>
         ) : (
           <span className="truncate text-muted-foreground">
-            {placeholder ?? label}
+            {placeholder ?? chosenLabel}
           </span>
         )}
       </Combobox>
@@ -241,7 +273,7 @@ export function MovePicker({
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={`Clear ${label.toLowerCase()}`}
+          aria-label={t("pokemonEditor.clear", { label: chosenLabel })}
           className="shrink-0 text-muted-foreground"
           onClick={() => onChange(null)}
         >

@@ -17,11 +17,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { FieldBar, FieldPanel } from "@/features/calc/field-panel";
-import { koResultOf } from "@/features/calc/ko-result";
+import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { ResultsPanel } from "@/features/calc/results-panel";
 import { SidePanel } from "@/features/calc/side-panel";
 import { useCalcState } from "@/features/calc/use-calc-state";
 import { useIsWide } from "@/features/calc/use-is-wide";
+import { useLocale } from "@/lib/i18n/locale";
+import { useT } from "@/lib/i18n/t";
 import { sideNames } from "@/lib/calc/battle";
 import {
   computeAllOutcomes,
@@ -41,12 +43,6 @@ import { track } from "@/lib/telemetry/analytics";
 import type { BattleFormat } from "@/types/battle";
 
 const reportedMatchups = new Set<string>();
-
-const SECTION_OPTIONS = [
-  { value: "p1", label: "Attacker" },
-  { value: "p2", label: "Defender" },
-  { value: "field", label: "Field" },
-];
 
 type Selection = ReturnType<typeof resolveSelection>;
 
@@ -74,10 +70,14 @@ function StickyResultBar({
   dispatch,
   selection,
 }: StickyResultBarProps) {
+  const t = useT();
+  const [locale] = useLocale();
   const result = selection?.outcome.result ?? null;
   const summary = selection ? outcomeSummary(selection.outcome) : null;
   const ko = summary ? koResultOf(summary) : null;
-  const shortKo = ko === "GUARANTEED 2HKO" ? "2HKO" : ko;
+  // English shortens "GUARANTEED 2HKO" to fit the phone bar. Japanese must
+  // not: its "2HKO" label is 乱数2発 (possible), while 確定2発 is short anyway.
+  const shortKo = locale === "en" && ko === "GUARANTEED 2HKO" ? "2HKO" : ko;
 
   return (
     <Sheet>
@@ -97,7 +97,7 @@ function StickyResultBar({
                     <KoLabel className="shrink-0" result={shortKo} />
                   ) : (
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {summary}
+                      {summary !== null ? summaryText(summary, t) : null}
                     </span>
                   )}
                 </span>
@@ -115,7 +115,9 @@ function StickyResultBar({
               ) : null}
             </>
           ) : (
-            <span className="text-sm text-muted-foreground">No moves yet</span>
+            <span className="text-sm text-muted-foreground">
+              {t("calc.noMovesYet")}
+            </span>
           )}
         </button>
       </SheetTrigger>
@@ -125,7 +127,7 @@ function StickyResultBar({
         side="bottom"
       >
         <SheetHeader>
-          <SheetTitle>Results</SheetTitle>
+          <SheetTitle>{t("calc.results")}</SheetTitle>
         </SheetHeader>
         <div className="px-4 pb-4">
           <ResultsPanel
@@ -144,8 +146,14 @@ function StickyResultBar({
 export function CalcPage() {
   const [state, dispatch] = useCalcState();
   const [format] = useBattleFormat();
+  const t = useT();
   const isWide = useIsWide();
   const [section, setSection] = useState("p1");
+  const sectionOptions = [
+    { value: "p1", label: t("calc.attacker") },
+    { value: "p2", label: t("calc.defender") },
+    { value: "field", label: t("calc.field") },
+  ];
   const outcomes = useMemo(
     () => computeAllOutcomes(state, format),
     [state, format],
@@ -174,9 +182,9 @@ export function CalcPage() {
   const handleReset = () => {
     const previous = state;
     dispatch({ type: "reset" });
-    toast("Calculator reset", {
+    toast(t("calc.resetToast"), {
       action: {
-        label: "Undo",
+        label: t("calc.undo"),
         onClick: () => dispatch({ type: "restore", state: previous }),
       },
     });
@@ -192,15 +200,15 @@ export function CalcPage() {
               variant="outline"
             >
               <ArrowLeftRightIcon />
-              Swap sides
+              {t("calc.swapSides")}
             </Button>
             <Button onClick={handleReset} variant="outline">
               <RotateCcwIcon />
-              Reset
+              {t("calc.reset")}
             </Button>
           </>
         }
-        title="Damage calculator"
+        title={t("calc.title")}
       >
         <div className="grid gap-4">
           <FieldBar dispatch={dispatch} state={state} />
@@ -234,16 +242,16 @@ export function CalcPage() {
       actions={
         <Button onClick={handleReset} variant="outline">
           <RotateCcwIcon />
-          Reset
+          {t("calc.reset")}
         </Button>
       }
-      title="Damage calculator"
+      title={t("calc.title")}
     >
       <div className="grid gap-4 pb-28">
         <div className="flex items-center gap-2">
           <MatchupChip name={names.p1} species={state.sides.p1.set.species} />
           <Button
-            aria-label="Swap sides"
+            aria-label={t("calc.swapSides")}
             onClick={() => dispatch({ type: "swapSides" })}
             size="icon-sm"
             variant="outline"
@@ -253,10 +261,10 @@ export function CalcPage() {
           <MatchupChip name={names.p2} species={state.sides.p2.set.species} />
         </div>
         <SegmentedControl
-          aria-label="Calculator section"
+          aria-label={t("calc.sectionAria")}
           className="w-full"
           onValueChange={setSection}
-          options={SECTION_OPTIONS}
+          options={sectionOptions}
           value={section}
         />
         {section === "p1" ? (

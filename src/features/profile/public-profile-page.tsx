@@ -50,6 +50,7 @@ import {
   usePublicTeams,
 } from "@/features/profile/profile-queries";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import type { Profile } from "@/lib/auth/types";
 import {
   socialAvailability,
@@ -93,13 +94,12 @@ const ProfileBannerTint = lazy(() =>
 type ProfileTab = "posts" | "teams" | "groups";
 
 function UnconfiguredNotice() {
+  const t = useT();
   return (
     <Alert>
       <AlertCircleIcon />
-      <AlertTitle>Profiles are unavailable</AlertTitle>
-      <AlertDescription>
-        Profiles are not available in this build.
-      </AlertDescription>
+      <AlertTitle>{t("publicProfile.unconfiguredTitle")}</AlertTitle>
+      <AlertDescription>{t("publicProfile.unconfiguredBody")}</AlertDescription>
     </Alert>
   );
 }
@@ -114,6 +114,7 @@ function ProfileSkeleton() {
 }
 
 function TeamDialog({ team, username }: { team: Team; username: string }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const { create } = useTeams();
 
@@ -124,14 +125,14 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
       members: team.members,
     });
     setOpen(false);
-    toast.success(`Copied "${copy.name}" to your teams.`);
+    toast.success(t("publicProfile.copyToast", { name: copy.name }));
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          View
+          {t("publicProfile.view")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
@@ -139,7 +140,8 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
           <DialogTitle className="min-w-0 truncate">{team.name}</DialogTitle>
           <DialogDescription>
             {team.format === "doubles" ? "Doubles" : "Singles"} ·{" "}
-            {team.members.length} Pokémon · shared by @{username}
+            {t("publicProfile.pokemonCount", { n: team.members.length })} ·{" "}
+            {t("publicProfile.sharedBy", { name: username })}
           </DialogDescription>
         </DialogHeader>
         <ul className="grid gap-3">
@@ -158,11 +160,11 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
         </ul>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button onClick={copyToMyTeams}>
             <CopyIcon />
-            Copy to my teams
+            {t("postCard.copyTeam")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -212,6 +214,7 @@ function TeamsSection({
   username: string;
   client: AppSupabaseClient;
 }) {
+  const t = useT();
   const teamsQuery = usePublicTeams(userId, client);
 
   if (teamsQuery.isPending) {
@@ -226,15 +229,15 @@ function TeamsSection({
   if (teamsQuery.isError) {
     return (
       <ErrorState
-        title="Could not load teams"
-        description="Something went wrong while loading this profile's teams."
+        title={t("publicProfile.teamsLoadError")}
+        description={t("publicProfile.teamsLoadErrorDescription")}
         action={
           <Button
             variant="outline"
             size="sm"
             onClick={() => void teamsQuery.refetch()}
           >
-            Try again
+            {t("common.retry")}
           </Button>
         }
       />
@@ -244,7 +247,7 @@ function TeamsSection({
   const teams = teamsQuery.data;
 
   if (teams.length === 0) {
-    return <EmptyState title="No public teams yet" />;
+    return <EmptyState title={t("publicProfile.noTeams")} />;
   }
 
   return (
@@ -257,6 +260,7 @@ function TeamsSection({
 }
 
 function ProfileGroupCard({ group }: { group: GroupSummary }) {
+  const t = useT();
   return (
     <Link
       to={`/g/${group.slug}`}
@@ -268,11 +272,13 @@ function ProfileGroupCard({ group }: { group: GroupSummary }) {
             {group.name}
           </span>
           <Badge variant="secondary">
-            {group.visibility === "invite_only" ? "Invite only" : "Public"}
+            {group.visibility === "invite_only"
+              ? t("groups.inviteOnly")
+              : t("groups.publicBadge")}
           </Badge>
         </div>
         <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-          {group.description ?? "No description yet."}
+          {group.description ?? t("groups.noDescription")}
         </p>
       </div>
     </Link>
@@ -286,11 +292,12 @@ function GroupsSection({
   userId: string;
   client: AppSupabaseClient;
 }) {
+  const t = useT();
   const groupsQuery = useUserGroups(userId, client);
 
   if (groupsQuery.isPending) {
     return (
-      <div className="grid gap-3" aria-label="Loading groups">
+      <div className="grid gap-3" aria-label={t("groups.loadingGroups")}>
         <Skeleton className="h-20 w-full rounded-md" />
         <Skeleton className="h-20 w-full rounded-md" />
       </div>
@@ -300,15 +307,15 @@ function GroupsSection({
   if (groupsQuery.isError) {
     return (
       <ErrorState
-        title="Could not load groups"
-        description="Something went wrong while loading this trainer's groups. Check your connection and try again."
+        title={t("publicProfile.groupsLoadError")}
+        description={t("publicProfile.groupsLoadErrorDescription")}
         action={
           <Button
             variant="outline"
             size="sm"
             onClick={() => void groupsQuery.refetch()}
           >
-            Try again
+            {t("common.retry")}
           </Button>
         }
       />
@@ -318,7 +325,7 @@ function GroupsSection({
   const groups = groupsQuery.data ?? [];
 
   if (groups.length === 0) {
-    return <EmptyState title="No groups yet" />;
+    return <EmptyState title={t("publicProfile.noGroups")} />;
   }
 
   return (
@@ -376,6 +383,7 @@ function FollowListDialog({
   emptyText: string;
   onClose: () => void;
 }) {
+  const t = useT();
   return (
     <Dialog open onOpenChange={(open) => (!open ? onClose() : undefined)}>
       <DialogContent>
@@ -402,7 +410,7 @@ function FollowListDialog({
         )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -419,12 +427,13 @@ function FollowersDialog({
   client: AppSupabaseClient;
   onClose: () => void;
 }) {
+  const t = useT();
   const query = useFollowers(userId, client);
   return (
     <FollowListDialog
       query={query}
-      title="Followers"
-      emptyText="No followers yet"
+      title={t("publicProfile.followers")}
+      emptyText={t("publicProfile.noFollowers")}
       onClose={onClose}
     />
   );
@@ -439,12 +448,13 @@ function FollowingDialog({
   client: AppSupabaseClient;
   onClose: () => void;
 }) {
+  const t = useT();
   const query = useFollowing(userId, client);
   return (
     <FollowListDialog
       query={query}
-      title="Following"
-      emptyText="Not following anyone yet"
+      title={t("publicProfile.following")}
+      emptyText={t("publicProfile.notFollowing")}
       onClose={onClose}
     />
   );
@@ -458,6 +468,7 @@ function ProfileSocialActions({
   client: AppSupabaseClient;
 }) {
   const auth = useAuth();
+  const t = useT();
   const isSelf = auth.user?.id === profile.id;
   const followState = useFollowState(profile.id, client);
   const toggleFollow = useToggleFollow(profile.id, client);
@@ -488,7 +499,7 @@ function ProfileSocialActions({
     const result = await toggleBlock.mutateAsync();
     if (result.ok) {
       setBlockOpen(false);
-      toast.success(`Blocked @${profile.username}.`);
+      toast.success(t("postCard.blockedToast", { name: profile.username }));
     } else {
       toast.error(result.error.message);
     }
@@ -502,7 +513,7 @@ function ProfileSocialActions({
             <Button variant="outline" size="sm" asChild>
               <Link to={signInTo}>
                 <LogInIcon />
-                Sign in to follow
+                {t("publicProfile.signInToFollow")}
               </Link>
             </Button>
             <DropdownMenu>
@@ -510,7 +521,7 @@ function ProfileSocialActions({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="More options"
+                  aria-label={t("publicProfile.moreOptions")}
                 >
                   <EllipsisIcon />
                 </Button>
@@ -519,7 +530,7 @@ function ProfileSocialActions({
                 <DropdownMenuItem asChild>
                   <Link to={signInTo}>
                     <LogInIcon />
-                    Sign in to block
+                    {t("publicProfile.signInToBlock")}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -536,14 +547,16 @@ function ProfileSocialActions({
               {toggleFollow.isPending ? (
                 <LoaderCircleIcon className="animate-spin" />
               ) : null}
-              {following ? "Unfollow" : "Follow"}
+              {following
+                ? t("publicProfile.unfollow")
+                : t("publicProfile.follow")}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="More options"
+                  aria-label={t("publicProfile.moreOptions")}
                 >
                   <EllipsisIcon />
                 </Button>
@@ -554,11 +567,11 @@ function ProfileSocialActions({
                   onSelect={() => setBlockOpen(true)}
                 >
                   <BanIcon />
-                  Block user
+                  {t("publicProfile.blockUser")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setReportOpen(true)}>
                   <FlagIcon />
-                  Report user
+                  {t("publicProfile.reportUser")}
                 </DropdownMenuItem>
                 {isModerator ? (
                   <DropdownMenuItem
@@ -566,7 +579,7 @@ function ProfileSocialActions({
                     onSelect={() => setSuspendOpen(true)}
                   >
                     <BanIcon />
-                    Suspend user
+                    {t("publicProfile.suspendUser")}
                   </DropdownMenuItem>
                 ) : null}
               </DropdownMenuContent>
@@ -578,11 +591,11 @@ function ProfileSocialActions({
       <Dialog open={blockOpen} onOpenChange={setBlockOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Block @{profile.username}?</DialogTitle>
+            <DialogTitle>
+              {t("publicProfile.blockTitle", { name: profile.username })}
+            </DialogTitle>
             <DialogDescription>
-              Blocking works both ways: you won't see their posts or profile,
-              they won't see yours, and neither of you can follow the other. You
-              can unblock them later from your account page.
+              {t("publicProfile.blockDescription")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -603,7 +616,7 @@ function ProfileSocialActions({
               ) : (
                 <BanIcon />
               )}
-              Block
+              {t("publicProfile.block")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -732,11 +745,15 @@ function PostsSection({
   userId: string;
   client: AppSupabaseClient;
 }) {
+  const t = useT();
   const postsQuery = useAuthorPosts(userId, client);
 
   if (postsQuery.isPending) {
     return (
-      <div className="grid gap-3" aria-label="Loading posts">
+      <div
+        className="grid gap-3"
+        aria-label={t("publicProfile.loadingPostsAria")}
+      >
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
@@ -747,15 +764,15 @@ function PostsSection({
   if (postsQuery.isError) {
     return (
       <ErrorState
-        title="Could not load posts"
-        description="Something went wrong while loading this trainer's posts. Check your connection and try again."
+        title={t("publicProfile.postsLoadError")}
+        description={t("publicProfile.postsLoadErrorDescription")}
         action={
           <Button
             variant="outline"
             size="sm"
             onClick={() => void postsQuery.refetch()}
           >
-            Try again
+            {t("common.retry")}
           </Button>
         }
       />
@@ -766,7 +783,7 @@ function PostsSection({
 
   return (
     <div className="grid gap-3">
-      <PostList posts={posts} emptyMessage="No posts yet" />
+      <PostList posts={posts} emptyMessage={t("publicProfile.noPosts")} />
       {postsQuery.hasNextPage ? (
         <div>
           <Button
@@ -775,7 +792,9 @@ function PostsSection({
             onClick={() => void postsQuery.fetchNextPage()}
             disabled={postsQuery.isFetchingNextPage}
           >
-            {postsQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+            {postsQuery.isFetchingNextPage
+              ? t("common.loading")
+              : t("notifications.loadMore")}
           </Button>
         </div>
       ) : null}
@@ -788,6 +807,7 @@ export function PublicProfilePage({
 }: {
   client?: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const { username } = useParams();
   const normalized = normalizeUsername(username ?? "");
   const profileQuery = usePublicProfile(normalized, client);
@@ -797,11 +817,13 @@ export function PublicProfilePage({
 
   return (
     <Page
-      title={profile ? (profile.displayName ?? profile.username) : "Profile"}
+      title={
+        profile ? (profile.displayName ?? profile.username) : t("nav.profile")
+      }
       description={
         profile?.displayName
-          ? `${profile.displayName} on OHKOLab`
-          : "A trainer's public profile."
+          ? t("publicProfile.metaDescription", { name: profile.displayName })
+          : t("publicProfile.defaultDescription")
       }
       width="narrow"
     >
@@ -811,29 +833,31 @@ export function PublicProfilePage({
         <ProfileSkeleton />
       ) : profileQuery.isError ? (
         <ErrorState
-          title="Could not load profile"
-          description="Something went wrong while loading this profile. Check your connection and try again."
+          title={t("publicProfile.profileLoadError")}
+          description={t("publicProfile.profileLoadErrorDescription")}
           action={
             <Button
               variant="outline"
               size="sm"
               onClick={() => void profileQuery.refetch()}
             >
-              Try again
+              {t("common.retry")}
             </Button>
           }
         />
       ) : !profile ? (
         <div className="grid gap-3">
           <EmptyState
-            title="Profile not found"
-            description={`No one goes by @${normalized} here.`}
+            title={t("publicProfile.notFoundTitle")}
+            description={t("publicProfile.notFoundDescription", {
+              name: normalized,
+            })}
           />
           <div>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/">
                 <ExternalLinkIcon />
-                Back to home
+                {t("authCallback.backHome")}
               </Link>
             </Button>
           </div>
@@ -846,13 +870,13 @@ export function PublicProfilePage({
             socialReady={socialReady}
           />
           <SegmentedControl
-            aria-label="Profile sections"
+            aria-label={t("publicProfile.sectionsAria")}
             value={tab}
             onValueChange={(value) => setTab(value as ProfileTab)}
             options={[
-              { value: "posts", label: "Posts" },
-              { value: "teams", label: "Teams" },
-              { value: "groups", label: "Groups" },
+              { value: "posts", label: t("publicProfile.postsTab") },
+              { value: "teams", label: t("publicProfile.teamsTab") },
+              { value: "groups", label: t("publicProfile.groupsTab") },
             ]}
           />
           {tab === "posts" ? (

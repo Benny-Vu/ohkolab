@@ -9,8 +9,11 @@ import { TypeBadge } from "@/components/type-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMove } from "@/data";
-import { koResultOf } from "@/features/calc/ko-result";
+import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { Panel, PanelTitle } from "@/features/calc/panel";
+import type { Translate } from "@/components/stat-labels";
+import { useT } from "@/lib/i18n/t";
+import type { TranslationKey } from "@/lib/i18n/en";
 import { sideNames } from "@/lib/calc/battle";
 import {
   outcomeRangeText,
@@ -29,8 +32,24 @@ import {
 } from "@/lib/calc/state";
 import { track } from "@/lib/telemetry/analytics";
 import type { BattleFormat } from "@/types/battle";
+import type { MoveCategory } from "@/types/pokemon";
 
 const DIRECTION_ARROW = "\u2192";
+
+/** The move categories shown next to a move's name, as translation keys. */
+const CATEGORY_KEYS: Record<MoveCategory, TranslationKey> = {
+  Physical: "calc.categoryPhysical",
+  Special: "calc.categorySpecial",
+  Status: "calc.categoryStatus",
+};
+
+/** The localized name of a move category, or null when there is none. */
+function categoryLabel(
+  category: MoveCategory | null,
+  t: Translate,
+): string | null {
+  return category ? t(CATEGORY_KEYS[category]) : null;
+}
 
 type Selection = ReturnType<typeof resolveSelection>;
 
@@ -61,6 +80,7 @@ function MoveRow({
   side: SideId;
   dispatch: Dispatch<CalcAction>;
 }) {
+  const t = useT();
   const summary = outcomeSummary(outcome);
   const ko = koResultOf(summary);
 
@@ -81,7 +101,9 @@ function MoveRow({
         {ko ? (
           <KoLabel result={ko} />
         ) : (
-          <span className="text-xs text-muted-foreground">{summary}</span>
+          <span className="text-xs text-muted-foreground">
+            {summaryText(summary, t)}
+          </span>
         )}
       </span>
     </button>
@@ -101,6 +123,7 @@ function SelectedResult({
   names: Record<SideId, string>;
   format: BattleFormat;
 }) {
+  const t = useT();
   const result = outcome.result;
   const defender = otherSide(side);
   const move = getMove(outcome.move);
@@ -111,12 +134,13 @@ function SelectedResult({
     : null;
   const hasDamage = Boolean(result && result.max > 0);
   const description =
-    (result?.description || `${names[side]} \u2014 ${summary}`) +
-    (outcome.crit ? " (critical hit)" : "");
+    (result?.description ||
+      `${names[side]} \u2014 ${summaryText(summary, t)}`) +
+    (outcome.crit ? t("calc.criticalHit") : "");
 
   const handleCopy = () => {
     void navigator.clipboard.writeText(description).then(() => {
-      toast.success("Copied to clipboard.");
+      toast.success(t("calc.copied"));
       track("calc_description_copied", { format });
     });
   };
@@ -129,7 +153,7 @@ function SelectedResult({
           {outcome.move}
         </p>
         <p className="text-xs text-muted-foreground">
-          {outcome.category}
+          {categoryLabel(outcome.category, t)}
           {outcome.category !== "Status" && move
             ? ` \u00b7 ${move.basePower}`
             : ""}
@@ -138,7 +162,7 @@ function SelectedResult({
           <KoLabel className="ml-auto" result={ko} />
         ) : (
           <span className="ml-auto text-xs text-muted-foreground">
-            {summary}
+            {summaryText(summary, t)}
           </span>
         )}
       </div>
@@ -156,20 +180,31 @@ function SelectedResult({
       </div>
       {hasDamage && result && hp ? (
         <p className="text-xs tabular-nums text-muted-foreground">
-          Damage: {result.min}-{result.max} ({result.minPercent} -{" "}
-          {result.maxPercent}%)
+          {t("calc.damageLine", {
+            min: result.min,
+            max: result.max,
+            minPercent: result.minPercent,
+            maxPercent: result.maxPercent,
+          })}
         </p>
       ) : null}
       {hasDamage && result && hp ? (
         <p className="text-xs tabular-nums text-muted-foreground">
-          Remaining HP: {hp.minRemaining}-{hp.maxRemaining} ({hp.minPercent} -{" "}
-          {hp.maxPercent}%)
+          {t("calc.remainingHpLine", {
+            min: hp.minRemaining,
+            max: hp.maxRemaining,
+            minPercent: hp.minPercent,
+            maxPercent: hp.maxPercent,
+          })}
         </p>
       ) : null}
       {result ? (
         <p className="font-mono text-xs tabular-nums text-muted-foreground">
-          Rolls:{" "}
-          {result.rolls ? result.rolls.join(", ") : "damage varies per hit"}
+          {t("calc.rolls", {
+            rolls: result.rolls
+              ? result.rolls.join(", ")
+              : t("calc.damageVaries"),
+          })}
         </p>
       ) : null}
       <div className="flex items-start justify-between gap-2">
@@ -181,7 +216,7 @@ function SelectedResult({
           variant="ghost"
         >
           <CopyIcon />
-          Copy
+          {t("calc.copy")}
         </Button>
       </div>
     </div>
@@ -197,6 +232,7 @@ function DirectionContent({
   format,
   dispatch,
 }: DirectionContentProps) {
+  const t = useT();
   const sideOutcomes = outcomes[side];
   const selectedOutcome = selection?.side === side ? selection.outcome : null;
   const rows = selectedOutcome
@@ -223,7 +259,7 @@ function DirectionContent({
         />
       ))}
       {sideOutcomes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No moves</p>
+        <p className="text-sm text-muted-foreground">{t("calc.noMoves")}</p>
       ) : null}
     </div>
   );
@@ -236,6 +272,7 @@ function SpeedLine({
   names: Record<SideId, string>;
   state: CalcState;
 }) {
+  const t = useT();
   const speeds = { p1: sideSpeed(state, "p1"), p2: sideSpeed(state, "p2") };
   const first = fasterSide(
     { p1: speeds.p1.final, p2: speeds.p2.final },
@@ -257,7 +294,9 @@ function SpeedLine({
         {"\u00b7"}
       </span>
       <span className="font-medium text-accent-brand-text">
-        {first === "tie" ? "Speed tie" : `${names[first]} moves first`}
+        {first === "tie"
+          ? t("calc.speedTie")
+          : t("calc.movesFirst", { name: names[first] })}
       </span>
       {state.trickRoom ? (
         <>
@@ -279,6 +318,7 @@ export function ResultsPanel({
   unframed = false,
 }: ResultsPanelProps) {
   const titleId = useId();
+  const t = useT();
   const names = sideNames(state);
   const selection = resolveSelection(state.selected, outcomes);
 
@@ -322,7 +362,7 @@ export function ResultsPanel({
 
   return (
     <Panel labelledBy={titleId}>
-      <PanelTitle id={titleId}>Results</PanelTitle>
+      <PanelTitle id={titleId}>{t("calc.results")}</PanelTitle>
       {content}
     </Panel>
   );
