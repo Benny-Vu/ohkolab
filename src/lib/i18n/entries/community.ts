@@ -341,6 +341,92 @@ export const communityEn = {
   "groups.reasonLabel": "Reason",
   "groups.reasonPlaceholder": "Why is this post being removed?",
   "groups.removedToast": "Post removed from the group",
+
+  // Feedback dialog, crash screen and telemetry switch.
+  "feedback.kindBug": "Bug",
+  "feedback.kindIdea": "Idea",
+  "feedback.kindOther": "Other",
+  "feedback.tooShort": "Tell us a bit more (at least {min} characters).",
+  "feedback.tooLong": "Feedback is limited to {max} characters.",
+  "feedback.sentToast": "Thanks! Your feedback was sent.",
+  "feedback.rateLimited":
+    "You have sent a lot of feedback recently. Please try again in an hour.",
+  "feedback.description":
+    "Tell us what is broken, what is missing, or what you would like to see. We read everything.",
+  "feedback.signedOutBody":
+    "You need an account to send feedback through the site. You can also email us and we will get back to you.",
+  "feedback.emailUs": "Email {email}",
+  "feedback.kindAria": "Feedback kind",
+  "feedback.placeholder": "What happened? What should we change?",
+  "feedback.messageAria": "Your feedback",
+  "feedback.includeDetails":
+    "Include technical details (page, app version, browser, screen size",
+  "feedback.crashIdSuffix": ", crash id",
+  "feedback.send": "Send",
+  "feedback.sending": "Sending...",
+  "feedback.telemetryAria":
+    "Share anonymous usage statistics and crash reports",
+  "feedback.telemetryBody":
+    "Share anonymous usage statistics and crash reports. Usage statistics are cookieless and never include what you write or your teams; crash reports contain only the error and the page it happened on. You can turn this off at any time.",
+  "crash.title": "Something went wrong",
+  "crash.body":
+    "Something broke on our side. Your data is safe. You can reload the page, go back to the feed, or tell us what happened so we can fix it faster.",
+  "crash.referencePrefix": "Crash reference:",
+  "crash.reload": "Reload",
+  "crash.goHome": "Go home",
+  "crash.tellUs": "Tell us what happened",
+
+  // Moderation notice page and suspend dialog.
+  "moderation.noticeTitle": "Moderation notice",
+  "moderation.suspendedTitle": "Your account was suspended",
+  "moderation.postRemovedTitle": "Your post was removed",
+  "moderation.commentRemovedTitle": "Your comment was removed",
+  "moderation.contentRemovedTitle": "Your content was removed",
+  "moderation.underReview": "Under review",
+  "moderation.appealUpheld": "Appeal upheld",
+  "moderation.appealReversed": "Appeal reversed",
+  "moderation.yourAppeal": "Your appeal",
+  "moderation.filedAt": "Filed {date}",
+  "moderation.reviewPending":
+    "A moderator will review your appeal and update its status here.",
+  "moderation.writeMessage": "Write a message for the moderators.",
+  "moderation.appealSubmittedToast": "Appeal submitted.",
+  "moderation.appealTitle": "Appeal this decision",
+  "moderation.appealDescription":
+    "Explain why you think this action was wrong. A moderator will review your appeal.",
+  "moderation.appealAria": "Appeal message",
+  "moderation.appealPlaceholder": "Why should this decision be reconsidered?",
+  "moderation.submitAppeal": "Submit appeal",
+  "moderation.reasonLabel": "Reason:",
+  "moderation.removedContent": "Removed content",
+  "moderation.suspension": "Suspension",
+  "moderation.until": "Until {date}",
+  "moderation.suspendDescription":
+    "Temporarily prevent this user from posting, commenting and interacting. Choose a duration and give a reason; the user is notified and can appeal.",
+  "moderation.suspendReasonAria": "Reason for the suspension",
+  "moderation.enterSuspendReason": "Enter a reason for the suspension.",
+  "moderation.suspendedToast": "User suspended.",
+  "moderation.duration1": "1 day",
+  "moderation.duration7": "7 days",
+  "moderation.duration30": "30 days",
+  "moderation.durationPermanent": "Permanent",
+
+  // System pages.
+  "system.notFoundTitle": "Page not found",
+  "system.notFoundBody":
+    "There is nothing at this address. It may have moved or never existed.",
+
+  // Browser tab titles (page-title.ts).
+  "pageTitle.appeals": "Appeals",
+  "pageTitle.feedback": "Feedback",
+  "pageTitle.reports": "Reports",
+  "pageTitle.styleguide": "Styleguide",
+  "pageTitle.signingIn": "Signing in",
+  "pageTitle.resetPassword": "Reset password",
+  "pageTitle.team": "Team",
+  "pageTitle.post": "Post",
+  "pageTitle.group": "Group",
+  "pageTitle.notFound": "Page not found",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;
@@ -677,4 +763,85 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "groups.reasonLabel": "理由",
   "groups.reasonPlaceholder": "この投稿を削除する理由は何ですか？",
   "groups.removedToast": "投稿をグループから削除しました",
+
+  "feedback.kindBug": "バグ",
+  "feedback.kindIdea": "アイデア",
+  "feedback.kindOther": "その他",
+  "feedback.tooShort": "もう少し詳しく教えてください（{min}文字以上）。",
+  "feedback.tooLong": "フィードバックは{max}文字以内です。",
+  "feedback.sentToast": "ありがとうございます！フィードバックを送信しました。",
+  "feedback.rateLimited":
+    "最近フィードバックを多数送信しています。1時間ほど経ってからもう一度お送りください。",
+  "feedback.description":
+    "壊れているもの、足りないもの、見たいものをお聞かせください。すべて目を通しています。",
+  "feedback.signedOutBody":
+    "サイトからフィードバックを送るにはアカウントが必要です。メールでもご連絡いただけます。",
+  "feedback.emailUs": "{email}にメールする",
+  "feedback.kindAria": "フィードバックの種類",
+  "feedback.placeholder": "何が起きましたか？何を変えるべきですか？",
+  "feedback.messageAria": "フィードバック内容",
+  "feedback.includeDetails":
+    "技術情報を含める（ページ、アプリのバージョン、ブラウザー、画面サイズ",
+  "feedback.crashIdSuffix": "、クラッシュID",
+  "feedback.send": "送信",
+  "feedback.sending": "送信中…",
+  "feedback.telemetryAria": "匿名の利用統計とクラッシュレポートを共有する",
+  "feedback.telemetryBody":
+    "匿名の利用統計とクラッシュレポートを共有します。利用統計にCookieは使われず、入力内容や構築が含まれることもありません。クラッシュレポートにはエラーと発生ページのみが含まれます。いつでもオフにできます。",
+  "crash.title": "問題が発生しました",
+  "crash.body":
+    "こちら側で問題が発生しました。データは安全です。ページの再読み込み、フィードへの戻る、または発生したことをお知らせいただければ、より早く修正できます。",
+  "crash.referencePrefix": "クラッシュ参照ID:",
+  "crash.reload": "再読み込み",
+  "crash.goHome": "ホームへ",
+  "crash.tellUs": "発生したことを報告する",
+
+  "moderation.noticeTitle": "モデレーションのお知らせ",
+  "moderation.suspendedTitle": "アカウントが停止されました",
+  "moderation.postRemovedTitle": "投稿が削除されました",
+  "moderation.commentRemovedTitle": "コメントが削除されました",
+  "moderation.contentRemovedTitle": "コンテンツが削除されました",
+  "moderation.underReview": "審査中",
+  "moderation.appealUpheld": "申し立てが認められました",
+  "moderation.appealReversed": "申し立てで取り消されました",
+  "moderation.yourAppeal": "あなたの申し立て",
+  "moderation.filedAt": "{date}に提出",
+  "moderation.reviewPending":
+    "モデレーターが申し立てを確認し、ここに状況が表示されます。",
+  "moderation.writeMessage": "モデレーターへのメッセージを書いてください。",
+  "moderation.appealSubmittedToast": "申し立てを提出しました。",
+  "moderation.appealTitle": "この決定に申し立てる",
+  "moderation.appealDescription":
+    "この処置が誤りだと思われる理由を説明してください。モデレーターが確認します。",
+  "moderation.appealAria": "申し立てのメッセージ",
+  "moderation.appealPlaceholder": "この決定を再考すべき理由は何ですか？",
+  "moderation.submitAppeal": "申し立てを送信",
+  "moderation.reasonLabel": "理由：",
+  "moderation.removedContent": "削除されたコンテンツ",
+  "moderation.suspension": "停止",
+  "moderation.until": "{date}まで",
+  "moderation.suspendDescription":
+    "このユーザーが投稿・コメント・やり取りできないよう一時的に停止します。期間を選び、理由を入力してください。ユーザーには通知され、申し立てができます。",
+  "moderation.suspendReasonAria": "停止の理由",
+  "moderation.enterSuspendReason": "停止の理由を入力してください。",
+  "moderation.suspendedToast": "ユーザーを停止しました。",
+  "moderation.duration1": "1日",
+  "moderation.duration7": "7日",
+  "moderation.duration30": "30日",
+  "moderation.durationPermanent": "無期限",
+
+  "system.notFoundTitle": "ページが見つかりません",
+  "system.notFoundBody":
+    "このアドレスには何もありません。移動したか、元から存在しません。",
+
+  "pageTitle.appeals": "申し立て",
+  "pageTitle.feedback": "フィードバック",
+  "pageTitle.reports": "報告",
+  "pageTitle.styleguide": "スタイルガイド",
+  "pageTitle.signingIn": "サインイン中",
+  "pageTitle.resetPassword": "パスワードのリセット",
+  "pageTitle.team": "構築",
+  "pageTitle.post": "投稿",
+  "pageTitle.group": "グループ",
+  "pageTitle.notFound": "ページが見つかりません",
 };

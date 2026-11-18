@@ -15,6 +15,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
+import type { TranslationKey } from "@/lib/i18n/en";
 import { CONTACT_EMAIL } from "@/features/legal/legal-info";
 import { getTelemetryConfig } from "@/lib/telemetry/config";
 import { track } from "@/lib/telemetry/analytics";
@@ -34,10 +36,10 @@ import {
  * Signed-out users get a mailto fallback instead of the form.
  */
 
-const KIND_LABELS: Record<FeedbackKind, string> = {
-  bug: "Bug",
-  idea: "Idea",
-  other: "Other",
+const KIND_LABELS: Record<FeedbackKind, TranslationKey> = {
+  bug: "feedback.kindBug",
+  idea: "feedback.kindIdea",
+  other: "feedback.kindOther",
 };
 
 const KIND_ICONS: Record<FeedbackKind, ReactNode> = {
@@ -82,6 +84,7 @@ export function FeedbackDialog({
   crashId = null,
 }: FeedbackDialogProps) {
   const { user } = useAuth();
+  const t = useT();
   const [kind, setKind] = useState<FeedbackKind>(defaultKind);
   const [message, setMessage] = useState("");
   const [includeDetails, setIncludeDetails] = useState(true);
@@ -93,13 +96,11 @@ export function FeedbackDialog({
     event.preventDefault();
     const trimmed = message.trim();
     if (trimmed.length < FEEDBACK_MESSAGE_MIN) {
-      toast.error(
-        `Tell us a bit more (at least ${FEEDBACK_MESSAGE_MIN} characters).`,
-      );
+      toast.error(t("feedback.tooShort", { min: FEEDBACK_MESSAGE_MIN }));
       return;
     }
     if (trimmed.length > FEEDBACK_MESSAGE_MAX) {
-      toast.error(`Feedback is limited to ${FEEDBACK_MESSAGE_MAX} characters.`);
+      toast.error(t("feedback.tooLong", { max: FEEDBACK_MESSAGE_MAX }));
       return;
     }
     sendFeedback.mutate(
@@ -112,13 +113,11 @@ export function FeedbackDialog({
         onSuccess: (result) => {
           if (result.ok) {
             track("feedback_sent", { kind });
-            toast.success("Thanks! Your feedback was sent.");
+            toast.success(t("feedback.sentToast"));
             setMessage("");
             onOpenChange(false);
           } else if (result.error.code === "rate_limited") {
-            toast.error(
-              "You have sent a lot of feedback recently. Please try again in an hour.",
-            );
+            toast.error(t("feedback.rateLimited"));
           } else {
             toast.error(result.error.message);
           }
@@ -131,17 +130,13 @@ export function FeedbackDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Send feedback</DialogTitle>
-          <DialogDescription>
-            Tell us what is broken, what is missing, or what you would like to
-            see. We read everything.
-          </DialogDescription>
+          <DialogTitle>{t("footer.sendFeedback")}</DialogTitle>
+          <DialogDescription>{t("feedback.description")}</DialogDescription>
         </DialogHeader>
         {signedOut ? (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              You need an account to send feedback through the site. You can
-              also email us and we will get back to you.
+              {t("feedback.signedOutBody")}
             </p>
             <Button asChild variant="outline" className="w-full">
               <a
@@ -149,7 +144,7 @@ export function FeedbackDialog({
                   "OHKOLab feedback",
                 )}`}
               >
-                Email {CONTACT_EMAIL}
+                {t("feedback.emailUs", { email: CONTACT_EMAIL })}
               </a>
             </Button>
           </div>
@@ -164,13 +159,13 @@ export function FeedbackDialog({
                     setKind(value);
                   }
                 }}
-                aria-label="Feedback kind"
+                aria-label={t("feedback.kindAria")}
                 variant="outline"
               >
                 {FEEDBACK_KINDS.map((feedbackKind) => (
                   <ToggleGroupItem key={feedbackKind} value={feedbackKind}>
                     {KIND_ICONS[feedbackKind]}
-                    {KIND_LABELS[feedbackKind]}
+                    {t(KIND_LABELS[feedbackKind])}
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
@@ -179,8 +174,8 @@ export function FeedbackDialog({
               <Textarea
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
-                placeholder="What happened? What should we change?"
-                aria-label="Your feedback"
+                placeholder={t("feedback.placeholder")}
+                aria-label={t("feedback.messageAria")}
                 rows={5}
               />
               <p className="text-xs text-muted-foreground">
@@ -194,12 +189,14 @@ export function FeedbackDialog({
                   setIncludeDetails(checked === true)
                 }
               />
-              Include technical details (page, app version, browser, screen size
-              {crashId ? ", crash id" : ""})
+              {t("feedback.includeDetails")}
+              {crashId ? t("feedback.crashIdSuffix") : ""})
             </label>
             <DialogFooter>
               <Button type="submit" disabled={sendFeedback.isPending}>
-                {sendFeedback.isPending ? "Sending..." : "Send"}
+                {sendFeedback.isPending
+                  ? t("feedback.sending")
+                  : t("feedback.send")}
               </Button>
             </DialogFooter>
           </form>

@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { formatDate } from "@/lib/format-date";
+import { useT } from "@/lib/i18n/t";
 import {
   APPEAL_MESSAGE_MAX,
   useAppealForAction,
@@ -27,21 +28,22 @@ import {
 } from "@/lib/social/moderation";
 
 function noticeTitle(
+  t: ReturnType<typeof useT>,
   action: { action: string; target_type: string } | null,
 ): string {
   if (action === null) {
-    return "Moderation notice";
+    return t("moderation.noticeTitle");
   }
   if (action.action === "suspend") {
-    return "Your account was suspended";
+    return t("moderation.suspendedTitle");
   }
   if (action.target_type === "post") {
-    return "Your post was removed";
+    return t("moderation.postRemovedTitle");
   }
   if (action.target_type === "comment") {
-    return "Your comment was removed";
+    return t("moderation.commentRemovedTitle");
   }
-  return "Your content was removed";
+  return t("moderation.contentRemovedTitle");
 }
 
 function AppealStatus({
@@ -53,12 +55,13 @@ function AppealStatus({
     message: string;
   };
 }) {
+  const t = useT();
   const statusLabel =
     appeal.status === "open"
-      ? "Under review"
+      ? t("moderation.underReview")
       : appeal.status === "upheld"
-        ? "Appeal upheld"
-        : "Appeal reversed";
+        ? t("moderation.appealUpheld")
+        : t("moderation.appealReversed");
   return (
     <Card>
       <CardHeader>
@@ -68,15 +71,19 @@ function AppealStatus({
           >
             {statusLabel}
           </Badge>
-          <CardTitle className="text-base">Your appeal</CardTitle>
+          <CardTitle className="text-base">
+            {t("moderation.yourAppeal")}
+          </CardTitle>
         </div>
-        <CardDescription>Filed {formatDate(appeal.created_at)}</CardDescription>
+        <CardDescription>
+          {t("moderation.filedAt", { date: formatDate(appeal.created_at) })}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">{appeal.message}</p>
         {appeal.status === "open" ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            A moderator will review your appeal and update its status here.
+            {t("moderation.reviewPending")}
           </p>
         ) : null}
       </CardContent>
@@ -91,6 +98,7 @@ function AppealForm({
   actionId: string;
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const [message, setMessage] = useState("");
   const createAppeal = useCreateAppeal(client);
   const busy = createAppeal.isPending;
@@ -98,7 +106,7 @@ function AppealForm({
   const submit = async () => {
     const trimmed = message.trim();
     if (trimmed === "") {
-      toast.error("Write a message for the moderators.");
+      toast.error(t("moderation.writeMessage"));
       return;
     }
     const result = await createAppeal.mutateAsync({
@@ -106,7 +114,7 @@ function AppealForm({
       message: trimmed,
     });
     if (result.ok) {
-      toast.success("Appeal submitted.");
+      toast.success(t("moderation.appealSubmittedToast"));
     } else {
       toast.error(result.error.message);
     }
@@ -115,16 +123,15 @@ function AppealForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Appeal this decision</CardTitle>
-        <CardDescription>
-          Explain why you think this action was wrong. A moderator will review
-          your appeal.
-        </CardDescription>
+        <CardTitle className="text-base">
+          {t("moderation.appealTitle")}
+        </CardTitle>
+        <CardDescription>{t("moderation.appealDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-2">
         <Textarea
-          aria-label="Appeal message"
-          placeholder="Why should this decision be reconsidered?"
+          aria-label={t("moderation.appealAria")}
+          placeholder={t("moderation.appealPlaceholder")}
           value={message}
           maxLength={APPEAL_MESSAGE_MAX}
           onChange={(event) => setMessage(event.target.value)}
@@ -140,7 +147,7 @@ function AppealForm({
           }}
         >
           {busy ? <LoaderCircleIcon className="animate-spin" /> : <SendIcon />}
-          Submit appeal
+          {t("moderation.submitAppeal")}
         </Button>
       </CardContent>
     </Card>
@@ -152,6 +159,7 @@ export function ModerationNoticePage({
 }: {
   client?: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const { actionId } = useParams<{ actionId: string }>();
   const actionQuery = useModerationAction(actionId ?? "", client);
   const appealQuery = useAppealForAction(actionId ?? "", client);
@@ -159,7 +167,7 @@ export function ModerationNoticePage({
 
   if (actionQuery.isPending) {
     return (
-      <Page title="Moderation notice" width="narrow">
+      <Page title={t("moderation.noticeTitle")} width="narrow">
         <div className="grid gap-4">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -182,7 +190,7 @@ export function ModerationNoticePage({
       : null;
 
   return (
-    <Page title={noticeTitle(action)} width="narrow">
+    <Page title={noticeTitle(t, action)} width="narrow">
       <div className="grid gap-4">
         <Card>
           <CardHeader>
@@ -190,13 +198,15 @@ export function ModerationNoticePage({
           </CardHeader>
           <CardContent className="grid gap-3">
             <p className="text-sm">
-              <span className="font-medium">Reason: </span>
+              <span className="font-medium">
+                {t("moderation.reasonLabel")}{" "}
+              </span>
               {action.reason}
             </p>
             {isRemoval && action.content_snapshot !== null ? (
               <div className="grid gap-1 rounded-md border p-3">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Removed content
+                  {t("moderation.removedContent")}
                 </p>
                 <p className="whitespace-pre-wrap text-sm text-muted-foreground">
                   {action.content_snapshot}
@@ -206,9 +216,13 @@ export function ModerationNoticePage({
             {suspension ? (
               <div className="grid gap-1 rounded-md border p-3">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Suspension
+                  {t("moderation.suspension")}
                 </p>
-                <p className="text-sm">Until {formatDate(suspension.until)}</p>
+                <p className="text-sm">
+                  {t("moderation.until", {
+                    date: formatDate(suspension.until),
+                  })}
+                </p>
               </div>
             ) : null}
           </CardContent>

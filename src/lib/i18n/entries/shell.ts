@@ -13,6 +13,8 @@ export const shellEn = {
   "nav.meta": "Meta",
   "nav.profile": "Profile",
   "nav.main": "Main",
+  "account.menuAria": "Account menu",
+  "account.moderationItem": "Moderation",
 
   // The language switch (footer and profile settings).
   "language.label": "Language",
@@ -105,6 +107,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "nav.meta": "環境",
   "nav.profile": "プロフィール",
   "nav.main": "メイン",
+  "account.menuAria": "アカウントメニュー",
+  "account.moderationItem": "モデレーション",
 
   // 言語切り替え（フッターとプロフィール設定）。
   "language.label": "言語",
