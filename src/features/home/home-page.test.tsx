@@ -238,10 +238,59 @@ describe("HomePage", () => {
     expect(
       await screen.findByText(/sign in to see posts from trainers you follow/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /sign in/i })).toHaveAttribute(
-      "href",
-      "/login?returnTo=/",
-    );
+    const signInLinks = screen.getAllByRole("link", { name: /sign in/i });
+    expect(signInLinks.length).toBeGreaterThan(0);
+    for (const link of signInLinks) {
+      expect(link).toHaveAttribute("href", "/login?returnTo=/");
+    }
+  });
+
+  it("shows the sign-in prompt in the groups rail when signed out", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    renderHome(createFakeAuth({ user: null, session: null, profile: null }));
+
+    expect(
+      await screen.findByText(/sign in to join groups/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/no groups yet/i)).not.toBeInTheDocument();
+  });
+
+  it("lists the signed-in user's groups in the rail", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    groupsMocks.useMyGroups.mockReturnValue({
+      data: [
+        {
+          id: "g1",
+          slug: "sand-club",
+          name: "Sand Club",
+          description: null,
+          visibility: "public",
+          ownerId: "user-1",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    renderHome();
+
+    const link = await screen.findByRole("link", { name: "Sand Club" });
+    expect(link).toHaveAttribute("href", "/g/sand-club");
+  });
+
+  it("shows the empty groups state for a signed-in user with no groups", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    renderHome();
+
+    expect(await screen.findByText(/no groups yet/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/sign in to join groups/i),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the empty state when the feed has no posts", async () => {

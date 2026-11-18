@@ -10,7 +10,13 @@ import { PublicProfilePage } from "@/features/profile/public-profile-page";
 import { createFakeAuth, TEST_PROFILE } from "@/features/account/test-utils";
 import { TEAMS_STORAGE_KEY } from "@/lib/team";
 import type { AppSupabaseClient } from "@/lib/supabase";
-import type { FeedPostRow, ProfileRow, TeamRow } from "@/lib/database.types";
+import type {
+  FeedPostRow,
+  GroupMemberRow,
+  GroupRow,
+  ProfileRow,
+  TeamRow,
+} from "@/lib/database.types";
 import type { Team } from "@/types/team";
 
 const socialMocks = vi.hoisted(() => ({
@@ -179,27 +185,58 @@ function postRow(overrides: Partial<FeedPostRow> = {}): FeedPostRow {
   };
 }
 
+function groupRow(overrides: Partial<GroupRow> = {}): GroupRow {
+  return {
+    id: "g1",
+    slug: "vermilion-crew",
+    name: "Vermilion Crew",
+    description: "Surge's gym regulars.",
+    visibility: "public",
+    owner_id: "user-2",
+    created_at: "2024-02-01T00:00:00Z",
+    updated_at: "2024-02-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
+function memberRow(overrides: Partial<GroupMemberRow> = {}): GroupMemberRow {
+  return {
+    group_id: "g1",
+    user_id: "user-1",
+    role: "member",
+    status: "active",
+    created_at: "2024-02-02T00:00:00Z",
+    ...overrides,
+  };
+}
+
 type ProfileFetch = { data: ProfileRow | null; error: unknown };
 type TeamsFetch = { data: TeamRow[]; error: unknown };
+type MemberFetch = { data: GroupMemberRow[]; error: unknown };
+type GroupsFetch = { data: GroupRow[]; error: unknown };
 
 /**
  * A Supabase stand-in: `profiles` answers through `maybeSingle`, `teams`
- * through the eq/eq/order chain. Each chain counts its calls and answers
- * with an error while the call count is within the configured failure
- * count, so a retry (or a manual refetch) can succeed without flipping
- * flags between calls.
+ * through the eq/eq/order chain, `group_members` through eq/eq and `groups`
+ * through in/order. Each chain counts its calls and answers with an error
+ * while the call count is within the configured failure count, so a retry
+ * (or a manual refetch) can succeed without flipping flags between calls.
  */
 function createFakeClient(
   options: {
     profile?: ProfileRow | null;
     teams?: TeamRow[];
+    memberRows?: GroupMemberRow[];
+    groupRows?: GroupRow[];
     profileFailures?: number;
     teamsFailures?: number;
+    memberFailures?: number;
     hangProfile?: boolean;
   } = {},
 ) {
   let profileCalls = 0;
   let teamsCalls = 0;
+  let memberCalls = 0;
   const from = (table: string) => {
     if (table === "profiles") {
       return {
@@ -244,6 +281,40 @@ function createFakeClient(
                 });
               },
             }),
+          }),
+        }),
+      };
+    }
+    if (table === "group_members") {
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: (): Promise<MemberFetch> => {
+              memberCalls += 1;
+              if (memberCalls <= (options.memberFailures ?? 0)) {
+                return Promise.resolve({
+                  data: [],
+                  error: { message: "network down" },
+                });
+              }
+              return Promise.resolve({
+                data: options.memberRows ?? [],
+                error: null,
+              });
+            },
+          }),
+        }),
+      };
+    }
+    if (table === "groups") {
+      return {
+        select: () => ({
+          in: () => ({
+            order: (): Promise<GroupsFetch> =>
+              Promise.resolve({
+                data: options.groupRows ?? [],
+                error: null,
+              }),
           }),
         }),
       };
@@ -439,6 +510,102 @@ describe("PublicProfilePage", () => {
       "Garchomp",
       "Incineroar",
     ]);
+  });
+
+  it("lists the trainer's groups in the Groups tab", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-groups", username: "groupu" }),
+      memberRows: [
+        memberRow({ group_id: "g1", user_id: "user-groups" }),
+        memberRow({ group_id: "g2", user_id: "user-groups" }),
+      ],
+      groupRows: [
+        groupRow({ id: "g1", slug: "vermilion-crew", name: "Vermilion Crew" }),
+        groupRow({
+          id: "g2",
+          slug: "celadon-circle",
+          name: "Celadon Circle",
+          visibility: "invite_only",
+        }),
+      ],
+    });
+    renderProfilePage(client, "groupu");
+
+    await user.click(await screen.findByRole("radio", { name: "Groups" }));
+
+    expect(await screen.findByText("Vermilion Crew")).toBeInTheDocument();
+    expect(screen.getByText("Celadon Circle")).toBeInTheDocument();
+    expect(screen.getByText("Public")).toBeInTheDocument();
+    expect(screen.getByText("Invite only")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Vermilion Crew/ }),
+    ).toHaveAttribute("href", "/g/vermilion-crew");
+    expect(
+      screen.getByRole("link", { name: /Celadon Circle/ }),
+    ).toHaveAttribute("href", "/g/celadon-circle");
+  });
+
+  it("shows an empty state when the trainer has no groups", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-nogroups", username: "loneu" }),
+      memberRows: [],
+    });
+    renderProfilePage(client, "loneu");
+
+    await user.click(await screen.findByRole("radio", { name: "Groups" }));
+
+    expect(await screen.findByText("No groups yet")).toBeInTheDocument();
+  });
+
+  it("offers a retry when the groups could not be loaded", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-grouperr", username: "grouperr" }),
+      memberRows: [memberRow({ user_id: "user-grouperr" })],
+      groupRows: [groupRow()],
+      memberFailures: 1,
+    });
+    renderProfilePage(client, "grouperr");
+
+    await user.click(await screen.findByRole("radio", { name: "Groups" }));
+
+    expect(
+      await screen.findByText("Could not load groups"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Something went wrong while loading this trainer's groups. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByText("Vermilion Crew")).toBeInTheDocument();
+  });
+
+  it("tints the profile header with the avatar species' colour", async () => {
+    renderProfilePage(
+      createFakeClient({ profile: profileRow({ username: "tintu" }) }),
+      "tintu",
+    );
+
+    expect(
+      await screen.findByTestId("profile-banner-tint"),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the header untinted without an avatar species", async () => {
+    renderProfilePage(
+      createFakeClient({
+        profile: profileRow({ username: "plainu", avatar_species: null }),
+      }),
+      "plainu",
+    );
+
+    expect(await screen.findByText("Pallet Town")).toBeInTheDocument();
+    expect(screen.queryByTestId("profile-banner-tint")).not.toBeInTheDocument();
   });
 });
 

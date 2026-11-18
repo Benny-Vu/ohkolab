@@ -18,6 +18,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { SegmentedControl } from "@/components/segmented-control";
+import { Badge } from "@/components/ui/badge";
 import { formatJoined } from "@/lib/format-date";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +66,7 @@ import {
 import { PostList } from "@/features/feed/post-list";
 import { ReportDialog } from "@/features/feed/report-dialog";
 import { SuspendDialog } from "@/features/admin/suspend-dialog";
+import { useUserGroups, type GroupSummary } from "@/lib/groups/queries";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +79,14 @@ import {
 const TeamMemberRow = lazy(() =>
   import("@/features/profile/team-member-row").then((m) => ({
     default: m.TeamMemberRow,
+  })),
+);
+
+// The banner tint needs the dex (getSpecies), so it loads lazily too and
+// keeps the heavy pokemon-data chunk out of the profile route.
+const ProfileBannerTint = lazy(() =>
+  import("@/features/profile/profile-banner-tint").then((m) => ({
+    default: m.ProfileBannerTint,
   })),
 );
 
@@ -243,6 +253,82 @@ function TeamsSection({
         <TeamCard key={team.id} team={team} username={username} />
       ))}
     </div>
+  );
+}
+
+function ProfileGroupCard({ group }: { group: GroupSummary }) {
+  return (
+    <Link
+      to={`/g/${group.slug}`}
+      className="group block rounded-md focus-visible:outline-2"
+    >
+      <div className="rounded-md border bg-card p-4 transition-colors group-hover:border-primary/60">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="font-heading truncate text-base font-semibold">
+            {group.name}
+          </span>
+          <Badge variant="secondary">
+            {group.visibility === "invite_only" ? "Invite only" : "Public"}
+          </Badge>
+        </div>
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          {group.description ?? "No description yet."}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+function GroupsSection({
+  userId,
+  client,
+}: {
+  userId: string;
+  client: AppSupabaseClient;
+}) {
+  const groupsQuery = useUserGroups(userId, client);
+
+  if (groupsQuery.isPending) {
+    return (
+      <div className="grid gap-3" aria-label="Loading groups">
+        <Skeleton className="h-20 w-full rounded-md" />
+        <Skeleton className="h-20 w-full rounded-md" />
+      </div>
+    );
+  }
+
+  if (groupsQuery.isError) {
+    return (
+      <ErrorState
+        title="Could not load groups"
+        description="Something went wrong while loading this trainer's groups. Check your connection and try again."
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void groupsQuery.refetch()}
+          >
+            Try again
+          </Button>
+        }
+      />
+    );
+  }
+
+  const groups = groupsQuery.data ?? [];
+
+  if (groups.length === 0) {
+    return <EmptyState title="No groups yet" />;
+  }
+
+  return (
+    <ul className="grid gap-3">
+      {groups.map((group) => (
+        <li key={group.id}>
+          <ProfileGroupCard group={group} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -599,8 +685,11 @@ function ProfileHeader({
   socialReady: boolean;
 }) {
   return (
-    <Card size="sm">
-      <CardContent className="grid gap-4">
+    <Card size="sm" className="relative">
+      <Suspense fallback={null}>
+        <ProfileBannerTint avatarSpecies={profile.avatarSpecies} />
+      </Suspense>
+      <CardContent className="relative grid gap-4">
         <div className="flex flex-wrap items-start gap-4">
           <UserAvatar
             username={profile.username}
@@ -778,7 +867,9 @@ export function PublicProfilePage({
               client={client}
             />
           ) : null}
-          {tab === "groups" ? <EmptyState title="No groups yet" /> : null}
+          {tab === "groups" ? (
+            <GroupsSection userId={profile.id} client={client} />
+          ) : null}
         </div>
       )}
     </Page>

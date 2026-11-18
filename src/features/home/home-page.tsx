@@ -180,7 +180,7 @@ function FeedHome() {
       </div>
 
       <aside className="mt-8 hidden lg:mt-0 lg:block">
-        <RightRail />
+        <RightRail signedIn={user !== null} />
       </aside>
     </div>
   );
@@ -211,20 +211,37 @@ function SignedOutIntro() {
   );
 }
 
-function RightRail() {
+function RightRail({ signedIn }: { signedIn: boolean }) {
   return (
     <div className="grid gap-4">
       <Suspense fallback={null}>
         <TrendingStrip />
       </Suspense>
-      <MyGroupsRail />
+      <MyGroupsRail signedIn={signedIn} />
     </div>
   );
 }
 
-function MyGroupsRail() {
+function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
   const myGroups = useMyGroups();
   const groups = myGroups.data ?? [];
+
+  if (!signedIn) {
+    return (
+      <section
+        aria-label="Your groups"
+        className="rounded-md border bg-card p-4"
+      >
+        <h2 className="font-heading text-sm font-semibold">Your groups</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Sign in to join groups
+        </p>
+        <Button asChild size="sm" variant="outline" className="mt-3">
+          <Link to="/login?returnTo=/">Sign in</Link>
+        </Button>
+      </section>
+    );
+  }
 
   return (
     <section aria-label="Your groups" className="rounded-md border bg-card p-4">
@@ -233,10 +250,7 @@ function MyGroupsRail() {
         <ul className="mt-2 grid gap-1.5">
           {groups.slice(0, 5).map((group) => (
             <li key={group.id}>
-              <Link
-                to={`/groups/${group.slug}`}
-                className="text-sm hover:underline"
-              >
+              <Link to={`/g/${group.slug}`} className="text-sm hover:underline">
                 {group.name}
               </Link>
             </li>
