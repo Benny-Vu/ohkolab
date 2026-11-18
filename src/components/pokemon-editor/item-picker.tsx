@@ -11,6 +11,7 @@ import {
   listItems,
   listItemsFor,
   useDisplayName,
+  useDisplayDescription,
   type ItemInfo,
 } from "@/data";
 import { useT } from "@/lib/i18n/t";
@@ -46,6 +47,7 @@ function ItemOptions({
 }) {
   const t = useT();
   const display = useDisplayName();
+  const describe = useDisplayDescription();
   const groups = useMemo<OptionGroup<ItemInfo>[]>(() => {
     if (!species) return [{ options: listItems() }];
     const items = listItemsFor(species);
@@ -64,22 +66,25 @@ function ItemOptions({
     [display],
   );
   const renderItem = useCallback(
-    (item: ItemInfo) => (
-      <>
-        <span aria-hidden className="flex shrink-0 self-start">
-          <ItemIcon item={item.name} />
-        </span>
-        <span className="grid min-w-0 flex-1 gap-0.5">
-          <span className="truncate">{display("item", item.name)}</span>
-          {item.shortDesc ? (
-            <span className="line-clamp-2 text-xs text-muted-foreground">
-              {item.shortDesc}
-            </span>
-          ) : null}
-        </span>
-      </>
-    ),
-    [display],
+    (item: ItemInfo) => {
+      const description = describe("item", item.name);
+      return (
+        <>
+          <span aria-hidden className="flex shrink-0 self-start">
+            <ItemIcon item={item.name} />
+          </span>
+          <span className="grid min-w-0 flex-1 gap-0.5">
+            <span className="truncate">{display("item", item.name)}</span>
+            {description ? (
+              <span className="line-clamp-2 text-xs text-muted-foreground">
+                {description}
+              </span>
+            ) : null}
+          </span>
+        </>
+      );
+    },
+    [describe, display],
   );
 
   return (

@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  displayDescription,
   displayName,
   loadJapaneseNames,
   matchesDisplayName,
 } from "@/data/display-names";
+import { getAbility, getItem } from "@/data";
 
 // A tiny stand-in for the committed ja-names.json; the real file's parity
 // has its own test in src/data/i18n.
@@ -16,6 +18,8 @@ const { fixture, imports } = vi.hoisted(() => ({
     item: { lifeorb: "いのちのたま" },
     type: { fire: "ほのお" },
     nature: { hardy: "がんばりや" },
+    abilityDescription: { intimidate: "いかくの　せつめい" },
+    itemDescription: { lifeorb: "いのちのたまの　せつめい" },
   },
   imports: { count: 0 },
 }));
@@ -67,6 +71,43 @@ describe("displayName", () => {
     expect(displayName("species", "charizard", "ja")).toBe("Charizard");
     // Not in the roster at all: the id itself is the best we have.
     expect(displayName("move", "nope", "ja")).toBe("nope");
+  });
+});
+
+describe("displayDescription", () => {
+  // The displayName tests above have already loaded the fixture chunk by
+  // the time this describe runs, so only the loaded states are covered
+  // here; the not-loaded fallback is the same guard displayName uses.
+
+  it("keeps the English short description in English", () => {
+    expect(displayDescription("ability", "Intimidate", "en")).toBe(
+      getAbility("Intimidate")?.shortDesc,
+    );
+    expect(displayDescription("item", "Life Orb", "en")).toBe(
+      getItem("Life Orb")?.shortDesc,
+    );
+  });
+
+  it("looks descriptions up in the loaded Japanese data", () => {
+    expect(displayDescription("ability", "intimidate", "ja")).toBe(
+      "いかくの　せつめい",
+    );
+    expect(displayDescription("item", "Life Orb", "ja")).toBe(
+      "いのちのたまの　せつめい",
+    );
+  });
+
+  it("falls back to the English short description without Japanese text", () => {
+    // In the roster but absent from the fixture's description sections.
+    expect(displayDescription("ability", "Blaze", "ja")).toBe(
+      getAbility("Blaze")?.shortDesc,
+    );
+    expect(displayDescription("item", "Leftovers", "ja")).toBe(
+      getItem("Leftovers")?.shortDesc,
+    );
+    // Not in the roster at all: there is no description at all.
+    expect(displayDescription("ability", "nope", "ja")).toBe("");
+    expect(displayDescription("item", "nope", "ja")).toBe("");
   });
 });
 

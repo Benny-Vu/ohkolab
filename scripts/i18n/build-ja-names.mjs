@@ -2,13 +2,17 @@
 /**
  * Builds `src/data/i18n/ja-names.json`: Japanese display names for the
  * Pokémon Champions roster (species, moves, abilities, items, types,
- * natures), keyed by the ids `@/data` uses.
+ * natures), plus Japanese flavour-text descriptions for the Champions
+ * abilities and items, all keyed by the ids `@/data` uses.
  *
  * Source: PokéAPI's data CSVs (https://github.com/PokeAPI/pokeapi,
  * data/v2/csv, BSD-3 licence). Japanese names come from
  * `local_language_id` 11 ("ja"); for plain names it is identical to 1
- * ("ja-Hrkt"), which is only used as a fallback. The script prints every
- * roster id it could not match; those fall back to English at runtime.
+ * ("ja-Hrkt"), which is only used as a fallback. Descriptions come from
+ * `ability_flavor_text.csv` and `item_flavor_text.csv`, `language_id` 11
+ * only, taking the most recent version group each entry has. The script
+ * prints every roster id it could not match; those fall back to English
+ * at runtime.
  *
  * Run by hand (no arguments, no dependencies beyond Node and the
  * installed packages):  node scripts/i18n/build-ja-names.mjs
@@ -135,6 +139,36 @@ async function fetchCsv(name) {
     throw new Error(`Could not fetch ${name}: HTTP ${response.status}`);
   }
   return parseCsv(await response.text());
+}
+
+/**
+ * Rows of a `<kind>_flavor_text.csv` (id, version_group_id, language_id,
+ * flavor_text) keyed by the normalized English name from the matching
+ * `<kind>_names.csv`, mapped to the newest Japanese flavour text: among
+ * one entry's `language_id` 11 rows the highest version_group_id wins,
+ * as PokéAPI numbers version groups in release order. Items the newest
+ * games dropped (Mega Stones) thus keep their latest available text.
+ * Newlines inside the quoted CSV fields become single spaces.
+ */
+function jaFlavorByEnglishName(flavorRows, nameRows) {
+  const en = new Map();
+  for (const [id, lang, name] of nameRows) {
+    if (lang === String(LANG_EN)) en.set(id, normalize(name));
+  }
+  const chosen = new Map();
+  for (const [id, versionGroup, lang, text] of flavorRows) {
+    if (lang !== String(LANG_JA)) continue;
+    const english = en.get(id);
+    if (!english) continue;
+    const clean = text.replace(/\s+/g, " ").trim();
+    if (!clean) continue;
+    const group = Number(versionGroup);
+    const current = chosen.get(english);
+    if (!current || group > current[0]) chosen.set(english, [group, clean]);
+  }
+  const map = new Map();
+  for (const [english, [, text]] of chosen) map.set(english, text);
+  return map;
 }
 
 /**
@@ -329,6 +363,8 @@ const [
   typeNames,
   natureNames,
   formNames,
+  abilityFlavor,
+  itemFlavor,
 ] = await Promise.all([
   fetchCsv("pokemon_species_names.csv"),
   fetchCsv("move_names.csv"),
@@ -337,6 +373,8 @@ const [
   fetchCsv("type_names.csv"),
   fetchCsv("nature_names.csv"),
   fetchCsv("pokemon_form_names.csv"),
+  fetchCsv("ability_flavor_text.csv"),
+  fetchCsv("item_flavor_text.csv"),
 ]);
 
 const speciesByEn = jaByEnglishName(speciesNames, stats);
@@ -356,6 +394,14 @@ const sections = {
   item: jaByLookup(items, jaByEnglishName(itemNames, stats)),
   type: jaByLookup(types, jaByEnglishName(typeNames, stats)),
   nature: jaByLookup(natures, jaByEnglishName(natureNames, stats)),
+  abilityDescription: jaByLookup(
+    abilities,
+    jaFlavorByEnglishName(abilityFlavor, abilityNames),
+  ),
+  itemDescription: jaByLookup(
+    items,
+    jaFlavorByEnglishName(itemFlavor, itemNames),
+  ),
 };
 
 const rosters = {
@@ -365,6 +411,8 @@ const rosters = {
   item: items,
   type: types,
   nature: natures,
+  abilityDescription: abilities,
+  itemDescription: items,
 };
 
 const data = {
@@ -374,6 +422,8 @@ const data = {
   item: sorted(sections.item),
   type: sorted(sections.type),
   nature: sorted(sections.nature),
+  abilityDescription: sorted(sections.abilityDescription),
+  itemDescription: sorted(sections.itemDescription),
 };
 
 const outPath = join(
@@ -406,7 +456,8 @@ for (const kind of Object.keys(rosters)) {
     .filter((entry) => !sections[kind].has(entry.id))
     .map((entry) => entry.name);
   if (missing.length > 0) {
-    console.log(`\nNo Japanese name for ${kind}: ${missing.join(", ")}`);
+    const what = kind.endsWith("Description") ? "description" : "name";
+    console.log(`\nNo Japanese ${what} for ${kind}: ${missing.join(", ")}`);
   }
 }
 if (speciesReport.composed.length > 0) {
