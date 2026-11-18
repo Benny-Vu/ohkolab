@@ -89,6 +89,12 @@ describe("describeSocialError", () => {
     ).toBe("rate_limited");
   });
 
+  it("maps the post image rate limit code", () => {
+    expect(
+      describeSocialError({ code: "P0A07", message: "too many images" }).code,
+    ).toBe("rate_limited");
+  });
+
   it("maps the suspension error code", () => {
     expect(
       describeSocialError({ code: "P0A03", message: "suspended" }).code,

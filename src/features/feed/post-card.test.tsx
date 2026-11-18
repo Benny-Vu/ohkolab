@@ -7,8 +7,9 @@ import { Providers } from "@/app/providers";
 import { AuthContext } from "@/lib/auth/use-auth";
 import { createFakeAuth, TEST_PROFILE } from "@/features/account/test-utils";
 import { PostCard } from "@/features/feed/post-card";
+import { postImageRow } from "@/lib/social/test-client";
 import { TEAMS_STORAGE_KEY } from "@/lib/team";
-import type { FeedPostRow } from "@/lib/database.types";
+import type { FeedPostRow, PostImageRow } from "@/lib/database.types";
 import type { Team } from "@/types/team";
 
 const mutationsMocks = vi.hoisted(() => ({
@@ -90,14 +91,18 @@ function postRow(overrides: Partial<FeedPostRow> = {}): FeedPostRow {
   };
 }
 
-function renderCard(post: FeedPostRow, auth = createFakeAuth()) {
+function renderCard(
+  post: FeedPostRow,
+  auth = createFakeAuth(),
+  images?: PostImageRow[],
+) {
   const router = createMemoryRouter(
     [
       {
         path: "/",
         element: (
           <AuthContext.Provider value={auth}>
-            <PostCard post={post} />
+            <PostCard post={post} images={images} />
           </AuthContext.Provider>
         ),
       },
@@ -384,5 +389,76 @@ describe("PostCard", () => {
         reason: "Spam links",
       }),
     );
+  });
+
+  it("renders approved images for everyone", () => {
+    renderCard(postRow(), createFakeAuth(), [
+      postImageRow({ id: "img-1", alt: "A Garchomp on the beach" }),
+    ]);
+
+    const image = screen.getByRole("img", {
+      name: "A Garchomp on the beach",
+    });
+    expect(image).toHaveAttribute(
+      "src",
+      "https://img.ohkolab.com/user-1/post-1/image-a.webp",
+    );
+  });
+
+  it("shows the author their pending and rejected images with notices", () => {
+    renderCard(
+      postRow({ author_id: TEST_PROFILE.id, author_username: "ashketchum" }),
+      createFakeAuth(),
+      [
+        postImageRow({
+          id: "img-1",
+          position: 0,
+          status: "pending",
+          public_path: null,
+          screened_at: null,
+          alt: "Waiting",
+        }),
+        postImageRow({ id: "img-2", position: 1, status: "rejected" }),
+      ],
+    );
+
+    expect(screen.getByText("Checking image…")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Image removed by automatic screening/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "See the notice" }),
+    ).toHaveAttribute("href", "/notifications");
+  });
+
+  it("shows non-authors only approved images", () => {
+    renderCard(postRow(), createFakeAuth(), [
+      postImageRow({
+        id: "img-1",
+        status: "pending",
+        public_path: null,
+        screened_at: null,
+      }),
+      postImageRow({ id: "img-2", position: 1, status: "blocked" }),
+    ]);
+
+    expect(screen.queryByText("Checking image…")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "Image 1" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides blocked images even from the author", () => {
+    renderCard(
+      postRow({ author_id: TEST_PROFILE.id, author_username: "ashketchum" }),
+      createFakeAuth(),
+      [
+        postImageRow({ id: "img-1", status: "blocked", alt: "Nope" }),
+        postImageRow({ id: "img-2", position: 1, alt: "Fine" }),
+      ],
+    );
+
+    expect(screen.queryByRole("img", { name: "Nope" })).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Fine" })).toBeInTheDocument();
   });
 });

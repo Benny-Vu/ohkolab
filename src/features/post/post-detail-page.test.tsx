@@ -36,9 +36,17 @@ const moderationMocks = vi.hoisted(() => ({
   useSuspendUser: vi.fn(),
 }));
 
+const imagesMocks = vi.hoisted(() => ({
+  usePostImages: vi.fn(),
+}));
+
 vi.mock("@/lib/social/queries", () => queriesMocks);
 vi.mock("@/lib/social/mutations", () => mutationsMocks);
 vi.mock("@/lib/social/moderation", () => moderationMocks);
+vi.mock("@/lib/social/images", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/social/images")>()),
+  usePostImages: imagesMocks.usePostImages,
+}));
 
 const queryResult = (data: unknown, extra: Record<string, unknown> = {}) => ({
   data,
@@ -106,6 +114,7 @@ function stubSocial() {
   mutationsMocks.useToggleFollow.mockReturnValue(mutationResult());
   mutationsMocks.useToggleBlock.mockReturnValue(mutationResult());
   moderationMocks.useRemoveContent.mockReturnValue(mutationResult());
+  imagesMocks.usePostImages.mockReturnValue(queryResult([]));
 }
 
 function renderPostPage(postId = "post-1", auth = createFakeAuth()) {
@@ -254,5 +263,34 @@ describe("PostDetailPage", () => {
         details: undefined,
       }),
     );
+  });
+
+  it("shows the author their pending image notice", async () => {
+    queriesMocks.usePost.mockReturnValue(
+      queryResult(postRow({ author_id: TEST_PROFILE.id })),
+    );
+    imagesMocks.usePostImages.mockReturnValue(
+      queryResult([
+        {
+          id: "img-1",
+          post_id: "post-1",
+          author_id: TEST_PROFILE.id,
+          position: 0,
+          pending_path: "user-1/post-1/img-1.webp",
+          public_path: null,
+          width: 1600,
+          height: 900,
+          bytes: 1000,
+          status: "pending",
+          screen_result: null,
+          screened_at: null,
+          alt: null,
+          created_at: "2026-11-19T10:00:00.000Z",
+        },
+      ]),
+    );
+    renderPostPage();
+
+    expect(await screen.findByText("Checking image…")).toBeInTheDocument();
   });
 });
