@@ -48,6 +48,12 @@ export async function copyAcrossBuckets(
   toBucket: string,
   path: string,
 ): Promise<boolean> {
+  // Delete any copy already at the destination first: the storage copy
+  // call fails on an existing destination, and both call sites need
+  // retries to be safe (removeFile treats a missing file as success).
+  // If the copy below then fails, nothing is lost: the source still
+  // holds the file and the next run copies it again.
+  await db.storage.from(toBucket).remove([path]);
   const { error } = await db.storage
     .from(fromBucket)
     .copy(path, path, { destinationBucket: toBucket });
@@ -96,10 +102,10 @@ export async function moveToQuarantine(
   path: string,
 ): Promise<MoveResult> {
   if (!(await fileExists(db, fromBucket, path))) return "absent";
-  // Replace any earlier quarantine copy so a half-finished previous run
-  // cannot leave this one stuck, but never delete the quarantine copy
-  // without being able to recreate it: the copy below only runs when the
-  // source exists (checked above).
+  // copyAcrossBuckets replaces any earlier quarantine copy, so a
+  // half-finished previous run cannot leave this one stuck - and the
+  // quarantine copy is only ever deleted when the source exists to
+  // recreate it (checked above).
   if (!(await copyAcrossBuckets(db, fromBucket, QUARANTINE_BUCKET, path))) {
     return "error";
   }
