@@ -252,10 +252,19 @@ describe("useAppeals", () => {
     resetSocialInstallState();
   });
 
-  it("loads open appeals with their moderation action", async () => {
+  it("loads open appeals with their moderation action and appellant", async () => {
     const action = moderationActionRow({ id: "action-1" });
     const appeal = appealRow({ id: "appeal-1" });
-    const row = { ...appeal, moderation_actions: action };
+    const appellant = {
+      username: "sparky",
+      display_name: "Sparky",
+      avatar_species: null,
+    };
+    const row = {
+      ...appeal,
+      moderation_actions: action,
+      appellant: appellant,
+    };
     const { client, records } = createFakeClient({
       tables: { appeals: { data: [row], error: null } },
     });
@@ -264,13 +273,18 @@ describe("useAppeals", () => {
       wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual([{ appeal: appeal, action: action }]);
+    expect(result.current.data).toEqual([
+      { appeal: appeal, action: action, appellant: appellant },
+    ]);
     const appealCalls = callsOn(records, "appeals");
     expect(appealCalls).toHaveLength(1);
     expect(appealCalls[0]!.eqFilters).toContainEqual(["status", "open"]);
     expect(appealCalls[0]!.orders).toEqual([
       ["created_at", { ascending: false }],
     ]);
+    expect(appealCalls[0]!.selectColumns).toContain(
+      "appellant:profiles!appeals_appellant_id_fkey(username, display_name, avatar_species)",
+    );
   });
 
   it("maps a missing embedded action to null", async () => {
@@ -278,7 +292,7 @@ describe("useAppeals", () => {
     const { client } = createFakeClient({
       tables: {
         appeals: {
-          data: [{ ...appeal, moderation_actions: null }],
+          data: [{ ...appeal, moderation_actions: null, appellant: null }],
           error: null,
         },
       },
@@ -288,7 +302,9 @@ describe("useAppeals", () => {
       wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual([{ appeal, action: null }]);
+    expect(result.current.data).toEqual([
+      { appeal, action: null, appellant: null },
+    ]);
   });
 });
 

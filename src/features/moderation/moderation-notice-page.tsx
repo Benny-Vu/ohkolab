@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
+import { formatDate } from "@/lib/format-date";
 import {
   APPEAL_MESSAGE_MAX,
   useAppealForAction,
@@ -25,18 +26,6 @@ import {
   useModerationTargetText,
   useOwnSuspensions,
 } from "@/lib/social/moderation";
-
-function formatDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return iso;
-  }
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 function noticeTitle(
   action: { action: string; target_type: string } | null,
@@ -54,13 +43,6 @@ function noticeTitle(
     return "Your comment was removed";
   }
   return "Your content was removed";
-}
-
-function fallbackText(action: { target_type: string } | null): string {
-  if (action?.target_type === "comment") {
-    return "Your comment was removed.";
-  }
-  return "Your post was removed.";
 }
 
 function AppealStatus({
@@ -217,15 +199,10 @@ export function ModerationNoticePage({
               <span className="font-medium">Reason: </span>
               {action.reason}
             </p>
-            {isRemoval ? (
-              <div className="grid gap-1 rounded-md border p-3">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Removed content
-                </p>
-                <p className="text-sm">
-                  {targetTextQuery.data ?? fallbackText(action)}
-                </p>
-              </div>
+            {isRemoval && targetTextQuery.data ? (
+              <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">
+                {targetTextQuery.data}
+              </blockquote>
             ) : null}
             {suspension ? (
               <div className="grid gap-1 rounded-md border p-3">

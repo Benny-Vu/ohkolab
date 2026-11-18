@@ -1,15 +1,18 @@
 import {
   CheckIcon,
+  ExternalLinkIcon,
   LoaderCircleIcon,
   RefreshCwIcon,
   RotateCcwIcon,
   ShieldAlertIcon,
   TriangleAlertIcon,
 } from "lucide-react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 
 import { NotFoundPage } from "@/app/route-pages";
 import { Page } from "@/components/page";
+import { UserAvatar } from "@/components/user-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
+import { formatDate } from "@/lib/format-date";
 import type { AppealWithAction } from "@/lib/social/moderation";
 import {
   socialAvailability,
@@ -30,18 +34,6 @@ import {
   useIsModerator,
   useModerationTargetText,
 } from "@/lib/social";
-
-function formatDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return iso;
-  }
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function actionLabel(action: AppealWithAction["action"]): string {
   if (action === null) {
@@ -57,6 +49,44 @@ function actionLabel(action: AppealWithAction["action"]): string {
     return "Removed comment";
   }
   return "Removed content";
+}
+
+function AppellantRow({
+  appellant,
+}: {
+  appellant: AppealWithAction["appellant"];
+}) {
+  if (appellant === null) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        The appellant's profile is no longer available.
+      </p>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <UserAvatar
+        username={appellant.username}
+        displayName={appellant.display_name}
+        avatarSpecies={appellant.avatar_species}
+        size="sm"
+      />
+      <div className="min-w-0">
+        <Link
+          to={`/u/${appellant.username}`}
+          className="block truncate text-sm font-medium hover:underline"
+        >
+          {appellant.display_name ?? appellant.username}
+        </Link>
+        <Link
+          to={`/u/${appellant.username}`}
+          className="block truncate text-xs text-muted-foreground hover:underline"
+        >
+          @{appellant.username}
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 function AppealCard({
@@ -99,6 +129,7 @@ function AppealCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
+        <AppellantRow appellant={entry.appellant} />
         {action ? (
           <div className="grid gap-2 rounded-md border p-3">
             <p className="text-sm">
@@ -112,6 +143,15 @@ function AppealCard({
                 </span>
                 {targetTextQuery.data}
               </p>
+            ) : null}
+            {action.target_type === "post" ? (
+              <Link
+                to={`/post/${action.target_id}`}
+                className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+              >
+                <ExternalLinkIcon className="size-3" aria-hidden />
+                View post
+              </Link>
             ) : null}
           </div>
         ) : (

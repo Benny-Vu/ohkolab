@@ -39,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
+import { formatDate } from "@/lib/format-date";
 import type { CommentRow, ProfileRow, ReportRow } from "@/lib/database.types";
 import {
   socialAvailability,
@@ -56,18 +57,6 @@ const TAB_STATUSES: Array<{ status: ReportStatus; label: string }> = [
   { status: "actioned", label: "Actioned" },
   { status: "dismissed", label: "Dismissed" },
 ];
-
-function formatDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return iso;
-  }
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function reasonBadgeVariant(
   reason: string,
