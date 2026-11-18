@@ -1,4 +1,5 @@
 import { typeEffectiveness } from "@/data";
+import { useT } from "@/lib/i18n/t";
 import { attackingTypes, defensiveOverview, memberLabel } from "@/lib/team";
 import { TYPE_COLORS } from "@/lib/type-colors";
 import { TYPE_NAMES, type PokemonSet, type TypeName } from "@/types/pokemon";
@@ -78,12 +79,13 @@ function cellTone(multiplier: number | null, mode: HeatMapMode): string {
 }
 
 export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
+  const t = useT();
   const rows = mode === "defense" ? defenseRows(members) : offenseRows(members);
 
   if (rows.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No damaging moves on this team yet.
+        {t("teams.noDamagingMoves")}
       </p>
     );
   }
@@ -97,7 +99,9 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
               scope="col"
               className="sticky left-0 z-10 border-b border-border bg-card pr-2 text-left text-[10px] font-medium text-muted-foreground"
             >
-              {mode === "defense" ? "Pokémon" : "Move type"}
+              {mode === "defense"
+                ? t("teams.heatMapPokemon")
+                : t("teams.heatMapMoveType")}
             </th>
             {TYPE_NAMES.map((type) => (
               <th

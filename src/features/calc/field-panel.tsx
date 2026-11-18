@@ -10,8 +10,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { CALC_SIDE_LABELS } from "@/features/calc/side-labels";
 import { Panel, PanelTitle } from "@/features/calc/panel";
+import { calcSideLabel } from "@/features/calc/side-labels";
+import type { Translate } from "@/features/calc/stat-labels";
+import type { TranslationKey } from "@/lib/i18n/en";
+import { useT } from "@/lib/i18n/t";
 import {
   SIDE_IDS,
   type CalcAction,
@@ -26,27 +29,51 @@ import {
   WEATHERS,
   type BattleFormat,
   type SideState,
+  type Terrain,
+  type Weather,
 } from "@/types/battle";
 
 /** Weather choices for the picker, with None first. */
-const WEATHER_OPTIONS: PickerOption[] = [
-  { value: "", label: "None" },
-  ...WEATHERS.map((weather) => ({ value: weather, label: weather })),
-];
+function weatherOptions(t: Translate): PickerOption[] {
+  return [
+    { value: "", label: t("calc.none") },
+    ...WEATHERS.map((weather) => ({
+      value: weather,
+      label: t(WEATHER_LABEL_KEYS[weather]),
+    })),
+  ];
+}
+
+const WEATHER_LABEL_KEYS: Record<Weather, TranslationKey> = {
+  Sun: "calc.weatherSun",
+  Rain: "calc.weatherRain",
+  Sand: "calc.weatherSand",
+  Snow: "calc.weatherSnow",
+};
+
+const TERRAIN_LABEL_KEYS: Record<Terrain, TranslationKey> = {
+  Electric: "calc.terrainElectric",
+  Grassy: "calc.terrainGrassy",
+  Psychic: "calc.terrainPsychic",
+  Misty: "calc.terrainMisty",
+};
 
 /** Terrain choices for the picker, with None first. */
-const TERRAIN_OPTIONS: PickerOption[] = [
-  { value: "", label: "None" },
-  ...TERRAINS.map((terrain) => ({ value: terrain, label: terrain })),
-];
+function terrainOptions(t: Translate): PickerOption[] {
+  return [
+    { value: "", label: t("calc.none") },
+    ...TERRAINS.map((terrain) => ({
+      value: terrain,
+      label: t(TERRAIN_LABEL_KEYS[terrain]),
+    })),
+  ];
+}
 
-/** Format choices for the segmented control. */
-const FORMAT_OPTIONS = [
-  { value: "singles", label: "Singles" },
-  { value: "doubles", label: "Doubles" },
-];
-
-/** The screens, support and hazards every side can carry. */
+/**
+ * The screens, support and hazards every side can carry. These labels are
+ * move names (Reflect, Stealth Rock, ...) and stay English until the
+ * ja-names stream's `displayName` lands.
+ */
 const SIDE_FLAGS: { flag: SideFlag; label: string }[] = [
   { flag: "reflect", label: "Reflect" },
   { flag: "lightScreen", label: "Light Screen" },
@@ -64,23 +91,27 @@ const DOUBLES_FLAGS: { flag: SideFlag; label: string }[] = [
 const ALL_SIDE_FLAGS = [...SIDE_FLAGS, ...DOUBLES_FLAGS];
 
 /** Short summary of a side's active conditions, for the field bar buttons. */
-function activeConditionsText(conditions: SideState): string {
+function activeConditionsText(conditions: SideState, t: Translate): string {
   const active = ALL_SIDE_FLAGS.filter(({ flag }) => conditions[flag]).map(
     ({ label }) => label,
   );
   if (conditions.spikes > 0) active.push("Spikes");
-  return active.length > 0 ? active.join(", ") : "No conditions";
+  return active.length > 0 ? active.join(", ") : t("calc.noConditions");
 }
 
 /** The singles/doubles switch, bound to the app-wide preference. */
 function FormatControl({ className }: { className?: string }) {
   const [format, setFormat] = useBattleFormat();
+  const t = useT();
   return (
     <SegmentedControl
-      options={FORMAT_OPTIONS}
+      options={[
+        { value: "singles", label: t("calc.formatSingles") },
+        { value: "doubles", label: t("calc.formatDoubles") },
+      ]}
       value={format}
       onValueChange={(value) => setFormat(value as BattleFormat)}
-      aria-label="Battle format"
+      aria-label={t("calc.battleFormat")}
       className={className}
     />
   );
@@ -94,9 +125,10 @@ interface FieldPickerProps {
 
 /** Weather picker bound to the calculator state. */
 function WeatherPicker({ state, dispatch, className }: FieldPickerProps) {
+  const t = useT();
   return (
     <Picker
-      options={WEATHER_OPTIONS}
+      options={weatherOptions(t)}
       value={state.weather ?? ""}
       onValueChange={(value) =>
         dispatch({
@@ -104,7 +136,7 @@ function WeatherPicker({ state, dispatch, className }: FieldPickerProps) {
           weather: WEATHERS.find((name) => name === value) ?? null,
         })
       }
-      aria-label="Weather"
+      aria-label={t("calc.weather")}
       className={className}
     />
   );
@@ -112,9 +144,10 @@ function WeatherPicker({ state, dispatch, className }: FieldPickerProps) {
 
 /** Terrain picker bound to the calculator state. */
 function TerrainPicker({ state, dispatch, className }: FieldPickerProps) {
+  const t = useT();
   return (
     <Picker
-      options={TERRAIN_OPTIONS}
+      options={terrainOptions(t)}
       value={state.terrain ?? ""}
       onValueChange={(value) =>
         dispatch({
@@ -122,7 +155,7 @@ function TerrainPicker({ state, dispatch, className }: FieldPickerProps) {
           terrain: TERRAINS.find((name) => name === value) ?? null,
         })
       }
-      aria-label="Terrain"
+      aria-label={t("calc.terrain")}
       className={className}
     />
   );
@@ -144,7 +177,8 @@ function ConditionRows({
   disabled,
   dispatch,
 }: ConditionRowsProps) {
-  const label = CALC_SIDE_LABELS[side];
+  const t = useT();
+  const label = calcSideLabel(t, side);
 
   return (
     <>
@@ -178,7 +212,8 @@ interface SpikesControlProps {
 
 /** Layer picker for one side's Spikes. */
 function SpikesControl({ side, conditions, dispatch }: SpikesControlProps) {
-  const label = CALC_SIDE_LABELS[side];
+  const t = useT();
+  const label = calcSideLabel(t, side);
 
   return (
     <div className="flex items-center justify-between gap-2">
@@ -214,10 +249,11 @@ interface SideConditionsProps {
 
 /** One side's screens, support and entry hazards. */
 function SideConditions({ side, conditions, dispatch }: SideConditionsProps) {
+  const t = useT();
   return (
     <div className="grid gap-1.5">
       <span className="text-xs font-medium text-muted-foreground">
-        {CALC_SIDE_LABELS[side]}
+        {calcSideLabel(t, side)}
       </span>
       <ConditionRows
         side={side}
@@ -244,10 +280,11 @@ function DoublesConditions({
   format,
   dispatch,
 }: DoublesConditionsProps) {
+  const t = useT();
   return (
     <div className="grid gap-1.5">
       <span className="text-xs font-medium text-muted-foreground">
-        {CALC_SIDE_LABELS[side]}
+        {calcSideLabel(t, side)}
       </span>
       <ConditionRows
         side={side}
@@ -268,6 +305,7 @@ interface FieldBarProps {
 /** Desktop field bar: format, weather, terrain and side conditions inline. */
 export function FieldBar({ state, dispatch }: FieldBarProps) {
   const [format] = useBattleFormat();
+  const t = useT();
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -278,8 +316,8 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
         <Popover key={side}>
           <PopoverTrigger asChild>
             <Button type="button" variant="outline" size="sm">
-              {CALC_SIDE_LABELS[side]} ·{" "}
-              {activeConditionsText(state.fieldSides[side])}
+              {calcSideLabel(t, side)} ·{" "}
+              {activeConditionsText(state.fieldSides[side], t)}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-64 p-3">
@@ -294,7 +332,7 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
       <Popover>
         <PopoverTrigger asChild>
           <Button type="button" variant="outline" size="sm">
-            More conditions
+            {t("calc.moreConditions")}
           </Button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-72 p-3">
@@ -339,22 +377,27 @@ interface FieldPanelProps {
 /** The battle field on phones: weather, terrain and each side's conditions. */
 export function FieldPanel({ state, dispatch }: FieldPanelProps) {
   const [format] = useBattleFormat();
+  const t = useT();
   const [showRare, setShowRare] = useState(false);
   const titleId = useId();
 
   return (
     <Panel labelledBy={titleId}>
-      <PanelTitle id={titleId}>Field</PanelTitle>
+      <PanelTitle id={titleId}>{t("calc.field")}</PanelTitle>
 
       <FormatControl className="w-full" />
 
       <div className="grid grid-cols-2 gap-2">
         <div className="grid gap-1">
-          <span className="text-xs text-muted-foreground">Weather</span>
+          <span className="text-xs text-muted-foreground">
+            {t("calc.weather")}
+          </span>
           <WeatherPicker state={state} dispatch={dispatch} />
         </div>
         <div className="grid gap-1">
-          <span className="text-xs text-muted-foreground">Terrain</span>
+          <span className="text-xs text-muted-foreground">
+            {t("calc.terrain")}
+          </span>
           <TerrainPicker state={state} dispatch={dispatch} />
         </div>
       </div>
@@ -370,7 +413,7 @@ export function FieldPanel({ state, dispatch }: FieldPanelProps) {
 
       <div className="grid gap-3">
         <span className="text-xs font-medium text-muted-foreground">
-          Doubles only
+          {t("calc.doublesOnly")}
         </span>
         {SIDE_IDS.map((side) => (
           <DoublesConditions
@@ -398,7 +441,7 @@ export function FieldPanel({ state, dispatch }: FieldPanelProps) {
               showRare && "rotate-180",
             )}
           />
-          More conditions
+          {t("calc.moreConditions")}
         </Button>
         {showRare ? (
           <>

@@ -1,6 +1,7 @@
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { StatBar } from "@/components/stat-bar";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/lib/i18n/t";
 import { formatShare } from "@/lib/metagame/format";
 import { speedTiers, type SpeedTier } from "@/lib/metagame/speed-tiers";
 import type { PokemonUsage } from "@/lib/metagame/types";
@@ -23,6 +24,7 @@ function SpeedTierNotes({ tier }: { tier: SpeedTier }) {
 
 /** One species in the tier list: header row plus a bar per common speed. */
 function SpeedTierRow({ tier }: { tier: SpeedTier }) {
+  const t = useT();
   return (
     <li className="space-y-2 rounded-lg border p-3">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
@@ -33,12 +35,14 @@ function SpeedTierRow({ tier }: { tier: SpeedTier }) {
         <div className="flex flex-wrap items-center gap-2">
           <SpeedTierNotes tier={tier} />
           <span className="text-xs tabular-nums text-muted-foreground">
-            Max {tier.maxSpeed} · Min {tier.minSpeed}
+            {t("meta.maxMinSpeed", { max: tier.maxSpeed, min: tier.minSpeed })}
           </span>
         </div>
       </div>
       {tier.entries.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No spread data.</p>
+        <p className="text-sm text-muted-foreground">
+          {t("meta.noSpreadData")}
+        </p>
       ) : (
         <ul className="space-y-1.5">
           {tier.entries.map((entry, index) => (
@@ -70,14 +74,15 @@ function SpeedTierRow({ tier }: { tier: SpeedTier }) {
 }
 
 export function SpeedTiersSection({ pokemon }: { pokemon: PokemonUsage[] }) {
+  const t = useT();
   const tiers = speedTiers(pokemon);
   return (
     <section className="space-y-2">
-      <h2 className="text-base leading-tight font-semibold">Speed tiers</h2>
+      <h2 className="text-base leading-tight font-semibold">
+        {t("meta.speedTiers")}
+      </h2>
       {tiers.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No speed tier data for this snapshot.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("meta.noTierData")}</p>
       ) : (
         <ol className="space-y-1.5">
           {tiers.map((tier) => (

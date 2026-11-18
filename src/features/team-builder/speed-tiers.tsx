@@ -1,4 +1,5 @@
 import { PokemonIcon } from "@/components/pokemon-sprite";
+import { useT } from "@/lib/i18n/t";
 import { speedTiers } from "@/lib/team";
 import type { PokemonSet } from "@/types/pokemon";
 
@@ -7,13 +8,12 @@ interface SpeedTiersProps {
 }
 
 export function SpeedTiers({ members }: SpeedTiersProps) {
+  const t = useT();
   const tiers = speedTiers(members);
 
   if (tiers.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No Pokémon on this team yet.
-      </p>
+      <p className="text-sm text-muted-foreground">{t("teams.noMembers")}</p>
     );
   }
 
