@@ -47,9 +47,11 @@ import {
 } from "@/lib/social/mutations";
 import { useRemoveContent } from "@/lib/social/moderation";
 import { useIsModerator } from "@/lib/social/queries";
+import { usePostImages, visiblePostImages } from "@/lib/social/images";
 import { POST_BODY_MAX } from "@/lib/social/validation";
-import type { FeedPostRow } from "@/lib/database.types";
+import type { FeedPostRow, PostImageRow } from "@/lib/database.types";
 import { formatRelativeTime } from "@/features/feed/relative-time";
+import { PostImageGrid } from "@/features/feed/post-images";
 import {
   parseCalcResultAttachment,
   parseTeamAttachment,
@@ -63,16 +65,23 @@ interface PostCardProps {
   hideCommentLink?: boolean;
   /** Moderator action: take the post out of its group. */
   onRemoveFromGroup?: () => void;
+  /**
+   * The post's image rows, when the parent already fetched them (the feed
+   * batches one query per page). When omitted the card fetches its own —
+   * only while the VITE_IMAGE_POSTS flag is on.
+   */
+  images?: PostImageRow[];
 }
 
 /**
- * One post in the feed: author line, body, optional team attachment and the
- * like / comment / overflow actions.
+ * One post in the feed: author line, body, optional team attachment, its
+ * images (flagged builds) and the like / comment / overflow actions.
  */
 export function PostCard({
   post,
   hideCommentLink = false,
   onRemoveFromGroup,
+  images,
 }: PostCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -94,6 +103,11 @@ export function PostCard({
   const [removeReason, setRemoveReason] = useState("");
 
   const isOwn = user?.id === post.author_id;
+  const ownImagesQuery = usePostImages(images === undefined ? [post.id] : []);
+  const imageItems = visiblePostImages(
+    images ?? ownImagesQuery.data ?? [],
+    isOwn,
+  );
   const team = parseTeamAttachment(post.attachment);
   const calcResult = parseCalcResultAttachment(post.attachment);
   const liked = post.liked_by_me === true;
@@ -304,6 +318,10 @@ export function PostCard({
                 size="sm"
               />
             </div>
+          )}
+
+          {imageItems.length > 0 && (
+            <PostImageGrid images={imageItems} className="mt-3" />
           )}
         </div>
       </div>
