@@ -16,7 +16,9 @@ function Harness({
   initial?: PokemonSet;
   onChange: (set: PokemonSet) => void;
 }) {
-  const [value, setValue] = useState(() => initial ?? createDefaultSet(species));
+  const [value, setValue] = useState(
+    () => initial ?? createDefaultSet(species),
+  );
 
   return (
     <PokemonEditor
