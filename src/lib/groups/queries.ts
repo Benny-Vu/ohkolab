@@ -24,6 +24,21 @@ import {
   asGroupVisibility,
 } from "@/lib/groups/validation";
 
+/**
+ * The one query-key factory for groups. Read hooks build their exact keys
+ * from these prefixes and mutations invalidate the prefixes, so the keys
+ * cannot drift between files.
+ */
+export const GROUP_QUERY_KEYS = {
+  public: ["groups", "public"] as const,
+  mine: ["groups", "mine"] as const,
+  bySlug: ["groups", "by-slug"] as const,
+  myMembership: ["groups", "my-membership"] as const,
+  members: ["groups", "members"] as const,
+  memberCount: ["groups", "member-count"] as const,
+  groupFeed: ["social", "group-feed"] as const,
+};
+
 /** How many groups the Discover tab loads per search. */
 export const GROUPS_PAGE_SIZE = 50;
 
@@ -54,7 +69,7 @@ export interface GroupMember {
   profile: SocialProfileSummary | null;
 }
 
-function toGroupSummary(row: GroupRow): GroupSummary {
+export function toGroupSummary(row: GroupRow): GroupSummary {
   return {
     id: row.id,
     slug: row.slug,
@@ -84,7 +99,7 @@ export function usePublicGroups(
 ): UseQueryResult<GroupSummary[], SocialFailure> {
   const trimmed = search.trim();
   return useQuery<GroupSummary[], SocialFailure>({
-    queryKey: ["groups", "public", trimmed.toLowerCase()],
+    queryKey: [...GROUP_QUERY_KEYS.public, trimmed.toLowerCase()],
     queryFn: async () => {
       if (!client || isSocialNotInstalled()) {
         return [];
@@ -112,7 +127,7 @@ export function useMyGroups(
 ): UseQueryResult<GroupSummary[], SocialFailure> {
   const { user } = useAuth();
   return useQuery<GroupSummary[], SocialFailure>({
-    queryKey: ["groups", "mine", user?.id ?? null],
+    queryKey: [...GROUP_QUERY_KEYS.mine, user?.id ?? null],
     queryFn: async () => {
       if (!client || isSocialNotInstalled()) {
         return [];
@@ -154,7 +169,7 @@ export function useGroupBySlug(
   client: AppSupabaseClient | null = supabase,
 ): UseQueryResult<GroupSummary | null, SocialFailure> {
   return useQuery<GroupSummary | null, SocialFailure>({
-    queryKey: ["groups", "by-slug", slug],
+    queryKey: [...GROUP_QUERY_KEYS.bySlug, slug],
     queryFn: async () => {
       if (!client || isSocialNotInstalled()) {
         return null;
@@ -184,7 +199,7 @@ export function useMyGroupMembership(
 ): UseQueryResult<MyGroupMembership | null, SocialFailure> {
   const { user } = useAuth();
   return useQuery<MyGroupMembership | null, SocialFailure>({
-    queryKey: ["groups", "my-membership", groupId, user?.id ?? null],
+    queryKey: [...GROUP_QUERY_KEYS.myMembership, groupId, user?.id ?? null],
     queryFn: async () => {
       if (!client || isSocialNotInstalled()) {
         return null;
@@ -215,7 +230,7 @@ export function useGroupMembers(
   client: AppSupabaseClient | null = supabase,
 ): UseQueryResult<GroupMember[], SocialFailure> {
   return useQuery<GroupMember[], SocialFailure>({
-    queryKey: ["groups", "members", groupId],
+    queryKey: [...GROUP_QUERY_KEYS.members, groupId],
     queryFn: async () => {
       if (!client || isSocialNotInstalled()) {
         return [];
@@ -280,7 +295,7 @@ export function useGroupMemberCount(
   client: AppSupabaseClient | null = supabase,
 ): UseQueryResult<number, SocialFailure> {
   return useQuery<number, SocialFailure>({
-    queryKey: ["groups", "member-count", groupId],
+    queryKey: [...GROUP_QUERY_KEYS.memberCount, groupId],
     queryFn: async () => {
       if (!client || isSocialNotInstalled()) {
         return 0;
@@ -299,15 +314,5 @@ export function useGroupMemberCount(
     retry: false,
   });
 }
-
-/** Query keys the group mutations invalidate. */
-export const GROUP_QUERY_KEYS = {
-  public: ["groups", "public"] as const,
-  mine: ["groups", "mine"] as const,
-  bySlug: ["groups", "by-slug"] as const,
-  myMembership: ["groups", "my-membership"] as const,
-  members: ["groups", "members"] as const,
-  memberCount: ["groups", "member-count"] as const,
-};
 
 export type GroupQueryKey = QueryKey;

@@ -62,25 +62,23 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
     <>
       <ul className="grid gap-3">
         {posts.map((post) => (
-          <li key={post.id} className="grid gap-2">
+          <li key={post.id} className="relative">
             <PostCard post={post} />
             {canModerate && (
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  className="text-muted-foreground"
-                  onClick={() => {
-                    setRemovingPostId(post.id);
-                    setReason("");
-                    setError(null);
-                  }}
-                >
-                  <ShieldOffIcon aria-hidden />
-                  Remove from group
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="absolute right-11 bottom-4 text-muted-foreground"
+                aria-label="Remove from group"
+                onClick={() => {
+                  setRemovingPostId(post.id);
+                  setReason("");
+                  setError(null);
+                }}
+              >
+                <ShieldOffIcon aria-hidden />
+              </Button>
             )}
           </li>
         ))}

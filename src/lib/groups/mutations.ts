@@ -1,9 +1,11 @@
 /**
  * Write hooks for groups: creating and updating groups, joining, leaving,
- * invites, roles and removing members, plus the group-moderator post removal.
- * Mutations validate first, never throw, and return a SocialResult so screens
- * can react to rate limits and permission failures without parsing database
- * errors.
+ * invites, roles, removing members and deleting groups, plus the
+ * group-moderator post removal. Mutations validate first, never throw, and
+ * return a SocialResult so screens can react to rate limits and permission
+ * failures without parsing database errors. Every delete selects the rows it
+ * removed, so a zero-row delete (the database refusing the change) is
+ * reported as a failure instead of a silent success.
  */
 
 import {
@@ -32,7 +34,12 @@ import {
   MODERATION_REASON_MIN,
 } from "@/lib/social/validation";
 
-import { GROUP_QUERY_KEYS } from "@/lib/groups/queries";
+import {
+  GROUP_QUERY_KEYS,
+  toGroupSummary,
+  type GroupMember,
+  type MyGroupMembership,
+} from "@/lib/groups/queries";
 import {
   normalizeGroupDescription,
   normalizeGroupName,
@@ -126,7 +133,38 @@ export function useCreateGroup(
     },
     onSuccess: (result) => {
       if (!result.ok) return;
-      void queryClient.invalidateQueries({ queryKey: ["groups"] });
+      // Seed the cache so the new group's page already shows the owner as a
+      // member; the database trigger added the membership row server-side.
+      const group = toGroupSummary(result.data);
+      queryClient.setQueryData([...GROUP_QUERY_KEYS.bySlug, group.slug], group);
+      const me = user?.id ?? null;
+      if (me) {
+        const membership: MyGroupMembership = {
+          role: "owner",
+          status: "active",
+          createdAt: group.createdAt,
+        };
+        queryClient.setQueryData(
+          [...GROUP_QUERY_KEYS.myMembership, group.id, me],
+          membership,
+        );
+        const ownerMember: GroupMember = {
+          userId: me,
+          role: "owner",
+          status: "active",
+          joinedAt: group.createdAt,
+          profile: null,
+        };
+        queryClient.setQueryData(
+          [...GROUP_QUERY_KEYS.members, group.id],
+          [ownerMember],
+        );
+        queryClient.setQueryData(
+          [...GROUP_QUERY_KEYS.memberCount, group.id],
+          1,
+        );
+      }
+      invalidateGroupQueries(queryClient);
     },
   });
 }
@@ -167,7 +205,7 @@ export function useUpdateGroup(
     },
     onSuccess: (result) => {
       if (!result.ok) return;
-      void queryClient.invalidateQueries({ queryKey: ["groups"] });
+      invalidateGroupQueries(queryClient);
     },
   });
 }
@@ -198,7 +236,7 @@ export function useJoinGroup(
     },
     onSuccess: (result) => {
       if (!result.ok) return;
-      void queryClient.invalidateQueries({ queryKey: ["groups"] });
+      invalidateGroupQueries(queryClient);
     },
   });
 }
@@ -218,17 +256,21 @@ export function useLeaveGroup(
       if (input.groupId === "") {
         return socialFail("invalid_input", "Choose a group to leave.");
       }
-      const { error } = await client
+      const { data, error } = await client
         .from("group_members")
         .delete()
         .eq("group_id", input.groupId)
-        .eq("user_id", me);
+        .eq("user_id", me)
+        .select();
       if (error) return { ok: false, error: describeWriteError(error) };
+      if (!data || data.length === 0) {
+        return socialFail("forbidden");
+      }
       return socialSucceed();
     },
     onSuccess: (result) => {
       if (!result.ok) return;
-      void queryClient.invalidateQueries({ queryKey: ["groups"] });
+      invalidateGroupQueries(queryClient);
     },
   });
 }
@@ -282,7 +324,7 @@ export function useInviteMember(
       },
       onSuccess: (result) => {
         if (!result.ok) return;
-        void queryClient.invalidateQueries({ queryKey: ["groups"] });
+        invalidateGroupQueries(queryClient);
       },
     },
   );
@@ -314,7 +356,7 @@ export function useAcceptInvite(
     },
     onSuccess: (result) => {
       if (!result.ok) return;
-      void queryClient.invalidateQueries({ queryKey: ["groups"] });
+      invalidateGroupQueries(queryClient);
     },
   });
 }
@@ -334,18 +376,22 @@ export function useDeclineInvite(
       if (input.groupId === "") {
         return socialFail("invalid_input", "Choose a group first.");
       }
-      const { error } = await client
+      const { data, error } = await client
         .from("group_members")
         .delete()
         .eq("group_id", input.groupId)
         .eq("user_id", me)
-        .eq("status", "invited");
+        .eq("status", "invited")
+        .select();
       if (error) return { ok: false, error: describeWriteError(error) };
+      if (!data || data.length === 0) {
+        return socialFail("forbidden");
+      }
       return socialSucceed();
     },
     onSuccess: (result) => {
       if (!result.ok) return;
-      void queryClient.invalidateQueries({ queryKey: ["groups"] });
+      invalidateGroupQueries(queryClient);
     },
   });
 }
@@ -389,7 +435,7 @@ export function useSetMemberRole(
     },
     onSuccess: (result) => {
       if (!result.ok) return;
-      void queryClient.invalidateQueries({ queryKey: ["groups"] });
+      invalidateGroupQueries(queryClient);
     },
   });
 }
@@ -417,17 +463,21 @@ export function useRemoveMember(
         if (input.userId === "") {
           return socialFail("invalid_input", "Choose a member.");
         }
-        const { error } = await client
+        const { data, error } = await client
           .from("group_members")
           .delete()
           .eq("group_id", input.groupId)
-          .eq("user_id", input.userId);
+          .eq("user_id", input.userId)
+          .select();
         if (error) return { ok: false, error: describeWriteError(error) };
+        if (!data || data.length === 0) {
+          return socialFail("forbidden");
+        }
         return socialSucceed();
       },
       onSuccess: (result) => {
         if (!result.ok) return;
-        void queryClient.invalidateQueries({ queryKey: ["groups"] });
+        invalidateGroupQueries(queryClient);
       },
     },
   );
@@ -472,11 +522,49 @@ export function useRemoveGroupPost(
     },
     onSuccess: (result) => {
       if (!result.ok) return;
-      void queryClient.invalidateQueries({ queryKey: ["groups"] });
-      void queryClient.invalidateQueries({
-        queryKey: ["social", "group-feed"],
-      });
+      invalidateGroupQueries(queryClient);
       void queryClient.invalidateQueries({ queryKey: ["social", "post"] });
+    },
+  });
+}
+
+export interface DeleteGroupInput {
+  groupId: string;
+  slug: string;
+}
+
+/** Deletes a group with its posts and members. Owners only (RLS). */
+export function useDeleteGroup(
+  client: AppSupabaseClient | null = supabase,
+): UseMutationResult<SocialResult<undefined>, SocialFailure, DeleteGroupInput> {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation<SocialResult<undefined>, SocialFailure, DeleteGroupInput>({
+    mutationFn: async (input): Promise<SocialResult<undefined>> => {
+      if (isSocialNotInstalled()) return socialFail("not_installed");
+      if (!client) return socialFail("not_configured");
+      const me = user?.id ?? null;
+      if (!me) return socialFail("not_signed_in");
+      if (input.groupId === "") {
+        return socialFail("invalid_input", "Choose a group first.");
+      }
+      const { data, error } = await client
+        .from("groups")
+        .delete()
+        .eq("id", input.groupId)
+        .select();
+      if (error) return { ok: false, error: describeWriteError(error) };
+      if (!data || data.length === 0) {
+        return socialFail("forbidden");
+      }
+      return socialSucceed();
+    },
+    onSuccess: (result, input) => {
+      if (!result.ok) return;
+      queryClient.removeQueries({
+        queryKey: [...GROUP_QUERY_KEYS.bySlug, input.slug],
+      });
+      invalidateGroupQueries(queryClient);
     },
   });
 }
