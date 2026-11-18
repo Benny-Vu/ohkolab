@@ -254,7 +254,10 @@ export type Database = {
       };
       user_suspensions: {
         Row: {
-          user_id: string;
+          /** Synthetic key; the record survives its user's deletion. */
+          id: string;
+          /** The suspended user; null if their account was deleted. */
+          user_id: string | null;
           /** The suspension ends when `until` passes. */
           until: string;
           /** Up to 500 characters. */
@@ -293,6 +296,16 @@ export type Database = {
           report_id: string | null;
           /** The moderator who acted; null if deleted. */
           moderator_id: string | null;
+          /**
+           * Copy of the removed text, taken at the moment of removal.
+           * Null for actions written before the clean-up wave and for
+           * suspensions.
+           */
+          content_snapshot: string | null;
+          /** One of "post", "comment", "group_post"; null for suspensions. */
+          content_kind: string | null;
+          /** The suspension this action created, for suspensions. */
+          suspension_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -304,6 +317,9 @@ export type Database = {
           reason: string;
           report_id?: string | null;
           moderator_id?: string | null;
+          content_snapshot?: string | null;
+          content_kind?: string | null;
+          suspension_id?: string | null;
           created_at?: string;
         };
         /**
@@ -317,7 +333,8 @@ export type Database = {
         Row: {
           id: string;
           moderation_action_id: string;
-          appellant_id: string;
+          /** The appellant; null if their account was deleted. */
+          appellant_id: string | null;
           /** 1 to 1000 characters. */
           message: string;
           /** One of "open", "upheld", "reversed". */

@@ -19,7 +19,6 @@ const moderationMocks = vi.hoisted(() => ({
   useAppealForAction: vi.fn(),
   useCreateAppeal: vi.fn(),
   useOwnSuspensions: vi.fn(),
-  useModerationTargetText: vi.fn(),
 }));
 
 vi.mock("@/lib/social/moderation", async (importOriginal) => {
@@ -31,7 +30,6 @@ vi.mock("@/lib/social/moderation", async (importOriginal) => {
     useAppealForAction: moderationMocks.useAppealForAction,
     useCreateAppeal: moderationMocks.useCreateAppeal,
     useOwnSuspensions: moderationMocks.useOwnSuspensions,
-    useModerationTargetText: moderationMocks.useModerationTargetText,
   };
 });
 
@@ -63,6 +61,9 @@ function actionRow(
     reason: "Spam",
     report_id: null,
     moderator_id: "user-9",
+    content_snapshot: null,
+    content_kind: null,
+    suspension_id: null,
     created_at: "2026-11-18T10:00:00.000Z",
     ...overrides,
   };
@@ -86,6 +87,7 @@ function suspensionRow(
   overrides: Partial<UserSuspensionRow> = {},
 ): UserSuspensionRow {
   return {
+    id: "suspension-1",
     user_id: "user-1",
     until: "2026-11-25T10:00:00.000Z",
     reason: "Spam",
@@ -126,7 +128,6 @@ describe("ModerationNoticePage", () => {
     moderationMocks.useAppealForAction.mockReturnValue(queryResult(null));
     moderationMocks.useCreateAppeal.mockReturnValue(mutationResult());
     moderationMocks.useOwnSuspensions.mockReturnValue(queryResult([]));
-    moderationMocks.useModerationTargetText.mockReturnValue(queryResult(null));
   });
 
   it("shows a not-found page when the action is missing", () => {
@@ -146,10 +147,12 @@ describe("ModerationNoticePage", () => {
 
   it("shows the removal reason, date and stored text", () => {
     moderationMocks.useModerationAction.mockReturnValue(
-      queryResult(actionRow()),
-    );
-    moderationMocks.useModerationTargetText.mockReturnValue(
-      queryResult("Removed post body"),
+      queryResult(
+        actionRow({
+          content_snapshot: "Removed post body",
+          content_kind: "post",
+        }),
+      ),
     );
     renderNoticePage();
 
@@ -157,14 +160,14 @@ describe("ModerationNoticePage", () => {
       0,
     );
     expect(screen.getByText(/Spam/)).toBeInTheDocument();
+    expect(screen.getByText("Removed content")).toBeInTheDocument();
     expect(screen.getByText(/Removed post body/)).toBeInTheDocument();
   });
 
-  it("does not repeat the removal heading when the removed text is unreadable", () => {
+  it("hides the removed-content box when there is no snapshot", () => {
     moderationMocks.useModerationAction.mockReturnValue(
       queryResult(actionRow()),
     );
-    moderationMocks.useModerationTargetText.mockReturnValue(queryResult(null));
     renderNoticePage();
 
     expect(screen.getAllByText("Your post was removed").length).toBeGreaterThan(

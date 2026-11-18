@@ -10,7 +10,6 @@ import {
   useCreateAppeal,
   useHandleAppeal,
   useModerationAction,
-  useModerationTargetText,
   useOwnSuspensions,
   validateAppealMessage,
   type CreateAppealInput,
@@ -383,6 +382,7 @@ describe("useOwnSuspensions", () => {
 
   it("loads the signed-in user's suspensions", async () => {
     const suspension: UserSuspensionRow = {
+      id: "suspension-1",
       user_id: "user-1",
       until: "2026-11-25T10:00:00.000Z",
       reason: "Spam",
@@ -404,89 +404,5 @@ describe("useOwnSuspensions", () => {
     expect(suspensionCalls[0]!.orders).toEqual([
       ["created_at", { ascending: false }],
     ]);
-  });
-});
-
-describe("useModerationTargetText", () => {
-  beforeEach(() => {
-    resetSocialInstallState();
-  });
-
-  it("fetches a removed post's body", async () => {
-    const action = moderationActionRow({
-      id: "action-1",
-      action: "remove",
-      target_type: "post",
-      target_id: "post-1",
-    });
-    const { client, records } = createFakeClient({
-      tables: { posts: { data: { body: "Removed post body" }, error: null } },
-    });
-    const queryClient = createQueryClient();
-    const { result } = renderHook(
-      () => useModerationTargetText(action, client),
-      { wrapper: createWrapper(queryClient, SIGNED_IN_AUTH) },
-    );
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toBe("Removed post body");
-    const postCalls = callsOn(records, "posts");
-    expect(postCalls).toHaveLength(1);
-    expect(postCalls[0]!.eqFilters).toContainEqual(["id", "post-1"]);
-  });
-
-  it("fetches a removed comment's body", async () => {
-    const action = moderationActionRow({
-      id: "action-1",
-      action: "remove",
-      target_type: "comment",
-      target_id: "comment-1",
-    });
-    const { client } = createFakeClient({
-      tables: {
-        comments: { data: { body: "Removed comment body" }, error: null },
-      },
-    });
-    const queryClient = createQueryClient();
-    const { result } = renderHook(
-      () => useModerationTargetText(action, client),
-      { wrapper: createWrapper(queryClient, SIGNED_IN_AUTH) },
-    );
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toBe("Removed comment body");
-  });
-
-  it("returns null when the row is unreadable (RLS)", async () => {
-    const action = moderationActionRow({
-      id: "action-1",
-      action: "remove",
-      target_type: "post",
-      target_id: "post-1",
-    });
-    const { client } = createFakeClient({
-      tables: { posts: { data: null, error: null } },
-    });
-    const queryClient = createQueryClient();
-    const { result } = renderHook(
-      () => useModerationTargetText(action, client),
-      { wrapper: createWrapper(queryClient, SIGNED_IN_AUTH) },
-    );
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toBeNull();
-  });
-
-  it("does not query for suspend actions", async () => {
-    const action = moderationActionRow({
-      id: "action-1",
-      action: "suspend",
-      target_type: "profile",
-      target_id: "user-2",
-    });
-    const { client, records } = createFakeClient({});
-    const queryClient = createQueryClient();
-    renderHook(() => useModerationTargetText(action, client), {
-      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
-    });
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(records).toHaveLength(0);
   });
 });

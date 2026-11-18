@@ -31,7 +31,6 @@ import {
   useAppeals,
   useHandleAppeal,
   useIsModerator,
-  useModerationTargetText,
 } from "@/lib/social";
 
 function actionLabel(action: AppealWithAction["action"]): string {
@@ -96,7 +95,6 @@ function AppealRowView({
   client: AppSupabaseClient | null;
 }) {
   const handleAppeal = useHandleAppeal(client);
-  const targetTextQuery = useModerationTargetText(entry.action, client);
   const action = entry.action;
 
   const decide = async (decision: "upheld" | "reversed") => {
@@ -167,12 +165,12 @@ function AppealRowView({
                   <span className="font-medium">Reason: </span>
                   {action.reason}
                 </p>
-                {targetTextQuery.data ? (
+                {action.content_snapshot !== null ? (
                   <p className="text-sm text-muted-foreground">
                     <span className="font-medium text-foreground">
                       Original content:{" "}
                     </span>
-                    {targetTextQuery.data}
+                    {action.content_snapshot}
                   </p>
                 ) : null}
                 {action.target_type === "post" ? (

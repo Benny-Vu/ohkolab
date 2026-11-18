@@ -331,6 +331,9 @@ export function moderationActionRow(
     reason: "Spam",
     report_id: null,
     moderator_id: "user-1",
+    content_snapshot: null,
+    content_kind: null,
+    suspension_id: null,
     created_at: "2026-11-18T10:00:00.000Z",
     ...partial,
   };

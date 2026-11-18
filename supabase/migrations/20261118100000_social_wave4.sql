@@ -26,8 +26,10 @@
 -- reports.target_id, so the record survives its target being deleted.
 -- Deleting an account still cascades their posts and comments away
 -- entirely, removed or not, so a moderation_actions row can point at content
--- that no longer exists. Keeping removed content as an anonymous tombstone
--- instead is planned before image posts ship; out of scope for this wave.
+-- that no longer exists. Since the clean-up wave
+-- (20261119140000_moderation_records.sql) the row also keeps a copy of the
+-- removed text in content_snapshot, so the removal notice can still show
+-- what was taken down.
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.moderation_actions (

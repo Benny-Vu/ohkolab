@@ -16,7 +16,6 @@ const socialMocks = vi.hoisted(() => ({
   useIsModerator: vi.fn(),
   useAppeals: vi.fn(),
   useHandleAppeal: vi.fn(),
-  useModerationTargetText: vi.fn(),
 }));
 
 vi.mock("@/lib/social", () => socialMocks);
@@ -63,6 +62,9 @@ function actionRow(
     reason: "Spam",
     report_id: null,
     moderator_id: "user-1",
+    content_snapshot: null,
+    content_kind: null,
+    suspension_id: null,
     created_at: "2026-11-18T10:00:00.000Z",
     ...overrides,
   };
@@ -110,7 +112,6 @@ describe("AdminAppealsPage", () => {
     socialMocks.useIsModerator.mockReturnValue(queryResult(true));
     socialMocks.useAppeals.mockReturnValue(queryResult([]));
     socialMocks.useHandleAppeal.mockReturnValue(mutationResult());
-    socialMocks.useModerationTargetText.mockReturnValue(queryResult(null));
   });
 
   it("shows a not-found page for non-moderators", () => {
@@ -144,12 +145,12 @@ describe("AdminAppealsPage", () => {
 
   it("renders an appeal with its action and message", () => {
     const appeal = appealRow();
-    const action = actionRow();
+    const action = actionRow({
+      content_snapshot: "Removed post body",
+      content_kind: "post",
+    });
     socialMocks.useAppeals.mockReturnValue(
       queryResult([{ appeal, action, appellant: appellantRow() }]),
-    );
-    socialMocks.useModerationTargetText.mockReturnValue(
-      queryResult("Removed post body"),
     );
     renderAppealsPage(fakeClient);
 
@@ -165,6 +166,21 @@ describe("AdminAppealsPage", () => {
     expect(
       screen.getByRole("button", { name: /^reverse$/i }),
     ).toBeInTheDocument();
+  });
+
+  it("hides the original content when there is no snapshot", () => {
+    socialMocks.useAppeals.mockReturnValue(
+      queryResult([
+        {
+          appeal: appealRow(),
+          action: actionRow(),
+          appellant: appellantRow(),
+        },
+      ]),
+    );
+    renderAppealsPage(fakeClient);
+
+    expect(screen.queryByText(/Original content:/)).not.toBeInTheDocument();
   });
 
   it("shows the appellant with a link to their profile", () => {
