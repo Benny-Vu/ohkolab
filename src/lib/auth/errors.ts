@@ -1,33 +1,30 @@
 import type { AuthErrorCode, AuthFailure, AuthResult } from "@/lib/auth/types";
-import { USERNAME_RULES } from "@/lib/auth/validation";
+import { usernameRules } from "@/lib/auth/validation";
+import { t } from "@/lib/i18n/t";
+import type { TranslationKey } from "@/lib/i18n/en";
 
 /** Messages shown to the user. One place, so the wording stays consistent. */
-const MESSAGES: Record<AuthErrorCode, string> = {
-  not_configured:
-    "Accounts are not available in this build. The tools still work without one.",
-  unavailable: "Accounts are not fully set up yet. Try again later.",
-  invalid_input:
-    "Some of those details were not accepted. Check them and try again.",
-  invalid_credentials: "Wrong email or password.",
-  email_not_confirmed:
-    "Confirm your email address first: open the link we sent you, then sign in.",
-  email_taken:
-    "An account with this email may already exist. Try signing in, or reset your password.",
-  weak_password: "That password is too easy to guess. Choose a stronger one.",
-  rate_limited: "Too many attempts. Wait a minute and try again.",
-  provider_unavailable: "This sign-in method is not available yet.",
-  username_taken: "That username is already taken. Try another one.",
-  session_expired: "Your session has expired. Sign in again.",
-  link_invalid:
-    "This link is no longer valid. It may have expired, been used already, or been opened in a different browser from the one you started in. Request a new one.",
-  forbidden: "You are not allowed to do that.",
-  network: "Could not reach the server. Check your connection and try again.",
-  unknown: "Something went wrong. Try again.",
+const MESSAGES: Record<AuthErrorCode, TranslationKey> = {
+  not_configured: "auth.errNotConfigured",
+  unavailable: "auth.errUnavailable",
+  invalid_input: "auth.errInvalidInput",
+  invalid_credentials: "auth.errInvalidCredentials",
+  email_not_confirmed: "auth.errEmailNotConfirmed",
+  email_taken: "auth.errEmailTaken",
+  weak_password: "auth.errWeakPassword",
+  rate_limited: "auth.errRateLimited",
+  provider_unavailable: "auth.errProviderUnavailable",
+  username_taken: "auth.errUsernameTaken",
+  session_expired: "auth.errSessionExpired",
+  link_invalid: "auth.errLinkInvalid",
+  forbidden: "auth.errForbidden",
+  network: "auth.errNetwork",
+  unknown: "auth.errUnknown",
 };
 
 export function failure(
   code: AuthErrorCode,
-  message: string = MESSAGES[code],
+  message: string = t(MESSAGES[code]),
   field?: string,
 ): AuthFailure {
   return field ? { code, message, field } : { code, message };
@@ -82,14 +79,12 @@ const CODE_MAP: Record<string, AuthErrorCode> = {
 };
 
 /** Messages that differ from the default for their code. */
-const MESSAGE_OVERRIDES: Record<string, string> = {
-  same_password: "The new password must be different from the current one.",
-  signup_disabled: "New sign-ups are closed right now.",
-  reauthentication_needed:
-    "For your security, sign out and sign in again before changing your password.",
-  email_address_invalid:
-    "That email address was not accepted. Check it for typos.",
-  "23514": `Those profile details were not accepted. Username: ${USERNAME_RULES}`,
+const MESSAGE_OVERRIDES: Record<string, () => string> = {
+  same_password: () => t("auth.errSamePassword"),
+  signup_disabled: () => t("auth.errSignupDisabled"),
+  reauthentication_needed: () => t("auth.errReauth"),
+  email_address_invalid: () => t("auth.errEmailAddressInvalid"),
+  "23514": () => t("auth.errProfileRejected", { rules: usernameRules() }),
 };
 
 const NAME_MAP: Record<string, AuthErrorCode> = {
@@ -123,7 +118,10 @@ export function describeError(error: unknown): AuthFailure {
   const message = readString(error, "message") ?? "";
 
   if (code && code in MESSAGE_OVERRIDES) {
-    return failure(CODE_MAP[code] ?? "invalid_input", MESSAGE_OVERRIDES[code]);
+    return failure(
+      CODE_MAP[code] ?? "invalid_input",
+      MESSAGE_OVERRIDES[code](),
+    );
   }
   if (code && code in CODE_MAP) return failure(CODE_MAP[code] ?? "unknown");
   if (name && name in NAME_MAP) return failure(NAME_MAP[name] ?? "unknown");

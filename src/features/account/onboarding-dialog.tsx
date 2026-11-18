@@ -19,7 +19,7 @@ import type { AuthFailure, Profile } from "@/lib/auth/types";
 import { useAuth } from "@/lib/auth/use-auth";
 import {
   DISPLAY_NAME_MAX_LENGTH,
-  USERNAME_RULES,
+  usernameRules,
   normalizeOptionalText,
   normalizeUsername,
   validateAvatarSpecies,
@@ -30,6 +30,7 @@ import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { track } from "@/lib/telemetry/analytics";
 
 import { needsOnboarding } from "@/features/account/onboarding";
+import { useT } from "@/lib/i18n/t";
 
 // The species picker pulls the full dex; load it only when the dialog opens.
 const SpeciesPicker = lazy(() =>
@@ -58,7 +59,7 @@ async function isUsernameTaken(
   return data !== null;
 }
 
-const TAKEN_MESSAGE = "That username is already taken. Try another one.";
+const TAKEN_MESSAGE_KEY = "auth.errUsernameTaken" as const;
 
 export interface OnboardingDialogProps {
   /**
@@ -75,6 +76,7 @@ export interface OnboardingDialogProps {
  */
 export function OnboardingDialog({ client = supabase }: OnboardingDialogProps) {
   const auth = useAuth();
+  const t = useT();
   const [dismissed, setDismissed] = useState(false);
   const profile = auth.profile;
   const needed = !dismissed && !auth.loading && needsOnboarding(profile);
@@ -103,6 +105,7 @@ function OnboardingForm({
   onDone: () => void;
 }) {
   const auth = useAuth();
+  const t = useT();
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState(profile.displayName ?? "");
   const [avatarSpecies, setAvatarSpecies] = useState<string | null>(
@@ -152,7 +155,7 @@ function OnboardingForm({
     const nextDisplayName = normalizeOptionalText(displayName);
     const errors: FieldErrors = {};
     if (normalized === profile.username) {
-      errors.username = "Choose a new username.";
+      errors.username = t("auth.errUsernameNew");
     } else {
       const usernameError = validateUsername(normalized);
       if (usernameError) errors.username = usernameError;
@@ -175,7 +178,7 @@ function OnboardingForm({
     setPending(false);
     if (result.ok) {
       track("onboarding_completed");
-      toast.success("Profile saved.");
+      toast.success(t("profile.savedToast"));
       onDone();
     } else if (result.error.field) {
       setFieldErrors((prev) => ({
@@ -193,12 +196,12 @@ function OnboardingForm({
     </p>
   ) : status === "taken" ? (
     <p className="text-sm text-destructive" role="alert">
-      {TAKEN_MESSAGE}
+      {t(TAKEN_MESSAGE_KEY)}
     </p>
   ) : status === "checking" ? (
-    <p className="text-sm text-muted-foreground">Checking…</p>
+    <p className="text-sm text-muted-foreground">{t("onboarding.checking")}</p>
   ) : status === "available" ? (
-    <p className="text-sm text-success">Available</p>
+    <p className="text-sm text-success">{t("onboarding.available")}</p>
   ) : null;
 
   return (
@@ -210,14 +213,14 @@ function OnboardingForm({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Set up your profile</DialogTitle>
-          <DialogDescription>
-            Choose a username. The rest is optional and can change later.
-          </DialogDescription>
+          <DialogTitle>{t("onboarding.title")}</DialogTitle>
+          <DialogDescription>{t("onboarding.description")}</DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={handleSave} noValidate>
           <div className="grid gap-2">
-            <Label htmlFor="onboarding-username">Username</Label>
+            <Label htmlFor="onboarding-username">
+              {t("profile.usernameLabel")}
+            </Label>
             <Input
               id="onboarding-username"
               value={username}
@@ -228,10 +231,12 @@ function OnboardingForm({
               }
             />
             {usernameStatus}
-            <p className="text-xs text-muted-foreground">{USERNAME_RULES}</p>
+            <p className="text-xs text-muted-foreground">{usernameRules()}</p>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="onboarding-display-name">Display name</Label>
+            <Label htmlFor="onboarding-display-name">
+              {t("profile.displayNameLabel")}
+            </Label>
             <Input
               id="onboarding-display-name"
               value={displayName}
@@ -244,7 +249,7 @@ function OnboardingForm({
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Optional. At most {DISPLAY_NAME_MAX_LENGTH} characters.
+                {t("profile.displayNameHint", { max: DISPLAY_NAME_MAX_LENGTH })}
               </p>
             )}
           </div>
@@ -256,13 +261,15 @@ function OnboardingForm({
               size="lg"
             />
             <div className="grid min-w-0 flex-1 gap-2">
-              <Label htmlFor="onboarding-avatar">Avatar Pokémon</Label>
+              <Label htmlFor="onboarding-avatar">
+                {t("onboarding.avatarLabel")}
+              </Label>
               <Suspense fallback={<Skeleton className="h-8 w-full" />}>
                 <SpeciesPicker
                   id="onboarding-avatar"
                   value={avatarSpecies}
                   onChange={(species) => setAvatarSpecies(species)}
-                  placeholder="Choose a Pokémon"
+                  placeholder={t("pokemonEditor.chooseSpecies")}
                 />
               </Suspense>
               {fieldErrors.avatarSpecies ? (
@@ -279,14 +286,14 @@ function OnboardingForm({
           ) : null}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={skip}>
-              Skip for now
+              {t("onboarding.skip")}
             </Button>
             <Button
               type="submit"
               disabled={pending || status === "checking" || status === "taken"}
             >
               {pending ? <LoaderCircleIcon className="animate-spin" /> : null}
-              Save
+              {t("common.save")}
             </Button>
           </DialogFooter>
         </form>

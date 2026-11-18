@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import type { AuthFailure } from "@/lib/auth/types";
 import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 
@@ -21,6 +22,7 @@ import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
  */
 export function AuthCallbackPage() {
   const auth = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const started = useRef(false);
   const [failure, setFailure] = useState<AuthFailure | null>(null);
@@ -43,7 +45,7 @@ export function AuthCallbackPage() {
         if (active)
           setFailure({
             code: "unknown",
-            message: "Something went wrong. Try again.",
+            message: t("auth.errUnknown"),
           });
       });
     return () => {
@@ -53,34 +55,36 @@ export function AuthCallbackPage() {
 
   if (!auth.isConfigured) {
     return (
-      <Page title="Finishing sign-in…" width="narrow">
+      <Page title={t("authCallback.finishing")} width="narrow">
         <UnconfiguredNotice />
         <Button asChild variant="outline" className="mt-4">
-          <Link to="/">Back to home</Link>
+          <Link to="/">{t("authCallback.backHome")}</Link>
         </Button>
       </Page>
     );
   }
 
   return (
-    <Page title="Finishing sign-in…" width="narrow">
+    <Page title={t("authCallback.finishing")} width="narrow">
       <Card>
         <CardHeader>
           <CardTitle>
-            {failure ? "Sign-in could not be completed" : "Finishing sign-in…"}
+            {failure
+              ? t("authCallback.failedTitle")
+              : t("authCallback.finishing")}
           </CardTitle>
           <CardDescription>
             {failure ? (
               <span role="alert">{failure.message}</span>
             ) : (
-              "One moment while your sign-in is completed."
+              t("authCallback.waitDescription")
             )}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {failure ? (
             <Button asChild>
-              <Link to="/login">Back to sign in</Link>
+              <Link to="/login">{t("login.backToSignIn")}</Link>
             </Button>
           ) : (
             <LoaderCircleIcon className="size-5 animate-spin text-muted-foreground" />

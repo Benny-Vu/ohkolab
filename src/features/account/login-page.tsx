@@ -21,6 +21,7 @@ import {
 import { sanitizeReturnTo } from "@/lib/auth/redirects";
 import type { AuthFailure, OAuthProvider } from "@/lib/auth/types";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useT } from "@/lib/i18n/t";
 import { track } from "@/lib/telemetry/analytics";
 
 type FieldErrors = Partial<
@@ -54,6 +55,7 @@ function FormError({
 
 export function LoginPage() {
   const auth = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = sanitizeReturnTo(searchParams.get("returnTo") ?? "/");
@@ -75,7 +77,7 @@ export function LoginPage() {
 
   if (!auth.isConfigured) {
     return (
-      <Page title="Sign in" width="narrow">
+      <Page title={t("common.signIn")} width="narrow">
         <UnconfiguredNotice />
       </Page>
     );
@@ -114,7 +116,7 @@ export function LoginPage() {
     const result = await auth.signInWithPassword(normalizedEmail, password);
     setPending(null);
     if (result.ok) {
-      toast.success("Signed in.");
+      toast.success(t("login.signedInToast"));
       navigate(returnTo, { replace: true });
     } else {
       applyFailure(result.error);
@@ -130,8 +132,7 @@ export function LoginPage() {
     const passwordError = validateNewPassword(password);
     if (passwordError) errors.password = passwordError;
     if (!acceptedTerms) {
-      errors.acceptedTerms =
-        "Confirm that you are 13 or older and accept the terms to create an account.";
+      errors.acceptedTerms = t("login.acceptTermsError");
     }
     setFieldErrors(errors);
     setFormError(null);
@@ -149,7 +150,7 @@ export function LoginPage() {
       if (result.data.needsEmailConfirmation) {
         setNeedsEmailConfirmation(true);
       } else {
-        toast.success("Account created.");
+        toast.success(t("login.accountCreatedToast"));
         navigate(returnTo, { replace: true });
       }
     } else {
@@ -178,7 +179,7 @@ export function LoginPage() {
     setPending(null);
     if (result.ok) {
       setResetSent(true);
-      toast.success("Check your email for the reset link.");
+      toast.success(t("login.resetSentToast"));
     } else {
       applyFailure(result.error);
     }
@@ -186,25 +187,25 @@ export function LoginPage() {
 
   if (needsEmailConfirmation) {
     return (
-      <Page title="Check your email" width="narrow">
+      <Page title={t("login.checkEmailTitle")} width="narrow">
         <Card>
           <CardContent className="grid gap-2 pt-6">
             <h1 className="font-heading text-xl font-semibold">
-              Confirm your account
+              {t("login.confirmAccountTitle")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              We sent a link to{" "}
+              {t("login.confirmAccountPrefix")}{" "}
               <span className="font-medium text-foreground">
                 {normalizeEmail(email)}
               </span>
-              . Open it to confirm your account and finish signing up.
+              {t("login.confirmAccountSuffix")}
             </p>
             <Button
               variant="link"
               className="h-auto p-0 justify-self-start"
               onClick={() => setNeedsEmailConfirmation(false)}
             >
-              Sign in
+              {t("common.signIn")}
             </Button>
           </CardContent>
         </Card>
@@ -214,26 +215,25 @@ export function LoginPage() {
 
   if (resetSent) {
     return (
-      <Page title="Check your email" width="narrow">
+      <Page title={t("login.checkEmailTitle")} width="narrow">
         <Card>
           <CardContent className="grid gap-2 pt-6">
             <h1 className="font-heading text-xl font-semibold">
-              Reset link sent
+              {t("login.resetSentTitle")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              If an account exists for{" "}
+              {t("login.resetSentPrefix")}{" "}
               <span className="font-medium text-foreground">
                 {normalizeEmail(email)}
               </span>
-              , a password reset link is on its way. The link opens the reset
-              page.
+              {t("login.resetSentSuffix")}
             </p>
             <Button
               variant="link"
               className="h-auto p-0 justify-self-start"
               onClick={() => setResetSent(false)}
             >
-              Back to sign in
+              {t("login.backToSignIn")}
             </Button>
           </CardContent>
         </Card>
@@ -242,7 +242,7 @@ export function LoginPage() {
   }
 
   return (
-    <Page title="Sign in" width="narrow">
+    <Page title={t("common.signIn")} width="narrow">
       <div className="mx-auto grid w-full max-w-sm justify-items-center gap-6">
         <Link to="/" className="rounded-md" aria-label="OHKOLab home">
           <Wordmark className="text-3xl" />
@@ -250,8 +250,8 @@ export function LoginPage() {
 
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="w-full">
-            <TabsTrigger value="signin">Sign in</TabsTrigger>
-            <TabsTrigger value="signup">Sign up</TabsTrigger>
+            <TabsTrigger value="signin">{t("common.signIn")}</TabsTrigger>
+            <TabsTrigger value="signup">{t("login.signUpTab")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin" className="mt-4">
@@ -259,7 +259,7 @@ export function LoginPage() {
               <CardContent className="pt-6">
                 <form className="grid gap-4" onSubmit={handleSignIn} noValidate>
                   <div className="grid gap-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="signin-email">{t("login.email")}</Label>
                     <Input
                       id="signin-email"
                       type="email"
@@ -277,7 +277,9 @@ export function LoginPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="signin-password">
+                      {t("login.password")}
+                    </Label>
                     <Input
                       id="signin-password"
                       type="password"
@@ -307,7 +309,7 @@ export function LoginPage() {
                     {pending === "signIn" ? (
                       <LoaderCircleIcon className="animate-spin" />
                     ) : null}
-                    Sign in
+                    {t("common.signIn")}
                   </Button>
                   <Button
                     type="button"
@@ -316,7 +318,7 @@ export function LoginPage() {
                     onClick={handleReset}
                     disabled={busy}
                   >
-                    Forgot password?
+                    {t("login.forgotPassword")}
                   </Button>
                 </form>
               </CardContent>
@@ -328,7 +330,7 @@ export function LoginPage() {
               <CardContent className="pt-6">
                 <form className="grid gap-4" onSubmit={handleSignUp} noValidate>
                   <div className="grid gap-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email">{t("login.email")}</Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -346,7 +348,9 @@ export function LoginPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password">
+                      {t("login.password")}
+                    </Label>
                     <Input
                       id="signup-password"
                       type="password"
@@ -382,20 +386,21 @@ export function LoginPage() {
                         htmlFor="signup-terms"
                         className="font-normal leading-snug"
                       >
-                        I am 13 or older and accept the{" "}
+                        {t("login.termsPrefix")}{" "}
                         <Link
                           to="/terms"
                           className="text-primary underline underline-offset-4"
                         >
-                          terms
+                          {t("login.termsLink")}
                         </Link>{" "}
-                        and{" "}
+                        {t("login.termsJoin")}{" "}
                         <Link
                           to="/privacy"
                           className="text-primary underline underline-offset-4"
                         >
-                          privacy policy
+                          {t("login.privacyLink")}
                         </Link>
+                        {t("login.termsSuffix")}
                       </Label>
                     </div>
                     <FieldError
@@ -414,7 +419,7 @@ export function LoginPage() {
                     {pending === "signUp" ? (
                       <LoaderCircleIcon className="animate-spin" />
                     ) : null}
-                    Sign up
+                    {t("login.signUpTab")}
                   </Button>
                 </form>
               </CardContent>
@@ -431,7 +436,7 @@ export function LoginPage() {
             {pending === "google" ? (
               <LoaderCircleIcon className="animate-spin" />
             ) : null}
-            Continue with Google
+            {t("login.continueGoogle")}
           </Button>
           <Button
             variant="outline"
@@ -441,7 +446,7 @@ export function LoginPage() {
             {pending === "discord" ? (
               <LoaderCircleIcon className="animate-spin" />
             ) : null}
-            Continue with Discord
+            {t("login.continueDiscord")}
           </Button>
         </div>
       </div>
