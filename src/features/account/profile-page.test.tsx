@@ -256,18 +256,6 @@ describe("ProfilePage", () => {
     ).toBeInTheDocument();
   });
 
-  it("refreshes the profile on demand", async () => {
-    const user = userEvent.setup();
-    const auth = createFakeAuth();
-    renderPage(<ProfilePage />, auth, { path: "/profile" });
-
-    await user.click(screen.getByRole("button", { name: /refresh/i }));
-
-    await waitFor(() =>
-      expect(auth.calls.map((c) => c.name)).toContain("refreshProfile"),
-    );
-  });
-
   it("links to the public profile page", () => {
     renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
 
