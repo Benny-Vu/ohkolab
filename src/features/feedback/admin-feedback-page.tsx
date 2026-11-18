@@ -11,7 +11,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
-import { NotFoundPage } from "@/app/route-pages";
+import { NotFoundPage } from "@/features/system/not-found-page";
 import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

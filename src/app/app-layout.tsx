@@ -6,6 +6,7 @@ import { NAV_ITEMS } from "@/app/nav-items";
 import { usePageTitle, usePageView } from "@/app/page-title";
 import { SearchPalette } from "@/app/search-palette";
 import { Wordmark } from "@/components/wordmark";
+import { OnboardingDialog } from "@/features/account/onboarding-dialog";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import { cn } from "@/lib/utils";
@@ -108,6 +109,7 @@ export function AppLayout() {
       </nav>
 
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <OnboardingDialog />
       <ScrollRestoration />
     </div>
   );

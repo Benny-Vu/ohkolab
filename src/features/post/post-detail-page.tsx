@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ErrorState } from "@/components/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Page } from "@/components/page";
-import { NotFoundPage } from "@/app/route-pages";
+import { NotFoundPage } from "@/features/system/not-found-page";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useCreateComment, useDeleteComment } from "@/lib/social/mutations";

@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router";
 
 import { AppLayout } from "@/app/app-layout";
-import { NotFoundPage, PageLoading, RouteError } from "@/app/route-pages";
+import { PageLoading } from "@/app/route-pages";
 import { accountRoutes } from "@/features/account/routes";
 import { adminRoutes } from "@/features/admin/routes";
 import { calcRoutes } from "@/features/calc/routes";
@@ -15,6 +15,8 @@ import { notificationRoutes } from "@/features/notifications/routes";
 import { postRoutes } from "@/features/post/routes";
 import { profileRoutes } from "@/features/profile/routes";
 import { styleguideRoutes } from "@/features/styleguide/routes";
+import { RouteErrorPage } from "@/features/system/route-error-page";
+import { systemRoutes } from "@/features/system/routes";
 import { teamBuilderRoutes } from "@/features/team-builder/routes";
 
 /**
@@ -30,7 +32,7 @@ export const router = createBrowserRouter([
         // The fallback lives here, below the shell route, so the header and
         // tab bar stay mounted while the first lazy page hydrates.
         hydrateFallbackElement: <PageLoading />,
-        errorElement: <RouteError />,
+        errorElement: <RouteErrorPage />,
         children: [
           ...homeRoutes,
           ...legalRoutes,
@@ -46,7 +48,7 @@ export const router = createBrowserRouter([
           ...moderationRoutes,
           ...groupsRoutes,
           ...styleguideRoutes,
-          { path: "*", element: <NotFoundPage /> },
+          ...systemRoutes,
         ],
       },
     ],

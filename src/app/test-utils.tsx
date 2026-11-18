@@ -4,7 +4,7 @@ import { vi } from "vitest";
 
 import { AppLayout } from "@/app/app-layout";
 import { Providers } from "@/app/providers";
-import { NotFoundPage } from "@/app/route-pages";
+import { NotFoundPage } from "@/features/system/not-found-page";
 import type { AuthContextValue, Profile, User } from "@/lib/auth/types";
 import { AuthContext, GUEST_AUTH } from "@/lib/auth/use-auth";
 
