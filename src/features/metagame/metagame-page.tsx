@@ -4,7 +4,6 @@ import { useNavigate } from "react-router";
 import { InfoIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { FormatToggle } from "@/components/format-toggle";
 import { Page } from "@/components/page";
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -33,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FormatToggle } from "@/features/metagame/format-toggle";
 import {
   useMetagameIndex,
   useMetagameSnapshot,
