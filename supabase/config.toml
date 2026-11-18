@@ -1,0 +1,23 @@
+# Supabase CLI configuration for OHKOLab.
+#
+# Used by the "Database" CI workflow to start a local Supabase and apply
+# supabase/migrations from scratch. The live project (ref jzpyoyjnhuokprsdoiqf)
+# is not linked to the CLI. Its settings are mirrored here as documentation and
+# checked by scripts/infra-check.ps1; change them in the dashboard and here together.
+
+project_id = "ohkolab"
+
+[db]
+# Must match the live project (Postgres 17.11 on 2026-11-18).
+major_version = 17
+
+[api]
+schemas = ["public", "graphql_public"]
+
+[auth]
+# Live values on 2026-11-18 (Authentication -> URL Configuration).
+site_url = "https://ohkolab.com"
+additional_redirect_urls = ["https://ohkolab.com/**", "http://localhost:5173/**"]
+
+[studio]
+enabled = false
