@@ -1,27 +1,67 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
-import { copyFileSync } from "node:fs";
-import { join } from "node:path";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+} from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import type { Plugin } from "vite";
 import { loadEnv } from "vite";
 import { defineConfig } from "vitest/config";
 
 /**
+ * The fixed (parameter-free) route paths declared in the features'
+ * routes.tsx files, such as "terms" or "auth/callback". Read from the source
+ * so new pages are picked up without a list to maintain.
+ */
+function staticRoutePaths(root: string): string[] {
+  const featuresDir = join(root, "src", "features");
+  const paths = new Set<string>();
+  for (const feature of readdirSync(featuresDir)) {
+    const routesFile = join(featuresDir, feature, "routes.tsx");
+    if (!existsSync(routesFile)) continue;
+    const source = readFileSync(routesFile, "utf8");
+    for (const match of source.matchAll(/path:\s*"([^"]+)"/g)) {
+      const path = match[1].replace(/^\/+|\/+$/g, "");
+      if (path && !path.includes(":") && !path.includes("*")) {
+        paths.add(path);
+      }
+    }
+  }
+  return [...paths];
+}
+
+/**
  * GitHub Pages serves 404.html for unknown paths. Shipping a copy of
- * index.html under that name lets client-side routes survive a refresh.
+ * index.html under that name lets client-side routes survive a refresh, but
+ * with HTTP status 404, which search engines and link checkers (Discord,
+ * for one) treat as a missing page. So every fixed route also gets its own
+ * copy, `<route>.html`, which Pages serves at `/<route>` with status 200.
+ * Routes with parameters (`/u/:username`, `/g/:slug`, ...) still rely on
+ * the 404.html fallback.
  */
 function spaFallback(): Plugin {
+  let root = process.cwd();
   return {
     name: "spa-fallback",
     apply: "build",
+    configResolved(config) {
+      root = config.root;
+    },
     writeBundle(options) {
       if (!options.dir) return;
-      copyFileSync(
-        join(options.dir, "index.html"),
-        join(options.dir, "404.html"),
-      );
+      const index = join(options.dir, "index.html");
+      copyFileSync(index, join(options.dir, "404.html"));
+      for (const path of staticRoutePaths(root)) {
+        const target = join(options.dir, `${path}.html`);
+        mkdirSync(dirname(target), { recursive: true });
+        copyFileSync(index, target);
+      }
     },
   };
 }
