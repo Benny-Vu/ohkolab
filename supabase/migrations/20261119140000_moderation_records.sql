@@ -136,7 +136,7 @@ alter table public.moderation_actions
 alter table public.moderation_actions
   add column if not exists suspension_id uuid
     constraint moderation_actions_suspension_id_fkey
-      foreign key (suspension_id) references public.user_suspensions (id)
+      references public.user_suspensions (id)
       on delete set null;
 
 -- ---------------------------------------------------------------------------
@@ -725,10 +725,9 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- Retention. Nothing is deleted automatically yet; the owner picks the
--- period before this is scheduled. Once picked (12 months suggested),
--- uncomment the function below and call it from a daily pg_cron job:
---   select public.purge_moderation_records(interval '12 months');
+-- Retention: the owner chose 12 months on 2026-11-18. The live function and
+-- its daily pg_cron job are in 20261119150000_moderation_purge.sql; the
+-- commented draft below is kept for reference only.
 --
 -- Appeals and moderation notifications cascade away with their
 -- moderation_actions rows, so purging the actions purges them too.

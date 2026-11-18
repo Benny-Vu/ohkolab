@@ -249,12 +249,14 @@ export function PrivacyPage() {
             browser's site data for that.
           </LegalText>
           <LegalText>
-            We keep your moderation records for 12 months after the deletion:
-            the actions taken against you and their reasons, a copy of the
-            content we removed, your appeals and their outcomes, and your
-            suspensions. We keep these to explain our decisions to you and to
-            give evidence to the police if the law requires it. These records no
-            longer link to your account, and we delete them once the 12 months
+            Moderation records are an exception. These are the actions taken
+            against you and their reasons, a copy of the content we removed,
+            your appeals and their outcomes, and your suspensions. We keep each
+            record for 12 months after the decision (for a suspension, 12 months
+            after it ends), even if you delete your account in the meantime, so
+            we can explain our decisions and give evidence to the police if the
+            law requires it. After you delete your account, the records no
+            longer link to it. We delete them automatically once the 12 months
             have passed.
           </LegalText>
         </LegalSection>
