@@ -191,7 +191,7 @@ function SpikesControl({ side, conditions, dispatch }: SpikesControlProps) {
             className={cn(
               "h-6 w-6 rounded-md border text-xs font-medium tabular-nums",
               conditions.spikes === layers
-                ? "border-accent-brand bg-accent-brand/15 text-accent-brand-text"
+                ? "border-accent-brand-text bg-accent-brand/15 text-accent-brand-text"
                 : "border-input bg-transparent text-muted-foreground",
             )}
             aria-pressed={conditions.spikes === layers}

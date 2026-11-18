@@ -121,7 +121,7 @@ describe("PokemonEditor", () => {
       }),
     );
     expect(screen.getByText("65 / 66")).toBeInTheDocument();
-    expect(screen.getAllByText("1 left")).toHaveLength(6);
+    expect(screen.getByText("1 left")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Increase HP" }));
     expect(onChange).toHaveBeenLastCalledWith(
@@ -129,7 +129,7 @@ describe("PokemonEditor", () => {
         statPoints: { hp: 3, atk: 31, def: 0, spa: 0, spd: 0, spe: 32 },
       }),
     );
-    expect(screen.getAllByText("0 left")).toHaveLength(6);
+    expect(screen.queryByText(/left/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Increase HP" })).toBeDisabled();
 
     // Per-stat cap: Atk sits at 31 with 1 point left, but the cap is 32.

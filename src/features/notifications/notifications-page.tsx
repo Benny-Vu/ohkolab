@@ -202,7 +202,7 @@ function NotificationRowCard({
     <div
       className={cn(
         "flex items-start gap-3 rounded-md border bg-card p-4",
-        isUnread && "border-accent-brand/40 bg-muted",
+        isUnread && "border-accent-brand-text/40 bg-muted",
       )}
     >
       {item.actor ? (
@@ -251,7 +251,7 @@ function NotificationRowCard({
         {isUnread && (
           <span
             aria-hidden
-            className="mt-0.5 size-2 shrink-0 rounded-full bg-accent-brand"
+            className="mt-0.5 size-2 shrink-0 rounded-full bg-accent-brand-text"
           />
         )}
         {isUnread && (

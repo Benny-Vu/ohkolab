@@ -34,7 +34,7 @@ export function StatBar({
       <div
         className={cn(
           "h-full rounded-sm transition-[width] duration-150 ease-out",
-          tone === "accent" ? "bg-accent-brand" : "bg-muted-foreground/40",
+          tone === "accent" ? "bg-accent-brand-text" : "bg-muted-foreground/40",
         )}
         style={{ width: `${percent}%` }}
       />

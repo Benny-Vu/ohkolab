@@ -41,7 +41,7 @@ describe("NumberStepper", () => {
     expect(onChange).toHaveBeenCalledWith(31);
   });
 
-  it("shows the remaining budget", () => {
+  it("never renders the remaining budget", () => {
     render(
       <NumberStepper
         value={10}
@@ -51,6 +51,14 @@ describe("NumberStepper", () => {
       />,
     );
 
-    expect(screen.getByText("16 left")).toBeInTheDocument();
+    expect(screen.queryByText(/left/)).not.toBeInTheDocument();
+  });
+
+  it("disables increases when the remaining budget is spent", () => {
+    render(
+      <NumberStepper value={10} onChange={() => {}} remaining={0} label="HP" />,
+    );
+
+    expect(screen.getByRole("button", { name: "Increase HP" })).toBeDisabled();
   });
 });

@@ -34,7 +34,7 @@ export function AppLayout() {
                   cn(
                     "relative px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-150 ease-out outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
                     isActive &&
-                      "text-foreground after:absolute after:inset-x-3 after:-bottom-[13px] after:h-0.5 after:bg-accent-brand",
+                      "text-foreground after:absolute after:inset-x-3 after:-bottom-[13px] after:h-0.5 after:bg-accent-brand-text",
                   )
                 }
               >
@@ -75,7 +75,15 @@ export function AppLayout() {
           </button>
         </p>
         <p className="mt-2">
-          OHKOLab is made by <span className="font-medium">Vu Forge</span>
+          OHKOLab is made by{" "}
+          <a
+            className="font-medium underline-offset-4 hover:underline"
+            href="https://github.com/vu-forge"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Vu Forge
+          </a>
         </p>
       </footer>
 
@@ -93,7 +101,7 @@ export function AppLayout() {
                   cn(
                     "relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground",
                     isActive &&
-                      "text-foreground before:absolute before:top-0 before:h-0.5 before:w-8 before:bg-accent-brand",
+                      "text-foreground before:absolute before:top-0 before:h-0.5 before:w-8 before:bg-accent-brand-text",
                   )
                 }
               >

@@ -130,7 +130,7 @@ export function SearchPalette() {
         className="hidden h-9 w-64 items-center gap-2 rounded-md bg-surface-sunken px-3 text-sm text-muted-foreground transition-colors duration-150 ease-out outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 md:flex"
       >
         <SearchIcon className="size-4" aria-hidden />
-        <span className="flex-1 text-left">Search Pokémon, moves, players</span>
+        <span className="flex-1 text-left">Search</span>
         <kbd className="rounded-[4px] border border-border bg-background px-1.5 font-mono text-[10px] text-muted-foreground">
           Ctrl K
         </kbd>

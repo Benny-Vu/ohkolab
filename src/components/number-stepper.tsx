@@ -6,7 +6,7 @@ interface NumberStepperProps {
   onChange: (value: number) => void;
   min?: number;
   max?: number;
-  /** Remaining budget across all steppers, shown under the control. */
+  /** Remaining budget across all steppers; caps increases, never rendered. */
   remaining?: number;
   label: string;
   className?: string;
@@ -61,11 +61,6 @@ export function NumberStepper({
           <PlusIcon className="size-4" />
         </button>
       </div>
-      {remaining !== undefined && (
-        <p className="text-xs text-muted-foreground tabular-nums">
-          {remaining} left
-        </p>
-      )}
     </div>
   );
 }

@@ -120,8 +120,13 @@ export function PokemonEditor({
       <fieldset className="grid min-w-0 gap-2">
         <legend className="flex w-full items-baseline justify-between gap-2 text-xs text-muted-foreground">
           Stat Points
-          <span aria-live="polite" className="font-mono tabular-nums">
-            {spent} / {MAX_SP_TOTAL}
+          <span className="flex items-baseline gap-2">
+            {remaining > 0 ? (
+              <span className="tabular-nums">{remaining} left</span>
+            ) : null}
+            <span aria-live="polite" className="font-mono tabular-nums">
+              {spent} / {MAX_SP_TOTAL}
+            </span>
           </span>
         </legend>
         <div className="grid gap-1.5">

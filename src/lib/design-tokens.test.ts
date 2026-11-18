@@ -146,6 +146,7 @@ const TEXT_PAIRS: Array<[string, string]> = [
 const EDGE_PAIRS: Array<[string, string]> = [
   ["ring", "background"],
   ["ring", "card"],
+  ["accent-brand-text", "muted"],
 ];
 
 describe.each([
