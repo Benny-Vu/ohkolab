@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
-import { useT, type TranslationParams } from "@/lib/i18n/t";
+import { useT } from "@/lib/i18n/t";
 import { useCreateReport } from "@/lib/social/mutations";
 import { REPORT_DETAILS_MAX, REPORT_REASONS } from "@/lib/social/validation";
 import type { TranslationKey } from "@/lib/i18n/en";
@@ -85,7 +85,7 @@ export function ReportDialog({
   const [details, setDetails] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const targetLabel = () => t(TARGET_LABELS[targetType]) as TranslationParams;
+  const targetLabel = () => t(TARGET_LABELS[targetType]);
 
   function reset() {
     setReason("");
