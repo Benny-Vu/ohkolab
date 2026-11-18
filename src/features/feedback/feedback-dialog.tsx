@@ -17,6 +17,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAuth } from "@/lib/auth/use-auth";
 import { CONTACT_EMAIL } from "@/features/legal/legal-info";
 import { getTelemetryConfig } from "@/lib/telemetry/config";
+import { track } from "@/lib/telemetry/analytics";
 import { routeTemplate } from "@/lib/telemetry/route-template";
 import {
   FEEDBACK_KINDS,
@@ -110,6 +111,7 @@ export function FeedbackDialog({
       {
         onSuccess: (result) => {
           if (result.ok) {
+            track("feedback_sent", { kind });
             toast.success("Thanks! Your feedback was sent.");
             setMessage("");
             onOpenChange(false);

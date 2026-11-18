@@ -5,6 +5,7 @@ import { NotFoundPage, PageLoading, RouteError } from "@/app/route-pages";
 import { accountRoutes } from "@/features/account/routes";
 import { adminRoutes } from "@/features/admin/routes";
 import { calcRoutes } from "@/features/calc/routes";
+import { feedbackRoutes } from "@/features/feedback/routes";
 import { groupsRoutes } from "@/features/groups/routes";
 import { homeRoutes } from "@/features/home/routes";
 import { legalRoutes } from "@/features/legal/routes";
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
           ...metagameRoutes,
           ...accountRoutes,
           ...adminRoutes,
+          ...feedbackRoutes,
           ...postRoutes,
           ...profileRoutes,
           ...notificationRoutes,

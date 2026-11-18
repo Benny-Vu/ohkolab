@@ -67,6 +67,7 @@ import {
 } from "@/lib/groups/validation";
 import { Composer } from "@/features/feed/composer";
 import { GroupPostList } from "@/features/groups/group-post-list";
+import { track } from "@/lib/telemetry/analytics";
 
 /**
  * One group: header with membership actions, then the feed, members and (for
@@ -287,8 +288,12 @@ function MembershipActions({
       size="sm"
       onClick={async () => {
         const result = await joinGroup.mutateAsync({ groupId });
-        if (result.ok) toast.success("Welcome to the group!");
-        else toast.error(result.error.message);
+        if (result.ok) {
+          toast.success("Welcome to the group!");
+          track("group_joined", { visibility });
+        } else {
+          toast.error(result.error.message);
+        }
       }}
       disabled={joinGroup.isPending}
     >

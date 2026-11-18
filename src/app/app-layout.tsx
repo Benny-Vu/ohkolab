@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration } from "react-router";
 
 import { AccountMenu } from "@/app/account-menu";
 import { NAV_ITEMS } from "@/app/nav-items";
-import { usePageTitle } from "@/app/page-title";
+import { usePageTitle, usePageView } from "@/app/page-title";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +24,8 @@ function Wordmark() {
 /** App frame: header with desktop navigation, page content, phone tab bar. */
 export function AppLayout() {
   usePageTitle();
+  usePageView();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -69,6 +73,13 @@ export function AppLayout() {
           <Link className="underline-offset-4 hover:underline" to="/privacy">
             Privacy
           </Link>
+          <button
+            type="button"
+            className="underline-offset-4 hover:underline"
+            onClick={() => setFeedbackOpen(true)}
+          >
+            Send feedback
+          </button>
         </p>
       </footer>
 
@@ -100,6 +111,7 @@ export function AppLayout() {
         </ul>
       </nav>
 
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <ScrollRestoration />
     </div>
   );

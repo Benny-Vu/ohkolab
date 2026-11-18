@@ -32,6 +32,7 @@ import {
   type SocialFailure,
   type SocialResult,
 } from "@/lib/social/errors";
+import { track } from "@/lib/telemetry/analytics";
 import {
   normalizeCommentBody,
   normalizePostBody,
@@ -178,6 +179,9 @@ export function useDeletePost(
       if (!result.ok) return;
       void queryClient.invalidateQueries({ queryKey: ["social", "feed"] });
       void queryClient.invalidateQueries({
+        queryKey: ["social", "group-feed"],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ["social", "author-posts"],
       });
       void queryClient.invalidateQueries({
@@ -223,6 +227,7 @@ export function useCreateComment(
     },
     onSuccess: (result, input) => {
       if (!result.ok) return;
+      track("comment_created");
       void queryClient.invalidateQueries({
         queryKey: ["social", "comments", input.postId],
       });
@@ -372,6 +377,7 @@ export function useToggleLike(
           .from("post_likes")
           .insert({ post_id: postId, user_id: me });
         if (error) return { ok: false, error: describeWriteError(error) };
+        track("post_liked");
       }
       return socialSucceed();
     },
@@ -439,6 +445,7 @@ export function useToggleFollow(
           .from("follows")
           .insert({ follower_id: me, followee_id: userId });
         if (error) return { ok: false, error: describeWriteError(error) };
+        track("user_followed");
       }
       return socialSucceed();
     },

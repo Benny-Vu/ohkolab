@@ -59,7 +59,12 @@ export function CalcPage() {
           <SidePanel side="p1" calcSide={state.sides.p1} dispatch={dispatch} />
           <SidePanel side="p2" calcSide={state.sides.p2} dispatch={dispatch} />
           <FieldPanel state={state} format={format} dispatch={dispatch} />
-          <ResultsPanel state={state} outcomes={outcomes} dispatch={dispatch} />
+          <ResultsPanel
+            state={state}
+            outcomes={outcomes}
+            format={format}
+            dispatch={dispatch}
+          />
         </div>
       ) : (
         <div className="grid gap-4">
@@ -87,7 +92,12 @@ export function CalcPage() {
               <FieldPanel state={state} format={format} dispatch={dispatch} />
             </TabsContent>
           </Tabs>
-          <ResultsPanel state={state} outcomes={outcomes} dispatch={dispatch} />
+          <ResultsPanel
+            state={state}
+            outcomes={outcomes}
+            format={format}
+            dispatch={dispatch}
+          />
         </div>
       )}
     </Page>

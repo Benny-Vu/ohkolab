@@ -48,6 +48,7 @@ import {
 } from "@/lib/auth/validation";
 import type { AuthFailure, Profile } from "@/lib/auth/types";
 import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
+import { TelemetrySwitch } from "@/features/feedback/telemetry-switch";
 import { useProfilesByIds } from "@/features/profile/profile-queries";
 import { socialAvailability, useBlocks, useToggleBlock } from "@/lib/social";
 
@@ -511,6 +512,18 @@ export function ProfilePage() {
         <div className="grid gap-4">
           <ProfileEditor profile={auth.profile} />
           <BlockedUsersCard />
+          <Card>
+            <CardHeader>
+              <CardTitle>Crash reports and usage statistics</CardTitle>
+              <CardDescription>
+                Anonymous, cookieless telemetry that helps us find and fix
+                problems. Turning it off stops both immediately.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TelemetrySwitch />
+            </CardContent>
+          </Card>
         </div>
       ) : (
         <div className="grid gap-4">

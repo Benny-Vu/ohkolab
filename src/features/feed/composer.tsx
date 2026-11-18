@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTeams } from "@/lib/team";
 import { useCreatePost } from "@/lib/social/mutations";
 import { POST_BODY_MAX } from "@/lib/social/validation";
+import { track } from "@/lib/telemetry/analytics";
 import { teamAttachment, teamAttachmentJson } from "@/features/feed/attachment";
 import type { TeamAttachment } from "@/features/feed/attachment";
 
@@ -43,6 +44,10 @@ export function Composer({ groupId }: { groupId?: string | null }) {
       setBody("");
       setAttachment(null);
       toast.success("Posted.");
+      track("post_created", {
+        attachment: attachment ? "team" : "none",
+        in_group: Boolean(groupId),
+      });
     } else {
       toast.error(result.error.message);
     }

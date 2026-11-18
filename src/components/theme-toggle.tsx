@@ -1,6 +1,7 @@
 import { MoonIcon, SunIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { track } from "@/lib/telemetry/analytics";
 import { useTheme } from "@/lib/theme";
 
 /** Switches between the dark and light themes. */
@@ -12,7 +13,11 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={() => {
+        const next = isDark ? "light" : "dark";
+        setTheme(next);
+        track("theme_changed", { theme: next });
+      }}
     >
       {isDark ? <SunIcon /> : <MoonIcon />}
     </Button>

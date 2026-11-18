@@ -5,6 +5,9 @@ import { RouterProvider } from "react-router";
 import "@/index.css";
 import { Providers } from "@/app/providers";
 import { router } from "@/app/router";
+import { initSentry } from "@/lib/telemetry/sentry";
+
+initSentry();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

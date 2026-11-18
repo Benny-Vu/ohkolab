@@ -40,6 +40,7 @@ import {
   type GroupMember,
   type MyGroupMembership,
 } from "@/lib/groups/queries";
+import { track } from "@/lib/telemetry/analytics";
 import {
   normalizeGroupDescription,
   normalizeGroupName,
@@ -133,6 +134,7 @@ export function useCreateGroup(
     },
     onSuccess: (result) => {
       if (!result.ok) return;
+      track("group_created", { visibility: result.data.visibility });
       // Seed the cache so the new group's page already shows the owner as a
       // member; the database trigger added the membership row server-side.
       const group = toGroupSummary(result.data);

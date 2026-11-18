@@ -52,6 +52,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { createDefaultSet, validateSet } from "@/data";
 import { useAuth } from "@/lib/auth/use-auth";
+import { track } from "@/lib/telemetry/analytics";
 import {
   attackingTypes,
   battleTypes,
@@ -212,9 +213,13 @@ export function TeamDetailPage() {
   };
 
   const copyExport = () => {
-    void navigator.clipboard
-      .writeText(exportText)
-      .then(() => toast.success("Copied to clipboard."));
+    void navigator.clipboard.writeText(exportText).then(() => {
+      track("team_exported", {
+        format: team.format,
+        size: team.members.length,
+      });
+      toast.success("Copied to clipboard.");
+    });
   };
 
   return (
@@ -246,7 +251,15 @@ export function TeamDetailPage() {
               <Switch
                 id="team-public"
                 checked={team.isPublic ?? false}
-                onCheckedChange={(checked) => setPublic(team.id, checked)}
+                onCheckedChange={(checked) => {
+                  setPublic(team.id, checked);
+                  if (checked) {
+                    track("team_made_public", {
+                      format: team.format,
+                      size: team.members.length,
+                    });
+                  }
+                }}
                 aria-label="Public team"
               />
               <Label htmlFor="team-public">Public</Label>
