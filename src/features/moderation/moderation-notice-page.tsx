@@ -23,7 +23,6 @@ import {
   useAppealForAction,
   useCreateAppeal,
   useModerationAction,
-  useModerationTargetText,
   useOwnSuspensions,
 } from "@/lib/social/moderation";
 
@@ -157,10 +156,6 @@ export function ModerationNoticePage({
   const actionQuery = useModerationAction(actionId ?? "", client);
   const appealQuery = useAppealForAction(actionId ?? "", client);
   const suspensionsQuery = useOwnSuspensions(client);
-  const targetTextQuery = useModerationTargetText(
-    actionQuery.data ?? null,
-    client,
-  );
 
   if (actionQuery.isPending) {
     return (
@@ -198,10 +193,15 @@ export function ModerationNoticePage({
               <span className="font-medium">Reason: </span>
               {action.reason}
             </p>
-            {isRemoval && targetTextQuery.data ? (
-              <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">
-                {targetTextQuery.data}
-              </blockquote>
+            {isRemoval && action.content_snapshot !== null ? (
+              <div className="grid gap-1 rounded-md border p-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Removed content
+                </p>
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                  {action.content_snapshot}
+                </p>
+              </div>
             ) : null}
             {suspension ? (
               <div className="grid gap-1 rounded-md border p-3">

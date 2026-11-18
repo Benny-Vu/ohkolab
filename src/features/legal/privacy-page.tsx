@@ -170,9 +170,11 @@ export function PrivacyPage() {
           <LegalText>
             When content is removed or an account is suspended, we store what
             was removed or suspended, the reason, which moderator handled it,
-            and when. If you appeal, we store your appeal message and its
-            outcome. Moderators can see moderation actions and appeals. You can
-            see actions that affect you and your own appeals.
+            and when. When we remove a post or comment, we also keep a copy of
+            its text with the record, so we can still show you and our
+            moderators what was taken down. If you appeal, we store your appeal
+            message and its outcome. Moderators can see moderation actions and
+            appeals. You can see actions that affect you and your own appeals.
           </LegalText>
         </LegalSection>
 
@@ -242,11 +244,18 @@ export function PrivacyPage() {
             </Link>
             . This permanently removes your account, your profile, your saved
             teams, your posts, comments, likes, follows, blocks, group
-            memberships and groups you own, your notifications and your appeals
-            from our servers. We keep records of moderation actions, but once
-            your account is deleted they no longer link to you. It does not
-            remove data stored in your browser; clear your browser's site data
-            for that.
+            memberships and groups you own, and your notifications from our
+            servers. It does not remove data stored in your browser; clear your
+            browser's site data for that.
+          </LegalText>
+          <LegalText>
+            We keep your moderation records for 12 months after the deletion:
+            the actions taken against you and their reasons, a copy of the
+            content we removed, your appeals and their outcomes, and your
+            suspensions. We keep these to explain our decisions to you and to
+            give evidence to the police if the law requires it. These records no
+            longer link to your account, and we delete them once the 12 months
+            have passed.
           </LegalText>
         </LegalSection>
 
