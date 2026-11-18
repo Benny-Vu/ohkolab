@@ -28,7 +28,7 @@ import {
 } from "@/types/battle";
 import type { TranslationKey } from "@/lib/i18n/en";
 
-/** The stats a PokÃ©mon can raise or lower in battle. */
+/** The stats a Pokémon can raise or lower in battle. */
 const BOOST_STATS: BoostStatId[] = ["atk", "def", "spa", "spd", "spe"];
 
 /** Friendly names for the status conditions, as translation keys. */

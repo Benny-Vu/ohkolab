@@ -1,4 +1,4 @@
-import { useDisplayName } from "@/data/display-names";
+import { useDisplayName } from "@/data";
 import { battleName } from "@/lib/calc/battle";
 import type { CalcState, SideId } from "@/lib/calc/state";
 

@@ -365,7 +365,7 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
         <Popover key={side}>
           <PopoverTrigger asChild>
             <Button type="button" variant="outline" size="sm">
-              {calcSideLabel(t, side)} Â·{" "}
+              {calcSideLabel(t, side)} ·{" "}
               {activeConditionsText(state.fieldSides[side], t, displayName)}
             </Button>
           </PopoverTrigger>

@@ -24,8 +24,12 @@ function renderCalc(state?: unknown) {
   );
 }
 
-async function openResults(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: /Earthquake/ }));
+async function openResults(
+  user: ReturnType<typeof userEvent.setup>,
+  /** The sticky-bar move name, localized: じしん in the Japanese tests. */
+  move: RegExp = /Earthquake/,
+) {
+  await user.click(screen.getByRole("button", { name: move }));
   const dialog = await screen.findByRole("dialog");
   return within(dialog);
 }
@@ -294,18 +298,20 @@ describe("CalcPage in Japanese", () => {
     const user = userEvent.setup();
     renderCalc();
 
-    const dialog = await openResults(user);
-    expect(dialog.getByText("Garchompが先に動きます")).toBeInTheDocument();
+    const dialog = await openResults(user, /じしん/);
+    expect(dialog.getByText("ガブリアスが先に動きます")).toBeInTheDocument();
 
     await user.click(dialog.getByRole("button", { name: "Close" }));
     await user.click(screen.getByRole("radio", { name: "フィールド" }));
-    await user.click(screen.getByRole("switch", { name: "攻撃側 Tailwind" }));
+    await user.click(screen.getByRole("switch", { name: "攻撃側 おいかぜ" }));
     await user.click(screen.getByRole("button", { name: "その他の条件" }));
-    await user.click(screen.getByRole("switch", { name: "Trick Room" }));
+    await user.click(screen.getByRole("switch", { name: "トリックルーム" }));
 
-    const reopened = await openResults(user);
-    expect(reopened.getByText(/Garchomp 338 \(おいかぜ\)/)).toBeInTheDocument();
-    expect(reopened.getByText("Incineroarが先に動きます")).toBeInTheDocument();
+    const reopened = await openResults(user, /じしん/);
+    expect(
+      reopened.getByText(/ガブリアス 338 \(おいかぜ\)/),
+    ).toBeInTheDocument();
+    expect(reopened.getByText("ガオガエンが先に動きます")).toBeInTheDocument();
     expect(reopened.getByText("トリックルーム")).toBeInTheDocument();
   });
 });

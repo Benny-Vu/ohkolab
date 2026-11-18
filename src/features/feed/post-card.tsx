@@ -37,6 +37,7 @@ import { PokemonIcon } from "@/components/pokemon-sprite";
 import { UserAvatar } from "@/components/user-avatar";
 import { DamageMeter } from "@/components/damage-meter";
 import { KoLabel } from "@/components/ko-label";
+import { useDisplayName } from "@/data";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { useTeams } from "@/lib/team";
@@ -87,6 +88,9 @@ export function PostCard({
   const { user } = useAuth();
   const navigate = useNavigate();
   const t = useT();
+  // The calc-result attachment stores English roster names; show the
+  // localized ones, falling back to the stored string.
+  const nameOf = useDisplayName();
   const toggleLike = useToggleLike(post.id);
   const toggleBlock = useToggleBlock(post.author_id);
   const deletePost = useDeletePost();
@@ -289,8 +293,8 @@ export function PostCard({
               <div className="flex items-center gap-2">
                 <p className="min-w-0 truncate text-sm font-medium">
                   {t("postCard.vs", {
-                    a: calcResult.attacker,
-                    b: calcResult.defender,
+                    a: nameOf("species", calcResult.attacker),
+                    b: nameOf("species", calcResult.defender),
                   })}
                 </p>
                 {(() => {
@@ -305,7 +309,9 @@ export function PostCard({
                 })()}
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="text-sm font-medium">{calcResult.move}</span>
+                <span className="text-sm font-medium">
+                  {nameOf("move", calcResult.move)}
+                </span>
                 <span className="font-heading text-lg font-semibold tabular-nums">
                   {calcResult.minPercent === calcResult.maxPercent
                     ? `${calcResult.maxPercent}%`
