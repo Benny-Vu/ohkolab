@@ -7,7 +7,9 @@ import {
   LegalSection,
   LegalText,
 } from "@/features/legal/legal-page";
+import { JaPrivacySections } from "@/features/legal/ja-privacy";
 import { CONTACT_EMAIL, LAST_UPDATED } from "@/features/legal/legal-info";
+import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { imagePostsEnabled } from "@/lib/social";
 
@@ -16,33 +18,116 @@ import { imagePostsEnabled } from "@/lib/social";
 // that isn't happening yet.
 const IMAGES = imagePostsEnabled();
 
-const SECTIONS = [
-  { id: "operator", heading: "Who runs OHKOLab" },
-  { id: "what-this-covers", heading: "What this page covers" },
-  { id: "your-account", heading: "Your account" },
-  { id: "your-public-profile", heading: "Your public profile" },
-  { id: "your-teams", heading: "Your teams" },
-  { id: "community-features", heading: "Community features" },
-  ...(IMAGES ? [{ id: "images", heading: "Images in posts" }] : []),
-  { id: "groups", heading: "Groups" },
-  { id: "notifications", heading: "Notifications" },
-  { id: "telemetry", heading: "Crash reports and usage statistics" },
-  { id: "feedback", heading: "Feedback" },
-  { id: "moderation", heading: "Moderation and appeals" },
-  { id: "in-your-browser", heading: "What stays in your browser" },
-  { id: "third-parties", heading: "Third parties" },
-  { id: "deleting", heading: "Deleting your account" },
-  { id: "changes", heading: "Changes to this policy" },
-  { id: "contact", heading: "Contact" },
+const SECTIONS: Array<{ id: string; heading: string; headingJa: string }> = [
+  {
+    id: "operator",
+    heading: "Who runs OHKOLab",
+    headingJa: "OHKOLab の運営者",
+  },
+  {
+    id: "what-this-covers",
+    heading: "What this page covers",
+    headingJa: "このページの対象",
+  },
+  {
+    id: "your-account",
+    heading: "Your account",
+    headingJa: "あなたのアカウント",
+  },
+  {
+    id: "your-public-profile",
+    heading: "Your public profile",
+    headingJa: "あなたの公開プロフィール",
+  },
+  {
+    id: "your-teams",
+    heading: "Your teams",
+    headingJa: "あなたの構築",
+  },
+  {
+    id: "community-features",
+    heading: "Community features",
+    headingJa: "コミュニティ機能",
+  },
+  ...(IMAGES
+    ? [
+        {
+          id: "images",
+          heading: "Images in posts",
+          headingJa: "投稿内の画像",
+        },
+      ]
+    : []),
+  { id: "groups", heading: "Groups", headingJa: "グループ" },
+  {
+    id: "notifications",
+    heading: "Notifications",
+    headingJa: "通知",
+  },
+  {
+    id: "telemetry",
+    heading: "Crash reports and usage statistics",
+    headingJa: "クラッシュレポートと利用統計",
+  },
+  {
+    id: "feedback",
+    heading: "Feedback",
+    headingJa: "フィードバック",
+  },
+  {
+    id: "moderation",
+    heading: "Moderation and appeals",
+    headingJa: "モデレーションと申し立て",
+  },
+  {
+    id: "in-your-browser",
+    heading: "What stays in your browser",
+    headingJa: "ブラウザー内にとどまるデータ",
+  },
+  {
+    id: "third-parties",
+    heading: "Third parties",
+    headingJa: "第三者",
+  },
+  {
+    id: "deleting",
+    heading: "Deleting your account",
+    headingJa: "アカウントの削除",
+  },
+  {
+    id: "changes",
+    heading: "Changes to this policy",
+    headingJa: "ポリシーの変更",
+  },
+  { id: "contact", heading: "Contact", headingJa: "お問い合わせ" },
 ];
 
 export function PrivacyPage() {
   const t = useT();
+  const [locale] = useLocale();
+  const ja = locale === "ja";
+  const sections = SECTIONS.map(({ id, heading, headingJa }) => ({
+    id,
+    heading: ja ? headingJa : heading,
+  }));
+
+  if (ja) {
+    return (
+      <LegalPage
+        title="プライバシーポリシー"
+        description={`最終更新: ${new Intl.DateTimeFormat("ja", { year: "numeric", month: "long", day: "numeric" }).format(new Date(LAST_UPDATED))}`}
+        sections={sections}
+      >
+        <JaPrivacySections images={IMAGES} />
+      </LegalPage>
+    );
+  }
+
   return (
     <LegalPage
       title="Privacy Policy"
       description={`Last updated ${LAST_UPDATED}`}
-      sections={SECTIONS}
+      sections={sections}
     >
       <div className="space-y-8">
         <LegalSection id="operator" heading="Who runs OHKOLab">

@@ -230,7 +230,7 @@ function FeedbackCard({
                   : "secondary"
             }
           >
-            {t(KIND_LABEL_KEYS[feedback.kind])}
+            {t(KIND_LABEL_KEYS[feedback.kind] ?? "feedback.kindOther")}
           </Badge>
           <CardTitle className="text-base">{t("admin.feedbackCard")}</CardTitle>
         </div>

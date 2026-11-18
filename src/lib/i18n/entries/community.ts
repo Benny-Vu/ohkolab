@@ -18,10 +18,11 @@ export const communityEn = {
   "relative.dateWithYear": "{month} {day}, {year}",
   "profile.joined": "Joined {date}",
 
-  // Legal pages: the Japanese notice shown while only the English versions
-  // are official.
+  // Legal pages: the notice shown above the Japanese versions (the English
+  // versions stay binding). The key is only rendered in the ja locale.
   "legal.japaneseNotice":
-    "この規約・ポリシーは英語版が正式です。日本語版は準備中です。",
+    "日本語版は参考訳です。正式な内容は英語版に準じます。",
+  "legal.onThisPage": "On this page",
 
   // Privacy page: the browser-storage list gains the language choice.
   "privacy.languageChoice": "your language choice",
@@ -545,9 +546,10 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "relative.dateWithYear": "{year}年{month}{day}日",
   "profile.joined": "{date}に参加",
 
-  // 法務ページ：英語版が正式であることの日本語の告知。
+  // 法務ページ：日本語版（参考訳）の上に表示する告知。
   "legal.japaneseNotice":
-    "この規約・ポリシーは英語版が正式です。日本語版は準備中です。",
+    "日本語版は参考訳です。正式な内容は英語版に準じます。",
+  "legal.onThisPage": "このページの内容",
 
   // プライバシー：ブラウザーに保存されるものへ言語設定を追加。
   "privacy.languageChoice": "言語設定",
