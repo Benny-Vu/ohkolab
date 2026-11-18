@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import { calcSideLabel } from "@/features/calc/side-labels";
-import { statLabel } from "@/features/calc/stat-labels";
+import { statLabel } from "@/components/stat-labels";
 import {
   MAX_HP_PERCENT,
   MAX_STAGE,
@@ -27,7 +27,7 @@ import {
 } from "@/types/battle";
 import type { TranslationKey } from "@/lib/i18n/en";
 
-/** The stats a Pokémon can raise or lower in battle. */
+/** The stats a PokÃ©mon can raise or lower in battle. */
 const BOOST_STATS: BoostStatId[] = ["atk", "def", "spa", "spd", "spe"];
 
 /** Friendly names for the status conditions, as translation keys. */

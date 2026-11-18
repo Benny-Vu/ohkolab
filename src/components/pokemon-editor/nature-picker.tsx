@@ -1,12 +1,18 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
   Combobox,
   OptionList,
   type OptionGroup,
 } from "@/components/pokemon-editor/combobox";
-import { getNature, listNatures, type NatureInfo } from "@/data";
-import { STAT_LABELS, type StatId } from "@/types/pokemon";
+import { statLabel, type Translate } from "@/components/stat-labels";
+import {
+  getNature,
+  listNatures,
+  useDisplayName,
+  type NatureInfo,
+} from "@/data";
+import { useT } from "@/lib/i18n/t";
 
 export interface NaturePickerProps {
   /** Selected nature name. */
@@ -20,7 +26,7 @@ export interface NaturePickerProps {
 }
 
 /** Full stat names, so a nature can be found by "attack" or "speed". */
-const STAT_NAMES: Record<StatId, string> = {
+const STAT_NAMES: Record<string, string> = {
   hp: "HP",
   atk: "Attack",
   def: "Defense",
@@ -30,27 +36,12 @@ const STAT_NAMES: Record<StatId, string> = {
 };
 
 /** The effect shown next to a nature, e.g. "+Spe -SpA" or "Neutral". */
-function natureEffect(nature: NatureInfo): string {
-  if (!nature.plus || !nature.minus) return "Neutral";
-  return `+${STAT_LABELS[nature.plus]} -${STAT_LABELS[nature.minus]}`;
+function natureEffect(nature: NatureInfo, t: Translate): string {
+  if (!nature.plus || !nature.minus) return t("pokemonEditor.neutral");
+  return `+${statLabel(t, nature.plus)} -${statLabel(t, nature.minus)}`;
 }
 
 const getName = (nature: NatureInfo) => nature.name;
-const getKeywords = (nature: NatureInfo): readonly string[] =>
-  nature.plus && nature.minus
-    ? [STAT_NAMES[nature.plus], STAT_NAMES[nature.minus]]
-    : ["Neutral"];
-
-function renderNature(nature: NatureInfo) {
-  return (
-    <>
-      <span className="min-w-0 flex-1 truncate">{nature.name}</span>
-      <span className="shrink-0 text-xs text-muted-foreground">
-        {natureEffect(nature)}
-      </span>
-    </>
-  );
-}
 
 function NatureOptions({
   selected,
@@ -59,22 +50,50 @@ function NatureOptions({
   selected: string | null;
   onSelect: (nature: string) => void;
 }) {
+  const t = useT();
+  const display = useDisplayName();
   const groups = useMemo<OptionGroup<NatureInfo>[]>(
     () => [{ options: listNatures() }],
     [],
   );
+  const getKeywords = useCallback(
+    (nature: NatureInfo): readonly string[] =>
+      nature.plus && nature.minus
+        ? [STAT_NAMES[nature.plus], STAT_NAMES[nature.minus]]
+        : ["Neutral"],
+    [],
+  );
+  const getAltNames = useCallback(
+    (nature: NatureInfo) => [display("nature", nature.name)],
+    [display],
+  );
+  const renderNature = useCallback(
+    (nature: NatureInfo) => (
+      <>
+        <span className="min-w-0 flex-1 truncate">
+          {display("nature", nature.name)}
+        </span>
+        <span className="shrink-0 text-xs text-muted-foreground">
+          {natureEffect(nature, t)}
+        </span>
+      </>
+    ),
+    [display, t],
+  );
 
   return (
     <OptionList
-      label="Search natures"
-      placeholder="Search natures or stats…"
+      label={t("pokemonEditor.searchNatures")}
+      placeholder={t("pokemonEditor.searchNaturesPlaceholder")}
       groups={groups}
       getName={getName}
       getKeywords={getKeywords}
+      getAltNames={getAltNames}
+      getLabel={(nature) => display("nature", nature.name)}
       renderOption={renderNature}
       selected={selected}
       onSelect={onSelect}
-      emptyText="No nature found."
+      emptyText={t("pokemonEditor.noNature")}
     />
   );
 }
@@ -85,15 +104,18 @@ export function NaturePicker({
   onChange,
   className,
   id,
-  label = "Nature",
+  label,
 }: NaturePickerProps) {
+  const t = useT();
+  const display = useDisplayName();
   const known = getNature(value);
-  const effect = known ? natureEffect(known) : null;
+  const effect = known ? natureEffect(known, t) : null;
+  const chosenLabel = label ?? t("pokemonEditor.nature");
 
   return (
     <Combobox
       id={id}
-      label={label}
+      label={chosenLabel}
       className={className}
       content={(close) => (
         <NatureOptions
@@ -105,7 +127,9 @@ export function NaturePicker({
         />
       )}
     >
-      <span className="min-w-0 flex-1 truncate">{known?.name ?? value}</span>
+      <span className="min-w-0 flex-1 truncate">
+        {known ? display("nature", known.name) : value}
+      </span>
       {effect ? (
         <span className="shrink-0 text-xs text-muted-foreground">{effect}</span>
       ) : null}

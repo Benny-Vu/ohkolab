@@ -30,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FormatToggle } from "@/features/metagame/format-toggle";
-import { statLabel } from "@/features/calc/stat-labels";
+import { statLabel } from "@/components/stat-labels";
 import {
   useMetagameIndex,
   useMetagameSnapshot,

@@ -12,7 +12,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import { calcSideLabel } from "@/features/calc/side-labels";
-import type { Translate } from "@/features/calc/stat-labels";
+import type { Translate } from "@/components/stat-labels";
 import type { TranslationKey } from "@/lib/i18n/en";
 import { useT } from "@/lib/i18n/t";
 import {
@@ -316,7 +316,7 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
         <Popover key={side}>
           <PopoverTrigger asChild>
             <Button type="button" variant="outline" size="sm">
-              {calcSideLabel(t, side)} ·{" "}
+              {calcSideLabel(t, side)} Â·{" "}
               {activeConditionsText(state.fieldSides[side], t)}
             </Button>
           </PopoverTrigger>

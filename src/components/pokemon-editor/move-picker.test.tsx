@@ -69,7 +69,7 @@ describe("MovePicker", () => {
     const onChange = vi.fn();
     render(<MovePicker value="Earthquake" onChange={onChange} />);
 
-    await user.click(screen.getByRole("button", { name: "Clear move" }));
+    await user.click(screen.getByRole("button", { name: "Clear Move" }));
 
     expect(onChange).toHaveBeenLastCalledWith(null);
   });

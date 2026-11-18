@@ -1,5 +1,5 @@
 import type { KoLabelResult } from "@/components/ko-label";
-import type { Translate } from "@/features/calc/stat-labels";
+import type { Translate } from "@/components/stat-labels";
 
 /**
  * Localizes the calculator's own fallback summaries ("Not a KO", ...). KO

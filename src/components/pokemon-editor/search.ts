@@ -1,5 +1,7 @@
 /** Text search used by the pickers. Pure logic, no React. */
 
+import { normalizeForNameSearch } from "@/data";
+
 /** Lower-cases and drops accents and everything but letters and digits. */
 export function normalizeSearch(text: string): string {
   return text
@@ -16,29 +18,48 @@ const MIN_KEYWORD_QUERY = 3;
  * later word starts with it, 2 when it appears anywhere in the name, 3 when
  * only a keyword (a type, a description...) contains it, -1 for no match.
  * An empty query matches everything with rank 0.
+ *
+ * `altNames` are the same entry's names in other languages (the Japanese
+ * names). They only match queries written in that script — the normalizer
+ * keeps kana and kanji, which Latin queries never produce — and rank like
+ * the English name: prefix 0, substring 2.
  */
 export function matchRank(
   name: string,
   query: string,
   keywords: readonly string[] = [],
+  altNames: readonly string[] = [],
 ): number {
   const needle = normalizeSearch(query);
-  if (needle === "") return 0;
+  // A kana/kanji-only query folds to an empty Latin needle but must not
+  // match everything: it is matched against the alt names below.
+  const foldedNeedle = normalizeForNameSearch(query);
+  if (needle === "" && foldedNeedle === "") return 0;
 
-  if (normalizeSearch(name).startsWith(needle)) return 0;
-  const words = name.split(/[\s-]+/);
-  for (let index = 1; index < words.length; index++) {
-    if (normalizeSearch(words.slice(index).join(" ")).startsWith(needle)) {
-      return 1;
+  if (needle !== "") {
+    if (normalizeSearch(name).startsWith(needle)) return 0;
+    const words = name.split(/[\s-]+/);
+    for (let index = 1; index < words.length; index++) {
+      if (normalizeSearch(words.slice(index).join(" ")).startsWith(needle)) {
+        return 1;
+      }
+    }
+    if (normalizeSearch(name).includes(needle)) return 2;
+
+    if (needle.length >= MIN_KEYWORD_QUERY) {
+      for (const keyword of keywords) {
+        // Some data entries lack a keyword at runtime (a move without a type).
+        if (typeof keyword !== "string") continue;
+        if (normalizeSearch(keyword).includes(needle)) return 3;
+      }
     }
   }
-  if (normalizeSearch(name).includes(needle)) return 2;
 
-  if (needle.length >= MIN_KEYWORD_QUERY) {
-    for (const keyword of keywords) {
-      // Some data entries lack a keyword at runtime (a move without a type).
-      if (typeof keyword !== "string") continue;
-      if (normalizeSearch(keyword).includes(needle)) return 3;
+  if (foldedNeedle !== "") {
+    for (const alt of altNames) {
+      const folded = normalizeForNameSearch(alt);
+      if (folded.startsWith(foldedNeedle)) return 0;
+      if (folded.includes(foldedNeedle)) return 2;
     }
   }
   return -1;
@@ -53,12 +74,20 @@ export function searchOptions<T>(
   query: string,
   getName: (option: T) => string,
   getKeywords?: (option: T) => readonly string[],
+  getAltNames?: (option: T) => readonly string[],
 ): readonly T[] {
-  if (normalizeSearch(query) === "") return options;
+  if (normalizeSearch(query) === "" && normalizeForNameSearch(query) === "") {
+    return options;
+  }
 
   const ranked: { option: T; rank: number }[] = [];
   for (const option of options) {
-    const rank = matchRank(getName(option), query, getKeywords?.(option));
+    const rank = matchRank(
+      getName(option),
+      query,
+      getKeywords?.(option),
+      getAltNames?.(option) ?? [],
+    );
     if (rank >= 0) ranked.push({ option, rank });
   }
   // Array.prototype.sort is stable, so equal ranks stay in list order.

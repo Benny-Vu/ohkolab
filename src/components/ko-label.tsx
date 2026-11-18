@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/i18n/en";
+import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 
 export type KoLabelResult =
@@ -17,6 +19,15 @@ const TEXT_CLASSES: Partial<Record<KoLabelResult, string>> = {
   "No damage": "text-damage-none",
 };
 
+const LABEL_KEYS: Record<KoLabelResult, TranslationKey> = {
+  OHKO: "calc.koOhko",
+  "2HKO": "calc.ko2hko",
+  "3HKO": "calc.ko3hko",
+  "4HKO": "calc.ko4hko",
+  "GUARANTEED 2HKO": "calc.koGuaranteed2hko",
+  "No damage": "calc.koNoDamage",
+};
+
 interface KoLabelProps {
   result: KoLabelResult;
   className?: string;
@@ -27,6 +38,7 @@ interface KoLabelProps {
  * weaker results are coloured text only.
  */
 export function KoLabel({ result, className }: KoLabelProps) {
+  const t = useT();
   const filled = FILLED.includes(result);
 
   return (
@@ -39,7 +51,7 @@ export function KoLabel({ result, className }: KoLabelProps) {
         className,
       )}
     >
-      {result}
+      {t(LABEL_KEYS[result])}
     </span>
   );
 }

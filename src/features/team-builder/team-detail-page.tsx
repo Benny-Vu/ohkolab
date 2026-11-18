@@ -65,7 +65,7 @@ import {
 import { calcStats, createDefaultSet, validateSet } from "@/data";
 import { SpeedTiers } from "@/features/team-builder/speed-tiers";
 import { TypeHeatMap } from "@/features/team-builder/type-heat-map";
-import { statLabel } from "@/features/calc/stat-labels";
+import { statLabel } from "@/components/stat-labels";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import type { TranslationKey } from "@/lib/i18n/en";
@@ -483,8 +483,8 @@ export function TeamDetailPage() {
             const finalStats = calcStats(member);
             const meta = [member.item, member.ability]
               .filter(Boolean)
-              .join(" · ");
-            const moves = member.moves.filter(Boolean).join(" · ");
+              .join(" Â· ");
+            const moves = member.moves.filter(Boolean).join(" Â· ");
             return (
               <Card key={index} size="sm">
                 <CardContent className="flex flex-col gap-2">

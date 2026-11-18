@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMove } from "@/data";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { Panel, PanelTitle } from "@/features/calc/panel";
-import type { Translate } from "@/features/calc/stat-labels";
+import type { Translate } from "@/components/stat-labels";
 import { useT } from "@/lib/i18n/t";
 import type { TranslationKey } from "@/lib/i18n/en";
 import { sideNames } from "@/lib/calc/battle";

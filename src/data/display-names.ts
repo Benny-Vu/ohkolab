@@ -117,7 +117,7 @@ export function useDisplayName(): (kind: NameKind, id: string) => string {
  * voiced kana into base + voiced mark, so both sides must go through
  * this exact same pipeline for substrings to line up.
  */
-function normalizeForNameSearch(text: string): string {
+export function normalizeForNameSearch(text: string): string {
   return text
     .normalize("NFKC")
     .normalize("NFD")

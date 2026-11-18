@@ -1,6 +1,6 @@
 import type { SideId } from "@/lib/calc/state";
 import type { TranslationKey } from "@/lib/i18n/en";
-import type { Translate } from "@/features/calc/stat-labels";
+import type { Translate } from "@/components/stat-labels";
 
 /** The calculator's own names for the two sides, as translation keys. */
 export const CALC_SIDE_LABEL_KEYS: Record<SideId, TranslationKey> = {

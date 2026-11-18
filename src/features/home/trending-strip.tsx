@@ -4,6 +4,7 @@ import { BigNumber } from "@/components/big-number";
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { StatBar } from "@/components/stat-bar";
 import { useMetagameSnapshot } from "@/features/metagame/use-metagame";
+import { useDisplayName } from "@/data";
 import { formatPercent } from "@/lib/i18n/format";
 import { useT } from "@/lib/i18n/t";
 
@@ -13,6 +14,7 @@ import { useT } from "@/lib/i18n/t";
  */
 export function TrendingStrip() {
   const t = useT();
+  const display = useDisplayName();
   const snapshot = useMetagameSnapshot("doubles", null);
   const top = (snapshot.data?.pokemon ?? [])
     .filter((entry) => entry.usage !== null)
@@ -39,7 +41,7 @@ export function TrendingStrip() {
               >
                 <PokemonIcon species={entry.species} className="size-8" />
                 <span className="truncate text-xs font-medium">
-                  {entry.species}
+                  {display("species", entry.species)}
                 </span>
                 <BigNumber size="md" className="text-lg leading-none">
                   {formatPercent(percent / 100)}

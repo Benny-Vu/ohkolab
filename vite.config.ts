@@ -133,6 +133,13 @@ export default defineConfig(({ mode }) => {
                 test: /[\\/]node_modules[\\/]@pkmn[\\/]img[\\/]|[\\/]src[\\/]data[\\/]sprites\.ts$/,
                 includeDependenciesRecursively: false,
               },
+              // The lazily imported Japanese names: keep them out of
+              // pokemon-data so English users never download them.
+              {
+                name: "ja-names",
+                test: /[\\/]src[\\/]data[\\/]i18n[\\/]ja-names\.json$/,
+                includeDependenciesRecursively: false,
+              },
               // Everything Pokémon: the dex, the calc and our src/data layer.
               // Only routes that actually need Pokémon data load this chunk.
               // Dependencies are NOT pulled in recursively: src/data imports

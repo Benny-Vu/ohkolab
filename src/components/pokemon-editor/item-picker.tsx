@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
   Combobox,
@@ -6,7 +6,14 @@ import {
   type OptionGroup,
 } from "@/components/pokemon-editor/combobox";
 import { ItemIcon } from "@/components/pokemon-sprite";
-import { getItem, listItems, listItemsFor, type ItemInfo } from "@/data";
+import {
+  getItem,
+  listItems,
+  listItemsFor,
+  useDisplayName,
+  type ItemInfo,
+} from "@/data";
+import { useT } from "@/lib/i18n/t";
 
 export interface ItemPickerProps {
   /** Held item name, or null for no item. */
@@ -28,24 +35,6 @@ export interface ItemPickerProps {
 const getName = (item: ItemInfo) => item.name;
 const getKeywords = (item: ItemInfo) => [item.shortDesc];
 
-function renderItem(item: ItemInfo) {
-  return (
-    <>
-      <span aria-hidden className="flex shrink-0 self-start">
-        <ItemIcon item={item.name} />
-      </span>
-      <span className="grid min-w-0 flex-1 gap-0.5">
-        <span className="truncate">{item.name}</span>
-        {item.shortDesc ? (
-          <span className="line-clamp-2 text-xs text-muted-foreground">
-            {item.shortDesc}
-          </span>
-        ) : null}
-      </span>
-    </>
-  );
-}
-
 function ItemOptions({
   selected,
   species,
@@ -55,33 +44,59 @@ function ItemOptions({
   species: string | undefined;
   onSelect: (item: string | null) => void;
 }) {
+  const t = useT();
+  const display = useDisplayName();
   const groups = useMemo<OptionGroup<ItemInfo>[]>(() => {
     if (!species) return [{ options: listItems() }];
     const items = listItemsFor(species);
     const stones = items.filter((item) => item.megaStoneFor !== null);
     if (stones.length === 0) return [{ options: items }];
     return [
-      { heading: "Mega Stones", options: stones },
+      { heading: t("pokemonEditor.megaStones"), options: stones },
       {
-        heading: "Items",
+        heading: t("pokemonEditor.items"),
         options: items.filter((item) => item.megaStoneFor === null),
       },
     ];
-  }, [species]);
+  }, [species, t]);
+  const getAltNames = useCallback(
+    (item: ItemInfo) => [display("item", item.name)],
+    [display],
+  );
+  const renderItem = useCallback(
+    (item: ItemInfo) => (
+      <>
+        <span aria-hidden className="flex shrink-0 self-start">
+          <ItemIcon item={item.name} />
+        </span>
+        <span className="grid min-w-0 flex-1 gap-0.5">
+          <span className="truncate">{display("item", item.name)}</span>
+          {item.shortDesc ? (
+            <span className="line-clamp-2 text-xs text-muted-foreground">
+              {item.shortDesc}
+            </span>
+          ) : null}
+        </span>
+      </>
+    ),
+    [display],
+  );
 
   return (
     <OptionList
-      label="Search items"
-      placeholder="Search items or effects…"
+      label={t("pokemonEditor.searchItems")}
+      placeholder={t("pokemonEditor.searchItemsPlaceholder")}
       groups={groups}
       getName={getName}
       getKeywords={getKeywords}
+      getAltNames={getAltNames}
+      getLabel={(item) => display("item", item.name)}
       renderOption={renderItem}
       selected={selected}
       onSelect={onSelect}
-      noneLabel="None"
+      noneLabel={t("pokemonEditor.none")}
       onSelectNone={() => onSelect(null)}
-      emptyText="No item found."
+      emptyText={t("pokemonEditor.noItem")}
     />
   );
 }
@@ -91,17 +106,21 @@ export function ItemPicker({
   value,
   onChange,
   species,
-  placeholder = "None",
+  placeholder,
   className,
   id,
-  label = "Item",
+  label,
 }: ItemPickerProps) {
+  const t = useT();
+  const display = useDisplayName();
   const known = value ? getItem(value) : undefined;
+  const chosenLabel = label ?? t("pokemonEditor.item");
+  const chosenPlaceholder = placeholder ?? t("pokemonEditor.none");
 
   return (
     <Combobox
       id={id}
-      label={label}
+      label={chosenLabel}
       className={className}
       content={(close) => (
         <ItemOptions
@@ -121,10 +140,14 @@ export function ItemPicker({
               <ItemIcon item={known.name} />
             </span>
           ) : null}
-          <span className="truncate">{known?.name ?? value}</span>
+          <span className="truncate">
+            {known ? display("item", known.name) : value}
+          </span>
         </>
       ) : (
-        <span className="truncate text-muted-foreground">{placeholder}</span>
+        <span className="truncate text-muted-foreground">
+          {chosenPlaceholder}
+        </span>
       )}
     </Combobox>
   );

@@ -8,6 +8,7 @@ export {
   displayName,
   loadJapaneseNames,
   matchesDisplayName,
+  normalizeForNameSearch,
   useDisplayName,
   useJapaneseNames,
   type JapaneseNames,
