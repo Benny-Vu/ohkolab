@@ -468,7 +468,7 @@ export function MetagamePage() {
                             value={(pokemon.usage ?? 0) * 100}
                             max={100}
                             tone="accent"
-                            className="w-16 sm:w-24"
+                            className="hidden w-16 sm:block sm:w-24"
                           />
                           <span className="font-heading text-sm font-semibold tabular-nums">
                             {formatShare(pokemon.usage)}
