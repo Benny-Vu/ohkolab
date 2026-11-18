@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { track, trackPageView } from "@/lib/telemetry/analytics";
 import {
@@ -39,6 +39,10 @@ describe("track", () => {
     vi.clearAllMocks();
     localStorage.clear();
     overrideTelemetryConfig(null);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("does nothing when analytics is off", () => {
@@ -82,6 +86,35 @@ describe("track", () => {
       app_version: "1.2.3",
       platform: "web",
       screen_size: expect.any(String),
+    });
+  });
+
+  it("reports the Android platform inside the native app shell", async () => {
+    vi.stubGlobal("Capacitor", {
+      getPlatform: () => "android",
+      isNativePlatform: () => true,
+    });
+    overrideTelemetryConfig(ENABLED);
+    track("theme_changed", { theme: "dark" });
+    await vi.waitFor(() => {
+      expect(posthogMock.capture).toHaveBeenCalled();
+    });
+    const [, properties] = posthogMock.capture.mock.calls[0] ?? [];
+    expect(properties).toMatchObject({
+      platform: "android",
+    });
+  });
+
+  it("falls back to web when the bridge is only half there", async () => {
+    vi.stubGlobal("Capacitor", { isNativePlatform: () => true });
+    overrideTelemetryConfig(ENABLED);
+    track("theme_changed", { theme: "dark" });
+    await vi.waitFor(() => {
+      expect(posthogMock.capture).toHaveBeenCalled();
+    });
+    const [, properties] = posthogMock.capture.mock.calls[0] ?? [];
+    expect(properties).toMatchObject({
+      platform: "web",
     });
   });
 });
