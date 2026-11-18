@@ -3,6 +3,7 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { Picker, type PickerOption } from "@/components/picker";
 import { SegmentedControl } from "@/components/segmented-control";
+import { useDisplayName, type NameKind } from "@/data/display-names";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -69,33 +70,40 @@ function terrainOptions(t: Translate): PickerOption[] {
   ];
 }
 
+/** The display-name function `useDisplayName` returns. */
+type DisplayName = (kind: NameKind, id: string) => string;
+
 /**
- * The screens, support and hazards every side can carry. These labels are
- * move names (Reflect, Stealth Rock, ...) and stay English until the
- * ja-names stream's `displayName` lands.
+ * The screens, support and hazards every side can carry. Each label is a
+ * roster name: a move for the screens and hazards, an ability for
+ * Friend Guard, so the flags render through `displayName`.
  */
-const SIDE_FLAGS: { flag: SideFlag; label: string }[] = [
-  { flag: "reflect", label: "Reflect" },
-  { flag: "lightScreen", label: "Light Screen" },
-  { flag: "auroraVeil", label: "Aurora Veil" },
-  { flag: "tailwind", label: "Tailwind" },
-  { flag: "stealthRock", label: "Stealth Rock" },
+const SIDE_FLAGS: { flag: SideFlag; label: string; kind: NameKind }[] = [
+  { flag: "reflect", label: "Reflect", kind: "move" },
+  { flag: "lightScreen", label: "Light Screen", kind: "move" },
+  { flag: "auroraVeil", label: "Aurora Veil", kind: "move" },
+  { flag: "tailwind", label: "Tailwind", kind: "move" },
+  { flag: "stealthRock", label: "Stealth Rock", kind: "move" },
 ];
 
 /** Doubles-only conditions; they do nothing in singles. */
-const DOUBLES_FLAGS: { flag: SideFlag; label: string }[] = [
-  { flag: "helpingHand", label: "Helping Hand" },
-  { flag: "friendGuard", label: "Friend Guard" },
+const DOUBLES_FLAGS: { flag: SideFlag; label: string; kind: NameKind }[] = [
+  { flag: "helpingHand", label: "Helping Hand", kind: "move" },
+  { flag: "friendGuard", label: "Friend Guard", kind: "ability" },
 ];
 
 const ALL_SIDE_FLAGS = [...SIDE_FLAGS, ...DOUBLES_FLAGS];
 
 /** Short summary of a side's active conditions, for the field bar buttons. */
-function activeConditionsText(conditions: SideState, t: Translate): string {
+function activeConditionsText(
+  conditions: SideState,
+  t: Translate,
+  displayName: DisplayName,
+): string {
   const active = ALL_SIDE_FLAGS.filter(({ flag }) => conditions[flag]).map(
-    ({ label }) => label,
+    ({ label, kind }) => displayName(kind, label),
   );
-  if (conditions.spikes > 0) active.push("Spikes");
+  if (conditions.spikes > 0) active.push(displayName("move", "Spikes"));
   return active.length > 0 ? active.join(", ") : t("calc.noConditions");
 }
 
@@ -164,7 +172,7 @@ function TerrainPicker({ state, dispatch, className }: FieldPickerProps) {
 interface ConditionRowsProps {
   side: SideId;
   conditions: SideState;
-  flags: { flag: SideFlag; label: string }[];
+  flags: { flag: SideFlag; label: string; kind: NameKind }[];
   disabled?: boolean;
   dispatch: Dispatch<CalcAction>;
 }
@@ -178,28 +186,32 @@ function ConditionRows({
   dispatch,
 }: ConditionRowsProps) {
   const t = useT();
+  const displayName = useDisplayName();
   const label = calcSideLabel(t, side);
 
   return (
     <>
-      {flags.map(({ flag, label: flagLabel }) => (
-        <div key={flag} className="flex items-center justify-between gap-2">
-          <span
-            className={cn("text-sm", disabled && "text-muted-foreground/60")}
-          >
-            {flagLabel}
-          </span>
-          <Switch
-            size="sm"
-            checked={conditions[flag]}
-            disabled={disabled}
-            onCheckedChange={(on) =>
-              dispatch({ type: "setSideFlag", side, flag, on })
-            }
-            aria-label={`${label} ${flagLabel}`}
-          />
-        </div>
-      ))}
+      {flags.map(({ flag, label: flagLabel, kind }) => {
+        const flagText = displayName(kind, flagLabel);
+        return (
+          <div key={flag} className="flex items-center justify-between gap-2">
+            <span
+              className={cn("text-sm", disabled && "text-muted-foreground/60")}
+            >
+              {flagText}
+            </span>
+            <Switch
+              size="sm"
+              checked={conditions[flag]}
+              disabled={disabled}
+              onCheckedChange={(on) =>
+                dispatch({ type: "setSideFlag", side, flag, on })
+              }
+              aria-label={`${label} ${flagText}`}
+            />
+          </div>
+        );
+      })}
     </>
   );
 }
@@ -213,11 +225,13 @@ interface SpikesControlProps {
 /** Layer picker for one side's Spikes. */
 function SpikesControl({ side, conditions, dispatch }: SpikesControlProps) {
   const t = useT();
+  const displayName = useDisplayName();
   const label = calcSideLabel(t, side);
+  const spikesLabel = displayName("move", "Spikes");
 
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-sm">Spikes</span>
+      <span className="text-sm">{spikesLabel}</span>
       <div className="flex items-center gap-1">
         {[0, 1, 2, 3].map((layers) => (
           <button
@@ -230,7 +244,7 @@ function SpikesControl({ side, conditions, dispatch }: SpikesControlProps) {
                 : "border-input bg-transparent text-muted-foreground",
             )}
             aria-pressed={conditions.spikes === layers}
-            aria-label={`${label} Spikes ${layers}`}
+            aria-label={`${label} ${spikesLabel} ${layers}`}
             onClick={() => dispatch({ type: "setSpikes", side, layers })}
           >
             {layers}
@@ -297,6 +311,40 @@ function DoublesConditions({
   );
 }
 
+/** The Gravity and Trick Room switches, shared by the bar and the panel. */
+function GravityAndTrickRoom({
+  state,
+  dispatch,
+}: {
+  state: CalcState;
+  dispatch: Dispatch<CalcAction>;
+}) {
+  const displayName = useDisplayName();
+  const gravity = displayName("move", "Gravity");
+  const trickRoom = displayName("move", "Trick Room");
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm">{gravity}</span>
+        <Switch
+          checked={state.gravity}
+          onCheckedChange={(on) => dispatch({ type: "setGravity", on })}
+          aria-label={gravity}
+        />
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm">{trickRoom}</span>
+        <Switch
+          checked={state.trickRoom}
+          onCheckedChange={(on) => dispatch({ type: "setTrickRoom", on })}
+          aria-label={trickRoom}
+        />
+      </div>
+    </>
+  );
+}
+
 interface FieldBarProps {
   state: CalcState;
   dispatch: Dispatch<CalcAction>;
@@ -306,6 +354,7 @@ interface FieldBarProps {
 export function FieldBar({ state, dispatch }: FieldBarProps) {
   const [format] = useBattleFormat();
   const t = useT();
+  const displayName = useDisplayName();
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -317,7 +366,7 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
           <PopoverTrigger asChild>
             <Button type="button" variant="outline" size="sm">
               {calcSideLabel(t, side)} Â·{" "}
-              {activeConditionsText(state.fieldSides[side], t)}
+              {activeConditionsText(state.fieldSides[side], t, displayName)}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-64 p-3">
@@ -337,22 +386,7 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
         </PopoverTrigger>
         <PopoverContent align="start" className="w-72 p-3">
           <div className="grid gap-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm">Gravity</span>
-              <Switch
-                checked={state.gravity}
-                onCheckedChange={(on) => dispatch({ type: "setGravity", on })}
-                aria-label="Gravity"
-              />
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm">Trick Room</span>
-              <Switch
-                checked={state.trickRoom}
-                onCheckedChange={(on) => dispatch({ type: "setTrickRoom", on })}
-                aria-label="Trick Room"
-              />
-            </div>
+            <GravityAndTrickRoom state={state} dispatch={dispatch} />
             {SIDE_IDS.map((side) => (
               <DoublesConditions
                 key={side}
@@ -444,24 +478,7 @@ export function FieldPanel({ state, dispatch }: FieldPanelProps) {
           {t("calc.moreConditions")}
         </Button>
         {showRare ? (
-          <>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm">Gravity</span>
-              <Switch
-                checked={state.gravity}
-                onCheckedChange={(on) => dispatch({ type: "setGravity", on })}
-                aria-label="Gravity"
-              />
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm">Trick Room</span>
-              <Switch
-                checked={state.trickRoom}
-                onCheckedChange={(on) => dispatch({ type: "setTrickRoom", on })}
-                aria-label="Trick Room"
-              />
-            </div>
-          </>
+          <GravityAndTrickRoom state={state} dispatch={dispatch} />
         ) : null}
       </div>
     </Panel>

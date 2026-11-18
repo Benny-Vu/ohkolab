@@ -63,6 +63,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { calcStats, createDefaultSet, validateSet } from "@/data";
+import { useDisplayName } from "@/data/display-names";
 import { SpeedTiers } from "@/features/team-builder/speed-tiers";
 import { TypeHeatMap } from "@/features/team-builder/type-heat-map";
 import { statLabel } from "@/components/stat-labels";
@@ -94,6 +95,7 @@ export function TeamDetailPage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
   const t = useT();
+  const displayName = useDisplayName();
   const {
     teams,
     rename,
@@ -478,13 +480,19 @@ export function TeamDetailPage() {
                 </button>
               );
             }
-            const label = memberLabel(member);
+            const label = displayName("species", memberLabel(member));
             const types = battleTypes(member) ?? [];
             const finalStats = calcStats(member);
-            const meta = [member.item, member.ability]
+            const meta = [
+              member.item ? displayName("item", member.item) : null,
+              member.ability ? displayName("ability", member.ability) : null,
+            ]
               .filter(Boolean)
               .join(" Â· ");
-            const moves = member.moves.filter(Boolean).join(" Â· ");
+            const moves = member.moves
+              .filter((move): move is string => Boolean(move))
+              .map((move) => displayName("move", move))
+              .join(" Â· ");
             return (
               <Card key={index} size="sm">
                 <CardContent className="flex flex-col gap-2">
