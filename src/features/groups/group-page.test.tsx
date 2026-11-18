@@ -223,6 +223,18 @@ describe("GroupPage", () => {
     expect(screen.getByText(/3 members/i)).toBeInTheDocument();
   });
 
+  it("keeps the page frame with skeletons while the group loads", () => {
+    queriesMocks.useGroupBySlug.mockReturnValue(
+      queryResult(undefined, { isPending: true }),
+    );
+    renderGroupPage();
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Group" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Loading group")).toBeInTheDocument();
+  });
+
   it("shows the feed with the composer for active members", () => {
     queriesMocks.useGroupFeed.mockReturnValue(
       infiniteResult([[postRow({ body: "Hello group" })]]),
