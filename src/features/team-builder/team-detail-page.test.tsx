@@ -9,6 +9,7 @@ import { TeamDetailPage } from "@/features/team-builder/team-detail-page";
 import { AuthContext, GUEST_AUTH } from "@/lib/auth/use-auth";
 import type { AuthContextValue } from "@/lib/auth/types";
 import type { TeamRow } from "@/lib/database.types";
+import { createDefaultSet } from "@/data";
 import { setTeamsSyncClient } from "@/lib/team/active-store";
 import { createTeam } from "@/lib/team/team-ops";
 import { localTeamStore } from "@/lib/team/team-store";
@@ -185,10 +186,52 @@ describe("TeamDetailPage", () => {
     const user = userEvent.setup();
     const router = renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
 
-    await user.click(screen.getByRole("button", { name: "Delete team" }));
+    await user.click(screen.getByRole("button", { name: "More actions" }));
+    await user.click(screen.getByRole("menuitem", { name: "Delete team" }));
     expect(router.state.location.pathname).toBe("/teams");
 
     await user.click(await screen.findByRole("button", { name: "Undo" }));
     expect(await screen.findByText("Vaporize")).toBeTruthy();
+  });
+
+  it("renames a team inline from the header", async () => {
+    const team = createTeam({ format: "doubles", name: "Old name" });
+    localTeamStore.save(team);
+    const user = userEvent.setup();
+    renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
+
+    await user.click(screen.getByRole("button", { name: "Rename team" }));
+    const input = screen.getByLabelText("Team name");
+    await user.clear(input);
+    await user.type(input, "Renamed{Enter}");
+
+    expect(
+      await screen.findByRole("heading", { name: "Renamed" }),
+    ).toBeTruthy();
+  });
+
+  it("shows labelled actions on desktop", () => {
+    const team = createTeam({ format: "doubles" });
+    localTeamStore.save(team);
+    renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
+
+    expect(screen.getByRole("button", { name: "Export" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Duplicate" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "More actions" })).toBeTruthy();
+  });
+
+  it("summarises shared weaknesses in words", () => {
+    const team = createTeam({
+      format: "doubles",
+      members: [
+        createDefaultSet("Garchomp"),
+        createDefaultSet("Dragonite"),
+        createDefaultSet("Salamence"),
+      ],
+    });
+    localTeamStore.save(team);
+    renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
+
+    expect(screen.getByText("3 Pokémon weak to Ice, no resist")).toBeTruthy();
   });
 });

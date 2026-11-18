@@ -85,6 +85,7 @@ describe("toFieldState", () => {
     state = calcReducer(state, { type: "setWeather", weather: "Rain" });
     state = calcReducer(state, { type: "setTerrain", terrain: "Misty" });
     state = calcReducer(state, { type: "setGravity", on: true });
+    state = calcReducer(state, { type: "setTrickRoom", on: true });
     state = calcReducer(state, {
       type: "setSideFlag",
       side: "p1",
@@ -114,6 +115,7 @@ describe("toFieldState", () => {
       weather: "Rain",
       terrain: "Misty",
       gravity: true,
+      trickRoom: true,
     });
     expect(forward.attackerSide).toEqual({ ...emptySide(), helpingHand: true });
     expect(forward.defenderSide).toEqual({

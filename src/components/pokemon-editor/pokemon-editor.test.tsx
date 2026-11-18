@@ -9,12 +9,16 @@ import type { PokemonSet } from "@/types/pokemon";
 
 function Harness({
   species = "Garchomp",
+  initial,
   onChange,
 }: {
   species?: string;
+  initial?: PokemonSet;
   onChange: (set: PokemonSet) => void;
 }) {
-  const [value, setValue] = useState(() => createDefaultSet(species));
+  const [value, setValue] = useState(
+    () => initial ?? createDefaultSet(species),
+  );
 
   return (
     <PokemonEditor
@@ -27,9 +31,9 @@ function Harness({
   );
 }
 
-function renderEditor(species?: string) {
+function renderEditor(species?: string, initial?: PokemonSet) {
   const onChange = vi.fn();
-  render(<Harness species={species} onChange={onChange} />);
+  render(<Harness species={species} initial={initial} onChange={onChange} />);
 
   return onChange;
 }
@@ -101,23 +105,39 @@ describe("PokemonEditor", () => {
 
   it("clamps Stat Points to the per-stat and total limits", async () => {
     const user = userEvent.setup();
-    const onChange = renderEditor();
+    const onChange = renderEditor(undefined, {
+      ...createDefaultSet("Garchomp"),
+      statPoints: { hp: 2, atk: 32, def: 0, spa: 0, spd: 0, spe: 32 },
+    });
 
-    await user.type(screen.getByLabelText("HP"), "40");
-    expect(screen.getByLabelText("HP")).toHaveValue(32);
-    expect(screen.getByText("34 of 66 remaining")).toBeInTheDocument();
+    // The set spends all 66 points, so every increase is disabled.
+    expect(screen.getByRole("button", { name: "Increase HP" })).toBeDisabled();
+    expect(screen.getByText("66 / 66")).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("Atk"), "40");
-    expect(screen.getByLabelText("Atk")).toHaveValue(32);
-    expect(screen.getByText("2 of 66 remaining")).toBeInTheDocument();
-
-    await user.type(screen.getByLabelText("Def"), "5");
-    expect(screen.getByLabelText("Def")).toHaveValue(2);
-    expect(screen.getByText("0 of 66 remaining")).toBeInTheDocument();
-
+    await user.click(screen.getByRole("button", { name: "Decrease Atk" }));
     expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        statPoints: { hp: 32, atk: 32, def: 2, spa: 0, spd: 0, spe: 0 },
+        statPoints: { hp: 2, atk: 31, def: 0, spa: 0, spd: 0, spe: 32 },
+      }),
+    );
+    expect(screen.getByText("65 / 66")).toBeInTheDocument();
+    expect(screen.getByText("1 left")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Increase HP" }));
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        statPoints: { hp: 3, atk: 31, def: 0, spa: 0, spd: 0, spe: 32 },
+      }),
+    );
+    expect(screen.queryByText(/left/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Increase HP" })).toBeDisabled();
+
+    // Per-stat cap: Atk sits at 31 with 1 point left, but the cap is 32.
+    await user.click(screen.getByRole("button", { name: "Decrease Spe" }));
+    await user.click(screen.getByRole("button", { name: "Increase Atk" }));
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        statPoints: { hp: 3, atk: 32, def: 0, spa: 0, spd: 0, spe: 31 },
       }),
     );
   });
@@ -186,5 +206,27 @@ describe("PokemonEditor", () => {
     );
 
     expect(screen.getByText("No move found.")).toBeInTheDocument();
+  });
+
+  it("stacks the item and ability rows on narrow screens", () => {
+    renderEditor();
+
+    const grid = screen
+      .getByRole("combobox", { name: "Item" })
+      .closest("div.grid");
+    expect(grid).not.toBeNull();
+    expect(grid).toHaveClass("grid-cols-1", "sm:grid-cols-2");
+
+    const nature = screen.getByRole("combobox", { name: "Nature" });
+    expect(nature.closest("label")).toHaveClass("sm:col-span-2");
+  });
+
+  it("puts each stat stepper on its own row on narrow screens", () => {
+    renderEditor();
+
+    const stepper = screen.getByRole("button", { name: "Increase HP" });
+    const row = stepper.closest("div.grid");
+    expect(row).not.toBeNull();
+    expect(row).toHaveClass("grid-cols-1", "sm:grid-cols-[minmax(0,1fr)_auto]");
   });
 });

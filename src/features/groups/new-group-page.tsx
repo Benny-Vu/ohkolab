@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { LoaderCircleIcon, LogInIcon } from "lucide-react";
+import { LoaderCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -57,18 +58,14 @@ export function NewGroupPage() {
   if (!user) {
     return (
       <Page title="Create a group" width="narrow">
-        <Card size="sm" className="border-dashed p-6 text-center">
-          <LogInIcon
-            className="mx-auto size-6 text-muted-foreground"
-            aria-hidden
-          />
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to create a group.
-          </p>
-          <Button asChild size="sm" className="mt-3">
-            <Link to="/login?returnTo=/groups/new">Sign in</Link>
-          </Button>
-        </Card>
+        <EmptyState
+          title="Sign in to create a group"
+          action={
+            <Button asChild size="sm">
+              <Link to="/login?returnTo=/groups/new">Sign in</Link>
+            </Button>
+          }
+        />
       </Page>
     );
   }
@@ -97,7 +94,7 @@ export function NewGroupPage() {
       visibility,
     });
     if (result.ok) {
-      toast.success("Group created.");
+      toast.success("Group created");
       void navigate(`/g/${result.data.slug}`);
     } else {
       setError(result.error.message);

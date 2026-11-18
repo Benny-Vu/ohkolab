@@ -57,7 +57,7 @@ describe("team builder pages", () => {
     );
     await user.click(screen.getByRole("button", { name: "Import team" }));
     expect(await screen.findByText(/Imported 1 Pokémon/)).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Garchomp" })).toBeInTheDocument();
+    expect(screen.getByAltText("Garchomp")).toBeInTheDocument();
   });
 
   it("adds a Pokémon through the editor dialog", async () => {
@@ -74,7 +74,7 @@ describe("team builder pages", () => {
     );
     await user.click(screen.getByRole("option", { name: /Garchomp/ }));
     await user.click(screen.getByRole("button", { name: "Save" }));
-    expect(await screen.findByText("Garchomp")).toBeInTheDocument();
+    expect(await screen.findByAltText("Garchomp")).toBeInTheDocument();
     expect(screen.getByText("Team analysis")).toBeInTheDocument();
   });
 
@@ -86,8 +86,8 @@ describe("team builder pages", () => {
     await user.click(
       screen.getByRole("button", { name: "Delete Untitled team" }),
     );
-    expect(screen.queryByText("Untitled team")).not.toBeInTheDocument();
+    expect(screen.queryByText("Name this team")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Undo" }));
-    expect(await screen.findByText("Untitled team")).toBeInTheDocument();
+    expect(await screen.findByText("Name this team")).toBeInTheDocument();
   });
 });

@@ -109,6 +109,31 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("button", { name: /sign out/i })).toBeEnabled();
   });
 
+  it("splits the settings into sections", () => {
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Profile" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Account" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Privacy" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Danger zone" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Username")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign out/i })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /delete account/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("switch", { name: /anonymous usage statistics/i }),
+    ).toBeInTheDocument();
+  });
+
   it("shows a retry notice when the profile could not be loaded", () => {
     const auth = createFakeAuth({ profile: null });
     renderPage(<ProfilePage />, auth, { path: "/profile" });
@@ -254,18 +279,6 @@ describe("ProfilePage", () => {
     expect(
       await screen.findByText("Something went wrong. Try again."),
     ).toBeInTheDocument();
-  });
-
-  it("refreshes the profile on demand", async () => {
-    const user = userEvent.setup();
-    const auth = createFakeAuth();
-    renderPage(<ProfilePage />, auth, { path: "/profile" });
-
-    await user.click(screen.getByRole("button", { name: /refresh/i }));
-
-    await waitFor(() =>
-      expect(auth.calls.map((c) => c.name)).toContain("refreshProfile"),
-    );
   });
 
   it("links to the public profile page", () => {

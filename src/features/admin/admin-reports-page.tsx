@@ -3,29 +3,20 @@ import {
   EyeOffIcon,
   ExternalLinkIcon,
   LoaderCircleIcon,
-  RefreshCwIcon,
-  ShieldAlertIcon,
   Trash2Icon,
-  TriangleAlertIcon,
 } from "lucide-react";
 import { useQuery as useReactQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
-import { NotFoundPage } from "@/app/route-pages";
+import { NotFoundPage } from "@/features/system/not-found-page";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +27,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
@@ -380,7 +379,7 @@ function RemoveContentDialog({
   );
 }
 
-function ReportCard({
+function ReportRowView({
   report,
   client,
 }: {
@@ -458,73 +457,79 @@ function ReportCard({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-center gap-2">
+    <>
+      <TableRow>
+        <TableCell>
           <Badge variant={reasonBadgeVariant(report.reason)}>
             {report.reason}
           </Badge>
-          <CardTitle className="text-base">
-            {report.target_type} report
-          </CardTitle>
-        </div>
-        <CardDescription>
-          Reported {formatDate(report.created_at)} · Target:{" "}
-          {report.target_type} · {report.target_id}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        {report.details ? (
-          <p className="text-sm text-muted-foreground">
-            Reporter details: {report.details}
-          </p>
-        ) : null}
-        <div className="rounded-md border p-3">
-          <ReportContent report={report} client={client} />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ConfirmDialog
-            trigger={
-              <Button variant="outline" size="sm">
-                <EyeOffIcon />
-                Dismiss
-              </Button>
-            }
-            title="Dismiss this report?"
-            description="The report stays in the history as dismissed and no action is taken."
-            confirmLabel="Dismiss report"
-            onConfirm={dismiss}
-          />
-          {report.target_type === "post" || report.target_type === "comment" ? (
-            <RemoveContentDialog
-              targetType={report.target_type}
-              onRemove={remove}
+        </TableCell>
+        <TableCell className="text-sm capitalize">
+          {report.target_type}
+        </TableCell>
+        <TableCell className="text-sm tabular-nums text-muted-foreground">
+          {formatDate(report.created_at)}
+        </TableCell>
+        <TableCell className="text-right">
+          <div className="flex flex-wrap justify-end gap-2">
+            <ConfirmDialog
+              trigger={
+                <Button variant="outline" size="sm">
+                  <EyeOffIcon />
+                  Dismiss
+                </Button>
+              }
+              title="Dismiss this report?"
+              description="The report stays in the history as dismissed and no action is taken."
+              confirmLabel="Dismiss report"
+              onConfirm={dismiss}
             />
-          ) : null}
-          {suspendUserId ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSuspendOpen(true)}
-              >
-                <BanIcon />
-                Suspend user
-              </Button>
-              <SuspendDialog
-                userId={suspendUserId}
-                client={client}
-                open={suspendOpen}
-                onOpenChange={setSuspendOpen}
-                onSuspended={() => {
-                  void markActioned();
-                }}
+            {report.target_type === "post" ||
+            report.target_type === "comment" ? (
+              <RemoveContentDialog
+                targetType={report.target_type}
+                onRemove={remove}
               />
-            </>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
+            ) : null}
+            {suspendUserId ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSuspendOpen(true)}
+                >
+                  <BanIcon />
+                  Suspend user
+                </Button>
+                <SuspendDialog
+                  userId={suspendUserId}
+                  client={client}
+                  open={suspendOpen}
+                  onOpenChange={setSuspendOpen}
+                  onSuspended={() => {
+                    void markActioned();
+                  }}
+                />
+              </>
+            ) : null}
+          </div>
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell colSpan={4} className="whitespace-normal">
+          <div className="grid gap-2">
+            {report.details ? (
+              <p className="text-sm text-muted-foreground">
+                Reporter details: {report.details}
+              </p>
+            ) : null}
+            <div className="rounded-md border p-3">
+              <ReportContent report={report} client={client} />
+            </div>
+          </div>
+        </TableCell>
+      </TableRow>
+    </>
   );
 }
 
@@ -536,13 +541,10 @@ export function AdminReportsPage({
   if (socialAvailability(client) !== "ready") {
     return (
       <Page title="Reports" width="narrow">
-        <Alert>
-          <TriangleAlertIcon />
-          <AlertTitle>Moderation is unavailable</AlertTitle>
-          <AlertDescription>
-            Moderation tools need the community features to be configured.
-          </AlertDescription>
-        </Alert>
+        <EmptyState
+          title="Moderation is unavailable"
+          description="Moderation tools need the community features to be configured."
+        />
       </Page>
     );
   }
@@ -599,32 +601,48 @@ function ReportsList({ client }: { client: AppSupabaseClient | null }) {
           <Skeleton className="h-24 w-full" />
         </div>
       ) : reportsQuery.isError ? (
-        <div className="mt-4 grid gap-4">
-          <Alert variant="destructive">
-            <ShieldAlertIcon />
-            <AlertTitle>Reports could not be loaded</AlertTitle>
-            <AlertDescription>Try again in a moment.</AlertDescription>
-          </Alert>
-          <Button
-            className="justify-self-start"
-            variant="outline"
-            onClick={() => {
-              void reportsQuery.refetch();
-            }}
-          >
-            <RefreshCwIcon />
-            Try again
-          </Button>
+        <div className="mt-4">
+          <ErrorState
+            title="Reports could not be loaded"
+            description="Try again in a moment."
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void reportsQuery.refetch();
+                }}
+              >
+                Try again
+              </Button>
+            }
+          />
         </div>
       ) : (reportsQuery.data ?? []).length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          No {status} reports.
-        </p>
+        <div className="mt-4">
+          <EmptyState title={`No ${status} reports.`} />
+        </div>
       ) : (
-        <div className="mt-4 grid gap-4">
-          {(reportsQuery.data ?? []).map((report) => (
-            <ReportCard key={report.id} report={report} client={client} />
-          ))}
+        <div className="mt-4 overflow-x-auto rounded-lg border">
+          <Table density="dense">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Reason</TableHead>
+                <TableHead>Target</TableHead>
+                <TableHead>Reported</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(reportsQuery.data ?? []).map((report) => (
+                <ReportRowView
+                  key={report.id}
+                  report={report}
+                  client={client}
+                />
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </Page>

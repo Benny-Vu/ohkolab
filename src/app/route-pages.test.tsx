@@ -4,7 +4,9 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import { Providers } from "@/app/providers";
-import { NotFoundPage, PageLoading, RouteError } from "@/app/route-pages";
+import { NotFoundPage } from "@/features/system/not-found-page";
+import { RouteErrorPage } from "@/features/system/route-error-page";
+import { PageLoading } from "@/app/route-pages";
 
 function renderAt(path: string) {
   const router = createMemoryRouter(
@@ -18,7 +20,7 @@ function renderAt(path: string) {
             loader: () => {
               throw new Error("kaboom");
             },
-            errorElement: <RouteError />,
+            errorElement: <RouteErrorPage />,
           },
           { path: "loading", element: <PageLoading /> },
           { path: "*", element: <NotFoundPage /> },
@@ -55,7 +57,7 @@ describe("NotFoundPage", () => {
   });
 });
 
-describe("RouteError", () => {
+describe("RouteErrorPage", () => {
   it("shows the crash screen with reload, home and feedback options", async () => {
     renderAt("/boom");
 

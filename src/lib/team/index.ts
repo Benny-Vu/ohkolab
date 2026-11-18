@@ -1,5 +1,10 @@
 /** Teams: storage, Showdown text and analysis. */
 export {
+  defensiveWeakSpots,
+  speedTiers,
+  type SpeedTier,
+} from "@/lib/team/heat-map";
+export {
   attackingTypes,
   battleTypes,
   defensiveOverview,

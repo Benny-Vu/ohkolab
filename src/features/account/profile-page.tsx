@@ -7,7 +7,13 @@ import {
   Trash2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { lazy, Suspense, type FormEvent, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  type FormEvent,
+  type ReactNode,
+  useState,
+} from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -91,6 +97,29 @@ function GuestPrompt() {
   );
 }
 
+/** A titled group of settings, matching the styleguide section pattern. */
+function SettingsSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="grid gap-3">
+      <h2 className="font-heading text-lg font-semibold tracking-tight">
+        {title}
+      </h2>
+      {description ? (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      ) : null}
+      {children}
+    </section>
+  );
+}
+
 /** The signed-in profile editor. */
 function ProfileEditor({ profile }: { profile: Profile }) {
   const auth = useAuth();
@@ -171,185 +200,220 @@ function ProfileEditor({ profile }: { profile: Profile }) {
   };
 
   return (
-    <div className="grid gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>How you appear to other players.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-4" onSubmit={handleSave} noValidate>
-            <div className="flex items-center gap-4">
-              <UserAvatar
-                username={username}
-                displayName={displayName}
-                avatarSpecies={avatarSpecies}
-                size="lg"
-              />
-              <div className="grid min-w-0 flex-1 gap-2">
-                <Label htmlFor="avatar-species">Avatar species</Label>
-                <Suspense fallback={<Skeleton className="h-8 w-full" />}>
-                  <SpeciesPicker
-                    value={avatarSpecies}
-                    onChange={(species) => setAvatarSpecies(species)}
-                    placeholder="Choose a Pokémon"
-                  />
-                </Suspense>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                aria-invalid={fieldErrors.username ? true : undefined}
-              />
-              {fieldErrors.username ? (
-                <p className="text-sm text-destructive" role="alert">
-                  {fieldErrors.username}
-                </p>
-              ) : null}
-              <p className="text-xs text-muted-foreground">{USERNAME_RULES}</p>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="display-name">Display name</Label>
-              <Input
-                id="display-name"
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                aria-invalid={fieldErrors.displayName ? true : undefined}
-              />
-              {fieldErrors.displayName ? (
-                <p className="text-sm text-destructive" role="alert">
-                  {fieldErrors.displayName}
-                </p>
-              ) : null}
-              <p className="text-xs text-muted-foreground">
-                Optional. At most {DISPLAY_NAME_MAX_LENGTH} characters.
-              </p>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={bio}
-                onChange={(event) => setBio(event.target.value)}
-                aria-invalid={fieldErrors.bio ? true : undefined}
-              />
-              {fieldErrors.bio ? (
-                <p className="text-sm text-destructive" role="alert">
-                  {fieldErrors.bio}
-                </p>
-              ) : null}
-              <p className="text-xs text-muted-foreground">
-                Optional. At most {BIO_MAX_LENGTH} characters.
-              </p>
-            </div>
-            {formError ? (
-              <p className="text-sm text-destructive" role="alert">
-                {formError.message}
-              </p>
-            ) : null}
-            <div className="flex flex-wrap items-center gap-2">
-              <Button type="submit" disabled={busy}>
-                {pending === "save" ? (
-                  <LoaderCircleIcon className="animate-spin" />
-                ) : (
-                  <SaveIcon />
-                )}
-                Save changes
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={busy}
-                onClick={() => {
-                  setUsername(profile.username);
-                  setDisplayName(profile.displayName ?? "");
-                  setBio(profile.bio ?? "");
-                  setAvatarSpecies(profile.avatarSpecies);
-                  setFieldErrors({});
-                  setFormError(null);
-                }}
-              >
-                Reset
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Session</CardTitle>
-          <CardDescription>
-            Sign out on this device, or delete your account for good.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={handleSignOut} disabled={busy}>
-            {pending === "signOut" ? (
-              <LoaderCircleIcon className="animate-spin" />
-            ) : (
-              <LogOutIcon />
-            )}
-            Sign out
-          </Button>
-          <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-            <DialogTrigger asChild>
-              <Button variant="destructive" disabled={busy}>
-                <Trash2Icon />
-                Delete account
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Delete your account</DialogTitle>
-                <DialogDescription>
-                  This permanently deletes your account, your profile and all
-                  your saved teams. There is no undo. Type your username (
-                  <span className="font-medium">{profile.username}</span>) to
-                  confirm.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-2">
-                <Label htmlFor="delete-confirm">Confirm username</Label>
-                <Input
-                  id="delete-confirm"
-                  value={deleteConfirm}
-                  onChange={(event) => setDeleteConfirm(event.target.value)}
-                  autoComplete="off"
+    <div className="grid gap-6">
+      <SettingsSection
+        title="Profile"
+        description="How you appear to other players."
+      >
+        <Card>
+          <CardContent>
+            <form className="grid gap-4" onSubmit={handleSave} noValidate>
+              <div className="flex items-center gap-4">
+                <UserAvatar
+                  username={username}
+                  displayName={displayName}
+                  avatarSpecies={avatarSpecies}
+                  size="lg"
                 />
+                <div className="grid min-w-0 flex-1 gap-2">
+                  <Label htmlFor="avatar-species">Avatar species</Label>
+                  <Suspense fallback={<Skeleton className="h-8 w-full" />}>
+                    <SpeciesPicker
+                      value={avatarSpecies}
+                      onChange={(species) => setAvatarSpecies(species)}
+                      placeholder="Choose a Pokémon"
+                    />
+                  </Suspense>
+                </div>
               </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setDeleteOpen(false)}
-                  disabled={busy}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleDelete}
-                  disabled={
-                    busy ||
-                    deleteConfirm.trim().toLowerCase() !== profile.username
-                  }
-                >
-                  {pending === "delete" ? (
+              <div className="grid gap-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  aria-invalid={fieldErrors.username ? true : undefined}
+                />
+                {fieldErrors.username ? (
+                  <p className="text-sm text-destructive" role="alert">
+                    {fieldErrors.username}
+                  </p>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  {USERNAME_RULES}
+                </p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="display-name">Display name</Label>
+                <Input
+                  id="display-name"
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  aria-invalid={fieldErrors.displayName ? true : undefined}
+                />
+                {fieldErrors.displayName ? (
+                  <p className="text-sm text-destructive" role="alert">
+                    {fieldErrors.displayName}
+                  </p>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  Optional. At most {DISPLAY_NAME_MAX_LENGTH} characters.
+                </p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(event) => setBio(event.target.value)}
+                  aria-invalid={fieldErrors.bio ? true : undefined}
+                />
+                {fieldErrors.bio ? (
+                  <p className="text-sm text-destructive" role="alert">
+                    {fieldErrors.bio}
+                  </p>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  Optional. At most {BIO_MAX_LENGTH} characters.
+                </p>
+              </div>
+              {formError ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {formError.message}
+                </p>
+              ) : null}
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="submit" disabled={busy}>
+                  {pending === "save" ? (
                     <LoaderCircleIcon className="animate-spin" />
                   ) : (
-                    <Trash2Icon />
+                    <SaveIcon />
                   )}
-                  Delete forever
+                  Save changes
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </CardContent>
-      </Card>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    setUsername(profile.username);
+                    setDisplayName(profile.displayName ?? "");
+                    setBio(profile.bio ?? "");
+                    setAvatarSpecies(profile.avatarSpecies);
+                    setFieldErrors({});
+                    setFormError(null);
+                  }}
+                >
+                  Reset
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </SettingsSection>
+
+      <SettingsSection title="Account">
+        <Card>
+          <CardHeader>
+            <CardTitle>Session</CardTitle>
+            <CardDescription>Sign out on this device.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={handleSignOut} disabled={busy}>
+              {pending === "signOut" ? (
+                <LoaderCircleIcon className="animate-spin" />
+              ) : (
+                <LogOutIcon />
+              )}
+              Sign out
+            </Button>
+          </CardContent>
+        </Card>
+      </SettingsSection>
+
+      <SettingsSection title="Privacy">
+        <div className="grid gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Crash reports and usage statistics</CardTitle>
+              <CardDescription>
+                Anonymous, cookieless telemetry that helps us find and fix
+                problems. Turning it off stops both immediately.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TelemetrySwitch />
+            </CardContent>
+          </Card>
+          <BlockedUsersCard />
+        </div>
+      </SettingsSection>
+
+      <SettingsSection title="Danger zone">
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle>Delete account</CardTitle>
+            <CardDescription>
+              Deleting your account removes your profile and saved teams
+              forever. This cannot be undone.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <DialogTrigger asChild>
+                <Button variant="destructive" disabled={busy}>
+                  <Trash2Icon />
+                  Delete account
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete your account</DialogTitle>
+                  <DialogDescription>
+                    This permanently deletes your account, your profile and all
+                    your saved teams. There is no undo. Type your username (
+                    <span className="font-medium">{profile.username}</span>) to
+                    confirm.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-2">
+                  <Label htmlFor="delete-confirm">Confirm username</Label>
+                  <Input
+                    id="delete-confirm"
+                    value={deleteConfirm}
+                    onChange={(event) => setDeleteConfirm(event.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setDeleteOpen(false)}
+                    disabled={busy}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={
+                      busy ||
+                      deleteConfirm.trim().toLowerCase() !== profile.username
+                    }
+                  >
+                    {pending === "delete" ? (
+                      <LoaderCircleIcon className="animate-spin" />
+                    ) : (
+                      <Trash2Icon />
+                    )}
+                    Delete forever
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
+      </SettingsSection>
     </div>
   );
 }
@@ -486,45 +550,18 @@ export function ProfilePage() {
       description={auth.profile ? `@${auth.profile.username}` : undefined}
       width="narrow"
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          {auth.profile ? (
-            <Button variant="ghost" size="sm" asChild>
-              <Link to={`/u/${auth.profile.username}`}>
-                <ExternalLinkIcon />
-                Public page
-              </Link>
-            </Button>
-          ) : null}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              void auth.refreshProfile();
-            }}
-          >
-            <RefreshCwIcon />
-            Refresh
+        auth.profile ? (
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/u/${auth.profile.username}`}>
+              <ExternalLinkIcon />
+              Public page
+            </Link>
           </Button>
-        </div>
+        ) : undefined
       }
     >
       {auth.profile ? (
-        <div className="grid gap-4">
-          <ProfileEditor profile={auth.profile} />
-          <BlockedUsersCard />
-          <Card>
-            <CardHeader>
-              <CardTitle>Crash reports and usage statistics</CardTitle>
-              <CardDescription>
-                Anonymous, cookieless telemetry that helps us find and fix
-                problems. Turning it off stops both immediately.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TelemetrySwitch />
-            </CardContent>
-          </Card>
-        </div>
+        <ProfileEditor profile={auth.profile} />
       ) : (
         <div className="grid gap-4">
           <Alert>

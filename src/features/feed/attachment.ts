@@ -1,5 +1,5 @@
 import type { Json } from "@/lib/database.types";
-import type { BattleFormat } from "@/types/battle";
+import type { BattleFormat, DamageResult } from "@/types/battle";
 import type { PokemonSet } from "@/types/pokemon";
 import { STAT_IDS, emptyStatsTable } from "@/types/pokemon";
 import type { Team } from "@/types/team";
@@ -36,6 +36,120 @@ export function teamAttachmentJson(
     name: attachment.name,
     format: attachment.format,
     members: attachment.members.map(setToJson),
+  };
+}
+
+export type CalcResultAttachment = {
+  kind: "calc-result";
+  /** Attacker and defender names for the preview, e.g. "Garchomp". */
+  attacker: string;
+  defender: string;
+  move: string;
+  min: number;
+  max: number;
+  minPercent: number;
+  maxPercent: number;
+  defenderMaxHp: number;
+  rolls: number[] | null;
+  description: string;
+  koText: string;
+};
+
+export function calcResultAttachment(
+  attacker: string,
+  defender: string,
+  result: DamageResult,
+): CalcResultAttachment {
+  return {
+    kind: "calc-result",
+    attacker,
+    defender,
+    move: result.move,
+    min: result.min,
+    max: result.max,
+    minPercent: result.minPercent,
+    maxPercent: result.maxPercent,
+    defenderMaxHp: result.defenderMaxHp,
+    rolls: result.rolls ? [...result.rolls] : null,
+    description: result.description,
+    koText: result.koText,
+  };
+}
+
+/** The JSON shape stored in the posts.attachment column. */
+export type CalcResultAttachmentJson = {
+  kind: "calc-result";
+  attacker: string;
+  defender: string;
+  move: string;
+  min: number;
+  max: number;
+  minPercent: number;
+  maxPercent: number;
+  defenderMaxHp: number;
+  rolls: Json[] | null;
+  description: string;
+  koText: string;
+};
+
+export function calcResultAttachmentJson(
+  attachment: CalcResultAttachment,
+): CalcResultAttachmentJson {
+  return {
+    kind: "calc-result",
+    attacker: attachment.attacker,
+    defender: attachment.defender,
+    move: attachment.move,
+    min: attachment.min,
+    max: attachment.max,
+    minPercent: attachment.minPercent,
+    maxPercent: attachment.maxPercent,
+    defenderMaxHp: attachment.defenderMaxHp,
+    rolls: attachment.rolls,
+    description: attachment.description,
+    koText: attachment.koText,
+  };
+}
+
+export function parseCalcResultAttachment(
+  value: Json | null,
+): CalcResultAttachment | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return null;
+  const record: Record<string, Json | undefined> = value;
+  if (record.kind !== "calc-result") return null;
+  if (typeof record.attacker !== "string") return null;
+  if (typeof record.defender !== "string") return null;
+  if (typeof record.move !== "string") return null;
+  if (typeof record.min !== "number") return null;
+  if (typeof record.max !== "number") return null;
+  if (typeof record.minPercent !== "number") return null;
+  if (typeof record.maxPercent !== "number") return null;
+  if (typeof record.defenderMaxHp !== "number") return null;
+  const rawRolls = record.rolls;
+  let rolls: number[] | null = null;
+  if (rawRolls !== null) {
+    if (!Array.isArray(rawRolls)) return null;
+    for (const roll of rawRolls) {
+      if (typeof roll !== "number") return null;
+    }
+    rolls = rawRolls as number[];
+  }
+  if (typeof record.description !== "string") return null;
+  if (typeof record.koText !== "string") return null;
+  return {
+    kind: "calc-result",
+    attacker: record.attacker,
+    defender: record.defender,
+    move: record.move,
+    min: record.min,
+    max: record.max,
+    minPercent: record.minPercent,
+    maxPercent: record.maxPercent,
+    defenderMaxHp: record.defenderMaxHp,
+    rolls,
+    description: record.description,
+    koText: record.koText,
   };
 }
 

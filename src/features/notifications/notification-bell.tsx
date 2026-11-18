@@ -29,6 +29,12 @@ export function NotificationBell() {
             {badge}
           </span>
         )}
+        {user && !badge && (
+          <span
+            aria-hidden
+            className="absolute right-1 top-1 size-1.5 rounded-full bg-accent-brand-text"
+          />
+        )}
       </Link>
     </Button>
   );

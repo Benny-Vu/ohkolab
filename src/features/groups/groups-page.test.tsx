@@ -84,9 +84,9 @@ describe("GroupsPage", () => {
   it("shows the My groups tab first for signed-in users", () => {
     renderGroupsPage();
 
-    expect(screen.getByRole("tab", { name: "My groups" })).toHaveAttribute(
-      "data-state",
-      "active",
+    expect(screen.getByRole("radio", { name: "My groups" })).toHaveAttribute(
+      "aria-checked",
+      "true",
     );
   });
 
@@ -150,7 +150,7 @@ describe("GroupsPage", () => {
     const user = userEvent.setup();
     renderGroupsPage();
 
-    await user.click(screen.getByRole("tab", { name: /discover/i }));
+    await user.click(screen.getByRole("radio", { name: /discover/i }));
 
     expect(
       await screen.findByRole("searchbox", { name: /search groups by name/i }),
@@ -163,7 +163,7 @@ describe("GroupsPage", () => {
     const user = userEvent.setup();
     renderGroupsPage();
 
-    await user.click(screen.getByRole("tab", { name: /discover/i }));
+    await user.click(screen.getByRole("radio", { name: /discover/i }));
     const search = await screen.findByRole("searchbox", {
       name: /search groups by name/i,
     });
@@ -179,7 +179,7 @@ describe("GroupsPage", () => {
     const user = userEvent.setup();
     renderGroupsPage();
 
-    await user.click(screen.getByRole("tab", { name: /discover/i }));
+    await user.click(screen.getByRole("radio", { name: /discover/i }));
     const search = await screen.findByRole("searchbox", {
       name: /search groups by name/i,
     });

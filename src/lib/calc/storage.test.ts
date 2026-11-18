@@ -37,6 +37,7 @@ function changedState(): CalcState {
     { type: "setWeather", weather: "Sand" },
     { type: "setTerrain", terrain: "Psychic" },
     { type: "setGravity", on: true },
+    { type: "setTrickRoom", on: true },
     { type: "setSideFlag", side: "p2", flag: "auroraVeil", on: true },
     { type: "setSpikes", side: "p1", layers: 2 },
     { type: "selectMove", side: "p2", slot: 1 },
@@ -149,6 +150,7 @@ describe("parseCalcState", () => {
     raw.weather = "Fog";
     raw.terrain = null;
     raw.gravity = "true";
+    raw.trickRoom = "true";
     raw.fieldSides.p1 = { tailwind: true, spikes: 12, reflect: 1 };
     raw.fieldSides.p2 = null;
     raw.selected = { side: "p3", slot: 1 };
@@ -168,6 +170,7 @@ describe("parseCalcState", () => {
       weather: null,
       terrain: null,
       gravity: false,
+      trickRoom: false,
       selected: defaults.selected,
     });
     expect(parsed.fieldSides.p1).toEqual({

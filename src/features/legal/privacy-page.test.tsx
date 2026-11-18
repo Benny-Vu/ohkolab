@@ -41,10 +41,11 @@ describe("PrivacyPage", () => {
   it("shows the contact email and links to the terms and profile pages", () => {
     renderPrivacyPage();
 
-    expect(screen.getByRole("link", { name: CONTACT_EMAIL })).toHaveAttribute(
-      "href",
-      `mailto:${CONTACT_EMAIL}`,
-    );
+    const emailLinks = screen.getAllByRole("link", { name: CONTACT_EMAIL });
+    expect(emailLinks).toHaveLength(2);
+    for (const link of emailLinks) {
+      expect(link).toHaveAttribute("href", `mailto:${CONTACT_EMAIL}`);
+    }
     expect(
       screen.getByRole("link", { name: "terms of service" }),
     ).toHaveAttribute("href", "/terms");
@@ -78,5 +79,22 @@ describe("PrivacyPage", () => {
       .map((link) => link.getAttribute("href"));
     expect(policyLinks).toContain("https://sentry.io/privacy/");
     expect(policyLinks).toContain("https://posthog.com/privacy/");
+  });
+
+  it("names the operator and offers a table of contents", () => {
+    renderPrivacyPage();
+
+    expect(screen.getByText(/Vu Forge \(Benny Vu\)/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Who runs OHKOLab" }),
+    ).toBeInTheDocument();
+
+    const toc = screen.getByRole("navigation", { name: "On this page" });
+    expect(toc).toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("link", { name: "Crash reports and usage statistics" })
+        .getAttribute("href"),
+    ).toBe("#telemetry");
   });
 });

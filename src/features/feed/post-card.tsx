@@ -10,6 +10,7 @@ import {
   MessageCircleIcon,
   MoreHorizontalIcon,
   PencilIcon,
+  ShieldOffIcon,
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +35,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { UserAvatar } from "@/components/user-avatar";
+import { DamageMeter } from "@/components/damage-meter";
+import { KoLabel } from "@/components/ko-label";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useTeams } from "@/lib/team";
 import {
@@ -47,20 +50,30 @@ import { useIsModerator } from "@/lib/social/queries";
 import { POST_BODY_MAX } from "@/lib/social/validation";
 import type { FeedPostRow } from "@/lib/database.types";
 import { formatRelativeTime } from "@/features/feed/relative-time";
-import { parseTeamAttachment } from "@/features/feed/attachment";
+import {
+  parseCalcResultAttachment,
+  parseTeamAttachment,
+} from "@/features/feed/attachment";
+import { koResultOf } from "@/features/calc/ko-result";
 import { ReportDialog } from "@/features/feed/report-dialog";
 
 interface PostCardProps {
   post: FeedPostRow;
   /** Hide the comment count link on the post detail page. */
   hideCommentLink?: boolean;
+  /** Moderator action: take the post out of its group. */
+  onRemoveFromGroup?: () => void;
 }
 
 /**
  * One post in the feed: author line, body, optional team attachment and the
  * like / comment / overflow actions.
  */
-export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
+export function PostCard({
+  post,
+  hideCommentLink = false,
+  onRemoveFromGroup,
+}: PostCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const toggleLike = useToggleLike(post.id);
@@ -81,8 +94,13 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
   const [removeReason, setRemoveReason] = useState("");
 
   const isOwn = user?.id === post.author_id;
-  const attachment = parseTeamAttachment(post.attachment);
+  const team = parseTeamAttachment(post.attachment);
+  const calcResult = parseCalcResultAttachment(post.attachment);
   const liked = post.liked_by_me === true;
+  const displayName = post.author_display_name ?? post.author_username;
+  const showHandle =
+    displayName.trim().toLowerCase() !==
+    post.author_username.trim().toLowerCase();
 
   async function handleLike() {
     const result = await toggleLike.mutateAsync();
@@ -90,18 +108,18 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
   }
 
   async function handleCopyTeam() {
-    if (!attachment) return;
-    const team = create({
-      name: attachment.name,
-      format: attachment.format,
-      members: attachment.members,
+    if (!team) return;
+    const created = create({
+      name: team.name,
+      format: team.format,
+      members: team.members,
     });
-    toast.success(`Copied "${team.name}" to your teams.`);
+    toast.success(`Copied "${created.name}" to your teams.`);
   }
 
   function handleOpenInCalc() {
-    if (!attachment) return;
-    navigate("/calc", { state: { attacker: attachment.members[0] } });
+    if (!team) return;
+    navigate("/calc", { state: { attacker: team.members[0] } });
   }
 
   async function handleUpdate() {
@@ -160,8 +178,8 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
   }
 
   return (
-    <Card size="sm" className="p-4">
-      <div className="flex items-start gap-3">
+    <Card size="sm">
+      <div className="flex items-start gap-3 px-4 pt-4">
         <UserAvatar
           username={post.author_username}
           displayName={post.author_display_name}
@@ -175,11 +193,13 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
               href={`/u/${post.author_username}`}
               className="truncate font-medium hover:underline"
             >
-              {post.author_display_name ?? post.author_username}
+              {displayName}
             </a>
-            <span className="truncate text-sm text-muted-foreground">
-              @{post.author_username}
-            </span>
+            {showHandle && (
+              <span className="truncate text-sm text-muted-foreground">
+                @{post.author_username}
+              </span>
+            )}
             <span className="ml-auto shrink-0 text-xs text-muted-foreground">
               {formatRelativeTime(post.created_at)}
             </span>
@@ -218,16 +238,16 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
             <p className="mt-1 whitespace-pre-wrap break-words">{post.body}</p>
           )}
 
-          {attachment && (
-            <div className="mt-3 rounded-lg border bg-background/50 p-3">
+          {team && (
+            <div className="mt-3 rounded-md border bg-surface-sunken p-3">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">{attachment.name}</p>
+                <p className="text-sm font-medium">{team.name}</p>
                 <span className="text-xs text-muted-foreground capitalize">
-                  {attachment.format}
+                  {team.format}
                 </span>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {attachment.members.map((member, index) => (
+                {team.members.map((member, index) => (
                   <PokemonIcon
                     key={`${member.species}-${index}`}
                     species={member.species}
@@ -248,91 +268,143 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
             </div>
           )}
 
-          <div className="mt-3 flex items-center gap-1">
-            <Button
-              size="xs"
-              variant="ghost"
-              onClick={handleLike}
-              disabled={toggleLike.isPending}
-              aria-pressed={liked}
-              aria-label={liked ? "Unlike" : "Like"}
-            >
-              <HeartIcon
-                className={liked ? "fill-current text-primary" : undefined}
-                aria-hidden
+          {calcResult && (
+            <div className="mt-3 rounded-md border bg-surface-sunken p-3">
+              <div className="flex items-center gap-2">
+                <p className="min-w-0 truncate text-sm font-medium">
+                  {calcResult.attacker} vs {calcResult.defender}
+                </p>
+                {(() => {
+                  const ko = koResultOf(calcResult.koText);
+                  return ko ? (
+                    <KoLabel className="ml-auto shrink-0" result={ko} />
+                  ) : (
+                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                      {calcResult.koText}
+                    </span>
+                  );
+                })()}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="text-sm font-medium">{calcResult.move}</span>
+                <span className="font-heading text-lg font-semibold tabular-nums">
+                  {calcResult.minPercent === calcResult.maxPercent
+                    ? `${calcResult.maxPercent}%`
+                    : `${calcResult.minPercent} - ${calcResult.maxPercent}%`}
+                </span>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {calcResult.min}-{calcResult.max} damage
+                </span>
+              </div>
+              <DamageMeter
+                className="mt-2"
+                minPercent={calcResult.minPercent}
+                maxPercent={calcResult.maxPercent}
+                hpPercent={100}
+                size="sm"
               />
-              {post.like_count}
-            </Button>
-            {!hideCommentLink && (
-              <Button
-                size="xs"
-                variant="ghost"
-                aria-label={`${post.comment_count} ${post.comment_count === 1 ? "comment" : "comments"}`}
-                onClick={() => navigate(`/post/${post.id}`)}
-              >
-                <MessageCircleIcon aria-hidden />
-                {post.comment_count}
-              </Button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="icon-xs"
-                  variant="ghost"
-                  aria-label="Post options"
-                  className="ml-auto"
-                >
-                  <MoreHorizontalIcon aria-hidden />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isOwn ? (
-                  <>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setEditBody(post.body);
-                        setEditing(true);
-                      }}
-                    >
-                      <PencilIcon aria-hidden />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setConfirmDelete(true)}
-                    >
-                      <Trash2Icon aria-hidden />
-                      Delete
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem onSelect={() => setReporting(true)}>
-                      <FlagIcon aria-hidden />
-                      Report post
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setBlocking(true)}>
-                      <BanIcon aria-hidden />
-                      Block @{post.author_username}
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {isModerator && !isOwn && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setRemoving(true)}
-                    >
-                      <Trash2Icon aria-hidden />
-                      Remove post
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+            </div>
+          )}
         </div>
+      </div>
+
+      <div className="flex items-center gap-1 px-4 pb-1 pt-2">
+        <Button
+          size="xs"
+          variant="ghost"
+          onClick={handleLike}
+          disabled={toggleLike.isPending}
+          aria-pressed={liked}
+          aria-label={liked ? "Unlike" : "Like"}
+          className="text-muted-foreground tabular-nums"
+        >
+          <HeartIcon
+            className={liked ? "fill-current text-primary" : undefined}
+            aria-hidden
+          />
+          {post.like_count}
+        </Button>
+        {!hideCommentLink && (
+          <Button
+            size="xs"
+            variant="ghost"
+            aria-label={`${post.comment_count} ${post.comment_count === 1 ? "comment" : "comments"}`}
+            onClick={() => navigate(`/post/${post.id}`)}
+            className="text-muted-foreground tabular-nums"
+          >
+            <MessageCircleIcon aria-hidden />
+            {post.comment_count}
+          </Button>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label="Post options"
+              className="ml-auto"
+            >
+              <MoreHorizontalIcon aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {isOwn ? (
+              <>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setEditBody(post.body);
+                    setEditing(true);
+                  }}
+                >
+                  <PencilIcon aria-hidden />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setConfirmDelete(true)}
+                >
+                  <Trash2Icon aria-hidden />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem onSelect={() => setReporting(true)}>
+                  <FlagIcon aria-hidden />
+                  Report post
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setBlocking(true)}>
+                  <BanIcon aria-hidden />
+                  Block @{post.author_username}
+                </DropdownMenuItem>
+              </>
+            )}
+            {onRemoveFromGroup && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => onRemoveFromGroup()}
+                >
+                  <ShieldOffIcon aria-hidden />
+                  Remove from group
+                </DropdownMenuItem>
+              </>
+            )}
+            {isModerator && !isOwn && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setRemoving(true)}
+                >
+                  <Trash2Icon aria-hidden />
+                  Remove post
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <ReportDialog

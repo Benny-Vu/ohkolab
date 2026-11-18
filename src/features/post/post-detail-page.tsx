@@ -5,8 +5,10 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ErrorState } from "@/components/error-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Page } from "@/components/page";
-import { NotFoundPage } from "@/app/route-pages";
+import { NotFoundPage } from "@/features/system/not-found-page";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useCreateComment, useDeleteComment } from "@/lib/social/mutations";
@@ -36,7 +38,10 @@ export function PostDetailPage() {
   if (postQuery.isPending) {
     return (
       <Page title="Post" width="narrow">
-        <p className="text-sm text-muted-foreground">Loading post…</p>
+        <div className="grid gap-3" aria-label="Loading post">
+          <Skeleton className="h-28 w-full rounded-md" />
+          <Skeleton className="h-28 w-full rounded-md" />
+        </div>
       </Page>
     );
   }
@@ -44,15 +49,19 @@ export function PostDetailPage() {
   if (postQuery.isError) {
     return (
       <Page title="Post" width="narrow">
-        <p className="text-sm text-destructive">{postQuery.error.message}</p>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-3"
-          onClick={() => void postQuery.refetch()}
-        >
-          Try again
-        </Button>
+        <ErrorState
+          title="Could not load post"
+          description={postQuery.error.message}
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void postQuery.refetch()}
+            >
+              Try again
+            </Button>
+          }
+        />
       </Page>
     );
   }
@@ -73,7 +82,7 @@ export function PostDetailPage() {
     });
     if (result.ok) {
       setCommentBody("");
-      toast.success("Comment posted.");
+      toast.success("Comment posted");
     } else {
       toast.error(result.error.message);
     }
@@ -84,7 +93,7 @@ export function PostDetailPage() {
       commentId,
       postId: post.id,
     });
-    if (result.ok) toast.success("Comment deleted.");
+    if (result.ok) toast.success("Comment deleted");
     else toast.error(result.error.message);
   };
 
@@ -112,7 +121,7 @@ export function PostDetailPage() {
           <h2 className="text-sm font-semibold">Comments</h2>
 
           {user ? (
-            <div className="rounded-xl border bg-card p-4">
+            <div className="rounded-md border bg-card p-4">
               <Textarea
                 aria-label="Write a comment"
                 placeholder="Add a comment…"
@@ -122,7 +131,7 @@ export function PostDetailPage() {
                 disabled={createComment.isPending}
               />
               <div className="mt-3 flex items-center gap-2">
-                <span className="ml-auto text-xs text-muted-foreground">
+                <span className="ml-auto text-xs text-muted-foreground tabular-nums">
                   {commentBody.length}/{COMMENT_BODY_MAX}
                 </span>
                 <Button
@@ -140,7 +149,7 @@ export function PostDetailPage() {
               </div>
             </div>
           ) : (
-            <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
+            <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
               <Link
                 to={`/login?returnTo=/post/${post.id}`}
                 className="text-primary underline-offset-4 hover:underline"
@@ -156,15 +165,13 @@ export function PostDetailPage() {
           )}
 
           {comments.length === 0 && !commentsQuery.isPending ? (
-            <p className="text-sm text-muted-foreground">
-              No comments yet. Be the first!
-            </p>
+            <p className="text-sm text-muted-foreground">No comments yet</p>
           ) : (
             <ul className="grid gap-2">
               {comments.map((comment) => (
                 <li
                   key={comment.id}
-                  className="rounded-xl border bg-card p-3 text-sm"
+                  className="rounded-md border bg-card p-3 text-sm"
                 >
                   <div className="flex items-center gap-2">
                     <UserAvatar

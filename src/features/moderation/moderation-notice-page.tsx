@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 
-import { NotFoundPage } from "@/app/route-pages";
+import { NotFoundPage } from "@/features/system/not-found-page";
 import { Page } from "@/components/page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -191,7 +191,6 @@ export function ModerationNoticePage({
       <div className="grid gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>{noticeTitle(action)}</CardTitle>
             <CardDescription>{formatDate(action.created_at)}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">

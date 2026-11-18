@@ -32,6 +32,7 @@ import {
 export const GROUP_QUERY_KEYS = {
   public: ["groups", "public"] as const,
   mine: ["groups", "mine"] as const,
+  user: ["groups", "user"] as const,
   bySlug: ["groups", "by-slug"] as const,
   myMembership: ["groups", "my-membership"] as const,
   members: ["groups", "members"] as const,
@@ -159,6 +160,44 @@ export function useMyGroups(
       return (groupRows ?? []).map(toGroupSummary);
     },
     enabled: client !== null && user !== null,
+    retry: false,
+  });
+}
+
+/** One user's active groups, ordered by name. Public profiles use this. */
+export function useUserGroups(
+  userId: string,
+  client: AppSupabaseClient | null = supabase,
+): UseQueryResult<GroupSummary[], SocialFailure> {
+  return useQuery<GroupSummary[], SocialFailure>({
+    queryKey: [...GROUP_QUERY_KEYS.user, userId],
+    queryFn: async () => {
+      if (!client || isSocialNotInstalled()) {
+        return [];
+      }
+      const { data: memberRows, error: memberError } = await client
+        .from("group_members")
+        .select("group_id")
+        .eq("user_id", userId)
+        .eq("status", "active");
+      if (memberError) {
+        return softReadError(memberError, []);
+      }
+      const groupIds = (memberRows ?? []).map((row) => row.group_id);
+      if (groupIds.length === 0) {
+        return [];
+      }
+      const { data: groupRows, error: groupError } = await client
+        .from("groups")
+        .select("*")
+        .in("id", groupIds)
+        .order("name", { ascending: true });
+      if (groupError) {
+        return softReadError(groupError, []);
+      }
+      return (groupRows ?? []).map(toGroupSummary);
+    },
+    enabled: client !== null && userId !== "",
     retry: false,
   });
 }

@@ -1,17 +1,12 @@
-import { InfoIcon, LoaderCircleIcon } from "lucide-react";
+import { LoaderCircleIcon } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -193,19 +188,20 @@ export function LoginPage() {
     return (
       <Page title="Check your email" width="narrow">
         <Card>
-          <CardHeader>
-            <CardTitle>Confirm your account</CardTitle>
-            <CardDescription>
+          <CardContent className="grid gap-2 pt-6">
+            <h1 className="font-heading text-xl font-semibold">
+              Confirm your account
+            </h1>
+            <p className="text-sm text-muted-foreground">
               We sent a link to{" "}
-              <span className="font-medium">{normalizeEmail(email)}</span>. Open
-              it to confirm your account and finish signing up.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Already confirmed?{" "}
+              <span className="font-medium text-foreground">
+                {normalizeEmail(email)}
+              </span>
+              . Open it to confirm your account and finish signing up.
+            </p>
             <Button
               variant="link"
-              className="h-auto p-0"
+              className="h-auto p-0 justify-self-start"
               onClick={() => setNeedsEmailConfirmation(false)}
             >
               Sign in
@@ -220,18 +216,21 @@ export function LoginPage() {
     return (
       <Page title="Check your email" width="narrow">
         <Card>
-          <CardHeader>
-            <CardTitle>Reset link sent</CardTitle>
-            <CardDescription>
+          <CardContent className="grid gap-2 pt-6">
+            <h1 className="font-heading text-xl font-semibold">
+              Reset link sent
+            </h1>
+            <p className="text-sm text-muted-foreground">
               If an account exists for{" "}
-              <span className="font-medium">{normalizeEmail(email)}</span>, a
-              password reset link is on its way. The link opens the reset page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {normalizeEmail(email)}
+              </span>
+              , a password reset link is on its way. The link opens the reset
+              page.
+            </p>
             <Button
               variant="link"
-              className="h-auto p-0"
+              className="h-auto p-0 justify-self-start"
               onClick={() => setResetSent(false)}
             >
               Back to sign in
@@ -243,200 +242,187 @@ export function LoginPage() {
   }
 
   return (
-    <Page
-      title="Sign in"
-      description="Save teams and more with an account."
-      width="narrow"
-    >
-      <Tabs defaultValue="signin">
-        <TabsList className="w-full">
-          <TabsTrigger value="signin">Sign in</TabsTrigger>
-          <TabsTrigger value="signup">Sign up</TabsTrigger>
-        </TabsList>
+    <Page title="Sign in" width="narrow">
+      <div className="mx-auto grid w-full max-w-sm justify-items-center gap-6">
+        <Link to="/" className="rounded-md" aria-label="OHKOLab home">
+          <Wordmark className="text-3xl" />
+        </Link>
 
-        <TabsContent value="signin" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Welcome back</CardTitle>
-              <CardDescription>
-                Sign in with your email and password.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="grid gap-4" onSubmit={handleSignIn} noValidate>
-                <div className="grid gap-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    aria-invalid={fieldErrors.email ? true : undefined}
-                    aria-describedby={
-                      fieldErrors.email ? "signin-email-error" : undefined
-                    }
-                  />
-                  <FieldError
-                    id="signin-email-error"
-                    message={fieldErrors.email}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    aria-invalid={fieldErrors.password ? true : undefined}
-                    aria-describedby={
-                      fieldErrors.password ? "signin-password-error" : undefined
-                    }
-                  />
-                  <FieldError
-                    id="signin-password-error"
-                    message={fieldErrors.password}
-                  />
-                </div>
-                <FormError id="signin-form-error" failure={formError} />
-                <Button
-                  type="submit"
-                  disabled={busy}
-                  aria-describedby={formError ? "signin-form-error" : undefined}
-                >
-                  {pending === "signIn" ? (
-                    <LoaderCircleIcon className="animate-spin" />
-                  ) : (
-                    <InfoIcon />
-                  )}
-                  Sign in
-                </Button>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="h-auto p-0 justify-self-start"
-                  onClick={handleReset}
-                  disabled={busy}
-                >
-                  Forgot password?
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <Tabs defaultValue="signin" className="w-full">
+          <TabsList className="w-full">
+            <TabsTrigger value="signin">Sign in</TabsTrigger>
+            <TabsTrigger value="signup">Sign up</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="signup" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Create an account</CardTitle>
-              <CardDescription>Save teams and your profile.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="grid gap-4" onSubmit={handleSignUp} noValidate>
-                <div className="grid gap-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    aria-invalid={fieldErrors.email ? true : undefined}
-                    aria-describedby={
-                      fieldErrors.email ? "signup-email-error" : undefined
-                    }
-                  />
-                  <FieldError
-                    id="signup-email-error"
-                    message={fieldErrors.email}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    aria-invalid={fieldErrors.password ? true : undefined}
-                    aria-describedby={
-                      fieldErrors.password ? "signup-password-error" : undefined
-                    }
-                  />
-                  <FieldError
-                    id="signup-password-error"
-                    message={fieldErrors.password}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <div className="flex items-start gap-2">
-                    <Checkbox
-                      id="signup-terms"
-                      checked={acceptedTerms}
-                      onCheckedChange={(checked) =>
-                        setAcceptedTerms(checked === true)
-                      }
-                      aria-invalid={
-                        fieldErrors.acceptedTerms ? true : undefined
-                      }
+          <TabsContent value="signin" className="mt-4">
+            <Card>
+              <CardContent className="pt-6">
+                <form className="grid gap-4" onSubmit={handleSignIn} noValidate>
+                  <div className="grid gap-2">
+                    <Label htmlFor="signin-email">Email</Label>
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      aria-invalid={fieldErrors.email ? true : undefined}
                       aria-describedby={
-                        fieldErrors.acceptedTerms
-                          ? "signup-terms-error"
+                        fieldErrors.email ? "signin-email-error" : undefined
+                      }
+                    />
+                    <FieldError
+                      id="signin-email-error"
+                      message={fieldErrors.email}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Input
+                      id="signin-password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      aria-invalid={fieldErrors.password ? true : undefined}
+                      aria-describedby={
+                        fieldErrors.password
+                          ? "signin-password-error"
                           : undefined
                       }
                     />
-                    <Label
-                      htmlFor="signup-terms"
-                      className="font-normal leading-snug"
-                    >
-                      I am 13 or older and accept the{" "}
-                      <Link
-                        to="/terms"
-                        className="text-primary underline underline-offset-4"
-                      >
-                        terms
-                      </Link>{" "}
-                      and{" "}
-                      <Link
-                        to="/privacy"
-                        className="text-primary underline underline-offset-4"
-                      >
-                        privacy policy
-                      </Link>
-                    </Label>
+                    <FieldError
+                      id="signin-password-error"
+                      message={fieldErrors.password}
+                    />
                   </div>
-                  <FieldError
-                    id="signup-terms-error"
-                    message={fieldErrors.acceptedTerms}
-                  />
-                </div>
-                <FormError id="signup-form-error" failure={formError} />
-                <Button
-                  type="submit"
-                  disabled={busy}
-                  aria-describedby={formError ? "signup-form-error" : undefined}
-                >
-                  {pending === "signUp" ? (
-                    <LoaderCircleIcon className="animate-spin" />
-                  ) : (
-                    <InfoIcon />
-                  )}
-                  Sign up
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  <FormError id="signin-form-error" failure={formError} />
+                  <Button
+                    type="submit"
+                    disabled={busy}
+                    aria-describedby={
+                      formError ? "signin-form-error" : undefined
+                    }
+                  >
+                    {pending === "signIn" ? (
+                      <LoaderCircleIcon className="animate-spin" />
+                    ) : null}
+                    Sign in
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 justify-self-start"
+                    onClick={handleReset}
+                    disabled={busy}
+                  >
+                    Forgot password?
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      <div className="mt-6 grid gap-2">
-        <p className="text-center text-xs text-muted-foreground">
-          or continue with
-        </p>
-        <div className="grid gap-2 sm:grid-cols-2">
+          <TabsContent value="signup" className="mt-4">
+            <Card>
+              <CardContent className="pt-6">
+                <form className="grid gap-4" onSubmit={handleSignUp} noValidate>
+                  <div className="grid gap-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      aria-invalid={fieldErrors.email ? true : undefined}
+                      aria-describedby={
+                        fieldErrors.email ? "signup-email-error" : undefined
+                      }
+                    />
+                    <FieldError
+                      id="signup-email-error"
+                      message={fieldErrors.email}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      aria-invalid={fieldErrors.password ? true : undefined}
+                      aria-describedby={
+                        fieldErrors.password
+                          ? "signup-password-error"
+                          : undefined
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="signup-terms"
+                        checked={acceptedTerms}
+                        onCheckedChange={(checked) =>
+                          setAcceptedTerms(checked === true)
+                        }
+                        aria-invalid={
+                          fieldErrors.acceptedTerms ? true : undefined
+                        }
+                        aria-describedby={
+                          fieldErrors.acceptedTerms
+                            ? "signup-terms-error"
+                            : undefined
+                        }
+                      />
+                      <Label
+                        htmlFor="signup-terms"
+                        className="font-normal leading-snug"
+                      >
+                        I am 13 or older and accept the{" "}
+                        <Link
+                          to="/terms"
+                          className="text-primary underline underline-offset-4"
+                        >
+                          terms
+                        </Link>{" "}
+                        and{" "}
+                        <Link
+                          to="/privacy"
+                          className="text-primary underline underline-offset-4"
+                        >
+                          privacy policy
+                        </Link>
+                      </Label>
+                    </div>
+                    <FieldError
+                      id="signup-terms-error"
+                      message={fieldErrors.acceptedTerms}
+                    />
+                  </div>
+                  <FormError id="signup-form-error" failure={formError} />
+                  <Button
+                    type="submit"
+                    disabled={busy}
+                    aria-describedby={
+                      formError ? "signup-form-error" : undefined
+                    }
+                  >
+                    {pending === "signUp" ? (
+                      <LoaderCircleIcon className="animate-spin" />
+                    ) : null}
+                    Sign up
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <div className="grid w-full gap-2">
           <Button
             variant="outline"
             onClick={() => handleProvider("google")}

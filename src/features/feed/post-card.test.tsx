@@ -123,12 +123,24 @@ describe("PostCard", () => {
 
     expect(screen.getByText("First post!")).toBeInTheDocument();
     expect(screen.getByText("Brock")).toBeInTheDocument();
-    expect(screen.getByText("@brock")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Onix" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /like/i })).toHaveTextContent(
       "2",
     );
     expect(screen.getByRole("button", { name: /^1 comment$/i })).not.toBeNull();
+  });
+
+  it("hides the handle when it matches the display name", () => {
+    renderCard(postRow());
+
+    expect(screen.queryByText("@brock")).not.toBeInTheDocument();
+  });
+
+  it("shows the handle when it differs from the display name", () => {
+    renderCard(postRow({ author_username: "brockstone" }));
+
+    expect(screen.getByText("Brock")).toBeInTheDocument();
+    expect(screen.getByText("@brockstone")).toBeInTheDocument();
   });
 
   it("links to the author profile and post detail", () => {
@@ -198,6 +210,53 @@ describe("PostCard", () => {
     ) as { version: number; teams: Team[] };
     expect(stored.teams).toHaveLength(1);
     expect(stored.teams[0]!.name).toBe("Champion team");
+  });
+
+  it("shows the calc result attachment with range, KO label and meter", () => {
+    const attachment = {
+      kind: "calc-result",
+      attacker: "Garchomp",
+      defender: "Onix",
+      move: "Earthquake",
+      min: 102,
+      max: 120,
+      minPercent: 48.6,
+      maxPercent: 57.1,
+      defenderMaxHp: 210,
+      rolls: [102, 105, 108, 112, 115, 120],
+      description: "Garchomp Earthquake vs. Onix",
+      koText: "guaranteed 2HKO",
+    };
+    renderCard(postRow({ attachment }));
+
+    expect(screen.getByText("Garchomp vs Onix")).toBeInTheDocument();
+    expect(screen.getByText("Earthquake")).toBeInTheDocument();
+    expect(screen.getByText("48.6 - 57.1%")).toBeInTheDocument();
+    expect(screen.getByText("102-120 damage")).toBeInTheDocument();
+    expect(screen.getByText("GUARANTEED 2HKO")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: /HP left after the hit/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the raw KO text when it is not a plain KO summary", () => {
+    const attachment = {
+      kind: "calc-result",
+      attacker: "Garchomp",
+      defender: "Onix",
+      move: "Earthquake",
+      min: 12,
+      max: 14,
+      minPercent: 5.7,
+      maxPercent: 6.7,
+      defenderMaxHp: 210,
+      rolls: [12, 13, 14],
+      description: "Garchomp Earthquake vs. Onix",
+      koText: "not a KO",
+    };
+    renderCard(postRow({ attachment }));
+
+    expect(screen.getByText("not a KO")).toBeInTheDocument();
   });
 
   it("edits an own post through the overflow menu", async () => {

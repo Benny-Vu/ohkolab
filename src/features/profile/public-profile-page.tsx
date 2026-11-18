@@ -10,12 +10,15 @@ import {
   FlagIcon,
   LoaderCircleIcon,
   LogInIcon,
-  UserRoundIcon,
 } from "lucide-react";
 
 import { Page } from "@/components/page";
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { UserAvatar } from "@/components/user-avatar";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
+import { SegmentedControl } from "@/components/segmented-control";
+import { Badge } from "@/components/ui/badge";
 import { formatJoined } from "@/lib/format-date";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +66,7 @@ import {
 import { PostList } from "@/features/feed/post-list";
 import { ReportDialog } from "@/features/feed/report-dialog";
 import { SuspendDialog } from "@/features/admin/suspend-dialog";
+import { useUserGroups, type GroupSummary } from "@/lib/groups/queries";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +81,16 @@ const TeamMemberRow = lazy(() =>
     default: m.TeamMemberRow,
   })),
 );
+
+// The banner tint needs the dex (getSpecies), so it loads lazily too and
+// keeps the heavy pokemon-data chunk out of the profile route.
+const ProfileBannerTint = lazy(() =>
+  import("@/features/profile/profile-banner-tint").then((m) => ({
+    default: m.ProfileBannerTint,
+  })),
+);
+
+type ProfileTab = "posts" | "teams" | "groups";
 
 function UnconfiguredNotice() {
   return (
@@ -96,47 +110,6 @@ function ProfileSkeleton() {
       <Skeleton className="h-8 w-40" />
       <Skeleton className="h-40 w-full" />
     </div>
-  );
-}
-
-function ProfileHeader({
-  displayName,
-  username,
-  avatarSpecies,
-  bio,
-  createdAt,
-}: {
-  displayName: string | null;
-  username: string;
-  avatarSpecies: string | null;
-  bio: string | null;
-  createdAt: string;
-}) {
-  return (
-    <Card size="sm">
-      <CardContent className="flex flex-wrap items-start gap-4">
-        <UserAvatar
-          username={username}
-          displayName={displayName}
-          avatarSpecies={avatarSpecies}
-          size="lg"
-        />
-        <div className="grid min-w-0 flex-1 gap-1">
-          <p className="min-w-0 truncate text-xl font-semibold">
-            {displayName ?? username}
-          </p>
-          <p className="min-w-0 truncate text-sm text-muted-foreground">
-            @{username}
-          </p>
-          {bio ? (
-            <p className="min-w-0 whitespace-pre-wrap text-sm">{bio}</p>
-          ) : null}
-          <p className="min-w-0 text-xs text-muted-foreground">
-            {formatJoined(createdAt)}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -184,6 +157,9 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
           ))}
         </ul>
         <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
           <Button onClick={copyToMyTeams}>
             <CopyIcon />
             Copy to my teams
@@ -240,28 +216,19 @@ function TeamsSection({
 
   if (teamsQuery.isPending) {
     return (
-      <section className="grid gap-3">
-        <h2 className="text-lg font-semibold">Public teams</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Skeleton className="h-44 w-full" />
-          <Skeleton className="h-44 w-full" />
-        </div>
-      </section>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Skeleton className="h-44 w-full" />
+        <Skeleton className="h-44 w-full" />
+      </div>
     );
   }
 
   if (teamsQuery.isError) {
     return (
-      <section className="grid gap-3">
-        <h2 className="text-lg font-semibold">Public teams</h2>
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>Could not load teams</AlertTitle>
-          <AlertDescription>
-            Something went wrong while loading this profile's teams.
-          </AlertDescription>
-        </Alert>
-        <div>
+      <ErrorState
+        title="Could not load teams"
+        description="Something went wrong while loading this profile's teams."
+        action={
           <Button
             variant="outline"
             size="sm"
@@ -269,26 +236,99 @@ function TeamsSection({
           >
             Try again
           </Button>
-        </div>
-      </section>
+        }
+      />
     );
   }
 
   const teams = teamsQuery.data;
 
+  if (teams.length === 0) {
+    return <EmptyState title="No public teams yet" />;
+  }
+
   return (
-    <section className="grid gap-3">
-      <h2 className="text-lg font-semibold">Public teams</h2>
-      {teams.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No public teams yet.</p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {teams.map((team) => (
-            <TeamCard key={team.id} team={team} username={username} />
-          ))}
+    <div className="grid gap-4 sm:grid-cols-2">
+      {teams.map((team) => (
+        <TeamCard key={team.id} team={team} username={username} />
+      ))}
+    </div>
+  );
+}
+
+function ProfileGroupCard({ group }: { group: GroupSummary }) {
+  return (
+    <Link
+      to={`/g/${group.slug}`}
+      className="group block rounded-md focus-visible:outline-2"
+    >
+      <div className="rounded-md border bg-card p-4 transition-colors group-hover:border-primary/60">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="font-heading truncate text-base font-semibold">
+            {group.name}
+          </span>
+          <Badge variant="secondary">
+            {group.visibility === "invite_only" ? "Invite only" : "Public"}
+          </Badge>
         </div>
-      )}
-    </section>
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          {group.description ?? "No description yet."}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+function GroupsSection({
+  userId,
+  client,
+}: {
+  userId: string;
+  client: AppSupabaseClient;
+}) {
+  const groupsQuery = useUserGroups(userId, client);
+
+  if (groupsQuery.isPending) {
+    return (
+      <div className="grid gap-3" aria-label="Loading groups">
+        <Skeleton className="h-20 w-full rounded-md" />
+        <Skeleton className="h-20 w-full rounded-md" />
+      </div>
+    );
+  }
+
+  if (groupsQuery.isError) {
+    return (
+      <ErrorState
+        title="Could not load groups"
+        description="Something went wrong while loading this trainer's groups. Check your connection and try again."
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void groupsQuery.refetch()}
+          >
+            Try again
+          </Button>
+        }
+      />
+    );
+  }
+
+  const groups = groupsQuery.data ?? [];
+
+  if (groups.length === 0) {
+    return <EmptyState title="No groups yet" />;
+  }
+
+  return (
+    <ul className="grid gap-3">
+      {groups.map((group) => (
+        <li key={group.id}>
+          <ProfileGroupCard group={group} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -304,7 +344,7 @@ function FollowListRow({
       <Link
         to={`/u/${profile.username}`}
         onClick={onClose}
-        className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent"
+        className="flex items-center gap-3 rounded-md p-2 transition-colors duration-150 ease-out hover:bg-accent"
       >
         <UserAvatar
           username={profile.username}
@@ -360,6 +400,11 @@ function FollowListDialog({
             ))}
           </ul>
         )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -379,7 +424,7 @@ function FollowersDialog({
     <FollowListDialog
       query={query}
       title="Followers"
-      emptyText="No followers yet."
+      emptyText="No followers yet"
       onClose={onClose}
     />
   );
@@ -399,13 +444,13 @@ function FollowingDialog({
     <FollowListDialog
       query={query}
       title="Following"
-      emptyText="Not following anyone yet."
+      emptyText="Not following anyone yet"
       onClose={onClose}
     />
   );
 }
 
-function ProfileSocialSection({
+function ProfileSocialActions({
   profile,
   client,
 }: {
@@ -417,18 +462,13 @@ function ProfileSocialSection({
   const followState = useFollowState(profile.id, client);
   const toggleFollow = useToggleFollow(profile.id, client);
   const toggleBlock = useToggleBlock(profile.id, client);
-  const countsQuery = useFollowCounts(profile.id, client);
   const moderatorQuery = useIsModerator(client);
-  const [listOpen, setListOpen] = useState<"followers" | "following" | null>(
-    null,
-  );
   const [blockOpen, setBlockOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [suspendOpen, setSuspendOpen] = useState(false);
   const isModerator = moderatorQuery.data === true;
 
   const following = followState.data === true;
-  const counts = countsQuery.data;
   const signInTo = `/login?returnTo=/u/${profile.username}`;
 
   const handleToggleFollow = async () => {
@@ -455,106 +495,85 @@ function ProfileSocialSection({
   };
 
   return (
-    <Card size="sm">
-      <CardContent className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {!auth.user ? (
-            <>
-              <Button variant="outline" size="sm" asChild>
-                <Link to={signInTo}>
-                  <LogInIcon />
-                  Sign in to follow
-                </Link>
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="More options"
-                  >
-                    <EllipsisIcon />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link to={signInTo}>
-                      <LogInIcon />
-                      Sign in to block
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : !isSelf ? (
-            <>
-              <Button
-                variant={following ? "outline" : "default"}
-                size="sm"
-                disabled={toggleFollow.isPending}
-                onClick={() => void handleToggleFollow()}
-              >
-                {toggleFollow.isPending ? (
-                  <LoaderCircleIcon className="animate-spin" />
-                ) : null}
-                {following ? "Unfollow" : "Follow"}
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="More options"
-                  >
-                    <EllipsisIcon />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        {!auth.user ? (
+          <>
+            <Button variant="outline" size="sm" asChild>
+              <Link to={signInTo}>
+                <LogInIcon />
+                Sign in to follow
+              </Link>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="More options"
+                >
+                  <EllipsisIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to={signInTo}>
+                    <LogInIcon />
+                    Sign in to block
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : !isSelf ? (
+          <>
+            <Button
+              variant={following ? "outline" : "default"}
+              size="sm"
+              disabled={toggleFollow.isPending}
+              onClick={() => void handleToggleFollow()}
+            >
+              {toggleFollow.isPending ? (
+                <LoaderCircleIcon className="animate-spin" />
+              ) : null}
+              {following ? "Unfollow" : "Follow"}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="More options"
+                >
+                  <EllipsisIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setBlockOpen(true)}
+                >
+                  <BanIcon />
+                  Block user
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setReportOpen(true)}>
+                  <FlagIcon />
+                  Report user
+                </DropdownMenuItem>
+                {isModerator ? (
                   <DropdownMenuItem
                     variant="destructive"
-                    onSelect={() => setBlockOpen(true)}
+                    onSelect={() => setSuspendOpen(true)}
                   >
                     <BanIcon />
-                    Block user
+                    Suspend user
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setReportOpen(true)}>
-                    <FlagIcon />
-                    Report user
-                  </DropdownMenuItem>
-                  {isModerator ? (
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setSuspendOpen(true)}
-                    >
-                      <BanIcon />
-                      Suspend user
-                    </DropdownMenuItem>
-                  ) : null}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <button
-            type="button"
-            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            onClick={() => setListOpen("followers")}
-          >
-            {counts ? counts.followers : "…"} followers
-          </button>
-          <span aria-hidden="true" className="text-muted-foreground">
-            ·
-          </span>
-          <button
-            type="button"
-            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            onClick={() => setListOpen("following")}
-          >
-            {counts ? counts.following : "…"} following
-          </button>
-        </div>
-      </CardContent>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : null}
+      </div>
 
       <Dialog open={blockOpen} onOpenChange={setBlockOpen}>
         <DialogContent>
@@ -603,7 +622,41 @@ function ProfileSocialSection({
         open={suspendOpen}
         onOpenChange={setSuspendOpen}
       />
+    </>
+  );
+}
 
+function ProfileFollowCounts({
+  profile,
+  client,
+}: {
+  profile: Profile;
+  client: AppSupabaseClient;
+}) {
+  const countsQuery = useFollowCounts(profile.id, client);
+  const [listOpen, setListOpen] = useState<"followers" | "following" | null>(
+    null,
+  );
+  const counts = countsQuery.data;
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <button
+          type="button"
+          className="text-muted-foreground underline-offset-4 transition-colors duration-150 ease-out hover:text-foreground hover:underline"
+          onClick={() => setListOpen("followers")}
+        >
+          {counts ? counts.followers : "…"} followers
+        </button>
+        <button
+          type="button"
+          className="text-muted-foreground underline-offset-4 transition-colors duration-150 ease-out hover:text-foreground hover:underline"
+          onClick={() => setListOpen("following")}
+        >
+          {counts ? counts.following : "…"} following
+        </button>
+      </div>
       {listOpen === "followers" ? (
         <FollowersDialog
           userId={profile.id}
@@ -618,6 +671,56 @@ function ProfileSocialSection({
           onClose={() => setListOpen(null)}
         />
       ) : null}
+    </>
+  );
+}
+
+function ProfileHeader({
+  profile,
+  client,
+  socialReady,
+}: {
+  profile: Profile;
+  client: AppSupabaseClient;
+  socialReady: boolean;
+}) {
+  return (
+    <Card size="sm" className="relative">
+      <Suspense fallback={null}>
+        <ProfileBannerTint avatarSpecies={profile.avatarSpecies} />
+      </Suspense>
+      <CardContent className="relative grid gap-4">
+        <div className="flex flex-wrap items-start gap-4">
+          <UserAvatar
+            username={profile.username}
+            displayName={profile.displayName}
+            avatarSpecies={profile.avatarSpecies}
+            size="lg"
+          />
+          <div className="grid min-w-0 flex-1 gap-1">
+            <p className="min-w-0 truncate font-heading text-xl font-semibold">
+              {profile.displayName ?? profile.username}
+            </p>
+            <p className="min-w-0 truncate text-sm text-muted-foreground">
+              @{profile.username}
+            </p>
+            {profile.bio ? (
+              <p className="min-w-0 whitespace-pre-wrap text-sm">
+                {profile.bio}
+              </p>
+            ) : null}
+            <p className="min-w-0 text-xs text-muted-foreground">
+              {formatJoined(profile.createdAt)}
+            </p>
+          </div>
+          {socialReady ? (
+            <ProfileSocialActions profile={profile} client={client} />
+          ) : null}
+        </div>
+        {socialReady ? (
+          <ProfileFollowCounts profile={profile} client={client} />
+        ) : null}
+      </CardContent>
     </Card>
   );
 }
@@ -633,30 +736,20 @@ function PostsSection({
 
   if (postsQuery.isPending) {
     return (
-      <section className="grid gap-3">
-        <h2 className="text-lg font-semibold">Posts</h2>
-        <div className="grid gap-3" aria-label="Loading posts">
-          <Skeleton className="h-28 w-full rounded-xl" />
-          <Skeleton className="h-28 w-full rounded-xl" />
-          <Skeleton className="h-28 w-full rounded-xl" />
-        </div>
-      </section>
+      <div className="grid gap-3" aria-label="Loading posts">
+        <Skeleton className="h-28 w-full rounded-md" />
+        <Skeleton className="h-28 w-full rounded-md" />
+        <Skeleton className="h-28 w-full rounded-md" />
+      </div>
     );
   }
 
   if (postsQuery.isError) {
     return (
-      <section className="grid gap-3">
-        <h2 className="text-lg font-semibold">Posts</h2>
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>Could not load posts</AlertTitle>
-          <AlertDescription>
-            Something went wrong while loading this trainer's posts. Check your
-            connection and try again.
-          </AlertDescription>
-        </Alert>
-        <div>
+      <ErrorState
+        title="Could not load posts"
+        description="Something went wrong while loading this trainer's posts. Check your connection and try again."
+        action={
           <Button
             variant="outline"
             size="sm"
@@ -664,17 +757,16 @@ function PostsSection({
           >
             Try again
           </Button>
-        </div>
-      </section>
+        }
+      />
     );
   }
 
   const posts = postsQuery.data?.pages.flat() ?? [];
 
   return (
-    <section className="grid gap-3">
-      <h2 className="text-lg font-semibold">Posts</h2>
-      <PostList posts={posts} emptyMessage="No posts yet." />
+    <div className="grid gap-3">
+      <PostList posts={posts} emptyMessage="No posts yet" />
       {postsQuery.hasNextPage ? (
         <div>
           <Button
@@ -687,7 +779,7 @@ function PostsSection({
           </Button>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }
 
@@ -701,10 +793,11 @@ export function PublicProfilePage({
   const profileQuery = usePublicProfile(normalized, client);
   const profile = profileQuery.data ?? null;
   const socialReady = socialAvailability(client) === "ready";
+  const [tab, setTab] = useState<ProfileTab>("posts");
 
   return (
     <Page
-      title={profile ? `@${profile.username}` : "Profile"}
+      title={profile ? (profile.displayName ?? profile.username) : "Profile"}
       description={
         profile?.displayName
           ? `${profile.displayName} on OHKOLab`
@@ -717,16 +810,10 @@ export function PublicProfilePage({
       ) : profileQuery.isPending ? (
         <ProfileSkeleton />
       ) : profileQuery.isError ? (
-        <div className="grid gap-3">
-          <Alert variant="destructive">
-            <AlertCircleIcon />
-            <AlertTitle>Could not load profile</AlertTitle>
-            <AlertDescription>
-              Something went wrong while loading this profile. Check your
-              connection and try again.
-            </AlertDescription>
-          </Alert>
-          <div>
+        <ErrorState
+          title="Could not load profile"
+          description="Something went wrong while loading this profile. Check your connection and try again."
+          action={
             <Button
               variant="outline"
               size="sm"
@@ -734,17 +821,14 @@ export function PublicProfilePage({
             >
               Try again
             </Button>
-          </div>
-        </div>
+          }
+        />
       ) : !profile ? (
         <div className="grid gap-3">
-          <Alert>
-            <UserRoundIcon />
-            <AlertTitle>Profile not found</AlertTitle>
-            <AlertDescription>
-              No one goes by @{normalized} here.
-            </AlertDescription>
-          </Alert>
+          <EmptyState
+            title="Profile not found"
+            description={`No one goes by @${normalized} here.`}
+          />
           <div>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/">
@@ -757,23 +841,35 @@ export function PublicProfilePage({
       ) : (
         <div className="grid gap-6">
           <ProfileHeader
-            displayName={profile.displayName}
-            username={profile.username}
-            avatarSpecies={profile.avatarSpecies}
-            bio={profile.bio}
-            createdAt={profile.createdAt}
-          />
-          {socialReady ? (
-            <ProfileSocialSection profile={profile} client={client} />
-          ) : null}
-          {socialReady ? (
-            <PostsSection userId={profile.id} client={client} />
-          ) : null}
-          <TeamsSection
-            userId={profile.id}
-            username={profile.username}
+            profile={profile}
             client={client}
+            socialReady={socialReady}
           />
+          <SegmentedControl
+            aria-label="Profile sections"
+            value={tab}
+            onValueChange={(value) => setTab(value as ProfileTab)}
+            options={[
+              { value: "posts", label: "Posts" },
+              { value: "teams", label: "Teams" },
+              { value: "groups", label: "Groups" },
+            ]}
+          />
+          {tab === "posts" ? (
+            socialReady ? (
+              <PostsSection userId={profile.id} client={client} />
+            ) : null
+          ) : null}
+          {tab === "teams" ? (
+            <TeamsSection
+              userId={profile.id}
+              username={profile.username}
+              client={client}
+            />
+          ) : null}
+          {tab === "groups" ? (
+            <GroupsSection userId={profile.id} client={client} />
+          ) : null}
         </div>
       )}
     </Page>

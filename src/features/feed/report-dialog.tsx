@@ -129,7 +129,7 @@ export function ReportDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Close
+              Cancel
             </Button>
             <Button type="button" asChild>
               <a

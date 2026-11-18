@@ -39,10 +39,20 @@ const moderationMocks = vi.hoisted(() => ({
   useSuspendUser: vi.fn(),
 }));
 
+const groupsMocks = vi.hoisted(() => ({
+  useMyGroups: vi.fn(),
+}));
+
+const metagameMocks = vi.hoisted(() => ({
+  useMetagameSnapshot: vi.fn(),
+}));
+
 vi.mock("@/lib/social/availability", () => availabilityMocks);
 vi.mock("@/lib/social/queries", () => queriesMocks);
 vi.mock("@/lib/social/mutations", () => mutationsMocks);
 vi.mock("@/lib/social/moderation", () => moderationMocks);
+vi.mock("@/lib/groups/queries", () => groupsMocks);
+vi.mock("@/features/metagame/use-metagame", () => metagameMocks);
 
 const infiniteResult = (
   pages: FeedPostRow[][],
@@ -84,6 +94,20 @@ function stubSocial() {
     refetch: vi.fn(),
   });
   moderationMocks.useRemoveContent.mockReturnValue(mutationResult());
+  groupsMocks.useMyGroups.mockReturnValue({
+    data: [],
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  });
+  metagameMocks.useMetagameSnapshot.mockReturnValue({
+    data: null,
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  });
 }
 
 function postRow(overrides: Partial<FeedPostRow> = {}): FeedPostRow {
@@ -145,7 +169,7 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /metagame/i })).toBeInTheDocument();
     expect(
-      screen.queryByRole("tab", { name: /latest/i }),
+      screen.queryByRole("radio", { name: /latest/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -157,8 +181,10 @@ describe("HomePage", () => {
     renderHome();
 
     expect(await screen.findByText("Hello feed")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /latest/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /following/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /latest/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /following/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Groups" })).toHaveAttribute(
       "href",
       "/groups",
@@ -175,21 +201,96 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
   });
 
+  it("hides the hero for signed-in users", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    renderHome();
+
+    // Wait for the feed to settle, then confirm no hero heading remains.
+    await screen.findByRole("radio", { name: /latest/i });
+    expect(
+      screen.queryByRole("heading", { name: /ohko ?lab/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the compact intro for signed-out visitors", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    renderHome(createFakeAuth({ user: null, session: null, profile: null }));
+
+    expect(
+      await screen.findByRole("heading", { name: /ohko ?lab/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /damage calculator/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /metagame/i })).toBeInTheDocument();
+  });
+
   it("shows the sign-in prompt on the Following tab when signed out", async () => {
     availabilityMocks.socialAvailability.mockReturnValue("ready");
     queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
     const user = userEvent.setup();
     renderHome(createFakeAuth({ user: null, session: null, profile: null }));
 
-    await user.click(screen.getByRole("tab", { name: /following/i }));
+    await user.click(screen.getByRole("radio", { name: /following/i }));
 
     expect(
       await screen.findByText(/sign in to see posts from trainers you follow/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /sign in/i })).toHaveAttribute(
-      "href",
-      "/login?returnTo=/",
-    );
+    const signInLinks = screen.getAllByRole("link", { name: /sign in/i });
+    expect(signInLinks.length).toBeGreaterThan(0);
+    for (const link of signInLinks) {
+      expect(link).toHaveAttribute("href", "/login?returnTo=/");
+    }
+  });
+
+  it("shows the sign-in prompt in the groups rail when signed out", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    renderHome(createFakeAuth({ user: null, session: null, profile: null }));
+
+    expect(
+      await screen.findByText(/sign in to join groups/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/no groups yet/i)).not.toBeInTheDocument();
+  });
+
+  it("lists the signed-in user's groups in the rail", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    groupsMocks.useMyGroups.mockReturnValue({
+      data: [
+        {
+          id: "g1",
+          slug: "sand-club",
+          name: "Sand Club",
+          description: null,
+          visibility: "public",
+          ownerId: "user-1",
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+      ],
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    renderHome();
+
+    const link = await screen.findByRole("link", { name: "Sand Club" });
+    expect(link).toHaveAttribute("href", "/g/sand-club");
+  });
+
+  it("shows the empty groups state for a signed-in user with no groups", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    renderHome();
+
+    expect(await screen.findByText(/no groups yet/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/sign in to join groups/i),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the empty state when the feed has no posts", async () => {
@@ -197,9 +298,7 @@ describe("HomePage", () => {
     queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
     renderHome();
 
-    expect(
-      await screen.findByText(/no posts yet. be the first!/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/no posts yet/i)).toBeInTheDocument();
   });
 
   it("shows an error with retry when the feed fails", async () => {

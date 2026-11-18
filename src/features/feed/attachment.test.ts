@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import type { DamageResult } from "@/types/battle";
 import type { PokemonSet } from "@/types/pokemon";
 import { emptyStatsTable } from "@/types/pokemon";
 import type { Team } from "@/types/team";
 
 import {
+  calcResultAttachment,
+  calcResultAttachmentJson,
+  parseCalcResultAttachment,
   parseTeamAttachment,
   teamAttachment,
   teamAttachmentJson,
@@ -27,6 +31,18 @@ const team: Team = {
   members: [set],
   createdAt: "2026-01-01T00:00:00Z",
   updatedAt: "2026-01-01T00:00:00Z",
+};
+
+const damage: DamageResult = {
+  move: "Earthquake",
+  min: 102,
+  max: 120,
+  minPercent: 48.6,
+  maxPercent: 57.1,
+  defenderMaxHp: 210,
+  rolls: [102, 105, 108, 112, 115, 120],
+  description: "252 SpA Garchomp Earthquake vs. 0 HP / 0 SpD Onix",
+  koText: "guaranteed 2HKO",
 };
 
 describe("teamAttachment", () => {
@@ -133,5 +149,100 @@ describe("parseTeamAttachment", () => {
         },
       ],
     });
+  });
+});
+
+describe("calcResultAttachment", () => {
+  it("snapshots the calc result fields the feed needs", () => {
+    expect(calcResultAttachment("Garchomp", "Onix", damage)).toEqual({
+      kind: "calc-result",
+      attacker: "Garchomp",
+      defender: "Onix",
+      move: "Earthquake",
+      min: 102,
+      max: 120,
+      minPercent: 48.6,
+      maxPercent: 57.1,
+      defenderMaxHp: 210,
+      rolls: [102, 105, 108, 112, 115, 120],
+      description: damage.description,
+      koText: damage.koText,
+    });
+  });
+
+  it("keeps a null rolls list null", () => {
+    const attachment = calcResultAttachment("Garchomp", "Onix", {
+      ...damage,
+      rolls: null,
+    });
+    expect(attachment.rolls).toBeNull();
+  });
+});
+
+describe("calcResultAttachmentJson", () => {
+  it("produces JSON that parses back to the same attachment", () => {
+    const attachment = calcResultAttachment("Garchomp", "Onix", damage);
+    expect(
+      parseCalcResultAttachment(calcResultAttachmentJson(attachment)),
+    ).toEqual(attachment);
+  });
+});
+
+describe("parseCalcResultAttachment", () => {
+  it("round-trips a calc result through JSON", () => {
+    const attachment = calcResultAttachment("Garchomp", "Onix", damage);
+    const json = JSON.parse(JSON.stringify(attachment));
+    expect(parseCalcResultAttachment(json)).toEqual(attachment);
+  });
+
+  it("returns null for null and non-object values", () => {
+    expect(parseCalcResultAttachment(null)).toBeNull();
+    expect(parseCalcResultAttachment("calc-result")).toBeNull();
+    expect(parseCalcResultAttachment(3)).toBeNull();
+    expect(parseCalcResultAttachment([1, 2])).toBeNull();
+  });
+
+  it("returns null when the kind is not calc-result", () => {
+    expect(parseCalcResultAttachment({ kind: "team" })).toBeNull();
+  });
+
+  it("returns null when a field has the wrong type", () => {
+    const json = calcResultAttachmentJson(
+      calcResultAttachment("Garchomp", "Onix", damage),
+    );
+    expect(parseCalcResultAttachment({ ...json, attacker: 5 })).toBeNull();
+    expect(parseCalcResultAttachment({ ...json, defender: null })).toBeNull();
+    expect(parseCalcResultAttachment({ ...json, move: true })).toBeNull();
+    expect(parseCalcResultAttachment({ ...json, min: "102" })).toBeNull();
+    expect(parseCalcResultAttachment({ ...json, max: null })).toBeNull();
+    expect(
+      parseCalcResultAttachment({ ...json, minPercent: "48.6" }),
+    ).toBeNull();
+    expect(parseCalcResultAttachment({ ...json, maxPercent: [] })).toBeNull();
+    expect(
+      parseCalcResultAttachment({ ...json, defenderMaxHp: "210" }),
+    ).toBeNull();
+    expect(parseCalcResultAttachment({ ...json, description: 7 })).toBeNull();
+    expect(parseCalcResultAttachment({ ...json, koText: false })).toBeNull();
+  });
+
+  it("returns null when rolls is neither null nor a number array", () => {
+    const json = calcResultAttachmentJson(
+      calcResultAttachment("Garchomp", "Onix", damage),
+    );
+    expect(parseCalcResultAttachment({ ...json, rolls: "102-120" })).toBeNull();
+    expect(
+      parseCalcResultAttachment({ ...json, rolls: [102, "105"] }),
+    ).toBeNull();
+    expect(parseCalcResultAttachment({ ...json, rolls: [null] })).toBeNull();
+  });
+
+  it("accepts a payload with null rolls", () => {
+    const attachment = calcResultAttachment("Garchomp", "Onix", {
+      ...damage,
+      rolls: null,
+    });
+    const json = JSON.parse(JSON.stringify(attachment));
+    expect(parseCalcResultAttachment(json)).toEqual(attachment);
   });
 });

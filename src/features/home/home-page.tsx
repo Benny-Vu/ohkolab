@@ -1,32 +1,31 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
+import { Link } from "react-router";
 import {
-  AlertCircleIcon,
   ArrowRightIcon,
   CalculatorIcon,
   ChartColumnIcon,
-  ConstructionIcon,
-  LogInIcon,
   SwordsIcon,
   UsersIcon,
   type LucideIcon,
 } from "lucide-react";
-import { Link } from "react-router";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
+import { SegmentedControl } from "@/components/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth/use-auth";
+import { useMyGroups } from "@/lib/groups/queries";
 import { socialAvailability } from "@/lib/social/availability";
 import { useFeed } from "@/lib/social/queries";
 import { Composer } from "@/features/feed/composer";
 import { PostList } from "@/features/feed/post-list";
+
+const TrendingStrip = lazy(() =>
+  import("@/features/home/trending-strip").then((module) => ({
+    default: module.TrendingStrip,
+  })),
+);
 
 interface Tool {
   to: string;
@@ -70,7 +69,7 @@ export function HomePage() {
 function ToolsIntro() {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+      <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
         <span className="text-primary">OHKO</span>Lab
       </h1>
       <p className="mt-2 max-w-xl text-muted-foreground">
@@ -83,24 +82,26 @@ function ToolsIntro() {
           <li key={tool.to}>
             <Link
               to={tool.to}
-              className="group block rounded-xl focus-visible:outline-2"
+              className="block rounded-md focus-visible:outline-2"
             >
-              <Card className="transition-colors group-hover:border-primary/60">
-                <CardHeader className="flex flex-row items-center gap-4">
-                  <tool.icon
-                    className="size-6 shrink-0 text-primary"
-                    aria-hidden
-                  />
-                  <div className="min-w-0 flex-1">
-                    <CardTitle>{tool.title}</CardTitle>
-                    <CardDescription>{tool.description}</CardDescription>
-                  </div>
-                  <ArrowRightIcon
-                    className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                    aria-hidden
-                  />
-                </CardHeader>
-              </Card>
+              <div className="flex items-center gap-4 rounded-md border bg-card p-4 transition-colors duration-150 ease-out hover:bg-surface-sunken">
+                <tool.icon
+                  className="size-6 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading text-base font-semibold">
+                    {tool.title}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {tool.description}
+                  </p>
+                </div>
+                <ArrowRightIcon
+                  className="size-4 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
+              </div>
             </Link>
           </li>
         ))}
@@ -117,34 +118,34 @@ function ToolsIntro() {
 function FeedHome() {
   const { user } = useAuth();
   const [tab, setTab] = useState<"latest" | "following">("latest");
-  const feed = useFeed(tab);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-        <span className="text-primary">OHKO</span>Lab
-      </h1>
-      <p className="mt-2 max-w-xl text-muted-foreground">
-        Tools and community for Pokémon Champions: calculate damage, build teams
-        and follow the metagame.
-      </p>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
+      <div className="min-w-0">
+        {!user && <SignedOutIntro />}
 
-      {user && (
-        <div className="mt-6">
-          <Composer />
-        </div>
-      )}
+        {user && (
+          <div className="mb-4">
+            <Composer />
+          </div>
+        )}
 
-      <Tabs
-        value={tab}
-        onValueChange={(value) => setTab(value as "latest" | "following")}
-        className="mt-6"
-      >
+        <Suspense fallback={null}>
+          <div className="mb-4 lg:hidden">
+            <TrendingStrip />
+          </div>
+        </Suspense>
+
         <div className="flex items-center justify-between gap-2">
-          <TabsList>
-            <TabsTrigger value="latest">Latest</TabsTrigger>
-            <TabsTrigger value="following">Following</TabsTrigger>
-          </TabsList>
+          <SegmentedControl
+            aria-label="Feed"
+            value={tab}
+            onValueChange={(value) => setTab(value as "latest" | "following")}
+            options={[
+              { value: "latest", label: "Latest" },
+              { value: "following", label: "Following" },
+            ]}
+          />
           <Button asChild variant="outline" size="sm">
             <Link to="/groups">
               <UsersIcon aria-hidden />
@@ -153,69 +154,153 @@ function FeedHome() {
           </Button>
         </div>
 
-        <TabsContent value="latest" className="mt-4">
-          <FeedTabContent
-            feed={feed}
-            emptyMessage="No posts yet. Be the first!"
-          />
-        </TabsContent>
-        <TabsContent value="following" className="mt-4">
-          {user ? (
+        <div className="mt-4">
+          {tab === "latest" ? (
             <FeedTabContent
-              feed={feed}
-              emptyMessage="No posts from people you follow yet."
+              tab="latest"
+              emptyTitle="No posts yet"
+              emptyDescription="Be the first to post."
+            />
+          ) : user ? (
+            <FeedTabContent
+              tab="following"
+              emptyTitle="No posts from people you follow yet"
             />
           ) : (
-            <Card size="sm" className="border-dashed p-6 text-center">
-              <LogInIcon
-                className="mx-auto size-6 text-muted-foreground"
-                aria-hidden
-              />
-              <p className="mt-2 text-sm text-muted-foreground">
-                Sign in to see posts from trainers you follow.
-              </p>
-              <Button asChild size="sm" className="mt-3">
-                <Link to="/login?returnTo=/">Sign in</Link>
-              </Button>
-            </Card>
+            <EmptyState
+              title="Sign in to see posts from trainers you follow"
+              action={
+                <Button asChild size="sm">
+                  <Link to="/login?returnTo=/">Sign in</Link>
+                </Button>
+              }
+            />
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
+
+      <aside className="mt-8 hidden lg:mt-0 lg:block">
+        <RightRail signedIn={user !== null} />
+      </aside>
     </div>
   );
 }
 
-interface FeedTabContentProps {
-  feed: ReturnType<typeof useFeed>;
-  emptyMessage: string;
+function SignedOutIntro() {
+  return (
+    <section className="mb-4 rounded-md border bg-card p-4">
+      <h1 className="font-heading text-xl font-bold">
+        <span className="text-primary">OHKO</span>Lab
+      </h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        A community for Pokémon Champions players. Share teams, talk strategy
+        and follow the trainers you rate.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button asChild size="sm">
+          <Link to="/calc">
+            Damage calculator
+            <ArrowRightIcon aria-hidden />
+          </Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link to="/meta">Metagame</Link>
+        </Button>
+      </div>
+    </section>
+  );
 }
 
-function FeedTabContent({ feed, emptyMessage }: FeedTabContentProps) {
+function RightRail({ signedIn }: { signedIn: boolean }) {
+  return (
+    <div className="grid gap-4">
+      <Suspense fallback={null}>
+        <TrendingStrip />
+      </Suspense>
+      <MyGroupsRail signedIn={signedIn} />
+    </div>
+  );
+}
+
+function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
+  const myGroups = useMyGroups();
+  const groups = myGroups.data ?? [];
+
+  if (!signedIn) {
+    return (
+      <section
+        aria-label="Your groups"
+        className="rounded-md border bg-card p-4"
+      >
+        <h2 className="font-heading text-sm font-semibold">Your groups</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Sign in to join groups
+        </p>
+        <Button asChild size="sm" variant="outline" className="mt-3">
+          <Link to="/login?returnTo=/">Sign in</Link>
+        </Button>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-label="Your groups" className="rounded-md border bg-card p-4">
+      <h2 className="font-heading text-sm font-semibold">Your groups</h2>
+      {groups.length > 0 ? (
+        <ul className="mt-2 grid gap-1.5">
+          {groups.slice(0, 5).map((group) => (
+            <li key={group.id}>
+              <Link to={`/g/${group.slug}`} className="text-sm hover:underline">
+                {group.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">No groups yet</p>
+      )}
+    </section>
+  );
+}
+
+interface FeedTabContentProps {
+  tab: "latest" | "following";
+  emptyTitle: string;
+  emptyDescription?: string;
+}
+
+function FeedTabContent({
+  tab,
+  emptyTitle,
+  emptyDescription,
+}: FeedTabContentProps) {
+  const feed = useFeed(tab);
+
   if (feed.isPending) {
     return (
       <div className="grid gap-3" aria-label="Loading posts">
-        <Skeleton className="h-28 w-full rounded-xl" />
-        <Skeleton className="h-28 w-full rounded-xl" />
-        <Skeleton className="h-28 w-full rounded-xl" />
+        <Skeleton className="h-28 w-full rounded-md" />
+        <Skeleton className="h-28 w-full rounded-md" />
+        <Skeleton className="h-28 w-full rounded-md" />
       </div>
     );
   }
 
   if (feed.isError) {
     return (
-      <Alert variant="destructive">
-        <AlertCircleIcon aria-hidden />
-        <AlertTitle>Could not load the feed</AlertTitle>
-        <AlertDescription>{feed.error.message}</AlertDescription>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-3"
-          onClick={() => void feed.refetch()}
-        >
-          Try again
-        </Button>
-      </Alert>
+      <ErrorState
+        title="Could not load the feed"
+        description={feed.error.message}
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void feed.refetch()}
+          >
+            Try again
+          </Button>
+        }
+      />
     );
   }
 
@@ -224,13 +309,7 @@ function FeedTabContent({ feed, emptyMessage }: FeedTabContentProps) {
   return (
     <div className="grid gap-3">
       {posts.length === 0 ? (
-        <Card size="sm" className="border-dashed p-6 text-center">
-          <ConstructionIcon
-            className="mx-auto size-6 text-muted-foreground"
-            aria-hidden
-          />
-          <p className="mt-2 text-sm text-muted-foreground">{emptyMessage}</p>
-        </Card>
+        <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : (
         <PostList posts={posts} />
       )}
