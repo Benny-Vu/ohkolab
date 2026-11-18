@@ -127,7 +127,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "footer.terms": "利用規約",
   "footer.privacy": "プライバシー",
   "footer.sendFeedback": "フィードバックを送る",
-  "footer.madeBy": "OHKOLab is made by Vu Forge",
+  "footer.madeBy": "OHKOLabの制作:",
   "footer.japaneseNames": "日本語のポケモン名はPokéAPIのデータを使用しています",
 
   // 各機能で共通のアクションと状態。
