@@ -319,10 +319,18 @@ export function useCreateAppeal(
   );
 }
 
+/** The user who filed an appeal, embedded from profiles. */
+export interface AppealAppellant {
+  username: string;
+  display_name: string | null;
+  avatar_species: string | null;
+}
+
 /** An open appeal together with the moderation action it appeals. */
 export interface AppealWithAction {
   appeal: AppealRow;
   action: ModerationActionRow | null;
+  appellant: AppealAppellant | null;
 }
 
 /** Moderation queue: open appeals with their original action, newest first. */
@@ -338,20 +346,24 @@ export function useAppeals(
       }
       const { data, error } = await client
         .from("appeals")
-        .select("*, moderation_actions(*)")
+        .select(
+          "*, moderation_actions(*), appellant:profiles!appeals_appellant_id_fkey(username, display_name, avatar_species)",
+        )
         .eq("status", "open")
         .order("created_at", { ascending: false });
       if (error) {
         return softReadError(error, []);
       }
       return (data ?? []).map((row) => {
-        const { moderation_actions, ...appeal } =
+        const { moderation_actions, appellant, ...appeal } =
           row as unknown as AppealRow & {
             moderation_actions?: ModerationActionRow | null;
+            appellant?: AppealAppellant | null;
           };
         return {
           appeal,
           action: moderation_actions ?? null,
+          appellant: appellant ?? null,
         };
       });
     },

@@ -160,14 +160,20 @@ describe("ModerationNoticePage", () => {
     expect(screen.getByText(/Removed post body/)).toBeInTheDocument();
   });
 
-  it("falls back to a generic line when the removed text is unreadable", () => {
+  it("does not repeat the removal heading when the removed text is unreadable", () => {
     moderationMocks.useModerationAction.mockReturnValue(
       queryResult(actionRow()),
     );
     moderationMocks.useModerationTargetText.mockReturnValue(queryResult(null));
     renderNoticePage();
 
-    expect(screen.getByText("Your post was removed.")).toBeInTheDocument();
+    expect(screen.getAllByText("Your post was removed").length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      screen.queryByText("Your post was removed."),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Removed content")).not.toBeInTheDocument();
   });
 
   it("uses the comment wording for comment removals", () => {
@@ -181,7 +187,9 @@ describe("ModerationNoticePage", () => {
     expect(
       screen.getAllByText("Your comment was removed").length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText("Your comment was removed.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Your comment was removed."),
+    ).not.toBeInTheDocument();
   });
 
   it("shows suspension dates for suspend actions", () => {
