@@ -8,6 +8,12 @@ import {
   LegalText,
 } from "@/features/legal/legal-page";
 import { CONTACT_EMAIL, LAST_UPDATED } from "@/features/legal/legal-info";
+import { imagePostsEnabled } from "@/lib/social";
+
+// The image-post text (approved by the owner on 2026-11-18) is shown only when
+// the VITE_IMAGE_POSTS flag is on, so the policy never describes processing
+// that isn't happening yet.
+const IMAGES = imagePostsEnabled();
 
 const SECTIONS = [
   { id: "operator", heading: "Who runs OHKOLab" },
@@ -16,6 +22,7 @@ const SECTIONS = [
   { id: "your-public-profile", heading: "Your public profile" },
   { id: "your-teams", heading: "Your teams" },
   { id: "community-features", heading: "Community features" },
+  ...(IMAGES ? [{ id: "images", heading: "Images in posts" }] : []),
   { id: "groups", heading: "Groups" },
   { id: "notifications", heading: "Notifications" },
   { id: "telemetry", heading: "Crash reports and usage statistics" },
@@ -97,6 +104,39 @@ export function PrivacyPage() {
           </LegalText>
         </LegalSection>
 
+        {IMAGES && (
+          <LegalSection id="images" heading="Images in posts">
+            <LegalText>
+              When you attach an image to a post, your browser first resizes it
+              and re-encodes it as WebP. This also removes the image's metadata,
+              including any location information, before anything is uploaded.
+              Only the processed image leaves your device.
+            </LegalText>
+            <LegalText>
+              Every image is checked automatically before anyone else can see
+              it: OpenAI, a company in the United States that processes the
+              image for us, screens it for sexual content, violence and
+              self-harm, and an image that fails is never shown to others.
+              Cloudflare, which delivers our images, also checks every image
+              against known records of child sexual abuse material when it is
+              first delivered. A match is blocked at once and reported to the
+              authorities.
+            </LegalText>
+            <LegalText>
+              Rejected images and images from removed posts are kept in a locked
+              storage area that only our moderators can see, for 12 months
+              together with the moderation record of the removal. Then they are
+              deleted automatically.
+            </LegalText>
+            <LegalText>
+              We process images this way for our legitimate interest in keeping
+              the service safe and in meeting duties the law places on us. If an
+              image is rejected, we tell you and you can appeal once, like any
+              other removal.
+            </LegalText>
+          </LegalSection>
+        )}
+
         <LegalSection id="groups" heading="Groups">
           <LegalText>
             Groups store their name, description, whether they are public or
@@ -175,6 +215,8 @@ export function PrivacyPage() {
             moderators what was taken down. If you appeal, we store your appeal
             message and its outcome. Moderators can see moderation actions and
             appeals. You can see actions that affect you and your own appeals.
+            {IMAGES &&
+              " For posts with images, the record also lists the image files that were blocked with the removal."}
           </LegalText>
         </LegalSection>
 
@@ -229,7 +271,34 @@ export function PrivacyPage() {
             >
               privacy policy
             </a>
-            . Other than that, OHKOLab does not send your data to anyone else.
+            .
+            {IMAGES ? (
+              <>
+                {" "}
+                Images attached to posts are screened by OpenAI, hosted in the
+                United States, as described under "Images in posts"; see
+                OpenAI's{" "}
+                <a
+                  href="https://openai.com/policies/row-privacy-policy/"
+                  className="text-primary underline underline-offset-4"
+                >
+                  privacy policy
+                </a>
+                . Images are also served through Cloudflare, which checks them
+                against known records of child sexual abuse material; see
+                Cloudflare's{" "}
+                <a
+                  href="https://www.cloudflare.com/privacypolicy/"
+                  className="text-primary underline underline-offset-4"
+                >
+                  privacy policy
+                </a>
+                . Other than these, OHKOLab does not send your data to anyone
+                else.
+              </>
+            ) : (
+              " Other than that, OHKOLab does not send your data to anyone else."
+            )}
           </LegalText>
         </LegalSection>
 
@@ -244,7 +313,8 @@ export function PrivacyPage() {
             </Link>
             . This permanently removes your account, your profile, your saved
             teams, your posts, comments, likes, follows, blocks, group
-            memberships and groups you own, and your notifications from our
+            memberships and groups you own, and your notifications
+            {IMAGES && ", and the images you attached to posts,"} from our
             servers. It does not remove data stored in your browser; clear your
             browser's site data for that.
           </LegalText>

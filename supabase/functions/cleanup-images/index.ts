@@ -1,5 +1,5 @@
 /**
- * cleanup-images (Deno Edge Function): the daily storage janitor for image
+ * cleanup-images (Deno Edge Function): the storage janitor (every 15 minutes) for image
  * posts. SQL cannot move or delete storage objects, so this function owns
  * every file-level consequence of the image schema:
  *
@@ -12,7 +12,7 @@
  *      moderation record lists them any more; purge_moderation_records
  *      deletes the records themselves after the same period
  *
- * Scheduled daily by the Claude reviewer (the pg_cron pattern from
+ * Scheduled every 15 minutes by the Claude reviewer (the pg_cron pattern from
  * 20261119150000_moderation_purge.sql cannot call Edge Functions). The
  * caller must present the service role key in the Authorization header.
  */
@@ -38,13 +38,54 @@ function json(status: number, body: Record<string, unknown>): Response {
   });
 }
 
+/**
+ * True when the bearer token is a service-level key for this project.
+ *
+ * The Edge runtime's SUPABASE_SERVICE_ROLE_KEY is the new-style secret key
+ * (sb_secret_...), while the scheduler (pg_cron + pg_net) may send the legacy
+ * service_role JWT from the vault. Both are valid service keys, so accept an
+ * exact match with any key the runtime knows, and otherwise ask the auth
+ * admin API, which answers only service-level keys.
+ */
+async function isServiceKey(authorization: string): Promise<boolean> {
+  const token = authorization.startsWith("Bearer ")
+    ? authorization.slice("Bearer ".length).trim()
+    : "";
+  if (!token) return false;
+
+  const known = [Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""];
+  try {
+    known.push(
+      ...Object.values(
+        JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}") as Record<
+          string,
+          string
+        >,
+      ),
+    );
+  } catch {
+    // ignore a malformed variable; the admin check below still applies
+  }
+  if (known.some((key) => key && key === token)) return true;
+
+  const url = Deno.env.get("SUPABASE_URL") ?? "";
+  if (!url) return false;
+  try {
+    const res = await fetch(`${url}/auth/v1/admin/users?per_page=1`, {
+      headers: { apikey: token, Authorization: `Bearer ${token}` },
+    });
+    await res.body?.cancel();
+    return res.status === 200;
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
-  // Only the scheduler (or an owner) with the service role key may run
-  // this: it deletes files. Deploy with JWT verification OFF; the check
-  // here is the authorization.
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const authorization = req.headers.get("Authorization") ?? "";
-  if (!serviceKey || authorization !== `Bearer ${serviceKey}`) {
+  // Only the scheduler (or an owner) with a service-level key may run this:
+  // it deletes files. Deploy with JWT verification OFF; the check here is the
+  // authorization.
+  if (!(await isServiceKey(req.headers.get("Authorization") ?? ""))) {
     return json(401, { error: "Unauthorized" });
   }
 

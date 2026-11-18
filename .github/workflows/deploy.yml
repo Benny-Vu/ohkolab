@@ -35,6 +35,9 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
           VITE_POSTHOG_HOST: ${{ vars.VITE_POSTHOG_HOST }}
+          # Image posts (and their legal text) are on only when the repository
+          # variable VITE_IMAGE_POSTS is "true".
+          VITE_IMAGE_POSTS: ${{ vars.VITE_IMAGE_POSTS }}
           # SENTRY_AUTH_TOKEN gates the source-map upload plugin in
           # vite.config.ts; SENTRY_ORG and SENTRY_PROJECT target it.
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

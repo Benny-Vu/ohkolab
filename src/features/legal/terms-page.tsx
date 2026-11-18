@@ -7,6 +7,11 @@ import {
   LegalText,
 } from "@/features/legal/legal-page";
 import { CONTACT_EMAIL, LAST_UPDATED } from "@/features/legal/legal-info";
+import { imagePostsEnabled } from "@/lib/social";
+
+// The image-post rules (approved by the owner on 2026-11-18) are shown only
+// when the VITE_IMAGE_POSTS flag is on.
+const IMAGES = imagePostsEnabled();
 
 const SECTIONS = [
   { id: "operator", heading: "Who runs OHKOLab" },
@@ -15,6 +20,7 @@ const SECTIONS = [
   { id: "acceptable-use", heading: "Acceptable use" },
   { id: "moderation", heading: "Moderation and suspension" },
   { id: "groups", heading: "Groups" },
+  ...(IMAGES ? [{ id: "images", heading: "Images in posts" }] : []),
   { id: "notifications", heading: "Notifications" },
   { id: "removal-notices", heading: "Removal notices and appeals" },
   { id: "reporting", heading: "Reporting" },
@@ -93,6 +99,31 @@ export function TermsPage() {
             breaks these terms.
           </LegalText>
         </LegalSection>
+
+        {IMAGES && (
+          <LegalSection id="images" heading="Images in posts">
+            <LegalText>
+              You can attach up to four images to a post. Only attach images you
+              have the right to share, and do not upload images that:
+            </LegalText>
+            <LegalList>
+              <li>contain sexual material,</li>
+              <li>show violence or gore,</li>
+              <li>
+                show personal data of other people, such as their face, address
+                or messages, without their permission, or
+              </li>
+              <li>break any of the rules under "Acceptable use".</li>
+            </LegalList>
+            <LegalText>
+              Every image is screened automatically before others can see it.
+              Images that fail the screening are not shown, and you are told
+              why. We may remove any image at any time, for these reasons or for
+              any other reason under "Moderation and suspension", and removed
+              images can be appealed like any other removal.
+            </LegalText>
+          </LegalSection>
+        )}
 
         <LegalSection id="notifications" heading="Notifications">
           <LegalText>

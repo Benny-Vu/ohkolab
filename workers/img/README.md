@@ -62,8 +62,7 @@ report to the police).
 
 4. **Check it.** `https://img.ohkolab.com/` must return 404 (it only serves
    `{uid}/{post_id}/{image_id}.webp` paths), and an approved image URL
-   must return the image with a `cache-control: public, max-age=31536000,
-immutable` header.
+   must return the image with a `cache-control: public, max-age=3600` header.
 
 ## Switching on the CSAM Scanning Tool
 
@@ -89,8 +88,10 @@ is enough.
 - Upstream statuses (404, 451) pass through untouched, and non-2xx is
   never cached, so a blocked image cannot get stuck in the edge cache as
   a 200.
-- `Cache-Control: public, max-age=31536000, immutable` is safe because an
-  approved path never changes content: each file id is written once.
+- Images are cached for one hour (`max-age=3600`, and the same edge TTL), not
+  longer: an approved file never changes, but a moderator can remove it, and a
+  removed image must stop being served within about an hour. cleanup-images
+  runs every 15 minutes and moves removed files out of the public bucket.
 - The Supabase bucket itself stays public - that is what makes the
   upstream URL work - but the app always renders `img.ohkolab.com` URLs,
   so every human request goes through the scanned edge cache.
