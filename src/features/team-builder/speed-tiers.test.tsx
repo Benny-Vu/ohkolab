@@ -9,14 +9,20 @@ function set(species: string, patch: Partial<PokemonSet> = {}): PokemonSet {
 }
 
 test("lists the team from fastest to slowest", () => {
-  render(<SpeedTiers members={[set("Incineroar"), set("Gengar"), set("Garchomp")]} />);
+  render(
+    <SpeedTiers
+      members={[set("Incineroar"), set("Gengar"), set("Garchomp")]}
+    />,
+  );
 
   const items = screen.getAllByRole("listitem");
   expect(items).toHaveLength(3);
-  expect(within(items[0]).getByText("Gengar")).toBeInTheDocument();
-  expect(within(items[1]).getByText("Garchomp")).toBeInTheDocument();
-  expect(within(items[2]).getByText("Incineroar")).toBeInTheDocument();
-  expect(items[0].textContent).toMatch(/\d/);
+  const [first, second, third] = items;
+  if (!first || !second || !third) throw new Error("missing tier rows");
+  expect(within(first).getByText("Gengar")).toBeInTheDocument();
+  expect(within(second).getByText("Garchomp")).toBeInTheDocument();
+  expect(within(third).getByText("Incineroar")).toBeInTheDocument();
+  expect(first.textContent).toMatch(/\d/);
 });
 
 test("explains when the team is empty", () => {
