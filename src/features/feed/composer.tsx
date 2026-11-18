@@ -55,7 +55,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
   ];
 
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="rounded-md border bg-card p-3">
       <div className="flex items-start gap-2">
         <Textarea
           aria-label="Write a post"

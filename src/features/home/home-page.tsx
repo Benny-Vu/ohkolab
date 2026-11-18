@@ -82,9 +82,9 @@ function ToolsIntro() {
           <li key={tool.to}>
             <Link
               to={tool.to}
-              className="block rounded-lg focus-visible:outline-2"
+              className="block rounded-md focus-visible:outline-2"
             >
-              <div className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors duration-150 ease-out hover:bg-surface-sunken">
+              <div className="flex items-center gap-4 rounded-md border bg-card p-4 transition-colors duration-150 ease-out hover:bg-surface-sunken">
                 <tool.icon
                   className="size-6 shrink-0 text-muted-foreground"
                   aria-hidden
@@ -188,7 +188,7 @@ function FeedHome() {
 
 function SignedOutIntro() {
   return (
-    <section className="mb-4 rounded-lg border bg-card p-4">
+    <section className="mb-4 rounded-md border bg-card p-4">
       <h1 className="font-heading text-xl font-bold">
         <span className="text-primary">OHKO</span>Lab
       </h1>
@@ -227,7 +227,7 @@ function MyGroupsRail() {
   const groups = myGroups.data ?? [];
 
   return (
-    <section aria-label="Your groups" className="rounded-lg border bg-card p-4">
+    <section aria-label="Your groups" className="rounded-md border bg-card p-4">
       <h2 className="font-heading text-sm font-semibold">Your groups</h2>
       {groups.length > 0 ? (
         <ul className="mt-2 grid gap-1.5">
@@ -265,9 +265,9 @@ function FeedTabContent({
   if (feed.isPending) {
     return (
       <div className="grid gap-3" aria-label="Loading posts">
-        <Skeleton className="h-28 w-full rounded-lg" />
-        <Skeleton className="h-28 w-full rounded-lg" />
-        <Skeleton className="h-28 w-full rounded-lg" />
+        <Skeleton className="h-28 w-full rounded-md" />
+        <Skeleton className="h-28 w-full rounded-md" />
+        <Skeleton className="h-28 w-full rounded-md" />
       </div>
     );
   }

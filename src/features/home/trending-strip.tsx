@@ -20,7 +20,7 @@ export function TrendingStrip() {
   return (
     <section
       aria-label="Trending in doubles"
-      className="rounded-lg border bg-card p-3"
+      className="rounded-md border bg-card p-3"
     >
       <h2 className="font-heading text-sm font-semibold">
         Trending in doubles
