@@ -1,35 +1,142 @@
-import { useMemo, useState } from "react";
-import { LoaderCircleIcon, SendIcon } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ImageIcon,
+  LoaderCircleIcon,
+  SendIcon,
+  XIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Picker } from "@/components/picker";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/lib/auth/use-auth";
 import { useTeams } from "@/lib/team";
 import { useCreatePost } from "@/lib/social/mutations";
+import {
+  IMAGE_ALT_MAX,
+  IMAGE_POSTS_MAX,
+  clampImageAlt,
+  imagePostsEnabled,
+  prepareImage,
+  useAttachPostImages,
+  type AttachImageInput,
+} from "@/lib/social/images";
 import { POST_BODY_MAX } from "@/lib/social/validation";
 import { track } from "@/lib/telemetry/analytics";
 import { teamAttachment, teamAttachmentJson } from "@/features/feed/attachment";
 import type { TeamAttachment } from "@/features/feed/attachment";
 
+/** One chosen image: the processed WebP blob plus its composer state. */
+interface ImageDraft {
+  key: string;
+  blob: Blob;
+  width: number;
+  height: number;
+  alt: string;
+  previewUrl: string;
+}
+
 /**
  * Post composer for the community feed. One quiet line until focused, then the
- * full composer with the team picker and counter. Pass `groupId` to post into a
- * group instead of the main feed.
+ * full composer with the team picker and counter. Pass `groupId` to post into
+ * a group instead of the main feed. With the VITE_IMAGE_POSTS flag on (and
+ * signed in), up to 4 images can be attached: each is scaled and re-encoded
+ * as WebP in the browser, uploaded after the post is created, and screened
+ * before anyone else sees it.
  */
 export function Composer({ groupId }: { groupId?: string | null }) {
+  const { user } = useAuth();
   const { teams } = useTeams();
   const createPost = useCreatePost();
+  const attachImages = useAttachPostImages();
   const [body, setBody] = useState("");
   const [attachment, setAttachment] = useState<TeamAttachment | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [imageDrafts, setImageDrafts] = useState<ImageDraft[]>([]);
+  const [processingImages, setProcessingImages] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const imagesOn = imagePostsEnabled() && Boolean(user);
 
   const trimmed = useMemo(() => body.trim(), [body]);
+  const posting = createPost.isPending || attachImages.isPending;
   const canPost =
-    trimmed !== "" && body.length <= POST_BODY_MAX && !createPost.isPending;
+    trimmed !== "" &&
+    body.length <= POST_BODY_MAX &&
+    !posting &&
+    !processingImages;
+
+  async function handleFilesSelected(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length === 0) return;
+    const room = IMAGE_POSTS_MAX - imageDrafts.length;
+    if (files.length > room) {
+      toast.error(`A post can have at most ${IMAGE_POSTS_MAX} images.`);
+    }
+    const accepted = files.slice(0, Math.max(0, room));
+    if (accepted.length === 0) return;
+    setProcessingImages(true);
+    const drafts: ImageDraft[] = [];
+    for (const [index, file] of accepted.entries()) {
+      const result = await prepareImage(file);
+      if (result.ok) {
+        drafts.push({
+          key: `${Date.now()}-${index}-${imageDrafts.length + drafts.length}`,
+          blob: result.data.blob,
+          width: result.data.width,
+          height: result.data.height,
+          alt: "",
+          previewUrl: URL.createObjectURL(result.data.blob),
+        });
+      } else {
+        toast.error(result.error.message);
+      }
+    }
+    setImageDrafts((previous) => [...previous, ...drafts]);
+    setProcessingImages(false);
+  }
+
+  function removeDraft(key: string) {
+    setImageDrafts((previous) => {
+      const removed = previous.find((draft) => draft.key === key);
+      if (removed) URL.revokeObjectURL(removed.previewUrl);
+      return previous.filter((draft) => draft.key !== key);
+    });
+  }
+
+  function moveDraft(key: string, delta: -1 | 1) {
+    setImageDrafts((previous) => {
+      const index = previous.findIndex((draft) => draft.key === key);
+      const target = index + delta;
+      if (index === -1 || target < 0 || target >= previous.length) {
+        return previous;
+      }
+      const next = [...previous];
+      const [moved] = next.splice(index, 1);
+      if (moved) next.splice(target, 0, moved);
+      return next;
+    });
+  }
+
+  function setDraftAlt(key: string, alt: string) {
+    setImageDrafts((previous) =>
+      previous.map((draft) =>
+        draft.key === key ? { ...draft, alt: clampImageAlt(alt) } : draft,
+      ),
+    );
+  }
 
   async function submit() {
     if (!canPost) return;
+    const drafts = imageDrafts;
     const result = await createPost.mutateAsync({
       body,
       attachment: attachment ? teamAttachmentJson(attachment) : null,
@@ -39,11 +146,42 @@ export function Composer({ groupId }: { groupId?: string | null }) {
       setBody("");
       setAttachment(null);
       setExpanded(false);
-      toast.success("Posted.");
+      for (const draft of drafts) URL.revokeObjectURL(draft.previewUrl);
+      setImageDrafts([]);
       track("post_created", {
         attachment: attachment ? "team" : "none",
         in_group: Boolean(groupId),
       });
+      if (!imagesOn || drafts.length === 0 || !result.data) {
+        toast.success("Posted.");
+        return;
+      }
+      const attach = await attachImages.mutateAsync({
+        postId: result.data.id,
+        images: drafts.map<AttachImageInput>((draft) => ({
+          blob: draft.blob,
+          width: draft.width,
+          height: draft.height,
+          alt: draft.alt,
+        })),
+      });
+      if (!attach.ok) {
+        toast.error(attach.error.message);
+        return;
+      }
+      for (const outcome of attach.data) {
+        if (outcome.error) toast.error(outcome.error.message);
+      }
+      const uploaded = attach.data.filter((outcome) => outcome.uploaded);
+      if (uploaded.length === 0) return;
+      toast.success(
+        "Posted. Your images will appear once they have been checked.",
+      );
+      if (uploaded.some((outcome) => !outcome.screened)) {
+        toast.info(
+          "An image is still being checked — it will appear once it is approved.",
+        );
+      }
     } else {
       toast.error(result.error.message);
     }
@@ -55,7 +193,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
   ];
 
   return (
-    <div className="rounded-md border bg-card p-3">
+    <div ref={rootRef} className="rounded-md border bg-card p-3">
       <div className="flex items-start gap-2">
         <Textarea
           aria-label="Write a post"
@@ -63,11 +201,25 @@ export function Composer({ groupId }: { groupId?: string | null }) {
           value={body}
           onChange={(event) => setBody(event.target.value)}
           onFocus={() => setExpanded(true)}
-          onBlur={() => {
-            if (body.trim() === "" && !attachment) setExpanded(false);
+          onBlur={(event) => {
+            // Keep the composer open while focus moves within it (to the
+            // image picker or a description field), and while any image is
+            // being processed.
+            const focusInside =
+              rootRef.current?.contains(event.relatedTarget as Node | null) ??
+              false;
+            if (
+              body.trim() === "" &&
+              !attachment &&
+              imageDrafts.length === 0 &&
+              !processingImages &&
+              !focusInside
+            ) {
+              setExpanded(false);
+            }
           }}
           rows={1}
-          disabled={createPost.isPending}
+          disabled={posting}
           className={
             expanded ? "min-h-16" : "min-h-9 resize-none overflow-hidden py-2"
           }
@@ -79,7 +231,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
           disabled={!canPost}
           className="mt-0.5 shrink-0"
         >
-          {createPost.isPending ? (
+          {posting ? (
             <LoaderCircleIcon className="animate-spin" aria-hidden />
           ) : (
             <SendIcon aria-hidden />
@@ -108,6 +260,35 @@ export function Composer({ groupId }: { groupId?: string | null }) {
               className="w-auto max-w-56"
             />
           )}
+          {imagesOn && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                aria-label="Choose images"
+                className="hidden"
+                onChange={handleFilesSelected}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={
+                  imageDrafts.length >= IMAGE_POSTS_MAX || processingImages
+                }
+              >
+                {processingImages ? (
+                  <LoaderCircleIcon className="animate-spin" aria-hidden />
+                ) : (
+                  <ImageIcon aria-hidden />
+                )}
+                Add images
+              </Button>
+            </>
+          )}
           <span
             className={
               body.length > POST_BODY_MAX
@@ -121,6 +302,58 @@ export function Composer({ groupId }: { groupId?: string | null }) {
             <span className="sr-only">{`Attached team: ${attachment.name}`}</span>
           )}
         </div>
+      )}
+      {imageDrafts.length > 0 && (
+        <ul className="mt-2 grid gap-2" aria-label="Images to attach">
+          {imageDrafts.map((draft, index) => (
+            <li
+              key={draft.key}
+              className="flex items-center gap-2 rounded-md border bg-surface-sunken p-2"
+            >
+              <img
+                src={draft.previewUrl}
+                alt={draft.alt || `Image ${index + 1}`}
+                className="size-12 shrink-0 rounded object-cover"
+              />
+              <Input
+                value={draft.alt}
+                maxLength={IMAGE_ALT_MAX}
+                placeholder="Add description (optional)"
+                aria-label={`Describe image ${index + 1}`}
+                onChange={(event) => setDraftAlt(draft.key, event.target.value)}
+                className="text-sm"
+              />
+              <div className="flex shrink-0 items-center">
+                <Button
+                  size="icon-xs"
+                  variant="ghost"
+                  aria-label={`Move image ${index + 1} left`}
+                  disabled={index === 0}
+                  onClick={() => moveDraft(draft.key, -1)}
+                >
+                  <ArrowLeftIcon aria-hidden />
+                </Button>
+                <Button
+                  size="icon-xs"
+                  variant="ghost"
+                  aria-label={`Move image ${index + 1} right`}
+                  disabled={index === imageDrafts.length - 1}
+                  onClick={() => moveDraft(draft.key, 1)}
+                >
+                  <ArrowRightIcon aria-hidden />
+                </Button>
+                <Button
+                  size="icon-xs"
+                  variant="ghost"
+                  aria-label={`Remove image ${index + 1}`}
+                  onClick={() => removeDraft(draft.key)}
+                >
+                  <XIcon aria-hidden />
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
       {attachment && (
         <p className="mt-2 text-xs text-muted-foreground">

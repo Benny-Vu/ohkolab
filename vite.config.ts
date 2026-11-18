@@ -173,7 +173,13 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: "jsdom",
-      include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
+      include: [
+        "src/**/*.test.{ts,tsx}",
+        "scripts/**/*.test.ts",
+        // Pure modules shared by the Edge Functions: no Deno imports, so
+        // Vitest can run their tests in jsdom like any other module.
+        "supabase/functions/_shared/**/*.test.ts",
+      ],
       setupFiles: ["./src/test/setup.ts"],
       passWithNoTests: true,
     },

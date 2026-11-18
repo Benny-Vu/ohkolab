@@ -306,6 +306,13 @@ export type Database = {
           content_kind: string | null;
           /** The suspension this action created, for suspensions. */
           suspension_id: string | null;
+          /**
+           * Paths of the removed post's image files (pending and public
+           * copies), so the cleanup Edge Function can move them to
+           * quarantine. Null for actions on text-only posts and for
+           * suspensions.
+           */
+          media_paths: string[] | null;
           created_at: string;
         };
         Insert: {
@@ -320,6 +327,7 @@ export type Database = {
           content_snapshot?: string | null;
           content_kind?: string | null;
           suspension_id?: string | null;
+          media_paths?: string[] | null;
           created_at?: string;
         };
         /**
@@ -449,6 +457,62 @@ export type Database = {
         Update: {
           read_at?: string | null;
         };
+        Relationships: [];
+      };
+      post_images: {
+        Row: {
+          id: string;
+          post_id: string;
+          author_id: string;
+          /** 0 to 3; at most 4 images per post (unique with post_id). */
+          position: number;
+          /**
+           * Path inside the private post-images-pending bucket:
+           * {uid}/{post_id}/{image_id}.webp
+           */
+          pending_path: string;
+          /**
+           * Path inside the public post-images bucket; set by the screening
+           * Edge Function, null until approved.
+           */
+          public_path: string | null;
+          width: number;
+          height: number;
+          /** At most 1048576 (1 MB) per the bucket limit. */
+          bytes: number;
+          /** One of "pending", "approved", "rejected", "blocked". */
+          status: string;
+          /**
+           * What the screening found (the moderation API response), stored
+           * as `jsonb` of at most 8 KiB serialized. Validate what you read
+           * before trusting it.
+           */
+          screen_result: Json | null;
+          /** Set by the screening Edge Function when it decides. */
+          screened_at: string | null;
+          /** Optional description, up to 300 characters. */
+          alt: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          /** Row-level security forces this to the signed-in user. */
+          author_id: string;
+          position: number;
+          pending_path: string;
+          width: number;
+          height: number;
+          bytes: number;
+          alt?: string | null;
+          created_at?: string;
+        };
+        /**
+         * No update grant: status, public_path, screen_result and
+         * screened_at are written only by the screening Edge Function's
+         * service role.
+         */
+        Update: { [_ in never]: never };
         Relationships: [];
       };
       feedback: {
@@ -671,4 +735,7 @@ export type NotificationUpdate =
   Database["public"]["Tables"]["notifications"]["Update"];
 export type FeedbackRow = Database["public"]["Tables"]["feedback"]["Row"];
 export type FeedbackInsert = Database["public"]["Tables"]["feedback"]["Insert"];
+export type PostImageRow = Database["public"]["Tables"]["post_images"]["Row"];
+export type PostImageInsert =
+  Database["public"]["Tables"]["post_images"]["Insert"];
 export type FeedPostRow = Database["public"]["Views"]["feed_posts"]["Row"];

@@ -64,6 +64,7 @@ function actionRow(
     content_snapshot: null,
     content_kind: null,
     suspension_id: null,
+    media_paths: null,
     created_at: "2026-11-18T10:00:00.000Z",
     ...overrides,
   };

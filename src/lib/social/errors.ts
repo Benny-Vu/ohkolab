@@ -68,6 +68,7 @@ export function socialSucceed<T>(data?: T): SocialResult<T | undefined> {
  * - P0A04: too many reports in an hour
  * - P0A05: too many groups created in a day
  * - P0A06: too many feedback messages in an hour
+ * - P0A07: too many post images in 24 hours
  */
 const CODE_MAP: Record<string, SocialErrorCode> = {
   P0A01: "rate_limited",
@@ -76,6 +77,7 @@ const CODE_MAP: Record<string, SocialErrorCode> = {
   P0A04: "rate_limited",
   P0A05: "rate_limited",
   P0A06: "rate_limited",
+  P0A07: "rate_limited",
   "22001": "too_long",
   "23514": "invalid_input",
   "42501": "forbidden",

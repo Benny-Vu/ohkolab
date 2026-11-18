@@ -23,6 +23,7 @@ import type {
   GroupRow,
   ModerationActionRow,
   NotificationRow,
+  PostImageRow,
   PostRow,
   ReportRow,
 } from "@/lib/database.types";
@@ -78,10 +79,26 @@ interface ChainNode {
   ): Promise<unknown>;
 }
 
+/** One storage.upload call, for assertions. */
+export interface StorageUploadRecord {
+  bucket: string;
+  path: string;
+  body: unknown;
+  options: Record<string, unknown> | undefined;
+}
+
+/** One functions.invoke call, for assertions. */
+export interface InvokeRecord {
+  fn: string;
+  options: { body?: unknown } | undefined;
+}
+
 export interface FakeClient {
   client: AppSupabaseClient;
   records: ChainRecord[];
   rpcCalls: Array<{ fn: string; args: Record<string, unknown> | undefined }>;
+  uploads: StorageUploadRecord[];
+  invokes: InvokeRecord[];
 }
 
 export interface FakeClientConfig {
@@ -91,6 +108,14 @@ export interface FakeClientConfig {
   resolve?: (record: ChainRecord) => FakeResult;
   /** Results for rpc calls, by function name. */
   rpc?: Record<string, FakeResult>;
+  /**
+   * Results for storage uploads: per bucket, or one resolver for every
+   * upload. Defaults to success.
+   */
+  storage?:
+    Record<string, FakeResult> | ((record: StorageUploadRecord) => FakeResult);
+  /** Results for functions.invoke calls, by function name. */
+  functions?: Record<string, FakeResult>;
 }
 
 export function createFakeClient(config: FakeClientConfig = {}): FakeClient {
@@ -99,10 +124,23 @@ export function createFakeClient(config: FakeClientConfig = {}): FakeClient {
     fn: string;
     args: Record<string, unknown> | undefined;
   }> = [];
+  const uploads: StorageUploadRecord[] = [];
+  const invokes: InvokeRecord[] = [];
   const resolve =
     config.resolve ??
     ((record: ChainRecord) =>
       config.tables?.[record.table] ?? { data: [], error: null });
+  const resolveUpload = (record: StorageUploadRecord): FakeResult => {
+    if (typeof config.storage === "function") {
+      return config.storage(record);
+    }
+    return (
+      config.storage?.[record.bucket] ?? {
+        data: { path: record.path },
+        error: null,
+      }
+    );
+  };
 
   const makeNode = (record: ChainRecord): ChainNode => {
     const node: ChainNode = {
@@ -187,9 +225,43 @@ export function createFakeClient(config: FakeClientConfig = {}): FakeClient {
       rpcCalls.push({ fn, args });
       return Promise.resolve(config.rpc?.[fn] ?? { data: null, error: null });
     },
+    storage: {
+      from(bucket: string) {
+        return {
+          upload(
+            path: string,
+            body: unknown,
+            options?: Record<string, unknown>,
+          ): Promise<FakeResult> {
+            const record: StorageUploadRecord = {
+              bucket,
+              path,
+              body,
+              options,
+            };
+            uploads.push(record);
+            return Promise.resolve(resolveUpload(record));
+          },
+        };
+      },
+    },
+    functions: {
+      invoke(fn: string, options?: { body?: unknown }): Promise<FakeResult> {
+        invokes.push({ fn, options });
+        return Promise.resolve(
+          config.functions?.[fn] ?? { data: null, error: null },
+        );
+      },
+    },
   };
 
-  return { client: client as unknown as AppSupabaseClient, records, rpcCalls };
+  return {
+    client: client as unknown as AppSupabaseClient,
+    records,
+    rpcCalls,
+    uploads,
+    invokes,
+  };
 }
 
 /** A fresh query client with retries off, one per test. */
@@ -334,6 +406,7 @@ export function moderationActionRow(
     content_snapshot: null,
     content_kind: null,
     suspension_id: null,
+    media_paths: null,
     created_at: "2026-11-18T10:00:00.000Z",
     ...partial,
   };
@@ -398,6 +471,28 @@ export function notificationRow(
     moderation_action_id: null,
     read_at: null,
     created_at: "2026-11-18T10:00:00.000Z",
+    ...partial,
+  };
+}
+
+/** An image row of a post, approved with a public path by default. */
+export function postImageRow(
+  partial: Partial<PostImageRow> & { id: string },
+): PostImageRow {
+  return {
+    post_id: "post-1",
+    author_id: "user-1",
+    position: 0,
+    pending_path: "user-1/post-1/image-a.webp",
+    public_path: "user-1/post-1/image-a.webp",
+    width: 1600,
+    height: 900,
+    bytes: 120000,
+    status: "approved",
+    screen_result: null,
+    screened_at: "2026-11-19T10:01:00.000Z",
+    alt: null,
+    created_at: "2026-11-19T10:00:00.000Z",
     ...partial,
   };
 }

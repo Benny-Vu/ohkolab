@@ -13,6 +13,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useCreateComment, useDeleteComment } from "@/lib/social/mutations";
 import { useComments, usePost } from "@/lib/social/queries";
+import { usePostImages } from "@/lib/social/images";
 import { COMMENT_BODY_MAX } from "@/lib/social/validation";
 import { formatRelativeTime } from "@/features/feed/relative-time";
 import { PostCard } from "@/features/feed/post-card";
@@ -28,6 +29,7 @@ export function PostDetailPage() {
   const navigate = useNavigate();
   const postQuery = usePost(postId ?? "");
   const commentsQuery = useComments(postId ?? "");
+  const imagesQuery = usePostImages(postId ? [postId] : []);
   const createComment = useCreateComment();
   const deleteComment = useDeleteComment();
   const [commentBody, setCommentBody] = useState("");
@@ -115,7 +117,7 @@ export function PostDetailPage() {
       </Button>
 
       <div className="mt-4 grid gap-4">
-        <PostCard post={post} hideCommentLink />
+        <PostCard post={post} hideCommentLink images={imagesQuery.data ?? []} />
 
         <section aria-label="Comments" className="grid gap-3">
           <h2 className="text-sm font-semibold">Comments</h2>
