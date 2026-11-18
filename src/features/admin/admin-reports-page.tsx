@@ -49,13 +49,22 @@ import {
   useReports,
 } from "@/lib/social";
 import type { ReportStatus } from "@/lib/social/validation";
+import { useT } from "@/lib/i18n/t";
+import type { TranslationKey } from "@/lib/i18n/en";
 import { SuspendDialog } from "@/features/admin/suspend-dialog";
 
-const TAB_STATUSES: Array<{ status: ReportStatus; label: string }> = [
-  { status: "open", label: "Open" },
-  { status: "actioned", label: "Actioned" },
-  { status: "dismissed", label: "Dismissed" },
-];
+const TAB_STATUSES: Array<{ status: ReportStatus; labelKey: TranslationKey }> =
+  [
+    { status: "open", labelKey: "admin.statusOpen" },
+    { status: "actioned", labelKey: "admin.statusActioned" },
+    { status: "dismissed", labelKey: "admin.statusDismissed" },
+  ];
+
+const TARGET_LABELS: Record<string, TranslationKey> = {
+  post: "report.targetPost",
+  comment: "report.targetComment",
+  profile: "report.targetProfile",
+};
 
 function reasonBadgeVariant(
   reason: string,
@@ -131,6 +140,7 @@ function ReportContent({
   report: ReportRow;
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   if (report.target_type === "post") {
     return <PostContent postId={report.target_id} client={client} />;
   }
@@ -140,7 +150,9 @@ function ReportContent({
   if (report.target_type === "profile") {
     return <ProfileContent profileId={report.target_id} client={client} />;
   }
-  return <p className="text-sm text-muted-foreground">Unknown target type.</p>;
+  return (
+    <p className="text-sm text-muted-foreground">{t("admin.unknownTarget")}</p>
+  );
 }
 
 function PostContent({
@@ -150,6 +162,7 @@ function PostContent({
   postId: string;
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const postQuery = usePost(postId, client);
   if (postQuery.isPending) {
     return <Skeleton className="h-16 w-full" />;
@@ -157,7 +170,9 @@ function PostContent({
   const post = postQuery.data;
   if (post === null || post === undefined) {
     return (
-      <p className="text-sm text-muted-foreground">Content not available.</p>
+      <p className="text-sm text-muted-foreground">
+        {t("admin.contentUnavailable")}
+      </p>
     );
   }
   return (
@@ -171,7 +186,7 @@ function PostContent({
         className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
       >
         <ExternalLinkIcon className="size-3" aria-hidden />
-        View post
+        {t("admin.viewPost")}
       </Link>
     </div>
   );
@@ -184,27 +199,30 @@ function CommentContent({
   commentId: string;
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const { data: comment, isPending } = useCommentRow(commentId, client);
   if (isPending) {
     return <Skeleton className="h-16 w-full" />;
   }
   if (comment === null || comment.removed_at !== null) {
     return (
-      <p className="text-sm text-muted-foreground">Content already removed.</p>
+      <p className="text-sm text-muted-foreground">
+        {t("admin.contentRemoved")}
+      </p>
     );
   }
   return (
     <div className="grid gap-1">
       <p className="text-sm">{comment.body}</p>
       <p className="text-xs text-muted-foreground">
-        Comment by {comment.author_id.slice(0, 8)}
+        {t("admin.commentBy", { id: comment.author_id.slice(0, 8) })}
       </p>
       <Link
         to={`/post/${comment.post_id}`}
         className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
       >
         <ExternalLinkIcon className="size-3" aria-hidden />
-        View comment
+        {t("admin.viewComment")}
       </Link>
     </div>
   );
@@ -217,13 +235,16 @@ function ProfileContent({
   profileId: string;
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const { data: profile, isPending } = useProfileRow(profileId, client);
   if (isPending) {
     return <Skeleton className="h-16 w-full" />;
   }
   if (profile === null) {
     return (
-      <p className="text-sm text-muted-foreground">Content not available.</p>
+      <p className="text-sm text-muted-foreground">
+        {t("admin.contentUnavailable")}
+      </p>
     );
   }
   return (
@@ -247,7 +268,7 @@ function ProfileContent({
         className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
       >
         <ExternalLinkIcon className="size-3" aria-hidden />
-        View profile
+        {t("admin.viewProfile")}
       </Link>
     </div>
   );
@@ -315,6 +336,7 @@ function RemoveContentDialog({
   targetType: "post" | "comment";
   onRemove: (reason: string) => Promise<void>;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -322,7 +344,7 @@ function RemoveContentDialog({
   const remove = async () => {
     const trimmed = reason.trim();
     if (trimmed === "") {
-      toast.error("Enter a reason for the removal.");
+      toast.error(t("postCard.enterReason"));
       return;
     }
     setBusy(true);
@@ -336,21 +358,26 @@ function RemoveContentDialog({
       <DialogTrigger asChild>
         <Button variant="destructive" size="sm">
           <Trash2Icon />
-          Remove content
+          {t("admin.removeContent")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Remove this {targetType}?</DialogTitle>
-          <DialogDescription>
-            The content is removed for everyone, the author is notified with
-            your reason, and the report is marked as actioned.
-          </DialogDescription>
+          <DialogTitle>
+            {t("admin.removeThis", {
+              target: t(
+                targetType === "post"
+                  ? "report.targetPost"
+                  : "report.targetComment",
+              ),
+            })}
+          </DialogTitle>
+          <DialogDescription>{t("admin.removeDescription")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-2">
           <Textarea
-            aria-label="Reason for the removal"
-            placeholder="Reason for the removal"
+            aria-label={t("admin.removalReasonAria")}
+            placeholder={t("admin.removalReasonAria")}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
           />
@@ -371,7 +398,7 @@ function RemoveContentDialog({
             disabled={busy || reason.trim() === ""}
           >
             {busy ? <LoaderCircleIcon className="animate-spin" /> : null}
-            Remove content
+            {t("admin.removeContent")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -386,6 +413,7 @@ function ReportRowView({
   report: ReportRow;
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const handleReport = useHandleReport(client);
   const removeContent = useRemoveContent(client);
   const [suspendOpen, setSuspendOpen] = useState(false);
@@ -413,7 +441,7 @@ function ReportRowView({
       status: "dismissed",
     });
     if (result.ok) {
-      toast.success("Report dismissed.");
+      toast.success(t("admin.reportDismissedToast"));
     } else {
       toast.error(result.error.message);
     }
@@ -438,7 +466,7 @@ function ReportRowView({
       status: "actioned",
     });
     if (result.ok) {
-      toast.success("Content removed and report actioned.");
+      toast.success(t("admin.removedActionedToast"));
     } else {
       toast.error(result.error.message);
     }
@@ -450,7 +478,7 @@ function ReportRowView({
       status: "actioned",
     });
     if (result.ok) {
-      toast.success("User suspended and report actioned.");
+      toast.success(t("admin.suspendedActionedToast"));
     } else {
       toast.error(result.error.message);
     }
@@ -464,8 +492,8 @@ function ReportRowView({
             {report.reason}
           </Badge>
         </TableCell>
-        <TableCell className="text-sm capitalize">
-          {report.target_type}
+        <TableCell className="text-sm">
+          {t(TARGET_LABELS[report.target_type] ?? "report.targetProfile")}
         </TableCell>
         <TableCell className="text-sm tabular-nums text-muted-foreground">
           {formatDate(report.created_at)}
@@ -476,12 +504,12 @@ function ReportRowView({
               trigger={
                 <Button variant="outline" size="sm">
                   <EyeOffIcon />
-                  Dismiss
+                  {t("admin.dismiss")}
                 </Button>
               }
-              title="Dismiss this report?"
-              description="The report stays in the history as dismissed and no action is taken."
-              confirmLabel="Dismiss report"
+              title={t("admin.dismissTitle")}
+              description={t("admin.dismissDescription")}
+              confirmLabel={t("admin.dismissReport")}
               onConfirm={dismiss}
             />
             {report.target_type === "post" ||
@@ -499,7 +527,7 @@ function ReportRowView({
                   onClick={() => setSuspendOpen(true)}
                 >
                   <BanIcon />
-                  Suspend user
+                  {t("publicProfile.suspendUser")}
                 </Button>
                 <SuspendDialog
                   userId={suspendUserId}
@@ -520,7 +548,7 @@ function ReportRowView({
           <div className="grid gap-2">
             {report.details ? (
               <p className="text-sm text-muted-foreground">
-                Reporter details: {report.details}
+                {t("admin.reporterDetails", { details: report.details })}
               </p>
             ) : null}
             <div className="rounded-md border p-3">
@@ -538,12 +566,13 @@ export function AdminReportsPage({
 }: {
   client?: AppSupabaseClient | null;
 }) {
+  const t = useT();
   if (socialAvailability(client) !== "ready") {
     return (
-      <Page title="Reports" width="narrow">
+      <Page title={t("pageTitle.reports")} width="narrow">
         <EmptyState
-          title="Moderation is unavailable"
-          description="Moderation tools need the community features to be configured."
+          title={t("admin.moderationUnavailable")}
+          description={t("admin.moderationUnavailableDescription")}
         />
       </Page>
     );
@@ -553,11 +582,12 @@ export function AdminReportsPage({
 }
 
 function ModeratorGate({ client }: { client: AppSupabaseClient | null }) {
+  const t = useT();
   const moderatorQuery = useIsModerator(client);
 
   if (moderatorQuery.isPending) {
     return (
-      <Page title="Reports" width="wide">
+      <Page title={t("pageTitle.reports")} width="wide">
         <div className="grid gap-4">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -574,23 +604,24 @@ function ModeratorGate({ client }: { client: AppSupabaseClient | null }) {
 }
 
 function ReportsList({ client }: { client: AppSupabaseClient | null }) {
+  const t = useT();
   const [status, setStatus] = useState<ReportStatus>("open");
   const reportsQuery = useReports(status, client);
 
   return (
     <Page
-      title="Reports"
-      description="Review reports from the community."
+      title={t("pageTitle.reports")}
+      description={t("admin.reportsDescription")}
       width="wide"
     >
       <Tabs
         value={status}
         onValueChange={(value) => setStatus(value as ReportStatus)}
       >
-        <TabsList aria-label="Report status">
+        <TabsList aria-label={t("admin.reportStatusAria")}>
           {TAB_STATUSES.map((tab) => (
             <TabsTrigger key={tab.status} value={tab.status}>
-              {tab.label}
+              {t(tab.labelKey)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -603,8 +634,8 @@ function ReportsList({ client }: { client: AppSupabaseClient | null }) {
       ) : reportsQuery.isError ? (
         <div className="mt-4">
           <ErrorState
-            title="Reports could not be loaded"
-            description="Try again in a moment."
+            title={t("admin.reportsLoadError")}
+            description={t("admin.loadErrorDescription")}
             action={
               <Button
                 variant="outline"
@@ -613,24 +644,35 @@ function ReportsList({ client }: { client: AppSupabaseClient | null }) {
                   void reportsQuery.refetch();
                 }}
               >
-                Try again
+                {t("common.retry")}
               </Button>
             }
           />
         </div>
       ) : (reportsQuery.data ?? []).length === 0 ? (
         <div className="mt-4">
-          <EmptyState title={`No ${status} reports.`} />
+          <EmptyState
+            title={t("admin.noStatusReports", {
+              // The English message lowercases the tab label ("No open
+              // reports."); Japanese has no case, so this is a no-op there.
+              status: t(
+                TAB_STATUSES.find((tab) => tab.status === status)?.labelKey ??
+                  "admin.statusOpen",
+              ).toLowerCase(),
+            })}
+          />
         </div>
       ) : (
         <div className="mt-4 overflow-x-auto rounded-lg border">
           <Table density="dense">
             <TableHeader>
               <TableRow>
-                <TableHead>Reason</TableHead>
-                <TableHead>Target</TableHead>
-                <TableHead>Reported</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("admin.colReason")}</TableHead>
+                <TableHead>{t("admin.colTarget")}</TableHead>
+                <TableHead>{t("admin.colReported")}</TableHead>
+                <TableHead className="text-right">
+                  {t("admin.colActions")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

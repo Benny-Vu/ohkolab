@@ -16,6 +16,10 @@ export const shellEn = {
   "account.menuAria": "Account menu",
   "account.moderationItem": "Moderation",
 
+  // Shared calc-facing components (damage meter). Lives here, not tools.ts,
+  // because the tools dictionary is stream-owned during the japanese-2 wave.
+  "calc.damageMeterAria": "HP left after the hit: {min} to {max} percent",
+
   // The language switch (footer and profile settings).
   "language.label": "Language",
   "language.english": "English",
@@ -109,6 +113,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "nav.main": "メイン",
   "account.menuAria": "アカウントメニュー",
   "account.moderationItem": "モデレーション",
+
+  "calc.damageMeterAria": "ヒット後の残りHP：{min}〜{max}％",
 
   // 言語切り替え（フッターとプロフィール設定）。
   "language.label": "言語",
