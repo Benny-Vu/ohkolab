@@ -20,7 +20,6 @@ import { useCreatePost } from "@/lib/social/mutations";
 import {
   IMAGE_ALT_MAX,
   IMAGE_POSTS_MAX,
-  clampImageAlt,
   imagePostsEnabled,
   prepareImage,
   useAttachPostImages,
@@ -129,9 +128,13 @@ export function Composer({ groupId }: { groupId?: string | null }) {
   }
 
   function setDraftAlt(key: string, alt: string) {
+    // Only cap the length while typing. clampImageAlt also trims, which would
+    // delete every space as it is typed; the upload trims once (useAttachPostImages).
     setImageDrafts((previous) =>
       previous.map((draft) =>
-        draft.key === key ? { ...draft, alt: clampImageAlt(alt) } : draft,
+        draft.key === key
+          ? { ...draft, alt: alt.slice(0, IMAGE_ALT_MAX) }
+          : draft,
       ),
     );
   }
