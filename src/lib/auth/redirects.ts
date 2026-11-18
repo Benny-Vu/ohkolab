@@ -1,13 +1,15 @@
+import { isNativeApp } from "@/lib/platform";
+
 /**
  * Everything about leaving the app to authenticate and coming back: the one
  * callback address, and remembering which page to return to.
  *
  * This is the single place to change when the app ships through Capacitor.
  * There the web origin is not a usable redirect target, so
- * `getAuthCallbackUrl()` must return the app's deep link (custom scheme or
- * universal link), and the deep-link listener must pass the opened URL to
- * `completeAuthRedirect()` from `useAuth()`, exactly as the `/auth/callback`
- * page does.
+ * `getAuthCallbackUrl()` returns the app's deep link (custom scheme), and
+ * the deep-link listener in `@/lib/auth/native-auth` passes the opened URL
+ * to `completeAuthRedirect()` from `useAuth()`, exactly as the
+ * `/auth/callback` page does.
  */
 
 /** In-app path of the page that finishes redirects. */
@@ -16,6 +18,13 @@ export const AUTH_CALLBACK_PATH = "/auth/callback";
 export const RESET_PASSWORD_PATH = "/reset-password";
 /** Where to go when nothing was remembered. */
 export const DEFAULT_RETURN_PATH = "/";
+
+/**
+ * The app's deep link for finishing auth redirects. Google and Discord
+ * block sign-in inside embedded WebViews, so the native app always uses the
+ * system browser, which sends the user back to this address.
+ */
+export const NATIVE_AUTH_CALLBACK_URL = "com.vuforge.ohkolab://auth/callback";
 
 const RETURN_TO_KEY = "ohkolab:auth:return-to";
 
@@ -26,8 +35,11 @@ const AUTH_ONLY_PATHS = ["/login", "/auth/"];
  * The address Supabase sends the browser back to after OAuth, email
  * confirmation and password-reset links. It carries no query string, so one
  * exact entry per origin in the Supabase redirect allow-list is enough.
+ * The native app registers the custom scheme instead, and Android opens it
+ * through the intent filter in `AndroidManifest.xml`.
  */
 export function getAuthCallbackUrl(): string {
+  if (isNativeApp()) return NATIVE_AUTH_CALLBACK_URL;
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   return `${window.location.origin}${base}${AUTH_CALLBACK_PATH}`;
 }

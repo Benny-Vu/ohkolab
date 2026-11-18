@@ -85,10 +85,13 @@ function retryable(error: string): Response {
  * preflights itself. It is deployed with JWT verification OFF because the
  * gateway rejected the credential-less preflight with 401; the user check
  * below (userFromRequest, which asks Supabase Auth) is the authorization.
+ * "https://localhost" is the Capacitor apps' origin: their WebView serves
+ * the bundled build from that scheme and host.
  */
 const ALLOWED_ORIGINS = new Set([
   "https://ohkolab.com",
   "https://www.ohkolab.com",
+  "https://localhost",
   "http://localhost:5173",
   "http://localhost:4173",
 ]);

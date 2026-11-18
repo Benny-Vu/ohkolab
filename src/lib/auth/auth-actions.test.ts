@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createAuthActions, toProfile } from "@/lib/auth/auth-actions";
 import {
@@ -513,6 +513,56 @@ describe("signInWithProvider", () => {
       await actions.signInWithProvider("google"),
       "provider_unavailable",
     );
+  });
+});
+
+describe("signInWithProvider in the native app", () => {
+  const globalBridge = globalThis as {
+    Capacitor?: {
+      getPlatform?: () => string;
+      isNativePlatform?: () => boolean;
+    };
+  };
+
+  beforeEach(() => {
+    globalBridge.Capacitor = {
+      getPlatform: () => "android",
+      isNativePlatform: () => true,
+    };
+  });
+
+  afterEach(() => {
+    delete globalBridge.Capacitor;
+  });
+
+  it("opens the provider's page in the system browser", async () => {
+    const fake = createFakeClient();
+    const openExternalAuthUrl = vi.fn().mockResolvedValue(undefined);
+    const actions = createAuthActions(fake.client, { openExternalAuthUrl });
+
+    const result = await actions.signInWithProvider("google", "/teams");
+
+    expect(result).toEqual({ ok: true, data: undefined });
+    expect(fake.auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        redirectTo: "com.vuforge.ohkolab://auth/callback",
+        skipBrowserRedirect: true,
+      },
+    });
+    expect(openExternalAuthUrl).toHaveBeenCalledWith(
+      "https://auth.example.com",
+    );
+    expect(consumeReturnTo()).toBe("/teams");
+  });
+
+  it("fails when the browser cannot be opened", async () => {
+    const fake = createFakeClient();
+    const actions = createAuthActions(fake.client, {
+      openExternalAuthUrl: vi.fn().mockRejectedValue(new Error("no browser")),
+    });
+
+    expectFailure(await actions.signInWithProvider("google"), "unknown");
   });
 });
 

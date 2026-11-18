@@ -19,7 +19,13 @@ export default defineConfig([
   // supabase/functions is Deno code (Deno globals, URL imports) with its own
   // linter; the browser config here would fail on it. The pure _shared
   // modules are still exercised by Vitest.
-  globalIgnores(["dist", ".claude", "supabase/functions"]),
+  globalIgnores([
+    "dist",
+    ".claude",
+    "supabase/functions",
+    // Native project: Gradle output and copied web assets, no app source.
+    "android",
+  ]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [

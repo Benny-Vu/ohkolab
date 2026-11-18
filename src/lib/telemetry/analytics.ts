@@ -1,5 +1,6 @@
 import type { CaptureResult, PostHog } from "posthog-js";
 
+import { platformName } from "@/lib/platform";
 import { getTelemetryConfig } from "@/lib/telemetry/config";
 import { getTelemetryConsent } from "@/lib/telemetry/consent";
 import type {
@@ -31,7 +32,7 @@ function sharedProps(): SharedEventProps {
     width < 640 ? "phone" : width < 1024 ? "tablet" : "desktop";
   return {
     app_version: config.appVersion ?? "unknown",
-    platform: "web",
+    platform: platformName(),
     screen_size: screenSize,
   };
 }

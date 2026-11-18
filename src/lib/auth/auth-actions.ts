@@ -36,6 +36,7 @@ import {
   validateUsername,
 } from "@/lib/auth/validation";
 import type { AppSupabaseClient } from "@/lib/supabase";
+import { isNativeApp } from "@/lib/platform";
 
 /**
  * The auth logic, free of React: every call the app makes to Supabase for
@@ -71,6 +72,12 @@ export interface AuthActionsOptions {
    * available yet" instead of sending the user to a raw error page.
    */
   checkProvider?: (provider: OAuthProvider) => Promise<boolean | null>;
+  /**
+   * Opens the OAuth provider's sign-in page outside the app (the native
+   * build uses the system browser, because Google and Discord block
+   * sign-in inside embedded WebViews). Injectable so tests can observe it.
+   */
+  openExternalAuthUrl?: (url: string) => Promise<void>;
 }
 
 export function toProfile(row: ProfileRow): Profile {
@@ -302,6 +309,33 @@ export function createAuthActions(
         }
 
         rememberReturnTo(sanitizeReturnTo(returnTo));
+        if (isNativeApp()) {
+          // The system browser handles the provider's sign-in pages and
+          // comes back through the custom scheme; the appUrlOpen listener
+          // in `@/lib/auth/native-auth` finishes the redirect.
+          const { data, error } = await client.auth.signInWithOAuth({
+            provider,
+            options: {
+              redirectTo: getAuthCallbackUrl(),
+              skipBrowserRedirect: true,
+            },
+          });
+          if (error) return { ok: false, error: describeError(error) };
+          if (data.url) {
+            const opened =
+              options.openExternalAuthUrl ??
+              (async (url: string) => {
+                const { Browser } = await import("@capacitor/browser");
+                await Browser.open({ url });
+              });
+            try {
+              await opened(data.url);
+            } catch {
+              return fail("unknown", "Sign-in could not be opened. Try again.");
+            }
+          }
+          return succeed();
+        }
         const { error } = await client.auth.signInWithOAuth({
           provider,
           options: { redirectTo: getAuthCallbackUrl() },

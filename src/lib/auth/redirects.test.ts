@@ -63,6 +63,24 @@ describe("getAuthCallbackUrl", () => {
       `${window.location.origin}${AUTH_CALLBACK_PATH}`,
     );
   });
+
+  it("points at the app's deep link in the native app", () => {
+    const globalBridge = globalThis as {
+      Capacitor?: {
+        getPlatform?: () => string;
+        isNativePlatform?: () => boolean;
+      };
+    };
+    globalBridge.Capacitor = {
+      getPlatform: () => "android",
+      isNativePlatform: () => true,
+    };
+    try {
+      expect(getAuthCallbackUrl()).toBe("com.vuforge.ohkolab://auth/callback");
+    } finally {
+      delete globalBridge.Capacitor;
+    }
+  });
 });
 
 describe("rememberReturnTo and consumeReturnTo", () => {
