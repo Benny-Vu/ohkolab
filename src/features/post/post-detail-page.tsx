@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Page } from "@/components/page";
 import { NotFoundPage } from "@/app/route-pages";
+import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useCreateComment, useDeleteComment } from "@/lib/social/mutations";
 import { useComments, usePost } from "@/lib/social/queries";
@@ -166,6 +167,12 @@ export function PostDetailPage() {
                   className="rounded-xl border bg-card p-3 text-sm"
                 >
                   <div className="flex items-center gap-2">
+                    <UserAvatar
+                      username={comment.author?.username ?? ""}
+                      displayName={comment.author?.displayName ?? null}
+                      avatarSpecies={comment.author?.avatarSpecies ?? null}
+                      size="sm"
+                    />
                     <Link
                       to={`/u/${comment.author?.username ?? ""}`}
                       className="font-medium hover:underline"

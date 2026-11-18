@@ -75,6 +75,18 @@ describe("describeSocialError", () => {
     expect(
       describeSocialError({ code: "P0A02", message: "too many comments" }).code,
     ).toBe("rate_limited");
+    expect(
+      describeSocialError({ code: "P0A04", message: "too many reports" }).code,
+    ).toBe("rate_limited");
+    expect(
+      describeSocialError({ code: "P0A05", message: "too many groups" }).code,
+    ).toBe("rate_limited");
+    expect(
+      describeSocialError({
+        code: "P0A06",
+        message: "too many feedback messages",
+      }).code,
+    ).toBe("rate_limited");
   });
 
   it("maps the suspension error code", () => {

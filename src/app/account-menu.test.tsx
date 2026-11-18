@@ -60,7 +60,7 @@ describe("AccountMenu", () => {
     const [headerTrigger, tabTrigger] = screen.getAllByRole("button", {
       name: "Account menu",
     });
-    expect(tabTrigger).toHaveTextContent("ashketchum");
+    expect(tabTrigger).toHaveTextContent("Profile");
 
     await user.click(headerTrigger!);
     const menu = await screen.findByRole("menu");

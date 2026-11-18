@@ -32,6 +32,7 @@ const mutationsMocks = vi.hoisted(() => ({
   useRemoveMember: vi.fn(),
   useUpdateGroup: vi.fn(),
   useRemoveGroupPost: vi.fn(),
+  useDeleteGroup: vi.fn(),
 }));
 
 vi.mock("@/lib/groups/queries", () => queriesMocks);
@@ -160,6 +161,7 @@ function stubMutations() {
   mutationsMocks.useRemoveMember.mockReturnValue(mutationResult());
   mutationsMocks.useUpdateGroup.mockReturnValue(mutationResult());
   mutationsMocks.useRemoveGroupPost.mockReturnValue(mutationResult());
+  mutationsMocks.useDeleteGroup.mockReturnValue(mutationResult());
 }
 
 function renderGroupPage(
@@ -235,6 +237,35 @@ describe("GroupPage", () => {
     renderGroupPage();
 
     expect(screen.getByRole("button", { name: /leave/i })).toBeInTheDocument();
+  });
+
+  it("hides Leave for the owner and shows the owner note", () => {
+    stubQueries(
+      groupSummary({ ownerId: "user-1" }),
+      membership({ role: "owner" }),
+    );
+    renderGroupPage();
+
+    expect(
+      screen.queryByRole("button", { name: /leave/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("You own this group")).toBeInTheDocument();
+  });
+
+  it("shows the delete danger zone for the owner", async () => {
+    stubQueries(
+      groupSummary({ ownerId: "user-1" }),
+      membership({ role: "owner" }),
+    );
+    const user = userEvent.setup();
+    renderGroupPage();
+
+    await user.click(screen.getByRole("tab", { name: /settings/i }));
+
+    expect(screen.getByText("Danger zone")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /delete group/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows accept and decline for an invited user", () => {
@@ -514,6 +545,53 @@ describe("GroupPage", () => {
         description: "For fans of the Elite Four.",
         visibility: "public",
       }),
+    );
+  });
+
+  it("keeps Delete group disabled until the slug is typed", async () => {
+    stubQueries(
+      groupSummary({ ownerId: "user-1" }),
+      membership({ role: "owner" }),
+    );
+    const user = userEvent.setup();
+    renderGroupPage();
+
+    await user.click(screen.getByRole("tab", { name: /settings/i }));
+
+    const deleteButton = screen.getByRole("button", { name: /delete group/i });
+    expect(deleteButton).toBeDisabled();
+
+    const confirm = screen.getByLabelText("Type the group address to confirm");
+    await user.type(confirm, "elite-four");
+    expect(deleteButton).toBeDisabled();
+
+    await user.type(confirm, "-fans");
+    expect(deleteButton).toBeEnabled();
+  });
+
+  it("deletes the group and navigates to /groups", async () => {
+    const mutateAsync = vi.fn(async () => ({ ok: true, data: undefined }));
+    mutationsMocks.useDeleteGroup.mockReturnValue(mutationResult(mutateAsync));
+    stubQueries(
+      groupSummary({ ownerId: "user-1" }),
+      membership({ role: "owner" }),
+    );
+    const user = userEvent.setup();
+    renderGroupPage();
+
+    await user.click(screen.getByRole("tab", { name: /settings/i }));
+    const confirm = screen.getByLabelText("Type the group address to confirm");
+    await user.type(confirm, "elite-four-fans");
+    await user.click(screen.getByRole("button", { name: /delete group/i }));
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith({
+        groupId: "g1",
+        slug: "elite-four-fans",
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("groups page")).toBeInTheDocument(),
     );
   });
 });

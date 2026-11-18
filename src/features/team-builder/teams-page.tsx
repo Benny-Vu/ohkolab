@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useBattleFormat } from "@/lib/preferences";
 import { importTeam, sortByUpdated, useTeams } from "@/lib/team";
+import { track } from "@/lib/telemetry/analytics";
 import type { Team } from "@/types/team";
 
 export function TeamsPage() {
@@ -45,6 +46,10 @@ export function TeamsPage() {
       name: imported.name ?? undefined,
       format: preferredFormat,
       members: imported.sets,
+    });
+    track("team_imported", {
+      format: preferredFormat,
+      size: imported.sets.length,
     });
     setImportOpen(false);
     setImportText("");
@@ -110,9 +115,10 @@ export function TeamsPage() {
           </Dialog>
           <Button
             size="sm"
-            onClick={() =>
-              navigate(`/teams/${create({ format: preferredFormat }).id}`)
-            }
+            onClick={() => {
+              track("team_created", { format: preferredFormat, size: 0 });
+              navigate(`/teams/${create({ format: preferredFormat }).id}`);
+            }}
           >
             <PlusIcon />
             New team

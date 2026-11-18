@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import {
   CheckIcon,
   ConstructionIcon,
   LoaderCircleIcon,
   LogInIcon,
   ShieldCheckIcon,
+  Trash2Icon,
   UserMinusIcon,
   UserPlusIcon,
   XIcon,
@@ -24,6 +25,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +39,7 @@ import { useAuth } from "@/lib/auth/use-auth";
 import {
   useAcceptInvite,
   useDeclineInvite,
+  useDeleteGroup,
   useInviteMember,
   useJoinGroup,
   useLeaveGroup,
@@ -49,7 +58,6 @@ import { useGroupFeed } from "@/lib/social/queries";
 import {
   GROUP_DESCRIPTION_MAX,
   GROUP_NAME_MAX,
-  GROUP_VISIBILITIES,
   canModerateGroup,
   normalizeGroupDescription,
   normalizeGroupName,
@@ -59,6 +67,7 @@ import {
 } from "@/lib/groups/validation";
 import { Composer } from "@/features/feed/composer";
 import { GroupPostList } from "@/features/groups/group-post-list";
+import { track } from "@/lib/telemetry/analytics";
 
 /**
  * One group: header with membership actions, then the feed, members and (for
@@ -117,6 +126,7 @@ function GroupDetail({ slug }: { slug: string }) {
   const isInvited = membership?.status === "invited";
   const canModerate = canModerateGroup(membership?.role ?? null);
   const memberCount = countQuery.data ?? null;
+  const isOwner = user?.id === group.ownerId;
 
   return (
     <Page
@@ -129,6 +139,7 @@ function GroupDetail({ slug }: { slug: string }) {
           visibility={group.visibility}
           isActiveMember={isActiveMember}
           isInvited={isInvited}
+          isOwner={isOwner}
         />
       }
     >
@@ -180,6 +191,7 @@ interface MembershipActionsProps {
   visibility: GroupVisibility;
   isActiveMember: boolean;
   isInvited: boolean;
+  isOwner: boolean;
 }
 
 function MembershipActions({
@@ -188,6 +200,7 @@ function MembershipActions({
   visibility,
   isActiveMember,
   isInvited,
+  isOwner,
 }: MembershipActionsProps) {
   const { user } = useAuth();
   const joinGroup = useJoinGroup();
@@ -203,6 +216,15 @@ function MembershipActions({
           Sign in to join
         </Link>
       </Button>
+    );
+  }
+
+  if (isOwner) {
+    return (
+      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <ShieldCheckIcon className="size-4" aria-hidden />
+        You own this group
+      </span>
     );
   }
 
@@ -266,8 +288,12 @@ function MembershipActions({
       size="sm"
       onClick={async () => {
         const result = await joinGroup.mutateAsync({ groupId });
-        if (result.ok) toast.success("Welcome to the group!");
-        else toast.error(result.error.message);
+        if (result.ok) {
+          toast.success("Welcome to the group!");
+          track("group_joined", { visibility });
+        } else {
+          toast.error(result.error.message);
+        }
       }}
       disabled={joinGroup.isPending}
     >
@@ -592,6 +618,8 @@ function MemberRow({
 function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
   const groupQuery = useGroupBySlug(slug);
   const updateGroup = useUpdateGroup();
+  const deleteGroup = useDeleteGroup();
+  const navigate = useNavigate();
   const group = groupQuery.data;
   const [name, setName] = useState(group?.name ?? "");
   const [description, setDescription] = useState(group?.description ?? "");
@@ -600,6 +628,8 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
   );
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [confirmSlug, setConfirmSlug] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (!group) return null;
 
@@ -609,6 +639,7 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
   );
   const canSave =
     nameError === null && descriptionError === null && !updateGroup.isPending;
+  const canDelete = confirmSlug.trim() === group.slug && !deleteGroup.isPending;
 
   async function save() {
     if (!canSave) {
@@ -630,71 +661,139 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
     }
   }
 
+  const deleteTheGroup = async () => {
+    if (!canDelete) return;
+    const result = await deleteGroup.mutateAsync({
+      groupId,
+      slug: group.slug,
+    });
+    if (result.ok) {
+      toast("Group deleted.");
+      void navigate("/groups");
+    } else {
+      setDeleteError(result.error.message);
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Group settings</CardTitle>
-        <CardDescription>
-          The address (/g/{group.slug}) cannot change after creation.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="settings-name">Name</Label>
-          <Input
-            id="settings-name"
-            value={name}
-            maxLength={GROUP_NAME_MAX}
-            onChange={(event) => {
-              setName(event.target.value);
-              setSaved(false);
-            }}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="settings-description">Description</Label>
-          <Textarea
-            id="settings-description"
-            value={description}
-            rows={3}
-            maxLength={GROUP_DESCRIPTION_MAX}
-            onChange={(event) => {
-              setDescription(event.target.value);
-              setSaved(false);
-            }}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="settings-visibility">Visibility</Label>
-          <select
-            id="settings-visibility"
-            className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-            value={visibility}
-            onChange={(event) => {
-              setVisibility(event.target.value as GroupVisibility);
-              setSaved(false);
-            }}
-          >
-            {GROUP_VISIBILITIES.map((candidate) => (
-              <option key={candidate} value={candidate}>
-                {candidate === "public" ? "Public" : "Invite only"}
-              </option>
-            ))}
-          </select>
-        </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        {saved && (
-          <p className="text-sm text-muted-foreground">Changes saved.</p>
-        )}
-        <div>
-          <Button size="sm" onClick={save} disabled={!canSave}>
-            {updateGroup.isPending && (
-              <LoaderCircleIcon className="animate-spin" aria-hidden />
-            )}
-            Save changes
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Group settings</CardTitle>
+          <CardDescription>
+            The address (/g/{group.slug}) cannot change after creation.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="settings-name">Name</Label>
+            <Input
+              id="settings-name"
+              value={name}
+              maxLength={GROUP_NAME_MAX}
+              onChange={(event) => {
+                setName(event.target.value);
+                setSaved(false);
+              }}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="settings-description">Description</Label>
+            <Textarea
+              id="settings-description"
+              value={description}
+              rows={3}
+              maxLength={GROUP_DESCRIPTION_MAX}
+              onChange={(event) => {
+                setDescription(event.target.value);
+                setSaved(false);
+              }}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="settings-visibility">Visibility</Label>
+            <Select
+              value={visibility}
+              onValueChange={(value) => {
+                setVisibility(value as GroupVisibility);
+                setSaved(false);
+              }}
+            >
+              <SelectTrigger id="settings-visibility" aria-label="Visibility">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">
+                  Public — anyone can join and find it
+                </SelectItem>
+                <SelectItem value="invite_only">
+                  Invite only — members join by invitation
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          {saved && (
+            <p className="text-sm text-muted-foreground">Changes saved.</p>
+          )}
+          <div>
+            <Button size="sm" onClick={save} disabled={!canSave}>
+              {updateGroup.isPending && (
+                <LoaderCircleIcon className="animate-spin" aria-hidden />
+              )}
+              Save changes
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle>Danger zone</CardTitle>
+          <CardDescription>
+            Deleting the group removes its feed, posts and members forever. This
+            cannot be undone.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <div className="grid gap-2">
+            <Label htmlFor="delete-group-confirm">
+              Type the group address to confirm
+            </Label>
+            <Input
+              id="delete-group-confirm"
+              value={confirmSlug}
+              onChange={(event) => {
+                setConfirmSlug(event.target.value);
+                setDeleteError(null);
+              }}
+              placeholder={group.slug}
+              autoComplete="off"
+              aria-describedby="delete-group-hint"
+            />
+            <p id="delete-group-hint" className="text-xs text-muted-foreground">
+              /g/{group.slug}
+            </p>
+          </div>
+          {deleteError && (
+            <p className="text-sm text-destructive">{deleteError}</p>
+          )}
+          <div>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={deleteTheGroup}
+              disabled={!canDelete}
+            >
+              {deleteGroup.isPending && (
+                <LoaderCircleIcon className="animate-spin" aria-hidden />
+              )}
+              <Trash2Icon aria-hidden />
+              Delete group
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

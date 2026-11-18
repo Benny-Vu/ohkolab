@@ -56,21 +56,17 @@ describe("NotFoundPage", () => {
 });
 
 describe("RouteError", () => {
-  it("shows the error detail with a retry and a way home", async () => {
-    const user = userEvent.setup();
+  it("shows the crash screen with reload, home and feedback options", async () => {
     renderAt("/boom");
 
     expect(
       await screen.findByRole("heading", { name: "Something went wrong" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("kaboom")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Reload" }));
-
-    const home = screen.getByRole("link", { name: "Back to home" });
-    expect(home).toHaveAttribute("href", "/");
-    await user.click(home);
-    expect(screen.getByText("home content")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reload" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Go home" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Tell us what happened" }),
+    ).toBeInTheDocument();
   });
 });
 

@@ -344,11 +344,7 @@ describe("PublicProfilePage", () => {
     expect(screen.getByText("Misty")).toBeInTheDocument();
     expect(screen.getAllByText("@misty")).toHaveLength(2);
     expect(screen.getByText("Water Pokémon master.")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        `Joined ${new Date("2024-03-05T00:00:00Z").toLocaleDateString()}`,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Joined March 2024")).toBeInTheDocument();
     expect(screen.getByAltText("Pikachu")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Public teams" }),
@@ -395,7 +391,7 @@ describe("PublicProfilePage", () => {
     renderProfilePage(client, "tracey");
 
     expect(await screen.findByText("No public teams yet.")).toBeInTheDocument();
-    expect(screen.getByText("No avatar")).toBeInTheDocument();
+    expect(screen.getByText("T")).toBeInTheDocument();
     expect(screen.getByText("tracey")).toBeInTheDocument();
     expect(screen.getAllByText("@tracey")).toHaveLength(2);
   });

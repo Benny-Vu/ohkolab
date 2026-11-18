@@ -1,10 +1,9 @@
-import { lazy, Suspense, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 
 import { InfoIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { FormatToggle } from "@/components/format-toggle";
 import { Page } from "@/components/page";
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -33,12 +32,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FormatToggle } from "@/features/metagame/format-toggle";
 import {
   useMetagameIndex,
   useMetagameSnapshot,
 } from "@/features/metagame/use-metagame";
 import { useBattleFormat } from "@/lib/preferences";
 import { findSnapshot, listSnapshots } from "@/lib/metagame/snapshots";
+import { track } from "@/lib/telemetry/analytics";
 import {
   formatAttribution,
   formatBattles,
@@ -161,6 +162,15 @@ export function MetagamePage() {
       ? findSnapshot(index.data, format, period)
       : null;
   const snapshot = useMetagameSnapshot(format, period);
+
+  useEffect(() => {
+    if (snapshot.data) {
+      track("metagame_viewed", {
+        format,
+        month: snapshot.data.period,
+      });
+    }
+  }, [snapshot.data, format]);
 
   const handleUseSet = async (pokemon: PokemonUsage) => {
     // usageToSet needs the dex; import it on demand so the route stays light.

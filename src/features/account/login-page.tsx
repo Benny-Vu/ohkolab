@@ -26,6 +26,7 @@ import {
 import { sanitizeReturnTo } from "@/lib/auth/redirects";
 import type { AuthFailure, OAuthProvider } from "@/lib/auth/types";
 import { useAuth } from "@/lib/auth/use-auth";
+import { track } from "@/lib/telemetry/analytics";
 
 type FieldErrors = Partial<
   Record<"email" | "password" | "acceptedTerms", string>
@@ -149,6 +150,7 @@ export function LoginPage() {
     });
     setPending(null);
     if (result.ok) {
+      track("sign_up_completed", { method: "email" });
       if (result.data.needsEmailConfirmation) {
         setNeedsEmailConfirmation(true);
       } else {

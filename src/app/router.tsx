@@ -5,6 +5,7 @@ import { NotFoundPage, PageLoading, RouteError } from "@/app/route-pages";
 import { accountRoutes } from "@/features/account/routes";
 import { adminRoutes } from "@/features/admin/routes";
 import { calcRoutes } from "@/features/calc/routes";
+import { feedbackRoutes } from "@/features/feedback/routes";
 import { groupsRoutes } from "@/features/groups/routes";
 import { homeRoutes } from "@/features/home/routes";
 import { legalRoutes } from "@/features/legal/routes";
@@ -23,9 +24,11 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <AppLayout />,
-    hydrateFallbackElement: <PageLoading />,
     children: [
       {
+        // The fallback lives here, below the shell route, so the header and
+        // tab bar stay mounted while the first lazy page hydrates.
+        hydrateFallbackElement: <PageLoading />,
         errorElement: <RouteError />,
         children: [
           ...homeRoutes,
@@ -35,6 +38,7 @@ export const router = createBrowserRouter([
           ...metagameRoutes,
           ...accountRoutes,
           ...adminRoutes,
+          ...feedbackRoutes,
           ...postRoutes,
           ...profileRoutes,
           ...notificationRoutes,

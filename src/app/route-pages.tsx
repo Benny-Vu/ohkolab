@@ -1,8 +1,11 @@
-import { Link, isRouteErrorResponse, useRouteError } from "react-router";
+import { useState } from "react";
+import { Link, useRouteError } from "react-router";
 
 import { Page } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CrashScreen } from "@/features/feedback/crash-screen";
+import { reportError } from "@/lib/telemetry/sentry";
 
 /** Shown for any URL no route matches. */
 export function NotFoundPage() {
@@ -21,26 +24,21 @@ export function NotFoundPage() {
 /** Shown when a page fails to load or throws while rendering. */
 export function RouteError() {
   const error = useRouteError();
-  const detail = isRouteErrorResponse(error)
-    ? `${error.status} ${error.statusText}`
-    : error instanceof Error
-      ? error.message
-      : "Unknown error";
+  // Report the crash once per error (adjust state during render).
+  const [reportedError, setReportedError] = useState<unknown>(null);
+  const [hasReported, setHasReported] = useState(false);
+  const [crashId, setCrashId] = useState<string | null>(null);
+  if (!hasReported || reportedError !== error) {
+    setReportedError(error);
+    setHasReported(true);
+    setCrashId(reportError(error));
+  }
   return (
-    <Page title="Something went wrong" width="narrow">
-      <p className="mb-2 text-sm text-muted-foreground">
-        This page hit an error. Reloading usually fixes it.
-      </p>
-      <pre className="mb-4 overflow-x-auto rounded-md bg-muted p-3 text-xs">
-        {detail}
-      </pre>
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={() => window.location.reload()}>Reload</Button>
-        <Button asChild variant="outline">
-          <Link to="/">Back to home</Link>
-        </Button>
-      </div>
-    </Page>
+    <CrashScreen
+      crashId={crashId}
+      onReload={() => window.location.reload()}
+      onGoHome={() => (window.location.href = "/")}
+    />
   );
 }
 

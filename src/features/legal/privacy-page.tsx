@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Page } from "@/components/page";
+import { TelemetrySwitch } from "@/features/feedback/telemetry-switch";
 import { CONTACT_EMAIL, LAST_UPDATED } from "@/features/legal/legal-info";
 
 export function PrivacyPage() {
@@ -16,8 +17,10 @@ export function PrivacyPage() {
           </h2>
           <p className="text-sm text-muted-foreground">
             This page explains what OHKOLab stores about you and why. OHKOLab
-            has no advertising and no analytics: we do not track what you do on
-            the site.
+            has no advertising. We collect anonymous, cookieless usage
+            statistics and crash reports to find and fix problems, and you can
+            turn both off at any time (see "Crash reports and usage statistics"
+            below).
           </p>
         </section>
 
@@ -94,6 +97,57 @@ export function PrivacyPage() {
 
         <section className="space-y-2">
           <h2 className="text-base leading-tight font-semibold">
+            Crash reports and usage statistics
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            To keep OHKOLab working, we collect two kinds of telemetry, and both
+            are anonymous and cookieless:
+          </p>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+            <li>
+              <strong className="font-medium">Crash reports.</strong> When
+              something breaks, the app sends a report to Sentry (hosted in the
+              EU). It contains the error, the page you were on, your app
+              version, browser and screen size, a random session id and, when
+              you are signed in, your account id (a random code, not your name
+              or email). It never contains your posts, comments, bio, team
+              details beyond Pokémon and move names, username, display name,
+              email, password, auth tokens or IP address. Crash reports are kept
+              for about 30 days.
+            </li>
+            <li>
+              <strong className="font-medium">Usage statistics.</strong> We use
+              PostHog (hosted in the EU) to count which pages are visited and
+              which features are used, so we know what to improve. Page views
+              are recorded by page name only, never by full URL, and nothing is
+              written to cookies. Usage statistics are kept for up to 1 year.
+            </li>
+          </ul>
+          <p className="text-sm text-muted-foreground">
+            You can turn crash reports and usage statistics off with the switch
+            below. Turning them off stops both immediately. If your browser
+            sends a Global Privacy Control or Do Not Track signal, we honour it
+            by turning usage statistics off; crash reports stay on unless you
+            use the switch.
+          </p>
+          <TelemetrySwitch />
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base leading-tight font-semibold">Feedback</h2>
+          <p className="text-sm text-muted-foreground">
+            When you send feedback through the site, we store your message, its
+            kind (bug, idea or other), and, if you leave the technical details
+            checkbox on, the page you were on, your app version, browser, screen
+            size and the id of a crash if one just happened. Feedback is tied to
+            your account so we can follow up, and is seen by our moderators. We
+            keep feedback until it has been handled plus 12 months, and it is
+            deleted with your account.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base leading-tight font-semibold">
             Moderation and appeals
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -126,7 +180,11 @@ export function PrivacyPage() {
             </li>
             <li>
               the page you were viewing when you started signing in, so you can
-              return to it, and
+              return to it,
+            </li>
+            <li>
+              whether you have turned crash reports and usage statistics off,
+              and
             </li>
             <li>your sign-in session, which keeps you signed in.</li>
           </ul>
@@ -143,7 +201,22 @@ export function PrivacyPage() {
             Pokémon sprites are loaded from play.pokemonshowdown.com, so that
             host sees the requests your browser makes for those images. If you
             sign in with Google or Discord, that provider handles your sign-in.
-            Other than that, OHKOLab does not send your data to anyone else.
+            Crash reports go to Sentry and usage statistics go to PostHog, both
+            hosted in the EU, as described above; see Sentry's{" "}
+            <a
+              href="https://sentry.io/privacy/"
+              className="text-primary underline underline-offset-4"
+            >
+              privacy policy
+            </a>{" "}
+            and PostHog's{" "}
+            <a
+              href="https://posthog.com/privacy/"
+              className="text-primary underline underline-offset-4"
+            >
+              privacy policy
+            </a>
+            . Other than that, OHKOLab does not send your data to anyone else.
           </p>
         </section>
 

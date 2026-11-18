@@ -1,8 +1,9 @@
-import { useId, type Dispatch } from "react";
+import { useId, useEffect, type Dispatch } from "react";
 import { GaugeIcon } from "lucide-react";
 import { TypeBadge } from "@/components/type-badge";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import { sideNames } from "@/lib/calc/battle";
+import { track } from "@/lib/telemetry/analytics";
 import {
   outcomeRangeText,
   outcomeSummary,
@@ -18,9 +19,13 @@ import {
   type CalcState,
   type SideId,
 } from "@/lib/calc/state";
+import type { BattleFormat } from "@/types/battle";
 
 type Names = Record<SideId, string>;
 type Selection = { side: SideId; outcome: MoveOutcome };
+
+/** Matchups already reported this session, keyed by format/sides/move. */
+const reportedMatchups = new Set<string>();
 
 function MoveRow({
   side,
@@ -141,15 +146,32 @@ function SpeedSection({ state, names }: { state: CalcState; names: Names }) {
 export function ResultsPanel({
   state,
   outcomes,
+  format,
   dispatch,
 }: {
   state: CalcState;
   outcomes: Record<SideId, MoveOutcome[]>;
+  format: BattleFormat;
   dispatch: Dispatch<CalcAction>;
 }) {
   const titleId = useId();
   const names = sideNames(state);
   const selection = resolveSelection(state.selected, outcomes);
+
+  useEffect(() => {
+    if (!selection) return;
+    const key = `${format}:${names[selection.side]}:${names[otherSide(selection.side)]}:${selection.outcome.move}`;
+    if (reportedMatchups.has(key)) return;
+    reportedMatchups.add(key);
+    track("calc_result_viewed", {
+      format,
+      attacker: names[selection.side],
+      defender: names[otherSide(selection.side)],
+      move: selection.outcome.move,
+      ko: Boolean(selection.outcome.result?.koText),
+    });
+  }, [selection, format, names]);
+
   return (
     <Panel labelledBy={titleId}>
       <PanelTitle id={titleId}>Results</PanelTitle>

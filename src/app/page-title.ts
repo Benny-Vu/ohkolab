@@ -1,11 +1,14 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router";
 
+import { trackPageView } from "@/lib/telemetry/analytics";
+
 const SITE_NAME = "OHKOLab";
 
 /** Page titles for routes without parameters, keyed by exact path. */
 const EXACT_TITLES: Record<string, string> = {
   "/admin/appeals": "Appeals",
+  "/admin/feedback": "Feedback",
   "/admin/reports": "Reports",
   "/calc": "Damage calculator",
   "/groups": "Groups",
@@ -67,5 +70,13 @@ export function usePageTitle(): void {
   const { pathname } = useLocation();
   useEffect(() => {
     document.title = titleForPath(pathname);
+  }, [pathname]);
+}
+
+/** Records an anonymous page view for the current route. */
+export function usePageView(): void {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    trackPageView(pathname);
   }, [pathname]);
 }

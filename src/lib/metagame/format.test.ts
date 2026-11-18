@@ -41,3 +41,13 @@ test("formatAttribution matches the data-sources note", () => {
     "Pokémon Showdown ladder, October 2026, rating 1630+, via smogon.com/stats",
   );
 });
+
+test("formatAttribution does not repeat parts already in the label", () => {
+  const full =
+    "Pokémon Showdown ladder, October 2026, rating 1630+, via smogon.com/stats";
+  const snapshot = {
+    ...snapshotFixture,
+    source: { ...snapshotFixture.source, label: full },
+  };
+  expect(formatAttribution(snapshot)).toBe(full);
+});

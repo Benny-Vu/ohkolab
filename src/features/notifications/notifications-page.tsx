@@ -21,7 +21,7 @@ import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Page } from "@/components/page";
-import { PokemonIcon } from "@/components/pokemon-sprite";
+import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth/use-auth";
 import { formatRelativeTime } from "@/features/feed/relative-time";
 import {
@@ -223,9 +223,12 @@ function NotificationRowCard({
       )}
     >
       {item.actor ? (
-        <PokemonIcon
-          species={item.actor.avatarSpecies ?? "Missingno"}
-          className="mt-0.5 size-10 shrink-0"
+        <UserAvatar
+          username={item.actor.username}
+          displayName={item.actor.displayName}
+          avatarSpecies={item.actor.avatarSpecies}
+          size="md"
+          className="mt-0.5"
         />
       ) : (
         <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">

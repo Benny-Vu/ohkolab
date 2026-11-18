@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { PokemonIcon } from "@/components/pokemon-sprite";
+import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useTeams } from "@/lib/team";
 import {
@@ -161,9 +162,12 @@ export function PostCard({ post, hideCommentLink = false }: PostCardProps) {
   return (
     <Card size="sm" className="p-4">
       <div className="flex items-start gap-3">
-        <PokemonIcon
-          species={post.author_avatar_species ?? "Missingno"}
-          className="mt-0.5 size-10 shrink-0"
+        <UserAvatar
+          username={post.author_username}
+          displayName={post.author_display_name}
+          avatarSpecies={post.author_avatar_species}
+          size="md"
+          className="mt-0.5"
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

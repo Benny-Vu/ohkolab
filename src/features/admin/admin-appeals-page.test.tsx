@@ -9,6 +9,7 @@ import { createFakeAuth } from "@/features/account/test-utils";
 import { AuthContext } from "@/lib/auth/use-auth";
 import type { AppSupabaseClient } from "@/lib/supabase";
 import type { AppealRow, ModerationActionRow } from "@/lib/database.types";
+import type { AppealAppellant } from "@/lib/social/moderation";
 
 const socialMocks = vi.hoisted(() => ({
   socialAvailability: vi.fn(() => "ready"),
@@ -63,6 +64,17 @@ function actionRow(
     report_id: null,
     moderator_id: "user-1",
     created_at: "2026-11-18T10:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function appellantRow(
+  overrides: Partial<AppealAppellant> = {},
+): AppealAppellant {
+  return {
+    username: "sparky",
+    display_name: "Sparky",
+    avatar_species: null,
     ...overrides,
   };
 }
@@ -133,7 +145,9 @@ describe("AdminAppealsPage", () => {
   it("renders an appeal with its action and message", () => {
     const appeal = appealRow();
     const action = actionRow();
-    socialMocks.useAppeals.mockReturnValue(queryResult([{ appeal, action }]));
+    socialMocks.useAppeals.mockReturnValue(
+      queryResult([{ appeal, action, appellant: appellantRow() }]),
+    );
     socialMocks.useModerationTargetText.mockReturnValue(
       queryResult("Removed post body"),
     );
@@ -153,6 +167,57 @@ describe("AdminAppealsPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the appellant with a link to their profile", () => {
+    socialMocks.useAppeals.mockReturnValue(
+      queryResult([
+        {
+          appeal: appealRow(),
+          action: actionRow(),
+          appellant: appellantRow(),
+        },
+      ]),
+    );
+    renderAppealsPage(fakeClient);
+
+    expect(screen.getByText("Sparky")).toBeInTheDocument();
+    expect(screen.getByText("@sparky")).toBeInTheDocument();
+    const profileLink = screen.getAllByRole("link", {
+      name: /sparky/i,
+    })[0]!;
+    expect(profileLink).toHaveAttribute("href", "/u/sparky");
+  });
+
+  it("links to the removed post when the action removed a post", () => {
+    socialMocks.useAppeals.mockReturnValue(
+      queryResult([
+        {
+          appeal: appealRow(),
+          action: actionRow(),
+          appellant: appellantRow(),
+        },
+      ]),
+    );
+    renderAppealsPage(fakeClient);
+
+    expect(screen.getByRole("link", { name: /view post/i })).toHaveAttribute(
+      "href",
+      "/post/post-1",
+    );
+  });
+
+  it("handles a missing appellant gracefully", () => {
+    socialMocks.useAppeals.mockReturnValue(
+      queryResult([
+        { appeal: appealRow(), action: actionRow(), appellant: null },
+      ]),
+    );
+    renderAppealsPage(fakeClient);
+
+    expect(
+      screen.getByText(/appellant's profile is no longer available/i),
+    ).toBeInTheDocument();
+  });
+
   it("upholds an appeal", async () => {
     const user = userEvent.setup();
     const handle = vi.fn<
@@ -162,7 +227,13 @@ describe("AdminAppealsPage", () => {
       }>
     >(async () => ({ ok: true, data: undefined }));
     socialMocks.useAppeals.mockReturnValue(
-      queryResult([{ appeal: appealRow(), action: actionRow() }]),
+      queryResult([
+        {
+          appeal: appealRow(),
+          action: actionRow(),
+          appellant: appellantRow(),
+        },
+      ]),
     );
     socialMocks.useHandleAppeal.mockReturnValue(mutationResult(handle));
     renderAppealsPage(fakeClient);
@@ -185,7 +256,13 @@ describe("AdminAppealsPage", () => {
       }>
     >(async () => ({ ok: true, data: undefined }));
     socialMocks.useAppeals.mockReturnValue(
-      queryResult([{ appeal: appealRow(), action: actionRow() }]),
+      queryResult([
+        {
+          appeal: appealRow(),
+          action: actionRow(),
+          appellant: appellantRow(),
+        },
+      ]),
     );
     socialMocks.useHandleAppeal.mockReturnValue(mutationResult(handle));
     renderAppealsPage(fakeClient);
@@ -201,7 +278,9 @@ describe("AdminAppealsPage", () => {
 
   it("shows a placeholder when the action is missing", () => {
     socialMocks.useAppeals.mockReturnValue(
-      queryResult([{ appeal: appealRow(), action: null }]),
+      queryResult([
+        { appeal: appealRow(), action: null, appellant: appellantRow() },
+      ]),
     );
     renderAppealsPage(fakeClient);
 
@@ -216,6 +295,7 @@ describe("AdminAppealsPage", () => {
         {
           appeal: appealRow(),
           action: actionRow({ action: "suspend", target_type: "profile" }),
+          appellant: appellantRow(),
         },
       ]),
     );

@@ -434,6 +434,43 @@ export type Database = {
         };
         Relationships: [];
       };
+      feedback: {
+        Row: {
+          id: string;
+          /** Row-level security forces this to the signed-in user. */
+          user_id: string;
+          /** One of "bug", "idea", "other". */
+          kind: string;
+          /** 10 to 2000 characters. */
+          message: string;
+          /**
+           * Technical details from the client (page, app version, browser,
+           * screen size, last crash id), stored as `jsonb` of at most 2000
+           * bytes serialized. Validate what you read before trusting it.
+           */
+          context: Json | null;
+          /** One of "new", "seen", "done". */
+          status: string;
+          created_at: string;
+          /** Set by `set_feedback_status()`; null until then. */
+          handled_by: string | null;
+          handled_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind: string;
+          message: string;
+          context?: Json | null;
+          created_at?: string;
+        };
+        /**
+         * No update grant: `set_feedback_status()` is the only writer of
+         * status, handled_by and handled_at.
+         */
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
     };
     Views: {
       /**
@@ -567,6 +604,11 @@ export type Database = {
         Args: { target_post_id: string; removal_reason: string };
         Returns: undefined;
       };
+      /** Moderators only: sets feedback to "seen" or "done". */
+      set_feedback_status: {
+        Args: { feedback_id: string; new_status: string };
+        Returns: undefined;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
@@ -610,4 +652,6 @@ export type NotificationRow =
   Database["public"]["Tables"]["notifications"]["Row"];
 export type NotificationUpdate =
   Database["public"]["Tables"]["notifications"]["Update"];
+export type FeedbackRow = Database["public"]["Tables"]["feedback"]["Row"];
+export type FeedbackInsert = Database["public"]["Tables"]["feedback"]["Insert"];
 export type FeedPostRow = Database["public"]["Views"]["feed_posts"]["Row"];
