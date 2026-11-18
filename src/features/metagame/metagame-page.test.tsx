@@ -124,7 +124,7 @@ describe("MetagamePage", () => {
     renderMetagame();
     await screen.findByText(/rating 1630\+/);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("radio", { name: "Singles" }));
+    await user.click(screen.getByRole("button", { name: "Singles" }));
     expect(
       await screen.findByText("No data for this format yet."),
     ).toBeInTheDocument();
@@ -191,8 +191,45 @@ describe("MetagamePage", () => {
     mockFetch();
     renderMetagame();
     await screen.findByText(/rating 1630\+/);
-    await user.click(screen.getByRole("radio", { name: "Singles" }));
+    await user.click(screen.getByRole("button", { name: "Singles" }));
     expect(await screen.findByText(/87,848 battles/)).toBeInTheDocument();
     expect(screen.getAllByText("September 2026").length).toBeGreaterThan(0);
+  });
+
+  it("shows the source line once", async () => {
+    mockFetch();
+    const full =
+      "Pokémon Showdown ladder, October 2026, rating 1630+, via smogon.com/stats";
+    fetchHandlers.set("/data/metagame/2026-10/doubles.json", {
+      ...snapshotFixture,
+      source: { ...snapshotFixture.source, label: full },
+    });
+    renderMetagame();
+    expect(await screen.findAllByText(full)).toHaveLength(1);
+  });
+
+  it("marks the active format choice", async () => {
+    const user = userEvent.setup();
+    mockFetch();
+    renderMetagame();
+    await screen.findByText(/rating 1630\+/);
+    expect(screen.getByRole("button", { name: "Doubles" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Singles" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    await user.click(screen.getByRole("button", { name: "Singles" }));
+    await screen.findByText(/87,848 battles/);
+    expect(screen.getByRole("button", { name: "Singles" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Doubles" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 });

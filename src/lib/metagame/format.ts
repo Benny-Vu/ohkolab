@@ -36,15 +36,17 @@ export function formatBattles(battles: number): string {
 }
 
 /** Attribution line per the data-sources note, e.g.
- * "Pokémon Showdown ladder, October 2026, rating 1630+, via smogon.com/stats". */
+ * "Pokémon Showdown ladder, October 2026, rating 1630+, via smogon.com/stats".
+ * Labels that already carry the period, rating or via-credit (as generated
+ * snapshots do) are returned without repeating those parts. */
 export function formatAttribution(snapshot: MetagameSnapshot): string {
+  const { label } = snapshot.source;
   const parts = [
-    snapshot.source.label,
     formatPeriod(snapshot.period),
     `rating ${snapshot.source.ratingCutoff}+`,
   ];
   if (snapshot.source.id === "showdown-ladder") {
     parts.push("via smogon.com/stats");
   }
-  return parts.join(", ");
+  return [label, ...parts.filter((part) => !label.includes(part))].join(", ");
 }
