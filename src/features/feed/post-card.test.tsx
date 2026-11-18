@@ -123,12 +123,24 @@ describe("PostCard", () => {
 
     expect(screen.getByText("First post!")).toBeInTheDocument();
     expect(screen.getByText("Brock")).toBeInTheDocument();
-    expect(screen.getByText("@brock")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Onix" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /like/i })).toHaveTextContent(
       "2",
     );
     expect(screen.getByRole("button", { name: /^1 comment$/i })).not.toBeNull();
+  });
+
+  it("hides the handle when it matches the display name", () => {
+    renderCard(postRow());
+
+    expect(screen.queryByText("@brock")).not.toBeInTheDocument();
+  });
+
+  it("shows the handle when it differs from the display name", () => {
+    renderCard(postRow({ author_username: "brockstone" }));
+
+    expect(screen.getByText("Brock")).toBeInTheDocument();
+    expect(screen.getByText("@brockstone")).toBeInTheDocument();
   });
 
   it("links to the author profile and post detail", () => {
