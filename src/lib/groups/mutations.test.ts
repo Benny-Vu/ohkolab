@@ -7,6 +7,7 @@ import {
   useAcceptInvite,
   useCreateGroup,
   useDeclineInvite,
+  useDeleteGroup,
   useInviteMember,
   useJoinGroup,
   useLeaveGroup,
@@ -16,11 +17,13 @@ import {
   useUpdateGroup,
   type SetMemberRoleInput,
 } from "@/lib/groups/mutations";
+import { GROUP_QUERY_KEYS } from "@/lib/groups/queries";
 
 import {
   createFakeClient,
   createQueryClient,
   expectFailed,
+  groupRow,
   runMutation,
   SIGNED_IN_AUTH,
   type ChainRecord,
@@ -50,7 +53,10 @@ describe("useCreateGroup", () => {
   it("inserts a group for the signed-in user", async () => {
     const fake = createFakeClient({
       tables: {
-        groups: { data: { id: "g1", slug: "elite-four" }, error: null },
+        groups: {
+          data: groupRow({ id: "g1", slug: "elite-four" }),
+          error: null,
+        },
       },
     });
     const result = await runMutation(
@@ -76,6 +82,66 @@ describe("useCreateGroup", () => {
       },
     ]);
     expect(record?.isSingle).toBe(true);
+  });
+
+  it("seeds the cache so the group page shows the owner as a member", async () => {
+    const fake = createFakeClient({
+      tables: {
+        groups: {
+          data: groupRow({ id: "g1", slug: "elite-four" }),
+          error: null,
+        },
+      },
+    });
+    await runMutation(
+      useCreateGroup,
+      {
+        name: "Elite Four",
+        slug: "elite-four",
+        description: null,
+        visibility: "public",
+      },
+      { client: fake.client, auth: SIGNED_IN_AUTH, queryClient },
+    );
+
+    const group = queryClient.getQueryData([
+      ...GROUP_QUERY_KEYS.bySlug,
+      "elite-four",
+    ]);
+    expect(group).toEqual({
+      id: "g1",
+      slug: "elite-four",
+      name: "Test Group",
+      description: "A group for testing.",
+      visibility: "public",
+      ownerId: "user-1",
+      createdAt: "2026-11-18T10:00:00.000Z",
+    });
+    expect(
+      queryClient.getQueryData([
+        ...GROUP_QUERY_KEYS.myMembership,
+        "g1",
+        "user-1",
+      ]),
+    ).toEqual({
+      role: "owner",
+      status: "active",
+      createdAt: "2026-11-18T10:00:00.000Z",
+    });
+    expect(
+      queryClient.getQueryData([...GROUP_QUERY_KEYS.members, "g1"]),
+    ).toEqual([
+      {
+        userId: "user-1",
+        role: "owner",
+        status: "active",
+        joinedAt: "2026-11-18T10:00:00.000Z",
+        profile: null,
+      },
+    ]);
+    expect(
+      queryClient.getQueryData([...GROUP_QUERY_KEYS.memberCount, "g1"]),
+    ).toBe(1);
   });
 
   it("rejects an invalid slug before touching the database", async () => {
@@ -241,7 +307,12 @@ describe("useJoinGroup", () => {
 describe("useLeaveGroup", () => {
   it("deletes the signed-in user's own row", async () => {
     const fake = createFakeClient({
-      tables: { group_members: { data: null } },
+      tables: {
+        group_members: {
+          data: [{ group_id: "g1", user_id: "user-1" }],
+          error: null,
+        },
+      },
     });
     const result = await runMutation(
       useLeaveGroup,
@@ -254,6 +325,18 @@ describe("useLeaveGroup", () => {
     expect(record?.isDelete).toBe(true);
     expect(record?.eqFilters).toContainEqual(["group_id", "g1"]);
     expect(record?.eqFilters).toContainEqual(["user_id", "user-1"]);
+  });
+
+  it("reports forbidden when the database deletes zero rows", async () => {
+    const fake = createFakeClient({
+      tables: { group_members: { data: [], error: null } },
+    });
+    const result = await runMutation(
+      useLeaveGroup,
+      { groupId: "g1" },
+      { client: fake.client, auth: SIGNED_IN_AUTH, queryClient },
+    );
+    expectFailed(result, "forbidden");
   });
 });
 
@@ -337,7 +420,12 @@ describe("useAcceptInvite", () => {
 describe("useDeclineInvite", () => {
   it("deletes the invited row", async () => {
     const fake = createFakeClient({
-      tables: { group_members: { data: null } },
+      tables: {
+        group_members: {
+          data: [{ group_id: "g1", user_id: "user-1", status: "invited" }],
+          error: null,
+        },
+      },
     });
     const result = await runMutation(
       useDeclineInvite,
@@ -349,6 +437,18 @@ describe("useDeclineInvite", () => {
     const record = recordsOn(fake, "group_members")[0];
     expect(record?.isDelete).toBe(true);
     expect(record?.eqFilters).toContainEqual(["status", "invited"]);
+  });
+
+  it("reports forbidden when the database deletes zero rows", async () => {
+    const fake = createFakeClient({
+      tables: { group_members: { data: [], error: null } },
+    });
+    const result = await runMutation(
+      useDeclineInvite,
+      { groupId: "g1" },
+      { client: fake.client, auth: SIGNED_IN_AUTH, queryClient },
+    );
+    expectFailed(result, "forbidden");
   });
 });
 
@@ -387,7 +487,12 @@ describe("useSetMemberRole", () => {
 describe("useRemoveMember", () => {
   it("deletes the member's row", async () => {
     const fake = createFakeClient({
-      tables: { group_members: { data: null } },
+      tables: {
+        group_members: {
+          data: [{ group_id: "g1", user_id: "user-2" }],
+          error: null,
+        },
+      },
     });
     const result = await runMutation(
       useRemoveMember,
@@ -400,6 +505,18 @@ describe("useRemoveMember", () => {
     expect(record?.isDelete).toBe(true);
     expect(record?.eqFilters).toContainEqual(["group_id", "g1"]);
     expect(record?.eqFilters).toContainEqual(["user_id", "user-2"]);
+  });
+
+  it("reports forbidden when the database deletes zero rows", async () => {
+    const fake = createFakeClient({
+      tables: { group_members: { data: [], error: null } },
+    });
+    const result = await runMutation(
+      useRemoveMember,
+      { groupId: "g1", userId: "user-2" },
+      { client: fake.client, auth: SIGNED_IN_AUTH, queryClient },
+    );
+    expectFailed(result, "forbidden");
   });
 });
 
@@ -452,5 +569,71 @@ describe("useRemoveGroupPost", () => {
       { client: fake.client, auth: SIGNED_IN_AUTH, queryClient },
     );
     expectFailed(result, "forbidden");
+  });
+
+  it("invalidates the group feed so a removed post disappears", async () => {
+    queryClient.setQueryData([...GROUP_QUERY_KEYS.groupFeed, "g1"], {
+      pages: [{ posts: [{ id: "post-1" }] }],
+      pageParams: [null],
+    });
+    const fake = createFakeClient({
+      rpc: { remove_group_post: { data: null, error: null } },
+    });
+    await runMutation(
+      useRemoveGroupPost,
+      { postId: "post-1", reason: "Spam." },
+      { client: fake.client, auth: SIGNED_IN_AUTH, queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState([...GROUP_QUERY_KEYS.groupFeed, "g1"])
+        ?.isInvalidated,
+    ).toBe(true);
+  });
+});
+
+describe("useDeleteGroup", () => {
+  it("deletes the group and removes its cached page", async () => {
+    queryClient.setQueryData([...GROUP_QUERY_KEYS.bySlug, "elite-four"], {
+      id: "g1",
+    });
+    const fake = createFakeClient({
+      tables: { groups: { data: [{ id: "g1" }], error: null } },
+    });
+    const result = await runMutation(
+      useDeleteGroup,
+      { groupId: "g1", slug: "elite-four" },
+      { client: fake.client, auth: SIGNED_IN_AUTH, queryClient },
+    );
+
+    expect(result?.ok).toBe(true);
+    const record = recordsOn(fake, "groups")[0];
+    expect(record?.isDelete).toBe(true);
+    expect(record?.eqFilters).toContainEqual(["id", "g1"]);
+    expect(
+      queryClient.getQueryState([...GROUP_QUERY_KEYS.bySlug, "elite-four"]),
+    ).toBeUndefined();
+  });
+
+  it("reports forbidden when the database deletes zero rows", async () => {
+    const fake = createFakeClient({
+      tables: { groups: { data: [], error: null } },
+    });
+    const result = await runMutation(
+      useDeleteGroup,
+      { groupId: "g1", slug: "elite-four" },
+      { client: fake.client, auth: SIGNED_IN_AUTH, queryClient },
+    );
+    expectFailed(result, "forbidden");
+  });
+
+  it("requires a signed-in user", async () => {
+    const fake = createFakeClient();
+    const result = await runMutation(
+      useDeleteGroup,
+      { groupId: "g1", slug: "elite-four" },
+      { client: fake.client, auth: GUEST_AUTH, queryClient },
+    );
+    expectFailed(result, "not_signed_in");
   });
 });
