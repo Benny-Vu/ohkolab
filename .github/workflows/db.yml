@@ -1,0 +1,60 @@
+name: Database
+
+# Builds a fresh local Supabase from supabase/migrations on every change to them,
+# then lints the database and checks that every public table has row-level security.
+# Catches broken SQL before it reaches the live project.
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - ".github/workflows/db.yml"
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - "supabase/**"
+      - ".github/workflows/db.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start a local Supabase and apply all migrations
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime
+
+      - name: Lint the database (plpgsql_check)
+        run: supabase db lint --local --level warning --fail-on error
+
+      - name: Every public table has row-level security
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          missing=$(psql "$DB_URL" -v ON_ERROR_STOP=1 -tA -c "
+            select coalesce(string_agg(c.relname, ', ' order by c.relname), '')
+            from pg_class c join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity")
+          if [ -n "$missing" ]; then
+            echo "::error::Tables without RLS: $missing"
+            exit 1
+          fi
+          echo "All public tables have RLS."
+
+      - name: Stop
+        if: always()
+        run: supabase stop --no-backup
