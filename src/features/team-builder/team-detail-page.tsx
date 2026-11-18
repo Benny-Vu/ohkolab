@@ -7,6 +7,7 @@ import {
   ClipboardCopyIcon,
   CopyIcon,
   DownloadIcon,
+  MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
   Trash2Icon,
@@ -16,7 +17,8 @@ import { toast } from "sonner";
 
 import { Page } from "@/components/page";
 import { PokemonEditor } from "@/components/pokemon-editor";
-import { PokemonSprite } from "@/components/pokemon-sprite";
+import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
+import { StatBar } from "@/components/stat-bar";
 import { TypeBadge } from "@/components/type-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -34,37 +36,48 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { createDefaultSet, validateSet } from "@/data";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { calcStats, createDefaultSet, validateSet } from "@/data";
+import { SpeedTiers } from "@/features/team-builder/speed-tiers";
+import { TypeHeatMap } from "@/features/team-builder/type-heat-map";
 import { useAuth } from "@/lib/auth/use-auth";
 import { track } from "@/lib/telemetry/analytics";
 import {
-  attackingTypes,
   battleTypes,
-  defensiveOverview,
+  defensiveWeakSpots,
   exportTeam,
   memberLabel,
-  offensiveCoverage,
   teamWarnings,
   useTeams,
 } from "@/lib/team";
 import type { TeamWarning } from "@/lib/team";
 import type { BattleFormat } from "@/types/battle";
+import { STAT_IDS, STAT_LABELS } from "@/types/pokemon";
 import type { PokemonSet } from "@/types/pokemon";
 import { MAX_TEAM_SIZE } from "@/types/team";
 
@@ -73,14 +86,6 @@ const WARNING_TITLES: Record<TeamWarning["kind"], string> = {
   "duplicate-item": "Duplicate item",
   set: "Set problems",
 };
-
-function weakCellClass(count: number) {
-  return count > 0 ? "font-medium text-destructive" : "text-muted-foreground";
-}
-
-function countCellClass(count: number) {
-  return count > 0 ? "font-medium" : "text-muted-foreground";
-}
 
 export function TeamDetailPage() {
   const { teamId } = useParams();
@@ -105,6 +110,8 @@ export function TeamDetailPage() {
   const [renameOpen, setRenameOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
+  const [inlineEditing, setInlineEditing] = useState(false);
+  const [inlineDraft, setInlineDraft] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorIndex, setEditorIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<PokemonSet | null>(null);
@@ -147,9 +154,7 @@ export function TeamDetailPage() {
   }
 
   const warnings = teamWarnings(team.members);
-  const defense = defensiveOverview(team.members);
-  const coverage = offensiveCoverage(team.members);
-  const attackTypes = attackingTypes(team.members);
+  const weakSpots = defensiveWeakSpots(team.members);
   const exportText = exportTeam(team.members);
 
   const openAdd = () => {
@@ -178,9 +183,16 @@ export function TeamDetailPage() {
   };
 
   const openRename = () => {
+    setInlineEditing(false);
     setNameDraft(team.name);
     setNameError(null);
     setRenameOpen(true);
+  };
+
+  const commitInlineRename = () => {
+    setInlineEditing(false);
+    const trimmed = inlineDraft.trim();
+    if (trimmed && trimmed !== team.name) rename(team.id, trimmed);
   };
 
   const commitRename = () => {
@@ -196,7 +208,7 @@ export function TeamDetailPage() {
   const handleDuplicate = () => {
     const copy = duplicate(team.id);
     if (copy) {
-      toast.success(`Duplicated as “${copy.name}”.`);
+      toast.success(`Duplicated as "${copy.name}".`);
       navigate(`/teams/${copy.id}`);
     }
   };
@@ -204,7 +216,7 @@ export function TeamDetailPage() {
   const handleDelete = () => {
     remove(team.id);
     navigate("/teams");
-    toast(`Deleted “${team.name}”.`, {
+    toast(`Deleted "${team.name}".`, {
       action: {
         label: "Undo",
         onClick: () => restore(team),
@@ -265,17 +277,105 @@ export function TeamDetailPage() {
               <Label htmlFor="team-public">Public</Label>
             </div>
           )}
-          <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
-            <DialogTrigger asChild>
+          {inlineEditing ? (
+            <Input
+              aria-label="Team name"
+              autoFocus
+              className="w-44!"
+              value={inlineDraft}
+              onChange={(event) => setInlineDraft(event.target.value)}
+              onFocus={(event) => event.target.select()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") commitInlineRename();
+                if (event.key === "Escape") setInlineEditing(false);
+              }}
+              onBlur={commitInlineRename}
+            />
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Rename team"
+                  onClick={() => {
+                    setInlineDraft(team.name);
+                    setInlineEditing(true);
+                  }}
+                >
+                  <PencilIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Rename</TooltipContent>
+            </Tooltip>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden md:inline-flex"
+            onClick={() => setExportOpen(true)}
+          >
+            <DownloadIcon />
+            Export
+          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Rename team"
-                onClick={openRename}
+                aria-label="Export team"
+                className="md:hidden"
+                onClick={() => setExportOpen(true)}
               >
-                <PencilIcon />
+                <DownloadIcon />
               </Button>
-            </DialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Export</TooltipContent>
+          </Tooltip>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden md:inline-flex"
+            onClick={handleDuplicate}
+          >
+            <CopyIcon />
+            Duplicate
+          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Duplicate team"
+                className="md:hidden"
+                onClick={handleDuplicate}
+              >
+                <CopyIcon />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Duplicate</TooltipContent>
+          </Tooltip>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label="More actions">
+                <MoreHorizontalIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => openRename()}>
+                <PencilIcon aria-hidden />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => handleDelete()}
+              >
+                <Trash2Icon aria-hidden />
+                Delete team
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Rename team</DialogTitle>
@@ -305,6 +405,9 @@ export function TeamDetailPage() {
                 )}
               </form>
               <DialogFooter>
+                <Button variant="outline" onClick={() => setRenameOpen(false)}>
+                  Cancel
+                </Button>
                 <Button type="submit" form="rename-team-form">
                   Save
                 </Button>
@@ -312,11 +415,6 @@ export function TeamDetailPage() {
             </DialogContent>
           </Dialog>
           <Dialog open={exportOpen} onOpenChange={setExportOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="Export team">
-                <DownloadIcon />
-              </Button>
-            </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Export team</DialogTitle>
@@ -331,29 +429,16 @@ export function TeamDetailPage() {
                 value={exportText}
               />
               <DialogFooter>
-                <Button variant="outline" onClick={copyExport}>
+                <Button variant="outline" onClick={() => setExportOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={copyExport}>
                   <ClipboardCopyIcon />
                   Copy
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Duplicate team"
-            onClick={handleDuplicate}
-          >
-            <CopyIcon />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Delete team"
-            onClick={handleDelete}
-          >
-            <Trash2Icon />
-          </Button>
         </>
       }
     >
@@ -377,17 +462,57 @@ export function TeamDetailPage() {
             }
             const label = memberLabel(member);
             const types = battleTypes(member) ?? [];
+            const finalStats = calcStats(member);
+            const meta = [member.item, member.ability]
+              .filter(Boolean)
+              .join(" · ");
+            const moves = member.moves.filter(Boolean).join(" · ");
             return (
               <Card key={index} size="sm">
-                <CardContent className="flex items-center gap-3">
-                  <PokemonSprite species={member.species} size={64} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{label}</p>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {types.map((type) => (
-                        <TypeBadge key={type} type={type} />
-                      ))}
+                <CardContent className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3">
+                    <PokemonSprite species={member.species} size={64} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{label}</p>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {types.map((type) => (
+                          <TypeBadge key={type} type={type} />
+                        ))}
+                      </div>
+                      {meta ? (
+                        <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+                          {member.item ? (
+                            <ItemIcon
+                              item={member.item}
+                              className="size-3.5 shrink-0"
+                            />
+                          ) : null}
+                          <span className="truncate">{meta}</span>
+                        </p>
+                      ) : null}
                     </div>
+                  </div>
+                  {moves ? (
+                    <p className="text-xs text-muted-foreground">{moves}</p>
+                  ) : null}
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {STAT_IDS.map((stat) => (
+                      <div key={stat} className="flex flex-col gap-1">
+                        <span className="flex items-baseline justify-between gap-1">
+                          <span className="text-[9px] text-muted-foreground">
+                            {STAT_LABELS[stat]}
+                          </span>
+                          <span className="font-mono text-[10px] tabular-nums">
+                            {finalStats[stat]}
+                          </span>
+                        </span>
+                        <StatBar
+                          value={finalStats[stat]}
+                          max={200}
+                          className="h-1!"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
                 <CardFooter className="flex-wrap gap-1">
@@ -458,105 +583,56 @@ export function TeamDetailPage() {
                   ))}
                 </div>
               )}
+              {weakSpots.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  {weakSpots.map((spot) => (
+                    <p key={spot} className="text-sm">
+                      {spot}
+                    </p>
+                  ))}
+                </div>
+              )}
               <Tabs defaultValue="defense">
                 <TabsList>
                   <TabsTrigger value="defense">Defense</TabsTrigger>
                   <TabsTrigger value="offense">Offense</TabsTrigger>
                 </TabsList>
                 <TabsContent value="defense">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead className="text-right">Weak</TableHead>
-                        <TableHead className="text-right">Resists</TableHead>
-                        <TableHead className="text-right">Immune</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {defense.map((entry) => (
-                        <TableRow key={entry.type}>
-                          <TableCell>
-                            <TypeBadge type={entry.type} />
-                          </TableCell>
-                          <TableCell
-                            className={`text-right ${weakCellClass(entry.weak)}`}
-                          >
-                            {entry.weak}
-                          </TableCell>
-                          <TableCell
-                            className={`text-right ${countCellClass(entry.resistant)}`}
-                          >
-                            {entry.resistant}
-                          </TableCell>
-                          <TableCell
-                            className={`text-right ${countCellClass(entry.immune)}`}
-                          >
-                            {entry.immune}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <TypeHeatMap members={team.members} mode="defense" />
                 </TabsContent>
                 <TabsContent value="offense">
-                  {attackTypes.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No damaging moves on this team yet.
-                    </p>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Type</TableHead>
-                          <TableHead className="text-right">Best</TableHead>
-                          <TableHead>Moves</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {coverage.map((entry) => (
-                          <TableRow key={entry.type}>
-                            <TableCell>
-                              <TypeBadge type={entry.type} />
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {entry.best === null ? "—" : `${entry.best}×`}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {entry.moveTypes.length > 0
-                                ? entry.moveTypes.join(", ")
-                                : "—"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
+                  <TypeHeatMap members={team.members} mode="offense" />
                 </TabsContent>
               </Tabs>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-sm font-medium">Speed tiers</h3>
+                <SpeedTiers members={team.members} />
+              </div>
             </CardContent>
           </Card>
         )}
       </div>
 
-      <Dialog
+      <Sheet
         open={editorOpen}
         onOpenChange={(open) => {
           setEditorOpen(open);
           if (!open) setDraft(null);
         }}
       >
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>
+        <SheetContent className="w-full! sm:max-w-xl!">
+          <SheetHeader>
+            <SheetTitle>
               {editorIndex === null ? "Add Pokémon" : "Edit Pokémon"}
-            </DialogTitle>
-            <DialogDescription>
+            </SheetTitle>
+            <SheetDescription>
               Pick a species, item, moves and stat points.
-            </DialogDescription>
-          </DialogHeader>
-          {draft && <PokemonEditor value={draft} onChange={setDraft} />}
-          <DialogFooter>
+            </SheetDescription>
+          </SheetHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4">
+            {draft && <PokemonEditor value={draft} onChange={setDraft} />}
+          </div>
+          <SheetFooter className="flex-row! items-center justify-end gap-2">
             <Button variant="outline" onClick={() => setEditorOpen(false)}>
               Cancel
             </Button>
@@ -566,9 +642,9 @@ export function TeamDetailPage() {
             >
               Save
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </Page>
   );
 }
