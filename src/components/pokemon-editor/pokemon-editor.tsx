@@ -170,9 +170,11 @@ export function PokemonEditor({
         </div>
       </fieldset>
 
-      <fieldset className="grid min-w-0 gap-2">
+      <fieldset className="@container grid min-w-0 gap-2">
         <legend className="text-xs text-muted-foreground">Moves</legend>
-        <div className="grid gap-2 sm:grid-cols-2">
+        {/* Two columns only when the editor itself is wide enough (team
+            builder); the calc's narrow side columns get one chip per row. */}
+        <div className="grid gap-2 @md:grid-cols-2">
           {value.moves.map((move, index) => (
             <MovePicker
               key={index}

@@ -447,17 +447,17 @@ export function MetagamePage() {
                       <TableCell className="tabular-nums">
                         {pokemon.rank}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="w-full max-w-0">
                         <Button
                           variant="ghost"
-                          className="h-8"
+                          className="h-8 max-w-full justify-start"
                           onClick={() => setSelected(pokemon)}
                         >
                           <PokemonIcon
                             species={pokemon.species}
-                            className="size-6"
+                            className="size-6 shrink-0"
                           />
-                          <span className="min-w-0 font-medium">
+                          <span className="min-w-0 truncate font-medium">
                             {pokemon.species}
                           </span>
                         </Button>
