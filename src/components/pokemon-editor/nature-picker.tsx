@@ -13,6 +13,7 @@ import {
   type NatureInfo,
 } from "@/data";
 import { useT } from "@/lib/i18n/t";
+import type { StatId } from "@/types/pokemon";
 
 export interface NaturePickerProps {
   /** Selected nature name. */
@@ -26,7 +27,7 @@ export interface NaturePickerProps {
 }
 
 /** Full stat names, so a nature can be found by "attack" or "speed". */
-const STAT_NAMES: Record<string, string> = {
+const STAT_NAMES: Record<StatId, string> = {
   hp: "HP",
   atk: "Attack",
   def: "Defense",

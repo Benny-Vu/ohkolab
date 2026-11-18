@@ -76,7 +76,6 @@ export interface OnboardingDialogProps {
  */
 export function OnboardingDialog({ client = supabase }: OnboardingDialogProps) {
   const auth = useAuth();
-  const t = useT();
   const [dismissed, setDismissed] = useState(false);
   const profile = auth.profile;
   const needed = !dismissed && !auth.loading && needsOnboarding(profile);

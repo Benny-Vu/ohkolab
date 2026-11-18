@@ -117,11 +117,11 @@ export function describeError(error: unknown): AuthFailure {
   const name = readString(error, "name");
   const message = readString(error, "message") ?? "";
 
-  if (code && code in MESSAGE_OVERRIDES) {
-    return failure(
-      CODE_MAP[code] ?? "invalid_input",
-      MESSAGE_OVERRIDES[code](),
-    );
+  if (code) {
+    const override = MESSAGE_OVERRIDES[code];
+    if (override) {
+      return failure(CODE_MAP[code] ?? "invalid_input", override());
+    }
   }
   if (code && code in CODE_MAP) return failure(CODE_MAP[code] ?? "unknown");
   if (name && name in NAME_MAP) return failure(NAME_MAP[name] ?? "unknown");
