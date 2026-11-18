@@ -264,4 +264,28 @@ describe("TeamDetailPage in Japanese", () => {
       await screen.findByText("こおりに弱いポケモンが2匹（耐性なし）"),
     ).toBeTruthy();
   });
+
+  it("shows members, items, abilities and moves in Japanese", async () => {
+    const team = createTeam({
+      format: "doubles",
+      members: [
+        {
+          ...createDefaultSet("Garchomp"),
+          item: "Choice Scarf",
+          ability: "Rough Skin",
+          moves: ["Earthquake", "Dragon Claw", null, null],
+        },
+      ],
+    });
+    localTeamStore.save(team);
+    renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
+
+    // The member label, meta line and move line all come from the roster.
+    expect((await screen.findAllByText("ガブリアス")).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getByText("こだわりスカーフ · さめはだ")).toBeTruthy();
+    expect(screen.getByText("じしん · ドラゴンクロー")).toBeTruthy();
+    expect(screen.queryByText("Garchomp")).not.toBeInTheDocument();
+  });
 });

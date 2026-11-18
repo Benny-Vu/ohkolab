@@ -11,10 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMove, useDisplayName } from "@/data";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { Panel, PanelTitle } from "@/features/calc/panel";
+import { useSideNames } from "@/features/calc/use-side-names";
 import type { Translate } from "@/components/stat-labels";
 import { useT } from "@/lib/i18n/t";
 import type { TranslationKey } from "@/lib/i18n/en";
-import { sideNames } from "@/lib/calc/battle";
 import {
   outcomeRangeText,
   outcomeSummary,
@@ -81,6 +81,7 @@ function MoveRow({
   dispatch: Dispatch<CalcAction>;
 }) {
   const t = useT();
+  const displayName = useDisplayName();
   const summary = outcomeSummary(outcome);
   const ko = koResultOf(summary);
 
@@ -92,7 +93,9 @@ function MoveRow({
     >
       <span className="flex min-w-0 items-center gap-2">
         {outcome.type ? <TypeBadge size="sm" type={outcome.type} /> : null}
-        <span className="min-w-0 font-medium">{outcome.move}</span>
+        <span className="min-w-0 font-medium">
+          {displayName("move", outcome.move)}
+        </span>
       </span>
       <span className="flex items-center gap-2 justify-self-end">
         <span className="text-xs tabular-nums text-muted-foreground">
@@ -124,6 +127,7 @@ function SelectedResult({
   format: BattleFormat;
 }) {
   const t = useT();
+  const displayName = useDisplayName();
   const result = outcome.result;
   const defender = otherSide(side);
   const move = getMove(outcome.move);
@@ -150,7 +154,7 @@ function SelectedResult({
       <div className="flex flex-wrap items-center gap-2">
         {outcome.type ? <TypeBadge type={outcome.type} /> : null}
         <p className="min-w-0 font-heading text-lg leading-tight font-semibold">
-          {outcome.move}
+          {displayName("move", outcome.move)}
         </p>
         <p className="text-xs text-muted-foreground">
           {categoryLabel(outcome.category, t)}
@@ -342,7 +346,7 @@ export function ResultsPanel({
 }: ResultsPanelProps) {
   const titleId = useId();
   const t = useT();
-  const names = sideNames(state);
+  const names = useSideNames(state);
   const selection = resolveSelection(state.selected, outcomes);
 
   const content = (

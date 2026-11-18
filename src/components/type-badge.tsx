@@ -1,3 +1,4 @@
+import { useDisplayName } from "@/data/display-names";
 import { TYPE_COLORS } from "@/lib/type-colors";
 import { cn } from "@/lib/utils";
 import type { TypeName } from "@/types/pokemon";
@@ -10,6 +11,7 @@ interface TypeBadgeProps {
 
 /** Coloured pill showing a Pokémon type. */
 export function TypeBadge({ type, size = "md", className }: TypeBadgeProps) {
+  const displayName = useDisplayName();
   return (
     <span
       className={cn(
@@ -20,7 +22,7 @@ export function TypeBadge({ type, size = "md", className }: TypeBadgeProps) {
       )}
       style={{ backgroundColor: TYPE_COLORS[type] }}
     >
-      {type}
+      {displayName("type", type)}
     </span>
   );
 }

@@ -99,7 +99,7 @@ export function TeamDetailPage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
   const t = useT();
-  const display = useDisplayName();
+  const displayName = useDisplayName();
   const {
     teams,
     rename,
@@ -484,13 +484,19 @@ export function TeamDetailPage() {
                 </button>
               );
             }
-            const label = memberLabel(member);
+            const label = displayName("species", memberLabel(member));
             const types = battleTypes(member) ?? [];
             const finalStats = calcStats(member);
-            const meta = [member.item, member.ability]
+            const meta = [
+              member.item ? displayName("item", member.item) : null,
+              member.ability ? displayName("ability", member.ability) : null,
+            ]
               .filter(Boolean)
-              .join(" Â· ");
-            const moves = member.moves.filter(Boolean).join(" Â· ");
+              .join(" · ");
+            const moves = member.moves
+              .filter((move): move is string => Boolean(move))
+              .map((move) => displayName("move", move))
+              .join(" · ");
             return (
               <Card key={index} size="sm">
                 <CardContent className="flex flex-col gap-2">
@@ -618,11 +624,11 @@ export function TeamDetailPage() {
                       {spot.noResist
                         ? t("teams.weakSpotNoResist", {
                             count: spot.weak,
-                            type: display("type", spot.type),
+                            type: displayName("type", spot.type),
                           })
                         : t("teams.weakSpot", {
                             count: spot.weak,
-                            type: display("type", spot.type),
+                            type: displayName("type", spot.type),
                           })}
                     </p>
                   ))}

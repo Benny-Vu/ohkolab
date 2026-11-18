@@ -32,6 +32,12 @@ import {
 import { FormatToggle } from "@/features/metagame/format-toggle";
 import { statLabel } from "@/components/stat-labels";
 import {
+  matchesDisplayName,
+  useDisplayName,
+  type NameKind,
+} from "@/data/display-names";
+import { useLocale } from "@/lib/i18n/locale";
+import {
   useMetagameIndex,
   useMetagameSnapshot,
 } from "@/features/metagame/use-metagame";
@@ -113,8 +119,15 @@ function SortButton({
   );
 }
 
-function ShareList({ shares }: { shares: { name: string; share: number }[] }) {
+function ShareList({
+  kind,
+  shares,
+}: {
+  kind: NameKind;
+  shares: { name: string; share: number }[];
+}) {
   const t = useT();
+  const displayName = useDisplayName();
   if (shares.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("meta.noData")}</p>;
   }
@@ -122,7 +135,9 @@ function ShareList({ shares }: { shares: { name: string; share: number }[] }) {
     <ul className="space-y-1.5">
       {shares.map((share) => (
         <li key={share.name} className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-sm">{share.name}</span>
+          <span className="min-w-0 flex-1 truncate text-sm">
+            {displayName(kind, share.name)}
+          </span>
           <StatBar
             value={share.share * 100}
             max={100}
@@ -140,6 +155,7 @@ function ShareList({ shares }: { shares: { name: string; share: number }[] }) {
 
 function SpreadList({ spreads }: { spreads: PokemonUsage["spreads"] }) {
   const t = useT();
+  const displayName = useDisplayName();
   if (spreads.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("meta.noData")}</p>;
   }
@@ -151,7 +167,9 @@ function SpreadList({ spreads }: { spreads: PokemonUsage["spreads"] }) {
           className="flex flex-wrap items-center gap-x-2 gap-y-1"
         >
           <span className="min-w-40 flex-1 text-sm">
-            <span className="font-medium">{spread.nature}</span>{" "}
+            <span className="font-medium">
+              {displayName("nature", spread.nature)}
+            </span>{" "}
             <span className="text-muted-foreground">
               {STAT_IDS.map(
                 (stat) => `${statLabel(t, stat)} ${spread.statPoints[stat]}`,
@@ -189,19 +207,19 @@ function PokemonDetail({
     <div className="space-y-4">
       <section className="space-y-1.5">
         <h3 className="text-sm font-semibold">{t("meta.moves")}</h3>
-        <ShareList shares={pokemon.moves} />
+        <ShareList kind="move" shares={pokemon.moves} />
       </section>
       <section className="space-y-1.5">
         <h3 className="text-sm font-semibold">{t("meta.items")}</h3>
-        <ShareList shares={pokemon.items} />
+        <ShareList kind="item" shares={pokemon.items} />
       </section>
       <section className="space-y-1.5">
         <h3 className="text-sm font-semibold">{t("meta.abilities")}</h3>
-        <ShareList shares={pokemon.abilities} />
+        <ShareList kind="ability" shares={pokemon.abilities} />
       </section>
       <section className="space-y-1.5">
         <h3 className="text-sm font-semibold">{t("meta.teammates")}</h3>
-        <ShareList shares={pokemon.teammates} />
+        <ShareList kind="species" shares={pokemon.teammates} />
       </section>
       <section className="space-y-1.5">
         <h3 className="text-sm font-semibold">{t("meta.spreads")}</h3>
@@ -225,6 +243,8 @@ function PokemonDetail({
 export function MetagamePage() {
   const [format] = useBattleFormat();
   const t = useT();
+  const [locale] = useLocale();
+  const displayName = useDisplayName();
   const navigate = useNavigate();
   const index = useMetagameIndex();
   const { create } = useTeams();
@@ -346,8 +366,14 @@ export function MetagamePage() {
   } else {
     const data = snapshot.data;
     const query = search.trim().toLowerCase();
+    // In Japanese the search matches the Japanese name too; in English the
+    // filter stays a plain substring match so the behaviour does not change.
+    const matches = (species: string) =>
+      locale === "ja"
+        ? matchesDisplayName(query, species, displayName("species", species))
+        : species.toLowerCase().includes(query);
     const visible = data.pokemon
-      .filter((pokemon) => pokemon.species.toLowerCase().includes(query))
+      .filter((pokemon) => matches(pokemon.species))
       .sort((a, b) => comparePokemon(a, b, sort.key, sort.dir));
 
     content = (
@@ -468,7 +494,7 @@ export function MetagamePage() {
                             className="size-6 shrink-0"
                           />
                           <span className="min-w-0 truncate font-medium">
-                            {pokemon.species}
+                            {displayName("species", pokemon.species)}
                           </span>
                         </Button>
                       </TableCell>
@@ -544,7 +570,7 @@ export function MetagamePage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <PokemonIcon species={selected.species} className="size-8" />
-                  <span>{selected.species}</span>
+                  <span>{displayName("species", selected.species)}</span>
                 </DialogTitle>
                 <DialogDescription>
                   {t("meta.rankUsage", {

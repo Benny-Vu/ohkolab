@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { createDefaultSet } from "@/data";
+import { setLocale } from "@/lib/i18n/locale";
 import { TYPE_NAMES, type PokemonSet, type TypeName } from "@/types/pokemon";
 import { TypeHeatMap } from "@/features/team-builder/type-heat-map";
 
@@ -69,4 +70,25 @@ test("marks unknown species with a dash", () => {
     .getByRole("rowheader", { name: "Not a real Pokémon" })
     .closest("tr") as HTMLElement;
   expect(typeCell(row, "Ice")).toHaveTextContent("—");
+});
+
+test("labels rows and columns with Japanese names", async () => {
+  setLocale("ja");
+  try {
+    render(
+      <TypeHeatMap
+        members={[set("Garchomp", { moves: ["Earthquake", null, null, null] })]}
+        mode="offense"
+      />,
+    );
+
+    // Row labels are the move types, columns the defending types.
+    expect(
+      await screen.findByRole("rowheader", { name: "じめん" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("ドラゴン").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Ground")).not.toBeInTheDocument();
+  } finally {
+    setLocale("en");
+  }
 });
