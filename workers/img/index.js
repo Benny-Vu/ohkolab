@@ -18,7 +18,12 @@
 
 // {uid}/{post_id}/{image_id}.webp - three UUID-shaped segments, the
 // bucket layout fixed by the client upload and the screening function.
-// Approved paths are immutable per file, so they cache for a year.
+// Approved paths never change content, but a moderator can remove one at any
+// time, so images cache for one hour only (see CACHE_SECONDS).
+// One hour: a removed image disappears from the edge cache and browsers within
+// an hour; cleanup-images moves removed files out of the public bucket every 15
+// minutes. Longer would keep removed (possibly harmful) images reachable.
+const CACHE_SECONDS = 3600;
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const IMAGE_PATH_RE = new RegExp(`^${UUID}/${UUID}/${UUID}\\.webp$`, "i");
 
@@ -43,15 +48,15 @@ export default {
         // Cache the image in Cloudflare's edge cache (and let the CSAM
         // Scanning Tool see it), ignoring Supabase's own cache headers.
         cacheEverything: true,
-        // A year per status: approved paths are immutable per file id.
+        // One hour per status (CACHE_SECONDS), so removals take effect quickly.
         // Only 2xx is listed, so 404 and 451 are never cached - they
         // pass straight through every time.
-        cacheTtlByStatus: { "200-299": 31536000 },
+        cacheTtlByStatus: { "200-299": CACHE_SECONDS },
       },
     });
 
     const headers = new Headers(upstream.headers);
-    headers.set("Cache-Control", "public, max-age=31536000, immutable");
+    headers.set("Cache-Control", `public, max-age=${CACHE_SECONDS}`);
 
     // Non-200 statuses (404, 451) pass through untouched; 451 is how the
     // screening function learns that the CSAM Scanning Tool matched the

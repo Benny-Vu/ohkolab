@@ -1,5 +1,5 @@
 /**
- * cleanup-images (Deno Edge Function): the daily storage janitor for image
+ * cleanup-images (Deno Edge Function): the storage janitor (every 15 minutes) for image
  * posts. SQL cannot move or delete storage objects, so this function owns
  * every file-level consequence of the image schema:
  *
@@ -12,7 +12,7 @@
  *      moderation record lists them any more; purge_moderation_records
  *      deletes the records themselves after the same period
  *
- * Scheduled daily by the Claude reviewer (the pg_cron pattern from
+ * Scheduled every 15 minutes by the Claude reviewer (the pg_cron pattern from
  * 20261119150000_moderation_purge.sql cannot call Edge Functions). The
  * caller must present the service role key in the Authorization header.
  */
