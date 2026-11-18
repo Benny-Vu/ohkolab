@@ -42,15 +42,17 @@ function defenseRows(members: PokemonSet[]): HeatMapRow[] {
   return members.map((member, memberIndex) => ({
     key: `${member.species}-${memberIndex}`,
     label: memberLabel(member),
-    cells: overview.map(entry => entry.multipliers[memberIndex] ?? null),
+    cells: overview.map((entry) => entry.multipliers[memberIndex] ?? null),
   }));
 }
 
 function offenseRows(members: PokemonSet[]): HeatMapRow[] {
-  return attackingTypes(members).map(moveType => ({
+  return attackingTypes(members).map((moveType) => ({
     key: moveType,
     label: moveType,
-    cells: TYPE_NAMES.map(defending => typeEffectiveness(moveType, [defending])),
+    cells: TYPE_NAMES.map((defending) =>
+      typeEffectiveness(moveType, [defending]),
+    ),
   }));
 }
 
@@ -79,7 +81,11 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
   const rows = mode === "defense" ? defenseRows(members) : offenseRows(members);
 
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">No damaging moves on this team yet.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        No damaging moves on this team yet.
+      </p>
+    );
   }
 
   return (
@@ -93,8 +99,12 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
             >
               {mode === "defense" ? "Pokémon" : "Move type"}
             </th>
-            {TYPE_NAMES.map(type => (
-              <th key={type} scope="col" className="border-b border-border px-0.5 pb-1.5 text-center">
+            {TYPE_NAMES.map((type) => (
+              <th
+                key={type}
+                scope="col"
+                className="border-b border-border px-0.5 pb-1.5 text-center"
+              >
                 <span
                   className="inline-flex h-4 min-w-7 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold tracking-wide text-white uppercase"
                   style={{ backgroundColor: TYPE_COLORS[type] }}
@@ -106,10 +116,15 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
           </tr>
         </thead>
         <tbody>
-          {rows.map(row => (
+          {rows.map((row) => (
             <tr key={row.key}>
-              <th scope="row" className="sticky left-0 z-10 bg-card pr-2 text-left font-normal">
-                <span className="block max-w-24 truncate text-muted-foreground">{row.label}</span>
+              <th
+                scope="row"
+                className="sticky left-0 z-10 bg-card pr-2 text-left font-normal"
+              >
+                <span className="block max-w-24 truncate text-muted-foreground">
+                  {row.label}
+                </span>
               </th>
               {row.cells.map((cell, index) => (
                 <td

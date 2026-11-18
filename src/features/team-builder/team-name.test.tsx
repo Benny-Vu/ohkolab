@@ -6,7 +6,9 @@ import { TeamName } from "@/features/team-builder/team-name";
 test("shows the naming invite for an untitled team", () => {
   render(<TeamName name="Untitled team" onRename={() => {}} />);
 
-  expect(screen.getByRole("button", { name: "Name this team" })).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Name this team" }),
+  ).toBeInTheDocument();
 });
 
 test("shows the team name when it has one", () => {
