@@ -86,8 +86,8 @@ describe("team builder pages", () => {
     await user.click(
       screen.getByRole("button", { name: "Delete Untitled team" }),
     );
-    expect(screen.queryByText("Untitled team")).not.toBeInTheDocument();
+    expect(screen.queryByText("Name this team")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Undo" }));
-    expect(await screen.findByText("Untitled team")).toBeInTheDocument();
+    expect(await screen.findByText("Name this team")).toBeInTheDocument();
   });
 });
