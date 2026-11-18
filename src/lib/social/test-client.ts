@@ -306,8 +306,12 @@ export async function runMutation<TVars, TData>(
       resolved = value;
     });
   });
-  await waitFor(() => expect(resolved).toBeDefined());
-  await waitFor(() => expect(result.current.data).toBeDefined());
+  // Generous timeout: mutations with internal retry backoffs can take
+  // a second or two of real time before they resolve.
+  await waitFor(() => expect(resolved).toBeDefined(), { timeout: 5000 });
+  await waitFor(() => expect(result.current.data).toBeDefined(), {
+    timeout: 5000,
+  });
   return result.current.data;
 }
 

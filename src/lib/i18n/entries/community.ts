@@ -113,6 +113,10 @@ export const communityEn = {
   "social.images.noCanvas":
     "Your browser could not process this image. Try another one.",
   "social.images.tooMany": "A post can have at most {n} images.",
+  "social.images.screenRetryFailed":
+    "The image could not be checked. Try again in a moment.",
+  "social.images.removeFailed":
+    "That image could not be removed. Try again in a moment.",
 
   // The post card (feed, profiles, post page).
   "postCard.copiedTeam": 'Copied "{name}" to your teams.',
@@ -178,6 +182,9 @@ export const communityEn = {
   "postImages.gridLabel": "Post images",
   "postImages.open": "Open image {n}",
   "postImages.checking": "Checking image…",
+  "postImages.checkFailed": "Couldn't check this image.",
+  "postImages.stale": "This image couldn't be checked.",
+  "postImages.removeImage": "Remove image",
   "postImages.removed": "Image removed by automatic screening.",
   "postImages.seeNotice": "See the notice",
   "image.lightboxTitle": "Image",
@@ -641,6 +648,10 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "social.images.noCanvas":
     "お使いのブラウザーでこの画像を処理できませんでした。別の画像をお試しください。",
   "social.images.tooMany": "投稿に添付できる画像は最大{n}枚です。",
+  "social.images.screenRetryFailed":
+    "画像を確認できませんでした。しばらくしてからもう一度お試しください。",
+  "social.images.removeFailed":
+    "画像を削除できませんでした。しばらくしてからもう一度お試しください。",
 
   // 投稿カード（フィード、プロフィール、投稿ページ）。
   "postCard.copiedTeam": "構築「{name}」を自分の構築にコピーしました。",
@@ -706,6 +717,9 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "postImages.gridLabel": "投稿の画像",
   "postImages.open": "画像{n}を開く",
   "postImages.checking": "画像を確認中…",
+  "postImages.checkFailed": "この画像を確認できませんでした。",
+  "postImages.stale": "この画像は確認できませんでした。",
+  "postImages.removeImage": "画像を削除",
   "postImages.removed": "画像は自動チェックで削除されました。",
   "postImages.seeNotice": "通知を見る",
   "image.lightboxTitle": "画像",

@@ -13,9 +13,11 @@
 import {
   useMutation,
   useQuery,
+  useQueryClient,
   type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query";
+import { useSyncExternalStore } from "react";
 
 import { useAuth } from "@/lib/auth/use-auth";
 import type { PostImageRow } from "@/lib/database.types";
@@ -215,6 +217,11 @@ export interface PostImageDisplay {
   /** The CDN URL; null unless approved with a public path. */
   url: string | null;
   alt: string | null;
+  /**
+   * The row's `created_at`, for pending images only: the UI uses it to spot
+   * images stuck pending for a day (a screening that never succeeded).
+   */
+  pendingSince: string | null;
 }
 
 /**
@@ -239,6 +246,7 @@ export function visiblePostImages(
           status: "approved",
           url: imageUrl(row.public_path),
           alt: row.alt,
+          pendingSince: null,
         });
       } else if (isAuthor) {
         // Approved without a public path should not happen; do not pretend.
@@ -247,6 +255,7 @@ export function visiblePostImages(
           status: "pending",
           url: null,
           alt: row.alt,
+          pendingSince: row.created_at,
         });
       }
       continue;
@@ -258,6 +267,7 @@ export function visiblePostImages(
           status: row.status,
           url: null,
           alt: row.alt,
+          pendingSince: row.status === "pending" ? row.created_at : null,
         });
       }
     }
@@ -299,6 +309,110 @@ export function usePostImages(
       key !== "",
     retry: false,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Screening retries and stuck images. `screen-image` answers with a
+// retryable 503 whenever it could not finish (OpenAI down, timeout, storage
+// hiccup); without the retries below the row would sit "pending" forever
+// with no way out for the author.
+// ---------------------------------------------------------------------------
+
+/** How long to wait before the automatic retries (2 retries, short backoff). */
+export const SCREEN_RETRY_DELAYS_MS: number[] = [400, 1200];
+
+/** The wait function, injectable so tests can run without timers. */
+export type Sleep = (ms: number) => Promise<void>;
+
+const browserSleep: Sleep = (ms) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Calls `screen-image` for one image, retrying twice with a short backoff
+ * while it errors or answers a retryable 503. Resolves to whether a call
+ * went through — the row's actual verdict (approved or rejected) arrives
+ * through the refetched `post_images` row, not this response.
+ */
+export async function screenImageWithRetry(
+  client: AppSupabaseClient,
+  imageId: string,
+  options: { sleep?: Sleep } = {},
+): Promise<boolean> {
+  const sleep = options.sleep ?? browserSleep;
+  for (
+    let attempt = 0;
+    attempt <= SCREEN_RETRY_DELAYS_MS.length;
+    attempt += 1
+  ) {
+    if (attempt > 0) {
+      await sleep(SCREEN_RETRY_DELAYS_MS[attempt - 1] ?? 0);
+    }
+    const { error } = await client.functions.invoke("screen-image", {
+      body: { imageId },
+    });
+    if (!error) return true;
+  }
+  return false;
+}
+
+/**
+ * The ids of images whose screening failed in this session, so the UI can
+ * offer "Try again". Not persisted: a page reload falls back to the plain
+ * "Checking image…" notice until the 24-hour rule below kicks in.
+ */
+const screenFailures = new Set<string>();
+const screenFailureListeners = new Set<() => void>();
+
+function emitScreenFailures(): void {
+  for (const listener of screenFailureListeners) listener();
+}
+
+/** Records that an image's screening could not be completed. */
+export function noteScreenFailure(imageId: string): void {
+  if (screenFailures.has(imageId)) return;
+  screenFailures.add(imageId);
+  emitScreenFailures();
+}
+
+/** Forgets a failed screening (it succeeded on retry, or the row is gone). */
+export function clearScreenFailure(imageId: string): void {
+  if (screenFailures.delete(imageId)) emitScreenFailures();
+}
+
+/** Forgets every failed screening (tests reset the module state). */
+export function clearAllScreenFailures(): void {
+  if (screenFailures.size === 0) return;
+  screenFailures.clear();
+  emitScreenFailures();
+}
+
+/** The currently failed image ids, reactive for the UI. */
+export function useFailedScreenings(): ReadonlySet<string> {
+  return useSyncExternalStore(
+    (onChange) => {
+      screenFailureListeners.add(onChange);
+      return () => {
+        screenFailureListeners.delete(onChange);
+      };
+    },
+    () => screenFailures,
+    () => screenFailures,
+  );
+}
+
+/** A pending image older than this counts as stuck. */
+export const PENDING_IMAGE_STALE_MS = 24 * 60 * 60 * 1000;
+
+/** True when a pending image's upload is more than a day behind us. */
+export function isStalePending(
+  pendingSince: string | null,
+  now: number = Date.now(),
+): boolean {
+  if (!pendingSince) return false;
+  const uploadedAt = Date.parse(pendingSince);
+  return (
+    Number.isFinite(uploadedAt) && now - uploadedAt >= PENDING_IMAGE_STALE_MS
+  );
 }
 
 /** One image to attach to a freshly created post. */
@@ -409,10 +523,8 @@ export function useAttachPostImages(
         const rowId = (data as PostImageRow | null)?.id ?? null;
         let screened = true;
         if (rowId) {
-          const screen = await client.functions.invoke("screen-image", {
-            body: { imageId: rowId },
-          });
-          screened = !screen.error;
+          screened = await screenImageWithRetry(client, rowId);
+          if (!screened) noteScreenFailure(rowId);
         }
         outcomes.push({
           position,
@@ -423,6 +535,77 @@ export function useAttachPostImages(
         });
       }
       return socialSucceed(outcomes);
+    },
+  });
+}
+
+/**
+ * Screens one stuck image again, on the author's "Try again". On success the
+ * refetched rows show the verdict (approved or rejected); the failure note
+ * is cleared either way the call went through.
+ */
+export function useRetryScreenImage(
+  client: AppSupabaseClient | null = supabase,
+): UseMutationResult<SocialResult<undefined>, SocialFailure, string> {
+  const queryClient = useQueryClient();
+  return useMutation<SocialResult<undefined>, SocialFailure, string>({
+    mutationFn: async (imageId): Promise<SocialResult<undefined>> => {
+      if (!imagePostsEnabled()) return socialFail("not_installed");
+      if (isSocialNotInstalled()) return socialFail("not_installed");
+      if (!client) return socialFail("not_configured");
+      const ok = await screenImageWithRetry(client, imageId);
+      if (!ok)
+        return socialFail("unknown", t("social.images.screenRetryFailed"));
+      clearScreenFailure(imageId);
+      return socialSucceed(undefined);
+    },
+    onSuccess: () => {
+      // The verdict (approved or rejected) shows once the rows refetch.
+      void queryClient.invalidateQueries({
+        queryKey: ["social", "post-images"],
+      });
+    },
+  });
+}
+
+/**
+ * Removes the author's own stuck image (pending, no successful screening):
+ * deletes the `post_images` row through the narrow policy from the
+ * `pending_image_delete` migration. The orphaned storage file is removed
+ * later by the cleanup-images function.
+ */
+export function useRemovePendingImage(
+  client: AppSupabaseClient | null = supabase,
+): UseMutationResult<SocialResult<undefined>, SocialFailure, string> {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation<SocialResult<undefined>, SocialFailure, string>({
+    mutationFn: async (imageId): Promise<SocialResult<undefined>> => {
+      if (!imagePostsEnabled()) return socialFail("not_installed");
+      if (isSocialNotInstalled()) return socialFail("not_installed");
+      if (!client) return socialFail("not_configured");
+      const me = user?.id ?? null;
+      if (!me) return socialFail("not_signed_in");
+      // The server's policy decides; the extra filters only shape the call.
+      const { data, error } = await client
+        .from("post_images")
+        .delete()
+        .eq("id", imageId)
+        .eq("author_id", me)
+        .eq("status", "pending")
+        .select("id");
+      if (error) return { ok: false, error: describeWriteError(error) };
+      // Nothing deleted means the row is not ours or no longer pending.
+      if (!data || data.length === 0) {
+        return socialFail("forbidden", t("social.images.removeFailed"));
+      }
+      clearScreenFailure(imageId);
+      return socialSucceed(undefined);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["social", "post-images"],
+      });
     },
   });
 }

@@ -1,15 +1,92 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { LoaderCircleIcon, ShieldOffIcon } from "lucide-react";
+import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n/t";
-import type { PostImageDisplay } from "@/lib/social/images";
+import {
+  isStalePending,
+  useFailedScreenings,
+  useRemovePendingImage,
+  useRetryScreenImage,
+  type PostImageDisplay,
+} from "@/lib/social/images";
 import { ImageLightbox } from "@/features/feed/image-lightbox";
 
 interface PostImageGridProps {
   /** Already filtered per viewer by `visiblePostImages`. */
   images: PostImageDisplay[];
   className?: string;
+}
+
+/** The author-only notice under the grid for one not-yet-public image. */
+function PendingNotice({ image }: { image: PostImageDisplay }) {
+  const t = useT();
+  const failedScreenings = useFailedScreenings();
+  const retryScreen = useRetryScreenImage();
+  const removeImage = useRemovePendingImage();
+
+  // Stuck for a day: the screening never succeeded. Offer removal.
+  if (isStalePending(image.pendingSince)) {
+    return (
+      <>
+        <ShieldOffIcon className="size-3.5 shrink-0" aria-hidden />
+        <span>{t("postImages.stale")}</span>
+        <Button
+          size="xs"
+          variant="ghost"
+          className="ml-auto h-auto px-2 py-0.5 text-xs"
+          disabled={removeImage.isPending}
+          onClick={() => {
+            removeImage.mutate(image.id, {
+              onSuccess: (result) => {
+                if (!result.ok) toast.error(result.error.message);
+              },
+            });
+          }}
+        >
+          {t("postImages.removeImage")}
+        </Button>
+      </>
+    );
+  }
+
+  // This session tried and could not reach the screening function.
+  if (failedScreenings.has(image.id)) {
+    return (
+      <>
+        <ShieldOffIcon className="size-3.5 shrink-0" aria-hidden />
+        <span>{t("postImages.checkFailed")}</span>
+        <Button
+          size="xs"
+          variant="ghost"
+          className="ml-auto h-auto px-2 py-0.5 text-xs"
+          disabled={retryScreen.isPending}
+          onClick={() => {
+            retryScreen.mutate(image.id, {
+              onSuccess: (result) => {
+                if (!result.ok) toast.error(result.error.message);
+              },
+            });
+          }}
+        >
+          {t("common.retry")}
+        </Button>
+      </>
+    );
+  }
+
+  // Freshly uploaded; a screening call is in flight or about to be retried.
+  return (
+    <>
+      <LoaderCircleIcon
+        className="size-3.5 shrink-0 animate-spin"
+        aria-hidden
+      />
+      {t("postImages.checking")}
+    </>
+  );
 }
 
 /**
@@ -72,13 +149,7 @@ export function PostImageGrid({ images, className }: PostImageGridProps) {
               className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground"
             >
               {image.status === "pending" ? (
-                <>
-                  <LoaderCircleIcon
-                    className="size-3.5 shrink-0 animate-spin"
-                    aria-hidden
-                  />
-                  {t("postImages.checking")}
-                </>
+                <PendingNotice image={image} />
               ) : (
                 <>
                   <ShieldOffIcon className="size-3.5 shrink-0" aria-hidden />

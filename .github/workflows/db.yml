@@ -55,6 +55,70 @@ jobs:
           fi
           echo "All public tables have RLS."
 
+      # Exercises the "authors delete their own pending images" policy from
+      # 20261120100000_pending_image_delete.sql as a real authenticated user.
+      - name: Pending-image delete policy behaviour
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+          AUTHOR_ID: 11111111-1111-4111-8111-111111111111
+          OTHER_ID: 22222222-2222-4222-8222-222222222222
+          POST_ID: 33333333-3333-4333-8333-333333333333
+          OWN_PENDING_ID: 44444444-4444-4444-8444-444444444444
+          OWN_APPROVED_ID: 55555555-5555-4555-8555-555555555555
+          OTHER_PENDING_ID: 66666666-6666-4666-8666-666666666666
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+          values
+            ('11111111-1111-4111-8111-111111111111', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'policy-ci-a@example.com', 'x', now(), now()),
+            ('22222222-2222-4222-8222-222222222222', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'policy-ci-b@example.com', 'x', now(), now());
+          insert into public.profiles (id, username) values
+            ('11111111-1111-4111-8111-111111111111', 'policy_ci_a'),
+            ('22222222-2222-4222-8222-222222222222', 'policy_ci_b');
+          insert into public.posts (id, author_id, body) values
+            ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'policy check'),
+            ('33333333-3333-4333-8333-333333333334', '22222222-2222-4222-8222-222222222222', 'policy check');
+          insert into public.post_images (id, post_id, author_id, position, pending_path, width, height, bytes, status) values
+            ('44444444-4444-4444-8444-444444444444', '33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 0, '11111111-1111-4111-8111-111111111111/pending.webp', 10, 10, 100, 'pending'),
+            ('55555555-5555-4555-8555-555555555555', '33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 1, '11111111-1111-4111-8111-111111111111/approved.webp', 10, 10, 100, 'approved'),
+            ('66666666-6666-4666-8666-666666666666', '33333333-3333-4333-8333-333333333334', '22222222-2222-4222-8222-222222222222', 0, '22222222-2222-4222-8222-222222222222/pending.webp', 10, 10, 100, 'pending');
+          SQL
+
+          # Runs one delete as the author and prints how many rows it removed.
+          delete_as_author() {
+            psql "$DB_URL" -tA -v ON_ERROR_STOP=1 \
+              -v uid="11111111-1111-4111-8111-111111111111" -v img="$1" -c "
+              begin;
+              set local role authenticated;
+              select set_config('request.jwt.claims',
+                json_build_object('sub', :'uid', 'role', 'authenticated')::text, true);
+              with del as (
+                delete from public.post_images where id = :'img' returning 1
+              ) select count(*) from del;
+              commit;"
+          }
+
+          own_pending=$(delete_as_author "$OWN_PENDING_ID")
+          if [ "$own_pending" != "1" ]; then
+            echo "::error::Author could not delete their own pending image (got $own_pending)"
+            exit 1
+          fi
+          echo "Author can delete their own pending image."
+
+          own_approved=$(delete_as_author "$OWN_APPROVED_ID")
+          if [ "$own_approved" != "0" ]; then
+            echo "::error::Author deleted a non-pending image (got $own_approved)"
+            exit 1
+          fi
+          echo "Author cannot delete an approved image."
+
+          foreign_pending=$(delete_as_author "$OTHER_PENDING_ID")
+          if [ "$foreign_pending" != "0" ]; then
+            echo "::error::Author deleted someone else's image (got $foreign_pending)"
+            exit 1
+          fi
+          echo "Author cannot delete another author's image."
+
       - name: Stop
         if: always()
         run: supabase stop --no-backup
