@@ -149,6 +149,25 @@ describe("MetagamePage", () => {
     expect(await screen.findByText("Speed tiers")).toBeInTheDocument();
   });
 
+  it("keeps the usage share readable on phones by hiding the bar", async () => {
+    mockFetch();
+    renderMetagame();
+    await screen.findByText(/rating 1630\+/);
+    const row = screen.getByRole("button", { name: /Sneasler/ }).closest("tr");
+    expect(row).not.toBeNull();
+    expect(row?.cells[0]).toHaveTextContent("1");
+    expect(row).toHaveTextContent("Sneasler");
+    expect(row).toHaveTextContent("41.2%");
+    expect(row?.querySelector("span[role='img']")).toHaveAttribute(
+      "aria-label",
+      "Sneasler",
+    );
+    expect(row?.querySelector("div[role='img']")).toHaveClass(
+      "hidden",
+      "sm:block",
+    );
+  });
+
   it("opens a detail dialog with moves, items and spreads", async () => {
     const user = userEvent.setup();
     mockFetch();
