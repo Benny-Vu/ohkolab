@@ -1,4 +1,5 @@
 import type { Json } from "@/lib/database.types";
+import { t } from "@/lib/i18n/t";
 
 /**
  * Shared limits between the social forms and the database constraints.
@@ -43,10 +44,10 @@ export function normalizePostBody(body: string): string {
 /** Returns a user-facing message when the body is invalid, or null when valid. */
 export function validatePostBody(body: string): string | null {
   if (body.length < POST_BODY_MIN) {
-    return "Write something before posting.";
+    return t("social.errPostEmpty");
   }
   if (body.length > POST_BODY_MAX) {
-    return `Posts are limited to ${POST_BODY_MAX} characters.`;
+    return t("social.errPostMax", { max: POST_BODY_MAX });
   }
   return null;
 }
@@ -58,10 +59,10 @@ export function normalizeCommentBody(body: string): string {
 /** Returns a user-facing message when the body is invalid, or null when valid. */
 export function validateCommentBody(body: string): string | null {
   if (body.length < COMMENT_BODY_MIN) {
-    return "Write something before commenting.";
+    return t("social.errCommentEmpty");
   }
   if (body.length > COMMENT_BODY_MAX) {
-    return `Comments are limited to ${COMMENT_BODY_MAX} characters.`;
+    return t("social.errCommentMax", { max: COMMENT_BODY_MAX });
   }
   return null;
 }
@@ -74,7 +75,7 @@ export function normalizeReportDetails(details: string): string | null {
 /** Returns a user-facing message when the details are invalid, or null when valid. */
 export function validateReportDetails(details: string): string | null {
   if (details.length > REPORT_DETAILS_MAX) {
-    return `Details are limited to ${REPORT_DETAILS_MAX} characters.`;
+    return t("social.errDetailsMax", { max: REPORT_DETAILS_MAX });
   }
   return null;
 }
@@ -85,10 +86,10 @@ export function validateReportTarget(target: {
   id: string;
 }): string | null {
   if (!REPORT_TARGET_TYPES.includes(target.type as ReportTargetType)) {
-    return "Choose what you are reporting.";
+    return t("social.errTargetChoose");
   }
   if (target.id === "") {
-    return "The reported item could not be identified.";
+    return t("social.errTargetId");
   }
   return null;
 }
@@ -96,7 +97,7 @@ export function validateReportTarget(target: {
 /** Returns a user-facing message when the reason is invalid, or null when valid. */
 export function validateReportReason(reason: string): string | null {
   if (!REPORT_REASONS.includes(reason as ReportReason)) {
-    return "Choose a reason for the report.";
+    return t("report.chooseReasonError");
   }
   return null;
 }
@@ -112,10 +113,10 @@ export function normalizeModerationReason(reason: string): string {
 /** Returns a user-facing message when a moderation reason is invalid, or null when valid. */
 export function validateModerationReason(reason: string): string | null {
   if (reason.length < MODERATION_REASON_MIN) {
-    return "Write a reason for this action.";
+    return t("social.errModerationReasonEmpty");
   }
   if (reason.length > MODERATION_REASON_MAX) {
-    return `Reasons are limited to ${MODERATION_REASON_MAX} characters.`;
+    return t("social.errReasonsMax", { max: MODERATION_REASON_MAX });
   }
   return null;
 }
@@ -123,10 +124,10 @@ export function validateModerationReason(reason: string): string | null {
 /** Returns a user-facing message when the reason is invalid, or null when valid. */
 export function validateSuspensionReason(reason: string): string | null {
   if (reason.length < SUSPENSION_REASON_MIN) {
-    return "Write a reason for the suspension.";
+    return t("social.errSuspensionReasonEmpty");
   }
   if (reason.length > SUSPENSION_REASON_MAX) {
-    return `Reasons are limited to ${SUSPENSION_REASON_MAX} characters.`;
+    return t("social.errReasonsMax", { max: SUSPENSION_REASON_MAX });
   }
   return null;
 }
@@ -135,10 +136,10 @@ export function validateSuspensionReason(reason: string): string | null {
 export function validateSuspensionUntil(until: string): string | null {
   const time = Date.parse(until);
   if (Number.isNaN(time)) {
-    return "Choose a valid end date.";
+    return t("social.errSuspensionDate");
   }
   if (time <= Date.now()) {
-    return "The suspension must end in the future.";
+    return t("social.errSuspensionFuture");
   }
   return null;
 }
@@ -154,10 +155,10 @@ export function validateAttachment(attachment: Json | null): string | null {
     return null;
   }
   if (typeof attachment !== "object") {
-    return "Attachments must be a team or calculation snapshot.";
+    return t("social.errAttachmentKind");
   }
   if (measureAttachmentBytes(attachment) > ATTACHMENT_MAX_BYTES) {
-    return "Attachments are limited to 8 KB.";
+    return t("social.errAttachmentMax");
   }
   return null;
 }

@@ -29,6 +29,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import type { FeedbackRow, ProfileRow } from "@/lib/database.types";
 import { socialAvailability, useIsModerator } from "@/lib/social";
+import { useT } from "@/lib/i18n/t";
+import type { TranslationKey } from "@/lib/i18n/en";
 import {
   useFeedback,
   useSetFeedbackStatus,
@@ -41,11 +43,20 @@ import {
  * context and a Sentry link when a crash id is present.
  */
 
-const TAB_STATUSES: Array<{ status: FeedbackStatus; label: string }> = [
-  { status: "new", label: "New" },
-  { status: "seen", label: "Seen" },
-  { status: "done", label: "Done" },
+const TAB_STATUSES: Array<{
+  status: FeedbackStatus;
+  labelKey: TranslationKey;
+}> = [
+  { status: "new", labelKey: "admin.feedbackNew" },
+  { status: "seen", labelKey: "admin.feedbackSeen" },
+  { status: "done", labelKey: "admin.feedbackDone" },
 ];
+
+const KIND_LABEL_KEYS: Record<string, TranslationKey> = {
+  bug: "feedback.kindBug",
+  idea: "feedback.kindIdea",
+  other: "feedback.kindOther",
+};
 
 /** The Sentry organisation slug for the crash-report links. */
 const SENTRY_ORG = "vu-forge";
@@ -109,12 +120,17 @@ function SenderDetails({
   userId: string;
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const { data: profile, isPending } = useProfileRow(userId, client);
   if (isPending) {
     return <Skeleton className="h-8 w-40" />;
   }
   if (profile === null) {
-    return <p className="text-xs text-muted-foreground">Deleted account</p>;
+    return (
+      <p className="text-xs text-muted-foreground">
+        {t("admin.deletedAccount")}
+      </p>
+    );
   }
   return (
     <div className="flex items-center gap-2">
@@ -135,6 +151,7 @@ function SenderDetails({
 }
 
 function ContextList({ context }: { context: FeedbackRow["context"] }) {
+  const t = useT();
   const entries = Object.entries(readContext(context));
   if (entries.length === 0) {
     return null;
@@ -142,7 +159,7 @@ function ContextList({ context }: { context: FeedbackRow["context"] }) {
   return (
     <div className="rounded-md border p-3">
       <p className="mb-2 text-xs font-medium text-muted-foreground">
-        Technical details
+        {t("admin.technicalDetails")}
       </p>
       <dl className="grid gap-1">
         {entries.map(([key, value]) => (
@@ -157,6 +174,7 @@ function ContextList({ context }: { context: FeedbackRow["context"] }) {
 }
 
 function SentryLink({ crashId }: { crashId: string }) {
+  const t = useT();
   return (
     <a
       href={sentryLink(crashId)}
@@ -165,7 +183,7 @@ function SentryLink({ crashId }: { crashId: string }) {
       className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
     >
       <ExternalLinkIcon className="size-3" aria-hidden />
-      View crash in Sentry
+      {t("admin.viewCrash")}
     </a>
   );
 }
@@ -177,6 +195,7 @@ function FeedbackCard({
   feedback: FeedbackRow;
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const setStatus = useSetFeedbackStatus(client);
   const context = readContext(feedback.context);
   const crashId =
@@ -189,7 +208,9 @@ function FeedbackCard({
     });
     if (result.ok) {
       toast.success(
-        status === "done" ? "Feedback marked done." : "Feedback marked seen.",
+        status === "done"
+          ? t("admin.feedbackDoneToast")
+          : t("admin.feedbackSeenToast"),
       );
     } else {
       toast.error(result.error.message);
@@ -209,12 +230,21 @@ function FeedbackCard({
                   : "secondary"
             }
           >
-            {feedback.kind}
+            {t(KIND_LABEL_KEYS[feedback.kind] ?? "feedback.kindOther")}
           </Badge>
-          <CardTitle className="text-base">Feedback</CardTitle>
+          <CardTitle className="text-base">{t("admin.feedbackCard")}</CardTitle>
         </div>
         <CardDescription>
-          Sent {formatDate(feedback.created_at)} · Status: {feedback.status}
+          {t("admin.sentAt", {
+            date: formatDate(feedback.created_at),
+            status: t(
+              feedback.status === "new"
+                ? "admin.feedbackNew"
+                : feedback.status === "seen"
+                  ? "admin.feedbackSeen"
+                  : "admin.feedbackDone",
+            ),
+          })}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -234,7 +264,7 @@ function FeedbackCard({
                 }}
               >
                 <EyeIcon />
-                Mark seen
+                {t("admin.markSeen")}
               </Button>
             ) : null}
             <Button
@@ -246,7 +276,7 @@ function FeedbackCard({
               }}
             >
               <CheckIcon />
-              Mark done
+              {t("admin.markDone")}
             </Button>
           </div>
         ) : null}
@@ -260,14 +290,15 @@ export function AdminFeedbackPage({
 }: {
   client?: AppSupabaseClient | null;
 }) {
+  const t = useT();
   if (socialAvailability(client) !== "ready") {
     return (
-      <Page title="Feedback" width="narrow">
+      <Page title={t("pageTitle.feedback")} width="narrow">
         <Alert>
           <TriangleAlertIcon />
-          <AlertTitle>Moderation is unavailable</AlertTitle>
+          <AlertTitle>{t("admin.moderationUnavailable")}</AlertTitle>
           <AlertDescription>
-            Moderation tools need the community features to be configured.
+            {t("admin.moderationUnavailableDescription")}
           </AlertDescription>
         </Alert>
       </Page>
@@ -278,11 +309,12 @@ export function AdminFeedbackPage({
 }
 
 function ModeratorGate({ client }: { client: AppSupabaseClient | null }) {
+  const t = useT();
   const moderatorQuery = useIsModerator(client);
 
   if (moderatorQuery.isPending) {
     return (
-      <Page title="Feedback" width="wide">
+      <Page title={t("pageTitle.feedback")} width="wide">
         <div className="grid gap-4">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -299,23 +331,24 @@ function ModeratorGate({ client }: { client: AppSupabaseClient | null }) {
 }
 
 function FeedbackList({ client }: { client: AppSupabaseClient | null }) {
+  const t = useT();
   const [status, setStatus] = useState<FeedbackStatus>("new");
   const feedbackQuery = useFeedback(status, client);
 
   return (
     <Page
-      title="Feedback"
-      description="Review feedback from the community."
+      title={t("pageTitle.feedback")}
+      description={t("admin.feedbackDescription")}
       width="wide"
     >
       <Tabs
         value={status}
         onValueChange={(value) => setStatus(value as FeedbackStatus)}
       >
-        <TabsList aria-label="Feedback status">
+        <TabsList aria-label={t("admin.feedbackStatusAria")}>
           {TAB_STATUSES.map((tab) => (
             <TabsTrigger key={tab.status} value={tab.status}>
-              {tab.label}
+              {t(tab.labelKey)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -329,8 +362,10 @@ function FeedbackList({ client }: { client: AppSupabaseClient | null }) {
         <div className="mt-4 grid gap-4">
           <Alert variant="destructive">
             <ShieldAlertIcon />
-            <AlertTitle>Feedback could not be loaded</AlertTitle>
-            <AlertDescription>Try again in a moment.</AlertDescription>
+            <AlertTitle>{t("admin.feedbackLoadError")}</AlertTitle>
+            <AlertDescription>
+              {t("admin.loadErrorDescription")}
+            </AlertDescription>
           </Alert>
           <Button
             className="justify-self-start"
@@ -340,12 +375,20 @@ function FeedbackList({ client }: { client: AppSupabaseClient | null }) {
             }}
           >
             <RefreshCwIcon />
-            Try again
+            {t("common.retry")}
           </Button>
         </div>
       ) : (feedbackQuery.data ?? []).length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">
-          No {status} feedback.
+          {t("admin.noStatusFeedback", {
+            status: t(
+              status === "new"
+                ? "admin.feedbackNew"
+                : status === "seen"
+                  ? "admin.feedbackSeen"
+                  : "admin.feedbackDone",
+            ).toLowerCase(),
+          })}
         </p>
       ) : (
         <div className="mt-4 grid gap-4">

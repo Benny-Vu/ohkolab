@@ -8,6 +8,7 @@ import { KoLabel } from "@/components/ko-label";
 import { Page } from "@/components/page";
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { SegmentedControl } from "@/components/segmented-control";
+import { useDisplayName } from "@/data/display-names";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -22,6 +23,7 @@ import { ResultsPanel } from "@/features/calc/results-panel";
 import { SidePanel } from "@/features/calc/side-panel";
 import { useCalcState } from "@/features/calc/use-calc-state";
 import { useIsWide } from "@/features/calc/use-is-wide";
+import { useSideNames } from "@/features/calc/use-side-names";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { sideNames } from "@/lib/calc/battle";
@@ -72,6 +74,7 @@ function StickyResultBar({
 }: StickyResultBarProps) {
   const t = useT();
   const [locale] = useLocale();
+  const displayName = useDisplayName();
   const result = selection?.outcome.result ?? null;
   const summary = selection ? outcomeSummary(selection.outcome) : null;
   const ko = summary ? koResultOf(summary) : null;
@@ -91,7 +94,7 @@ function StickyResultBar({
               <span className="flex items-center justify-between gap-3">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="min-w-0 truncate text-sm font-medium">
-                    {selection.outcome.move}
+                    {displayName("move", selection.outcome.move)}
                   </span>
                   {shortKo ? (
                     <KoLabel className="shrink-0" result={shortKo} />
@@ -160,6 +163,7 @@ export function CalcPage() {
   );
   const selection = resolveSelection(state.selected, outcomes);
   const names = sideNames(state);
+  const displayNames = useSideNames(state);
 
   useEffect(() => {
     if (!selection) {
@@ -249,7 +253,10 @@ export function CalcPage() {
     >
       <div className="grid gap-4 pb-28">
         <div className="flex items-center gap-2">
-          <MatchupChip name={names.p1} species={state.sides.p1.set.species} />
+          <MatchupChip
+            name={displayNames.p1}
+            species={state.sides.p1.set.species}
+          />
           <Button
             aria-label={t("calc.swapSides")}
             onClick={() => dispatch({ type: "swapSides" })}
@@ -258,7 +265,10 @@ export function CalcPage() {
           >
             <ArrowLeftRightIcon />
           </Button>
-          <MatchupChip name={names.p2} species={state.sides.p2.set.species} />
+          <MatchupChip
+            name={displayNames.p2}
+            species={state.sides.p2.set.species}
+          />
         </div>
         <SegmentedControl
           aria-label={t("calc.sectionAria")}

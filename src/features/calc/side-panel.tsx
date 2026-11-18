@@ -3,6 +3,7 @@ import { MinusIcon, PlusIcon } from "lucide-react";
 
 import { Picker, type PickerOption } from "@/components/picker";
 import { PokemonEditor } from "@/components/pokemon-editor";
+import { useDisplayName } from "@/data/display-names";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -27,7 +28,7 @@ import {
 } from "@/types/battle";
 import type { TranslationKey } from "@/lib/i18n/en";
 
-/** The stats a PokÃ©mon can raise or lower in battle. */
+/** The stats a Pokémon can raise or lower in battle. */
 const BOOST_STATS: BoostStatId[] = ["atk", "def", "spa", "spd", "spe"];
 
 /** Friendly names for the status conditions, as translation keys. */
@@ -53,6 +54,7 @@ interface SidePanelProps {
 /** One side of the calculator: its set plus its state in battle. */
 export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
   const t = useT();
+  const displayName = useDisplayName();
   const titleId = useId();
   const hpId = useId();
   const label = calcSideLabel(t, side);
@@ -198,7 +200,9 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm">
               {t("calc.megaEvolution")}{" "}
-              <span className="text-muted-foreground">({megaForme})</span>
+              <span className="text-muted-foreground">
+                ({displayName("species", megaForme)})
+              </span>
             </span>
             <Switch
               checked={calcSide.mega}
@@ -218,14 +222,17 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
                 key={slot}
                 className="flex items-center justify-between gap-2"
               >
-                <span className="text-sm">{move}</span>
+                <span className="text-sm">{displayName("move", move)}</span>
                 <Switch
                   size="sm"
                   checked={calcSide.crits[slot] ?? false}
                   onCheckedChange={(on) =>
                     dispatch({ type: "setCrit", side, slot, on })
                   }
-                  aria-label={t("calc.critAria", { side: label, move })}
+                  aria-label={t("calc.critAria", {
+                    side: label,
+                    move: displayName("move", move),
+                  })}
                 />
               </div>
             ))}

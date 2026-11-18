@@ -1,4 +1,6 @@
 import { typeEffectiveness } from "@/data";
+import { useDisplayName } from "@/data/display-names";
+import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { attackingTypes, defensiveOverview, memberLabel } from "@/lib/team";
 import { TYPE_COLORS } from "@/lib/type-colors";
@@ -80,7 +82,21 @@ function cellTone(multiplier: number | null, mode: HeatMapMode): string {
 
 export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
   const t = useT();
-  const rows = mode === "defense" ? defenseRows(members) : offenseRows(members);
+  const displayName = useDisplayName();
+  const [locale] = useLocale();
+  // The Japanese type names are short, so the columns show them whole; in
+  // English the three-letter abbreviations keep the table narrow.
+  const columnLabel = (type: TypeName) =>
+    locale === "ja" ? displayName("type", type) : TYPE_ABBREVIATIONS[type];
+  const rows = (
+    mode === "defense" ? defenseRows(members) : offenseRows(members)
+  ).map((row) => ({
+    ...row,
+    label:
+      mode === "defense"
+        ? displayName("species", row.label)
+        : displayName("type", row.label),
+  }));
 
   if (rows.length === 0) {
     return (
@@ -113,7 +129,7 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
                   className="inline-flex h-4 min-w-7 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold tracking-wide text-white uppercase"
                   style={{ backgroundColor: TYPE_COLORS[type] }}
                 >
-                  {TYPE_ABBREVIATIONS[type]}
+                  {columnLabel(type)}
                 </span>
               </th>
             ))}

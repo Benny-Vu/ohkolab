@@ -24,8 +24,12 @@ function renderCalc(state?: unknown) {
   );
 }
 
-async function openResults(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: /Earthquake/ }));
+async function openResults(
+  user: ReturnType<typeof userEvent.setup>,
+  /** The sticky-bar move name, localized: じしん in the Japanese tests. */
+  move: RegExp = /Earthquake/,
+) {
+  await user.click(screen.getByRole("button", { name: move }));
   const dialog = await screen.findByRole("dialog");
   return within(dialog);
 }
@@ -251,5 +255,63 @@ describe("CalcPage in Japanese", () => {
       screen.getByRole("button", { name: "その他の条件" }),
     ).toBeInTheDocument();
     expect(screen.getByText("ダブル専用")).toBeInTheDocument();
+
+    // The condition names come from the Japanese roster, not the dictionary.
+    expect((await screen.findAllByText("リフレクター")).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText("まきびし").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "その他の条件" }));
+    expect(await screen.findByText("じゅうりょく")).toBeInTheDocument();
+    expect(screen.getByText("トリックルーム")).toBeInTheDocument();
+  });
+
+  it("renders the matchup, moves and type badges with Japanese names", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    // The chips switch to the Japanese species names once the chunk loads.
+    expect((await screen.findAllByText("ガブリアス")).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText("ガオガエン").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Garchomp")).not.toBeInTheDocument();
+    expect(screen.queryByText("Incineroar")).not.toBeInTheDocument();
+
+    // The sticky bar names the selected move in Japanese.
+    const bar = await screen.findByRole("button", { name: /じしん/ });
+    expect(bar).toHaveTextContent("じしん");
+
+    await user.click(bar);
+    const dialog = await screen.findByRole("dialog");
+    const results = within(dialog);
+
+    // Move names and type badges render in Japanese in the results.
+    expect(results.getByText("じしん")).toBeInTheDocument();
+    expect(results.getByText("ドラゴンクロー")).toBeInTheDocument();
+    expect(results.getByText("じめん")).toBeInTheDocument();
+    expect(results.getByText("ドラゴン")).toBeInTheDocument();
+  });
+
+  it("renders the speed verdict and its modifier words in Japanese", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    const dialog = await openResults(user, /じしん/);
+    expect(dialog.getByText("ガブリアスが先に動きます")).toBeInTheDocument();
+
+    await user.click(dialog.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("radio", { name: "フィールド" }));
+    await user.click(screen.getByRole("switch", { name: "攻撃側 おいかぜ" }));
+    await user.click(screen.getByRole("button", { name: "その他の条件" }));
+    await user.click(screen.getByRole("switch", { name: "トリックルーム" }));
+
+    const reopened = await openResults(user, /じしん/);
+    expect(
+      reopened.getByText(/ガブリアス 338 \(おいかぜ\)/),
+    ).toBeInTheDocument();
+    expect(reopened.getByText("ガオガエンが先に動きます")).toBeInTheDocument();
+    expect(reopened.getByText("トリックルーム")).toBeInTheDocument();
   });
 });

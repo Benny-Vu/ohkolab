@@ -22,8 +22,8 @@ interface LegalPageProps {
  * Reading layout for the legal pages: a 680px column with a clear heading
  * scale and, on desktop, a table of contents rail. The text itself lives in
  * the page components; this frame only sets the layout. In Japanese mode the
- * pages stay English (the official versions) and carry one Japanese notice
- * line at the top.
+ * page components render the Japanese reference translation (the English
+ * versions stay binding), with one Japanese notice line at the top.
  */
 export function LegalPage({
   title,
@@ -36,11 +36,11 @@ export function LegalPage({
     <Page title={title} description={description} width="narrow">
       <div className="flex gap-10">
         <nav
-          aria-label="On this page"
+          aria-label={t("legal.onThisPage")}
           className="sticky top-24 hidden w-44 shrink-0 self-start lg:block"
         >
           <p className="mb-2 text-xs font-medium text-muted-foreground">
-            On this page
+            {t("legal.onThisPage")}
           </p>
           <ul className="grid gap-1">
             {sections.map((section) => (

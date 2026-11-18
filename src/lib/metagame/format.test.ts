@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { snapshotFixture } from "@/lib/metagame/fixture";
+import { setLocale } from "@/lib/i18n/locale";
 import {
   formatAttribution,
   formatBattles,
@@ -50,4 +51,16 @@ test("formatAttribution does not repeat parts already in the label", () => {
     source: { ...snapshotFixture.source, label: full },
   };
   expect(formatAttribution(snapshot)).toBe(full);
+});
+
+test("formatPeriod and formatAttribution follow the active locale", () => {
+  setLocale("ja");
+  try {
+    expect(formatPeriod("2026-10")).toBe("2026年10月");
+    expect(formatAttribution(snapshotFixture)).toBe(
+      "Pokémon Showdown ladder, 2026年10月, レーティング1630以上, smogon.com/statsより",
+    );
+  } finally {
+    setLocale("en");
+  }
 });

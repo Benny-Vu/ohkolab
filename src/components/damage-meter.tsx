@@ -1,3 +1,4 @@
+import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 
 type DamageMeterSize = "sm" | "md" | "lg";
@@ -30,6 +31,7 @@ export function DamageMeter({
   size = "md",
   className,
 }: DamageMeterProps) {
+  const t = useT();
   const damage = Math.max(0, Math.min(100, maxPercent));
   const remaining = Math.max(0, Math.min(hpPercent - damage, 100));
   const track = Math.max(0, 100 - remaining - damage);
@@ -37,7 +39,10 @@ export function DamageMeter({
   return (
     <div
       role="img"
-      aria-label={`HP left after the hit: ${Math.max(0, Math.round(hpPercent - damage))} to ${Math.max(0, Math.round(hpPercent - minPercent))} percent`}
+      aria-label={t("calc.damageMeterAria", {
+        min: Math.max(0, Math.round(hpPercent - damage)),
+        max: Math.max(0, Math.round(hpPercent - minPercent)),
+      })}
       className={cn(
         "flex w-full overflow-hidden rounded-sm bg-muted",
         HEIGHTS[size],

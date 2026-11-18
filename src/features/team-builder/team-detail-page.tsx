@@ -62,7 +62,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { calcStats, createDefaultSet, validateSet } from "@/data";
+import {
+  calcStats,
+  createDefaultSet,
+  useDisplayName,
+  validateSet,
+} from "@/data";
 import { SpeedTiers } from "@/features/team-builder/speed-tiers";
 import { TypeHeatMap } from "@/features/team-builder/type-heat-map";
 import { statLabel } from "@/components/stat-labels";
@@ -94,6 +99,7 @@ export function TeamDetailPage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
   const t = useT();
+  const displayName = useDisplayName();
   const {
     teams,
     rename,
@@ -478,13 +484,19 @@ export function TeamDetailPage() {
                 </button>
               );
             }
-            const label = memberLabel(member);
+            const label = displayName("species", memberLabel(member));
             const types = battleTypes(member) ?? [];
             const finalStats = calcStats(member);
-            const meta = [member.item, member.ability]
+            const meta = [
+              member.item ? displayName("item", member.item) : null,
+              member.ability ? displayName("ability", member.ability) : null,
+            ]
               .filter(Boolean)
-              .join(" Â· ");
-            const moves = member.moves.filter(Boolean).join(" Â· ");
+              .join(" · ");
+            const moves = member.moves
+              .filter((move): move is string => Boolean(move))
+              .map((move) => displayName("move", move))
+              .join(" · ");
             return (
               <Card key={index} size="sm">
                 <CardContent className="flex flex-col gap-2">
@@ -598,7 +610,9 @@ export function TeamDetailPage() {
                       <AlertTitle>
                         {t(WARNING_TITLE_KEYS[warning.kind])}
                       </AlertTitle>
-                      <AlertDescription>{warning.message}</AlertDescription>
+                      <AlertDescription>
+                        {t(warning.message.key, warning.message.params)}
+                      </AlertDescription>
                     </Alert>
                   ))}
                 </div>
@@ -606,8 +620,16 @@ export function TeamDetailPage() {
               {weakSpots.length > 0 && (
                 <div className="flex flex-col gap-1">
                   {weakSpots.map((spot) => (
-                    <p key={spot} className="text-sm">
-                      {spot}
+                    <p key={spot.type} className="text-sm">
+                      {spot.noResist
+                        ? t("teams.weakSpotNoResist", {
+                            count: spot.weak,
+                            type: displayName("type", spot.type),
+                          })
+                        : t("teams.weakSpot", {
+                            count: spot.weak,
+                            type: displayName("type", spot.type),
+                          })}
                     </p>
                   ))}
                 </div>

@@ -3,7 +3,10 @@
  * message to show the user, or null when the value is fine. The limits mirror
  * the check constraints in `supabase/migrations/20261118100000_social_wave4.sql`
  * and must stay in step with them. Slug uniqueness is enforced server-side.
+ * The messages render through the i18n dictionaries; the English values must
+ * match what the lib tests assert.
  */
+import { t } from "@/lib/i18n/t";
 
 export const GROUP_SLUG_MIN = 3;
 export const GROUP_SLUG_MAX = 40;
@@ -47,15 +50,15 @@ export function normalizeSlug(slug: string): string {
 
 /** Checks an already normalized slug. Uniqueness is checked server-side. */
 export function validateSlug(slug: string): string | null {
-  if (slug.length === 0) return "Choose an address for your group.";
+  if (slug.length === 0) return t("groups.errSlugChoose");
   if (slug.length < GROUP_SLUG_MIN) {
-    return `The address must be at least ${GROUP_SLUG_MIN} characters.`;
+    return t("groups.errSlugMin", { min: GROUP_SLUG_MIN });
   }
   if (slug.length > GROUP_SLUG_MAX) {
-    return `The address must be at most ${GROUP_SLUG_MAX} characters.`;
+    return t("groups.errSlugMax", { max: GROUP_SLUG_MAX });
   }
   if (!SLUG_PATTERN.test(slug)) {
-    return "The address can only contain lowercase letters, digits and hyphens.";
+    return t("groups.errSlugPattern");
   }
   return null;
 }
@@ -66,9 +69,9 @@ export function normalizeGroupName(name: string): string {
 
 /** Checks an already normalized name. */
 export function validateGroupName(name: string): string | null {
-  if (name.length === 0) return "Choose a name for your group.";
+  if (name.length === 0) return t("groups.errNameChoose");
   if (name.length > GROUP_NAME_MAX) {
-    return `Names are limited to ${GROUP_NAME_MAX} characters.`;
+    return t("groups.errNameMax", { max: GROUP_NAME_MAX });
   }
   return null;
 }
@@ -86,7 +89,7 @@ export function validateGroupDescription(
   description: string | null,
 ): string | null {
   if (description !== null && description.length > GROUP_DESCRIPTION_MAX) {
-    return `Descriptions are limited to ${GROUP_DESCRIPTION_MAX} characters.`;
+    return t("groups.errDescriptionMax", { max: GROUP_DESCRIPTION_MAX });
   }
   return null;
 }
@@ -94,7 +97,7 @@ export function validateGroupDescription(
 /** Checks the visibility value before it is sent to the database. */
 export function validateGroupVisibility(visibility: string): string | null {
   if (!GROUP_VISIBILITIES.includes(visibility as GroupVisibility)) {
-    return "Choose who can join the group.";
+    return t("groups.errVisibility");
   }
   return null;
 }

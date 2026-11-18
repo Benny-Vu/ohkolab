@@ -8,13 +8,13 @@ import { KoLabel } from "@/components/ko-label";
 import { TypeBadge } from "@/components/type-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getMove } from "@/data";
+import { getMove, useDisplayName } from "@/data";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { Panel, PanelTitle } from "@/features/calc/panel";
+import { useSideNames } from "@/features/calc/use-side-names";
 import type { Translate } from "@/components/stat-labels";
 import { useT } from "@/lib/i18n/t";
 import type { TranslationKey } from "@/lib/i18n/en";
-import { sideNames } from "@/lib/calc/battle";
 import {
   outcomeRangeText,
   outcomeSummary,
@@ -22,7 +22,7 @@ import {
   resolveSelection,
   type MoveOutcome,
 } from "@/lib/calc/results";
-import { fasterSide, sideSpeed } from "@/lib/calc/speed";
+import { fasterSide, sideSpeed, type SpeedModifier } from "@/lib/calc/speed";
 import {
   SIDE_IDS,
   otherSide,
@@ -81,6 +81,7 @@ function MoveRow({
   dispatch: Dispatch<CalcAction>;
 }) {
   const t = useT();
+  const displayName = useDisplayName();
   const summary = outcomeSummary(outcome);
   const ko = koResultOf(summary);
 
@@ -92,7 +93,9 @@ function MoveRow({
     >
       <span className="flex min-w-0 items-center gap-2">
         {outcome.type ? <TypeBadge size="sm" type={outcome.type} /> : null}
-        <span className="min-w-0 font-medium">{outcome.move}</span>
+        <span className="min-w-0 font-medium">
+          {displayName("move", outcome.move)}
+        </span>
       </span>
       <span className="flex items-center gap-2 justify-self-end">
         <span className="text-xs tabular-nums text-muted-foreground">
@@ -124,6 +127,7 @@ function SelectedResult({
   format: BattleFormat;
 }) {
   const t = useT();
+  const displayName = useDisplayName();
   const result = outcome.result;
   const defender = otherSide(side);
   const move = getMove(outcome.move);
@@ -150,7 +154,7 @@ function SelectedResult({
       <div className="flex flex-wrap items-center gap-2">
         {outcome.type ? <TypeBadge type={outcome.type} /> : null}
         <p className="min-w-0 font-heading text-lg leading-tight font-semibold">
-          {outcome.move}
+          {displayName("move", outcome.move)}
         </p>
         <p className="text-xs text-muted-foreground">
           {categoryLabel(outcome.category, t)}
@@ -265,6 +269,26 @@ function DirectionContent({
   );
 }
 
+/** One Speed modifier in words: a stage as "+1", the rest localized. */
+function modifierText(
+  modifier: SpeedModifier,
+  t: Translate,
+  display: ReturnType<typeof useDisplayName>,
+): string {
+  switch (modifier.kind) {
+    case "stage":
+      return modifier.stage > 0 ? `+${modifier.stage}` : `${modifier.stage}`;
+    case "tailwind":
+      return t("calc.speedTailwind");
+    case "ability":
+      return display("ability", modifier.ability);
+    case "item":
+      return display("item", modifier.item);
+    case "paralysis":
+      return t("calc.speedParalysis");
+  }
+}
+
 function SpeedLine({
   names,
   state,
@@ -273,6 +297,7 @@ function SpeedLine({
   state: CalcState;
 }) {
   const t = useT();
+  const display = useDisplayName();
   const speeds = { p1: sideSpeed(state, "p1"), p2: sideSpeed(state, "p2") };
   const first = fasterSide(
     { p1: speeds.p1.final, p2: speeds.p2.final },
@@ -281,7 +306,9 @@ function SpeedLine({
   const speedText = (id: SideId) =>
     `${names[id]} ${speeds[id].final}${
       speeds[id].modifiers.length > 0
-        ? ` (${speeds[id].modifiers.join(", ")})`
+        ? ` (${speeds[id].modifiers
+            .map((modifier) => modifierText(modifier, t, display))
+            .join(", ")})`
         : ""
     }`;
 
@@ -303,7 +330,7 @@ function SpeedLine({
           <span aria-hidden="true" className="text-muted-foreground">
             {"\u00b7"}
           </span>
-          <span className="text-muted-foreground">Trick Room</span>
+          <span className="text-muted-foreground">{t("calc.trickRoom")}</span>
         </>
       ) : null}
     </p>
@@ -319,7 +346,7 @@ export function ResultsPanel({
 }: ResultsPanelProps) {
   const titleId = useId();
   const t = useT();
-  const names = sideNames(state);
+  const names = useSideNames(state);
   const selection = resolveSelection(state.selected, outcomes);
 
   const content = (

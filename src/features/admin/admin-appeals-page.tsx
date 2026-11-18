@@ -26,6 +26,8 @@ import {
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { formatDate } from "@/lib/format-date";
 import type { AppealWithAction } from "@/lib/social/moderation";
+import { useT } from "@/lib/i18n/t";
+import type { TranslationKey } from "@/lib/i18n/en";
 import {
   socialAvailability,
   useAppeals,
@@ -33,20 +35,12 @@ import {
   useIsModerator,
 } from "@/lib/social";
 
-function actionLabel(action: AppealWithAction["action"]): string {
-  if (action === null) {
-    return "Moderation action";
-  }
-  if (action.action === "suspend") {
-    return "Suspension";
-  }
-  if (action.target_type === "post") {
-    return "Removed post";
-  }
-  if (action.target_type === "comment") {
-    return "Removed comment";
-  }
-  return "Removed content";
+function actionLabelKey(action: AppealWithAction["action"]): TranslationKey {
+  if (action === null) return "admin.actionLabel";
+  if (action.action === "suspend") return "moderation.suspension";
+  if (action.target_type === "post") return "admin.removedPost";
+  if (action.target_type === "comment") return "admin.removedComment";
+  return "admin.removedContent";
 }
 
 function AppellantCell({
@@ -54,10 +48,11 @@ function AppellantCell({
 }: {
   appellant: AppealWithAction["appellant"];
 }) {
+  const t = useT();
   if (appellant === null) {
     return (
       <p className="text-sm text-muted-foreground">
-        The appellant's profile is no longer available.
+        {t("admin.appellantUnavailable")}
       </p>
     );
   }
@@ -94,6 +89,7 @@ function AppealRowView({
   entry: AppealWithAction;
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const handleAppeal = useHandleAppeal(client);
   const action = entry.action;
 
@@ -105,8 +101,8 @@ function AppealRowView({
     if (result.ok) {
       toast.success(
         decision === "upheld"
-          ? "Appeal upheld. The action stands."
-          : "Appeal reversed. The action is undone.",
+          ? t("admin.appealUpheldToast")
+          : t("admin.appealReversedToast"),
       );
     } else {
       toast.error(result.error.message);
@@ -120,7 +116,7 @@ function AppealRowView({
           <AppellantCell appellant={entry.appellant} />
         </TableCell>
         <TableCell>
-          <Badge variant="secondary">{actionLabel(action)}</Badge>
+          <Badge variant="secondary">{t(actionLabelKey(action))}</Badge>
         </TableCell>
         <TableCell className="text-sm tabular-nums text-muted-foreground">
           {formatDate(entry.appeal.created_at)}
@@ -140,7 +136,7 @@ function AppealRowView({
               ) : (
                 <CheckIcon />
               )}
-              Uphold
+              {t("admin.uphold")}
             </Button>
             <Button
               variant="outline"
@@ -151,7 +147,7 @@ function AppealRowView({
               }}
             >
               <RotateCcwIcon />
-              Reverse
+              {t("admin.reverse")}
             </Button>
           </div>
         </TableCell>
@@ -162,13 +158,15 @@ function AppealRowView({
             {action ? (
               <div className="grid gap-2 rounded-md border p-3">
                 <p className="text-sm">
-                  <span className="font-medium">Reason: </span>
+                  <span className="font-medium">
+                    {t("moderation.reasonLabel")}{" "}
+                  </span>
                   {action.reason}
                 </p>
                 {action.content_snapshot !== null ? (
                   <p className="text-sm text-muted-foreground">
                     <span className="font-medium text-foreground">
-                      Original content:{" "}
+                      {t("admin.originalContent")}{" "}
                     </span>
                     {action.content_snapshot}
                   </p>
@@ -179,17 +177,17 @@ function AppealRowView({
                     className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
                   >
                     <ExternalLinkIcon className="size-3" aria-hidden />
-                    View post
+                    {t("admin.viewPost")}
                   </Link>
                 ) : null}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                The original moderation action is no longer available.
+                {t("admin.actionUnavailable")}
               </p>
             )}
             <div className="grid gap-2 rounded-md border p-3">
-              <p className="text-sm font-medium">Appeal message</p>
+              <p className="text-sm font-medium">{t("admin.appealMessage")}</p>
               <p className="text-sm text-muted-foreground">
                 {entry.appeal.message}
               </p>
@@ -206,12 +204,13 @@ export function AdminAppealsPage({
 }: {
   client?: AppSupabaseClient | null;
 }) {
+  const t = useT();
   if (socialAvailability(client) !== "ready") {
     return (
-      <Page title="Appeals" width="narrow">
+      <Page title={t("pageTitle.appeals")} width="narrow">
         <EmptyState
-          title="Moderation is unavailable"
-          description="Moderation tools need the community features to be configured."
+          title={t("admin.moderationUnavailable")}
+          description={t("admin.moderationUnavailableDescription")}
         />
       </Page>
     );
@@ -225,11 +224,12 @@ function AppealsModeratorGate({
 }: {
   client: AppSupabaseClient | null;
 }) {
+  const t = useT();
   const moderatorQuery = useIsModerator(client);
 
   if (moderatorQuery.isPending) {
     return (
-      <Page title="Appeals" width="wide">
+      <Page title={t("pageTitle.appeals")} width="wide">
         <div className="grid gap-4">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -246,12 +246,13 @@ function AppealsModeratorGate({
 }
 
 function AppealsList({ client }: { client: AppSupabaseClient | null }) {
+  const t = useT();
   const appealsQuery = useAppeals(client);
 
   return (
     <Page
-      title="Appeals"
-      description="Review appeals against moderation actions."
+      title={t("pageTitle.appeals")}
+      description={t("admin.appealsDescription")}
       width="wide"
     >
       {appealsQuery.isPending ? (
@@ -262,8 +263,8 @@ function AppealsList({ client }: { client: AppSupabaseClient | null }) {
       ) : appealsQuery.isError ? (
         <div className="mt-4">
           <ErrorState
-            title="Appeals could not be loaded"
-            description="Try again in a moment."
+            title={t("admin.appealsLoadError")}
+            description={t("admin.loadErrorDescription")}
             action={
               <Button
                 variant="outline"
@@ -272,24 +273,26 @@ function AppealsList({ client }: { client: AppSupabaseClient | null }) {
                   void appealsQuery.refetch();
                 }}
               >
-                Try again
+                {t("common.retry")}
               </Button>
             }
           />
         </div>
       ) : (appealsQuery.data ?? []).length === 0 ? (
         <div className="mt-4">
-          <EmptyState title="No open appeals." />
+          <EmptyState title={t("admin.noAppeals")} />
         </div>
       ) : (
         <div className="mt-4 overflow-x-auto rounded-lg border">
           <Table density="dense">
             <TableHeader>
               <TableRow>
-                <TableHead>Appellant</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Filed</TableHead>
-                <TableHead className="text-right">Decision</TableHead>
+                <TableHead>{t("admin.colAppellant")}</TableHead>
+                <TableHead>{t("admin.colAction")}</TableHead>
+                <TableHead>{t("admin.colFiled")}</TableHead>
+                <TableHead className="text-right">
+                  {t("admin.colDecision")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

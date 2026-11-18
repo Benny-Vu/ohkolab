@@ -77,13 +77,25 @@ const TERRAIN_SPEED_ABILITIES: Record<string, Terrain> = {
   "Surge Surfer": "Electric",
 };
 
+/**
+ * What changed a side's Speed, as structured data: the UI turns each entry
+ * into words (a stage renders as "+1", the rest through dictionary keys or
+ * the display-name system for roster names).
+ */
+export type SpeedModifier =
+  | { kind: "stage"; stage: number }
+  | { kind: "tailwind" }
+  | { kind: "ability"; ability: string }
+  | { kind: "item"; item: string }
+  | { kind: "paralysis" };
+
 export interface SideSpeed {
   /** The Speed stat of the forme in battle, before modifiers. */
   stat: number;
   /** Speed after every modifier. */
   final: number;
-  /** What changed the stat, in words, e.g. ["+1", "Tailwind"]. */
-  modifiers: string[];
+  /** What changed the stat, in order, e.g. a stage then Tailwind. */
+  modifiers: SpeedModifier[];
 }
 
 /** Final Speed of one side of the calculator, with what modifies it. */
@@ -105,13 +117,13 @@ export function sideSpeed(state: CalcState, id: SideId): SideSpeed {
   const ironBall = set.item === "Iron Ball";
   const paralyzed = side.status === "par";
 
-  const modifiers: string[] = [];
-  if (stage !== 0) modifiers.push(stage > 0 ? `+${stage}` : `${stage}`);
-  if (tailwind) modifiers.push("Tailwind");
-  if (abilityDoubles || quickFeet) modifiers.push(ability);
-  if (choiceScarf) modifiers.push("Choice Scarf");
-  if (ironBall) modifiers.push("Iron Ball");
-  if (paralyzed && !quickFeet) modifiers.push("paralysis");
+  const modifiers: SpeedModifier[] = [];
+  if (stage !== 0) modifiers.push({ kind: "stage", stage });
+  if (tailwind) modifiers.push({ kind: "tailwind" });
+  if (abilityDoubles || quickFeet) modifiers.push({ kind: "ability", ability });
+  if (choiceScarf) modifiers.push({ kind: "item", item: "Choice Scarf" });
+  if (ironBall) modifiers.push({ kind: "item", item: "Iron Ball" });
+  if (paralyzed && !quickFeet) modifiers.push({ kind: "paralysis" });
 
   return {
     stat,

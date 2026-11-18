@@ -306,6 +306,7 @@ describe("MetagamePage in Japanese", () => {
     expect(screen.getByRole("heading", { name: "環境" })).toBeInTheDocument();
     expect(screen.getByText("使用率ランキング")).toBeInTheDocument();
     expect(screen.getByText("レギュレーション")).toBeInTheDocument();
+    expect(screen.getByText(/レーティング1630以上/)).toBeInTheDocument();
     expect(await screen.findByText("素早さライン")).toBeInTheDocument();
   });
 
@@ -315,7 +316,12 @@ describe("MetagamePage in Japanese", () => {
     renderMetagame();
     await screen.findByText(/1,649,648バトル/);
 
-    await user.click(screen.getByRole("button", { name: /Sneasler/ }));
+    // The ranking rows switch to the Japanese species names once the
+    // roster's Japanese names finish loading.
+    const sneasler = await screen.findByRole("button", {
+      name: /オオニューラ/,
+    });
+    await user.click(sneasler);
 
     expect(await screen.findByText("順位#1 · 使用率41.2%")).toBeInTheDocument();
     expect(screen.getByText("技")).toBeInTheDocument();
@@ -326,5 +332,13 @@ describe("MetagamePage in Japanese", () => {
     expect(
       screen.getByRole("button", { name: "計算機で開く" }),
     ).toBeInTheDocument();
+
+    // Moves, items, abilities, teammates and natures come from the roster.
+    expect(screen.getByText("インファイト")).toBeInTheDocument();
+    expect(screen.getByText("きあいのタスキ")).toBeInTheDocument();
+    expect(screen.getByText("どくしゅ")).toBeInTheDocument();
+    expect(screen.getAllByText("ゴリランダー").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("ようき").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Close Combat")).not.toBeInTheDocument();
   });
 });

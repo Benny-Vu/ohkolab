@@ -71,6 +71,9 @@ export const toolsEn = {
   "calc.criticalHit": " (critical hit)",
   "calc.speedTie": "Speed tie",
   "calc.movesFirst": "{name} moves first",
+  "calc.trickRoom": "Trick Room",
+  "calc.speedTailwind": "Tailwind",
+  "calc.speedParalysis": "paralysis",
   "calc.summaryNotAKo": "Not a KO",
   "calc.summaryNoEffect": "No effect",
   "calc.summaryStatusMove": "Status move",
@@ -174,6 +177,13 @@ export const toolsEn = {
   "teams.heatMapPokemon": "Pokémon",
   "teams.heatMapMoveType": "Move type",
 
+  // Team builder: analysis warnings and weak-spot sentences.
+  "teams.warnDuplicateSpecies": "{name} is on the team {count} times.",
+  "teams.warnDuplicateItem": "{name} is held by {count} Pokémon.",
+  "teams.warnSetProblem": "{name}: {problem}",
+  "teams.weakSpot": "{count} Pokémon weak to {type}",
+  "teams.weakSpotNoResist": "{count} Pokémon weak to {type}, no resist",
+
   // Metagame: page frame.
   "meta.title": "Metagame",
   "meta.month": "Month",
@@ -185,6 +195,10 @@ export const toolsEn = {
   "meta.emptyDescription":
     "Usage snapshots appear here once the ladder data is published.",
   "meta.noUsageData": "No usage data",
+
+  // Metagame: the attribution line under the ranking table.
+  "meta.ratingCutoff": "rating {rating}+",
+  "meta.viaSmogon": "via smogon.com/stats",
 
   // Metagame: ranking table.
   "meta.battles": "{count} battles",
@@ -279,6 +293,9 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "calc.criticalHit": "（急所）",
   "calc.speedTie": "同速",
   "calc.movesFirst": "{name}が先に動きます",
+  "calc.trickRoom": "トリックルーム",
+  "calc.speedTailwind": "おいかぜ",
+  "calc.speedParalysis": "まひ",
   "calc.summaryNotAKo": "倒せません",
   "calc.summaryNoEffect": "効果なし",
   "calc.summaryStatusMove": "変化技",
@@ -384,6 +401,13 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "teams.heatMapPokemon": "ポケモン",
   "teams.heatMapMoveType": "技タイプ",
 
+  // 構築：分析の警告と弱点の文。
+  "teams.warnDuplicateSpecies": "{name}が構築に{count}匹含まれています。",
+  "teams.warnDuplicateItem": "{name}を{count}匹のポケモンが持っています。",
+  "teams.warnSetProblem": "{name}：{problem}",
+  "teams.weakSpot": "{type}に弱いポケモンが{count}匹",
+  "teams.weakSpotNoResist": "{type}に弱いポケモンが{count}匹（耐性なし）",
+
   // 環境：ページ。
   "meta.title": "環境",
   "meta.month": "月",
@@ -395,6 +419,10 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "meta.emptyDescription":
     "レーティングのデータが公開されると、ここに使用率スナップショットが表示されます。",
   "meta.noUsageData": "使用率データなし",
+
+  // 環境：ランキング表の下の出典表記。
+  "meta.ratingCutoff": "レーティング{rating}以上",
+  "meta.viaSmogon": "smogon.com/statsより",
 
   // 環境：使用率ランキング。
   "meta.battles": "{count}バトル",
