@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
-/** From this width up the calculator shows every panel at once. */
-const WIDE_QUERY = "(min-width: 768px)";
+/** From this width up the calculator shows its three-column layout. */
+const WIDE_QUERY = "(min-width: 1024px)";
 
 function subscribe(onChange: () => void): () => void {
   const query = window.matchMedia(WIDE_QUERY);

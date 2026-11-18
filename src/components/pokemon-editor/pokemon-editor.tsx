@@ -9,7 +9,9 @@ import {
   remainingStatPoints,
   withStatPoints,
 } from "@/components/pokemon-editor/stat-points";
+import { NumberStepper } from "@/components/number-stepper";
 import { PokemonSprite } from "@/components/pokemon-sprite";
+import { StatBar } from "@/components/stat-bar";
 import { TypeBadge } from "@/components/type-badge";
 import {
   calcStats,
@@ -29,9 +31,6 @@ export interface PokemonEditorProps {
   allowBattleOnly?: boolean;
   className?: string;
 }
-
-const fieldClass =
-  "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 
 /**
  * Edits one Pokémon set: species, item, ability, nature, Stat Points and
@@ -57,6 +56,7 @@ export function PokemonEditor({
     statPoints: value.statPoints,
   });
   const remaining = remainingStatPoints(value.statPoints);
+  const spent = MAX_SP_TOTAL - remaining;
 
   return (
     <div className={cn("grid gap-3", className)}>
@@ -120,44 +120,48 @@ export function PokemonEditor({
       <fieldset className="grid min-w-0 gap-2">
         <legend className="flex w-full items-baseline justify-between gap-2 text-xs text-muted-foreground">
           Stat Points
-          <span aria-live="polite" className="tabular-nums">
-            {remaining} of {MAX_SP_TOTAL} remaining
+          <span aria-live="polite" className="font-mono tabular-nums">
+            {spent} / {MAX_SP_TOTAL}
           </span>
         </legend>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-          {STAT_IDS.map((stat) => (
-            <div key={stat} className="grid gap-1">
-              <div className="flex items-baseline justify-between gap-1">
-                <label
-                  className="text-xs text-muted-foreground"
-                  htmlFor={`${id}-sp-${stat}`}
-                >
-                  {STAT_LABELS[stat]}
-                </label>
-                <span className="text-xs tabular-nums text-foreground">
-                  <span className="sr-only">{`Final ${STAT_LABELS[stat]} `}</span>
-                  {finalStats[stat]}
-                </span>
+        <div className="grid gap-1.5">
+          {STAT_IDS.map((stat) => {
+            const sp = value.statPoints[stat];
+            return (
+              <div
+                key={stat}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"
+              >
+                <div className="grid min-w-0 gap-1">
+                  <div className="flex items-baseline justify-between gap-1">
+                    <span className="text-xs text-muted-foreground">
+                      {STAT_LABELS[stat]}
+                    </span>
+                    <span className="font-mono text-sm tabular-nums">
+                      <span className="sr-only">{`Final ${STAT_LABELS[stat]} `}</span>
+                      {finalStats[stat]}
+                    </span>
+                  </div>
+                  <StatBar
+                    value={sp}
+                    max={MAX_SP_PER_STAT}
+                    tone={sp > 0 ? "accent" : "muted"}
+                  />
+                </div>
+                <NumberStepper
+                  value={sp}
+                  onChange={(next) =>
+                    update({
+                      statPoints: withStatPoints(value.statPoints, stat, next),
+                    })
+                  }
+                  max={MAX_SP_PER_STAT}
+                  remaining={remaining}
+                  label={STAT_LABELS[stat]}
+                />
               </div>
-              <input
-                id={`${id}-sp-${stat}`}
-                type="number"
-                min={0}
-                max={MAX_SP_PER_STAT}
-                className={fieldClass}
-                value={value.statPoints[stat]}
-                onChange={(event) =>
-                  update({
-                    statPoints: withStatPoints(
-                      value.statPoints,
-                      stat,
-                      Number(event.target.value),
-                    ),
-                  })
-                }
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </fieldset>
 
