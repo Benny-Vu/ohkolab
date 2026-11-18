@@ -486,26 +486,14 @@ export function ProfilePage() {
       description={auth.profile ? `@${auth.profile.username}` : undefined}
       width="narrow"
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          {auth.profile ? (
-            <Button variant="ghost" size="sm" asChild>
-              <Link to={`/u/${auth.profile.username}`}>
-                <ExternalLinkIcon />
-                Public page
-              </Link>
-            </Button>
-          ) : null}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              void auth.refreshProfile();
-            }}
-          >
-            <RefreshCwIcon />
-            Refresh
+        auth.profile ? (
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/u/${auth.profile.username}`}>
+              <ExternalLinkIcon />
+              Public page
+            </Link>
           </Button>
-        </div>
+        ) : undefined
       }
     >
       {auth.profile ? (

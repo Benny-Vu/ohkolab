@@ -1,13 +1,6 @@
 import { PokemonIcon } from "@/components/pokemon-sprite";
+import { StatBar } from "@/components/stat-bar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { formatShare } from "@/lib/metagame/format";
 import { speedTiers, type SpeedTier } from "@/lib/metagame/speed-tiers";
 import type { PokemonUsage } from "@/lib/metagame/types";
@@ -28,6 +21,54 @@ function SpeedTierNotes({ tier }: { tier: SpeedTier }) {
   );
 }
 
+/** One species in the tier list: header row plus a bar per common speed. */
+function SpeedTierRow({ tier }: { tier: SpeedTier }) {
+  return (
+    <li className="space-y-2 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+        <div className="flex min-w-0 items-center gap-2">
+          <PokemonIcon species={tier.species} className="size-6 shrink-0" />
+          <span className="min-w-0 truncate font-medium">{tier.species}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <SpeedTierNotes tier={tier} />
+          <span className="text-xs tabular-nums text-muted-foreground">
+            Max {tier.maxSpeed} · Min {tier.minSpeed}
+          </span>
+        </div>
+      </div>
+      {tier.entries.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No spread data.</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {tier.entries.map((entry, index) => (
+            <li
+              key={`${tier.species}-${entry.speed}-${index}`}
+              className="flex items-center gap-2"
+            >
+              <span className="w-14 shrink-0 text-xs text-muted-foreground">
+                {entry.nature}
+              </span>
+              <span className="w-10 shrink-0 text-sm font-medium tabular-nums">
+                {entry.speed}
+              </span>
+              <StatBar
+                value={entry.share * 100}
+                max={100}
+                tone="accent"
+                className="min-w-8 flex-1"
+              />
+              <span className="w-12 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                {formatShare(entry.share)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
 export function SpeedTiersSection({ pokemon }: { pokemon: PokemonUsage[] }) {
   const tiers = speedTiers(pokemon);
   return (
@@ -38,55 +79,11 @@ export function SpeedTiersSection({ pokemon }: { pokemon: PokemonUsage[] }) {
           No speed tier data for this snapshot.
         </p>
       ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pokémon</TableHead>
-                <TableHead>Common speeds</TableHead>
-                <TableHead className="text-right">Max</TableHead>
-                <TableHead className="text-right">Min</TableHead>
-                <TableHead>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tiers.map((tier) => (
-                <TableRow key={tier.species}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <PokemonIcon species={tier.species} className="size-6" />
-                      <span className="min-w-0 font-medium">
-                        {tier.species}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                      {tier.entries.map((entry, index) => (
-                        <span
-                          key={`${tier.species}-${entry.speed}-${index}`}
-                          className="text-sm tabular-nums"
-                        >
-                          {entry.nature} {entry.speed} (
-                          {formatShare(entry.share)})
-                        </span>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {tier.maxSpeed}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {tier.minSpeed}
-                  </TableCell>
-                  <TableCell>
-                    <SpeedTierNotes tier={tier} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ol className="space-y-1.5">
+          {tiers.map((tier) => (
+            <SpeedTierRow key={tier.species} tier={tier} />
+          ))}
+        </ol>
       )}
     </section>
   );

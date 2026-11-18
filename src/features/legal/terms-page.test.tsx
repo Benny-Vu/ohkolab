@@ -48,12 +48,27 @@ describe("TermsPage", () => {
     renderTermsPage();
 
     const emailLinks = screen.getAllByRole("link", { name: CONTACT_EMAIL });
-    expect(emailLinks).toHaveLength(2);
+    expect(emailLinks).toHaveLength(3);
     for (const link of emailLinks) {
       expect(link).toHaveAttribute("href", `mailto:${CONTACT_EMAIL}`);
     }
     expect(
       screen.getByRole("link", { name: "privacy policy" }),
     ).toHaveAttribute("href", "/privacy");
+  });
+
+  it("names the operator and offers a table of contents", () => {
+    renderTermsPage();
+
+    expect(screen.getByText(/Vu Forge \(Benny Vu\)/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Who runs OHKOLab" }),
+    ).toBeInTheDocument();
+
+    const toc = screen.getByRole("navigation", { name: "On this page" });
+    expect(toc).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Acceptable use" }).getAttribute("href"),
+    ).toBe("#acceptable-use");
   });
 });

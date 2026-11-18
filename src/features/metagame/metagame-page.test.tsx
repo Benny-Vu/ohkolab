@@ -46,6 +46,7 @@ function renderMetagame() {
     [
       { path: "/meta", element: <MetagamePage /> },
       { path: "/calc", element: <CalcStub /> },
+      { path: "/teams/:teamId", element: <div data-testid="team-stub" /> },
     ],
     { initialEntries: ["/meta"] },
   );
@@ -124,9 +125,9 @@ describe("MetagamePage", () => {
     renderMetagame();
     await screen.findByText(/rating 1630\+/);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Singles" }));
+    await user.click(screen.getByRole("radio", { name: "Singles" }));
     expect(
-      await screen.findByText("No data for this format yet."),
+      await screen.findByText("No data for this format yet"),
     ).toBeInTheDocument();
   });
 
@@ -170,7 +171,7 @@ describe("MetagamePage", () => {
     renderMetagame();
     await screen.findByText(/rating 1630\+/);
     await user.click(screen.getByRole("button", { name: /Sneasler/ }));
-    await user.click(screen.getByRole("button", { name: "Use this set" }));
+    await user.click(screen.getByRole("button", { name: "Open in calc" }));
     await waitFor(() => {
       expect(screen.getByTestId("calc-stub")).toHaveTextContent("Sneasler");
     });
@@ -191,7 +192,7 @@ describe("MetagamePage", () => {
     mockFetch();
     renderMetagame();
     await screen.findByText(/rating 1630\+/);
-    await user.click(screen.getByRole("button", { name: "Singles" }));
+    await user.click(screen.getByRole("radio", { name: "Singles" }));
     expect(await screen.findByText(/87,848 battles/)).toBeInTheDocument();
     expect(screen.getAllByText("September 2026").length).toBeGreaterThan(0);
   });
@@ -213,23 +214,57 @@ describe("MetagamePage", () => {
     mockFetch();
     renderMetagame();
     await screen.findByText(/rating 1630\+/);
-    expect(screen.getByRole("button", { name: "Doubles" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Doubles" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
-    expect(screen.getByRole("button", { name: "Singles" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Singles" })).toHaveAttribute(
+      "aria-checked",
       "false",
     );
-    await user.click(screen.getByRole("button", { name: "Singles" }));
+    await user.click(screen.getByRole("radio", { name: "Singles" }));
     await screen.findByText(/87,848 battles/);
-    expect(screen.getByRole("button", { name: "Singles" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Singles" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
-    expect(screen.getByRole("button", { name: "Doubles" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Doubles" })).toHaveAttribute(
+      "aria-checked",
       "false",
     );
+  });
+
+  it("sorts the ranking table by name", async () => {
+    const user = userEvent.setup();
+    mockFetch();
+    renderMetagame();
+    await screen.findByText(/rating 1630\+/);
+    await user.click(screen.getByRole("button", { name: "Pokémon" }));
+    const rows = screen.getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("Archaludon");
+  });
+
+  it("filters the ranking table by search", async () => {
+    const user = userEvent.setup();
+    mockFetch();
+    renderMetagame();
+    await screen.findByText(/rating 1630\+/);
+    await user.type(screen.getByLabelText("Search Pokémon"), "sneas");
+    expect(
+      screen.getByRole("button", { name: /Sneasler/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Archaludon/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("adds a usage set to a new team", async () => {
+    const user = userEvent.setup();
+    mockFetch();
+    renderMetagame();
+    await screen.findByText(/rating 1630\+/);
+    await user.click(screen.getByRole("button", { name: /Sneasler/ }));
+    await user.click(screen.getByRole("button", { name: "Add to a team" }));
+    expect(await screen.findByTestId("team-stub")).toBeInTheDocument();
   });
 });

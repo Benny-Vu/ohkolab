@@ -13,12 +13,12 @@ beforeEach(() => {
 describe("FormatToggle", () => {
   it("marks the active choice", () => {
     render(<FormatToggle />);
-    expect(screen.getByRole("button", { name: "Doubles" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Doubles" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
-    expect(screen.getByRole("button", { name: "Singles" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Singles" })).toHaveAttribute(
+      "aria-checked",
       "false",
     );
   });
@@ -26,14 +26,14 @@ describe("FormatToggle", () => {
   it("follows the selection", async () => {
     const user = userEvent.setup();
     render(<FormatToggle />);
-    await user.click(screen.getByRole("button", { name: "Singles" }));
+    await user.click(screen.getByRole("radio", { name: "Singles" }));
     expect(getBattleFormat()).toBe("singles");
-    expect(screen.getByRole("button", { name: "Singles" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Singles" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
-    expect(screen.getByRole("button", { name: "Doubles" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Doubles" })).toHaveAttribute(
+      "aria-checked",
       "false",
     );
   });
@@ -41,10 +41,10 @@ describe("FormatToggle", () => {
   it("keeps the active choice when pressed again", async () => {
     const user = userEvent.setup();
     render(<FormatToggle />);
-    await user.click(screen.getByRole("button", { name: "Doubles" }));
+    await user.click(screen.getByRole("radio", { name: "Doubles" }));
     expect(getBattleFormat()).toBe("doubles");
-    expect(screen.getByRole("button", { name: "Doubles" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Doubles" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
   });
