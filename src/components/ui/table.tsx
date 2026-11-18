@@ -1,15 +1,34 @@
 import * as React from "react";
 import { cn } from "cn";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+function Table({
+  className,
+  density = "medium",
+  stickyHeader = false,
+  ...props
+}: React.ComponentProps<"table"> & {
+  density?: "dense" | "medium";
+  stickyHeader?: boolean;
+}) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className={cn(
+        "relative w-full overflow-x-auto",
+        stickyHeader && "max-h-full overflow-y-auto",
+        className,
+      )}
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        data-density={density}
+        className={cn(
+          "w-full caption-bottom text-sm",
+          density === "dense" && "[&_th]:h-8 [&_td]:py-1",
+          stickyHeader &&
+            "[&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-background",
+          className,
+        )}
         {...props}
       />
     </div>
@@ -67,7 +86,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
+        "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-muted-foreground text-xs [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}

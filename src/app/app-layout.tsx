@@ -4,24 +4,13 @@ import { Link, NavLink, Outlet, ScrollRestoration } from "react-router";
 import { AccountMenu } from "@/app/account-menu";
 import { NAV_ITEMS } from "@/app/nav-items";
 import { usePageTitle, usePageView } from "@/app/page-title";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { SearchPalette } from "@/app/search-palette";
+import { Wordmark } from "@/components/wordmark";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import { cn } from "@/lib/utils";
 
-function Wordmark() {
-  return (
-    <Link
-      to="/"
-      className="text-lg font-bold tracking-tight"
-      aria-label="OHKOLab home"
-    >
-      <span className="text-primary">OHKO</span>Lab
-    </Link>
-  );
-}
-
-/** App frame: header with desktop navigation, page content, phone tab bar. */
+/** App frame: desktop header, page content, phone top bar and tab bar. */
 export function AppLayout() {
   usePageTitle();
   usePageView();
@@ -30,18 +19,21 @@ export function AppLayout() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-40 border-b bg-background/90 pt-safe backdrop-blur">
-        <div className="mx-auto flex h-12 w-full max-w-7xl items-center gap-6 px-4 sm:px-6">
-          <Wordmark />
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6">
+          <Link to="/" aria-label="OHKOLab home">
+            <Wordmark />
+          </Link>
           <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.filter((item) => item.to !== "/profile").map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-                    isActive && "bg-accent text-foreground",
+                    "relative px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-150 ease-out outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+                    isActive &&
+                      "text-foreground after:absolute after:inset-x-3 after:-bottom-[13px] after:h-0.5 after:bg-accent-brand",
                   )
                 }
               >
@@ -50,14 +42,14 @@ export function AppLayout() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-1">
+            <SearchPalette />
             <NotificationBell />
-            <ThemeToggle />
             <AccountMenu variant="header" />
           </div>
         </div>
       </header>
 
-      <main className="flex-1 pb-16 md:pb-0">
+      <main className="flex-1 pb-14 md:pb-0">
         <Outlet />
       </main>
 
@@ -81,6 +73,9 @@ export function AppLayout() {
             Send feedback
           </button>
         </p>
+        <p className="mt-2">
+          OHKOLab is made by <span className="font-medium">Vu Forge</span>
+        </p>
       </footer>
 
       <nav
@@ -95,8 +90,9 @@ export function AppLayout() {
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    "flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground",
-                    isActive && "text-primary",
+                    "relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground",
+                    isActive &&
+                      "text-foreground before:absolute before:top-0 before:h-0.5 before:w-8 before:bg-accent-brand",
                   )
                 }
               >

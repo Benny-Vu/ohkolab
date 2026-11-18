@@ -14,6 +14,7 @@ import { moderationRoutes } from "@/features/moderation/routes";
 import { notificationRoutes } from "@/features/notifications/routes";
 import { postRoutes } from "@/features/post/routes";
 import { profileRoutes } from "@/features/profile/routes";
+import { styleguideRoutes } from "@/features/styleguide/routes";
 import { teamBuilderRoutes } from "@/features/team-builder/routes";
 
 /**
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
           ...notificationRoutes,
           ...moderationRoutes,
           ...groupsRoutes,
+          ...styleguideRoutes,
           { path: "*", element: <NotFoundPage /> },
         ],
       },

@@ -12,11 +12,14 @@ describe("AppLayout", () => {
     const navs = screen.getAllByRole("navigation", { name: "Main" });
     expect(navs).toHaveLength(2);
     const header = navs[0]!;
-    for (const item of NAV_ITEMS) {
+    for (const item of NAV_ITEMS.filter((item) => item.to !== "/profile")) {
       expect(
         within(header).getByRole("link", { name: item.label }),
       ).toHaveAttribute("href", item.to);
     }
+    expect(
+      within(header).queryByRole("link", { name: "Profile" }),
+    ).not.toBeInTheDocument();
     expect(
       within(screen.getByRole("banner")).getByRole("link", {
         name: "Notifications",
