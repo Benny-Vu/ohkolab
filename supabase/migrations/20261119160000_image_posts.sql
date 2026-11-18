@@ -261,25 +261,14 @@ end;
 $$;
 
 -- Public bucket: approved images, served through img.ohkolab.com (the
--- Cloudflare Worker) and readable by anyone. Written only by the service
--- role (the screening Edge Function copies approved files here), so there
--- is no insert, update or delete policy for clients.
-
-do $$
-begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'approved post images are public'
-  ) then
-    create policy "approved post images are public"
-      on storage.objects
-      for select
-      to anon, authenticated
-      using (bucket_id = 'post-images');
-  end if;
-end;
-$$;
+-- Cloudflare Worker) and readable by anyone at their public URL. Written only
+-- by the service role (the screening Edge Function copies approved files
+-- here), so there is no insert, update or delete policy for clients.
+--
+-- Deliberately no SELECT policy either: a public bucket serves downloads by
+-- URL without one, and a SELECT policy would also let anyone *list* the
+-- bucket, enumerating every image path (which contains user and post ids).
+-- The app never lists it; it renders img.ohkolab.com URLs from post_images.
 
 -- Quarantine bucket: rejected images and images of removed posts, moved
 -- here by the Edge Function. Readable only by moderators; written only by
