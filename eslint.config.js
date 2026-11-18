@@ -16,7 +16,10 @@ const pokemonLibraries = {
 };
 
 export default defineConfig([
-  globalIgnores(["dist", ".claude"]),
+  // supabase/functions is Deno code (Deno globals, URL imports) with its own
+  // linter; the browser config here would fail on it. The pure _shared
+  // modules are still exercised by Vitest.
+  globalIgnores(["dist", ".claude", "supabase/functions"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
