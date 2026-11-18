@@ -1,13 +1,6 @@
 import type { ReactNode } from "react";
 
-import type { SideId } from "@/lib/calc/state";
 import { cn } from "@/lib/utils";
-
-/** The calculator's own names for the two sides. */
-export const CALC_SIDE_LABELS: Record<SideId, string> = {
-  p1: "Attacker",
-  p2: "Defender",
-};
 
 interface PanelProps {
   /** Id of the heading inside the panel that names it. */

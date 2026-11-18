@@ -6,7 +6,8 @@ import { PokemonEditor } from "@/components/pokemon-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { CALC_SIDE_LABELS, Panel, PanelTitle } from "@/features/calc/panel";
+import { CALC_SIDE_LABELS } from "@/features/calc/side-labels";
+import { Panel, PanelTitle } from "@/features/calc/panel";
 import {
   MAX_HP_PERCENT,
   MAX_STAGE,

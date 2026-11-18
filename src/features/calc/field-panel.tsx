@@ -10,7 +10,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { CALC_SIDE_LABELS, Panel, PanelTitle } from "@/features/calc/panel";
+import { CALC_SIDE_LABELS } from "@/features/calc/side-labels";
+import { Panel, PanelTitle } from "@/features/calc/panel";
 import {
   SIDE_IDS,
   type CalcAction,
@@ -150,10 +151,7 @@ function ConditionRows({
       {flags.map(({ flag, label: flagLabel }) => (
         <div key={flag} className="flex items-center justify-between gap-2">
           <span
-            className={cn(
-              "text-sm",
-              disabled && "text-muted-foreground/60",
-            )}
+            className={cn("text-sm", disabled && "text-muted-foreground/60")}
           >
             {flagLabel}
           </span>
@@ -215,11 +213,7 @@ interface SideConditionsProps {
 }
 
 /** One side's screens, support and entry hazards. */
-function SideConditions({
-  side,
-  conditions,
-  dispatch,
-}: SideConditionsProps) {
+function SideConditions({ side, conditions, dispatch }: SideConditionsProps) {
   return (
     <div className="grid gap-1.5">
       <span className="text-xs font-medium text-muted-foreground">
@@ -412,4 +406,3 @@ export function FieldPanel({ state, dispatch }: FieldPanelProps) {
     </Panel>
   );
 }
-
