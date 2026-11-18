@@ -207,4 +207,26 @@ describe("PokemonEditor", () => {
 
     expect(screen.getByText("No move found.")).toBeInTheDocument();
   });
+
+  it("stacks the item and ability rows on narrow screens", () => {
+    renderEditor();
+
+    const grid = screen
+      .getByRole("combobox", { name: "Item" })
+      .closest("div.grid");
+    expect(grid).not.toBeNull();
+    expect(grid).toHaveClass("grid-cols-1", "sm:grid-cols-2");
+
+    const nature = screen.getByRole("combobox", { name: "Nature" });
+    expect(nature.closest("label")).toHaveClass("sm:col-span-2");
+  });
+
+  it("puts each stat stepper on its own row on narrow screens", () => {
+    renderEditor();
+
+    const stepper = screen.getByRole("button", { name: "Increase HP" });
+    const row = stepper.closest("div.grid");
+    expect(row).not.toBeNull();
+    expect(row).toHaveClass("grid-cols-1", "sm:grid-cols-[minmax(0,1fr)_auto]");
+  });
 });

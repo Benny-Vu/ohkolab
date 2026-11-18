@@ -79,7 +79,7 @@ export function PokemonEditor({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <label
           className="grid gap-1 text-xs text-muted-foreground"
           htmlFor={`${id}-item`}
@@ -105,7 +105,7 @@ export function PokemonEditor({
           />
         </label>
         <label
-          className="col-span-2 grid gap-1 text-xs text-muted-foreground"
+          className="grid gap-1 text-xs text-muted-foreground sm:col-span-2"
           htmlFor={`${id}-nature`}
         >
           Nature
@@ -135,7 +135,7 @@ export function PokemonEditor({
             return (
               <div
                 key={stat}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"
+                className="grid grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-2"
               >
                 <div className="grid min-w-0 gap-1">
                   <div className="flex items-baseline justify-between gap-1">

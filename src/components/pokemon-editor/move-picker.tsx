@@ -220,7 +220,7 @@ export function MovePicker({
                 className="w-15 min-w-0 shrink-0 px-0 text-[10px]"
               />
             ) : null}
-            <span className="min-w-0 flex-1 text-left">
+            <span className="min-w-0 flex-1 truncate text-left">
               {known?.name ?? value}
             </span>
             {known && known.basePower > 0 ? (

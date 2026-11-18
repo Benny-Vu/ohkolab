@@ -145,6 +145,35 @@ describe("CalcPage", () => {
     expect(bar).toHaveTextContent("%");
   });
 
+  it("shortens the KO label in the sticky bar but not in the results", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    const bar = screen.getByRole("button", { name: /Earthquake/ });
+    expect(bar).toHaveTextContent("2HKO");
+    expect(bar).not.toHaveTextContent("GUARANTEED");
+
+    const dialog = await openResults(user);
+    expect(dialog.getByText("GUARANTEED 2HKO")).toBeInTheDocument();
+  });
+
+  it("flips the speed verdict under Trick Room", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    const dialog = await openResults(user);
+    expect(dialog.getByText("Garchomp moves first")).toBeInTheDocument();
+
+    await user.click(dialog.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("radio", { name: "Field" }));
+    await user.click(screen.getByRole("button", { name: "More conditions" }));
+    await user.click(screen.getByRole("switch", { name: "Trick Room" }));
+
+    const reopened = await openResults(user);
+    expect(reopened.getByText("Incineroar moves first")).toBeInTheDocument();
+    expect(reopened.getByText("Trick Room")).toBeInTheDocument();
+  });
+
   it("renders full move names without truncation", async () => {
     const user = userEvent.setup();
     renderCalc();

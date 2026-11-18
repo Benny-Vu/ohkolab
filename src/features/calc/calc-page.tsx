@@ -77,6 +77,7 @@ function StickyResultBar({
   const result = selection?.outcome.result ?? null;
   const summary = selection ? outcomeSummary(selection.outcome) : null;
   const ko = summary ? koResultOf(summary) : null;
+  const shortKo = ko === "GUARANTEED 2HKO" ? "2HKO" : ko;
 
   return (
     <Sheet>
@@ -89,13 +90,13 @@ function StickyResultBar({
             <>
               <span className="flex items-center justify-between gap-3">
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className="min-w-0 text-sm font-medium">
+                  <span className="min-w-0 truncate text-sm font-medium">
                     {selection.outcome.move}
                   </span>
-                  {ko ? (
-                    <KoLabel result={ko} />
+                  {shortKo ? (
+                    <KoLabel className="shrink-0" result={shortKo} />
                   ) : (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="shrink-0 text-xs text-muted-foreground">
                       {summary}
                     </span>
                   )}

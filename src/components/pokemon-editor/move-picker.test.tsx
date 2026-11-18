@@ -9,6 +9,7 @@ describe("MovePicker", () => {
     render(<MovePicker value="Earthquake" onChange={() => undefined} />);
 
     expect(screen.getByText("Earthquake")).toBeInTheDocument();
+    expect(screen.getByText("Earthquake")).toHaveClass("truncate");
   });
 
   it("picks a move without a species", async () => {
