@@ -35,6 +35,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { UserAvatar } from "@/components/user-avatar";
+import { DamageMeter } from "@/components/damage-meter";
+import { KoLabel } from "@/components/ko-label";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useTeams } from "@/lib/team";
 import {
@@ -48,7 +50,11 @@ import { useIsModerator } from "@/lib/social/queries";
 import { POST_BODY_MAX } from "@/lib/social/validation";
 import type { FeedPostRow } from "@/lib/database.types";
 import { formatRelativeTime } from "@/features/feed/relative-time";
-import { parseTeamAttachment } from "@/features/feed/attachment";
+import {
+  parseCalcResultAttachment,
+  parseTeamAttachment,
+} from "@/features/feed/attachment";
+import { koResultOf } from "@/features/calc/ko-result";
 import { ReportDialog } from "@/features/feed/report-dialog";
 
 interface PostCardProps {
@@ -88,7 +94,8 @@ export function PostCard({
   const [removeReason, setRemoveReason] = useState("");
 
   const isOwn = user?.id === post.author_id;
-  const attachment = parseTeamAttachment(post.attachment);
+  const team = parseTeamAttachment(post.attachment);
+  const calcResult = parseCalcResultAttachment(post.attachment);
   const liked = post.liked_by_me === true;
   const displayName = post.author_display_name ?? post.author_username;
   const showHandle =
@@ -101,18 +108,18 @@ export function PostCard({
   }
 
   async function handleCopyTeam() {
-    if (!attachment) return;
-    const team = create({
-      name: attachment.name,
-      format: attachment.format,
-      members: attachment.members,
+    if (!team) return;
+    const created = create({
+      name: team.name,
+      format: team.format,
+      members: team.members,
     });
-    toast.success(`Copied "${team.name}" to your teams.`);
+    toast.success(`Copied "${created.name}" to your teams.`);
   }
 
   function handleOpenInCalc() {
-    if (!attachment) return;
-    navigate("/calc", { state: { attacker: attachment.members[0] } });
+    if (!team) return;
+    navigate("/calc", { state: { attacker: team.members[0] } });
   }
 
   async function handleUpdate() {
@@ -231,16 +238,16 @@ export function PostCard({
             <p className="mt-1 whitespace-pre-wrap break-words">{post.body}</p>
           )}
 
-          {attachment && (
+          {team && (
             <div className="mt-3 rounded-md border bg-surface-sunken p-3">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">{attachment.name}</p>
+                <p className="text-sm font-medium">{team.name}</p>
                 <span className="text-xs text-muted-foreground capitalize">
-                  {attachment.format}
+                  {team.format}
                 </span>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {attachment.members.map((member, index) => (
+                {team.members.map((member, index) => (
                   <PokemonIcon
                     key={`${member.species}-${index}`}
                     species={member.species}
@@ -258,6 +265,44 @@ export function PostCard({
                   Open in calc
                 </Button>
               </div>
+            </div>
+          )}
+
+          {calcResult && (
+            <div className="mt-3 rounded-md border bg-surface-sunken p-3">
+              <div className="flex items-center gap-2">
+                <p className="min-w-0 truncate text-sm font-medium">
+                  {calcResult.attacker} vs {calcResult.defender}
+                </p>
+                {(() => {
+                  const ko = koResultOf(calcResult.koText);
+                  return ko ? (
+                    <KoLabel className="ml-auto shrink-0" result={ko} />
+                  ) : (
+                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                      {calcResult.koText}
+                    </span>
+                  );
+                })()}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="text-sm font-medium">{calcResult.move}</span>
+                <span className="font-heading text-lg font-semibold tabular-nums">
+                  {calcResult.minPercent === calcResult.maxPercent
+                    ? `${calcResult.maxPercent}%`
+                    : `${calcResult.minPercent} - ${calcResult.maxPercent}%`}
+                </span>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {calcResult.min}-{calcResult.max} damage
+                </span>
+              </div>
+              <DamageMeter
+                className="mt-2"
+                minPercent={calcResult.minPercent}
+                maxPercent={calcResult.maxPercent}
+                hpPercent={100}
+                size="sm"
+              />
             </div>
           )}
         </div>

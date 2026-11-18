@@ -212,6 +212,53 @@ describe("PostCard", () => {
     expect(stored.teams[0]!.name).toBe("Champion team");
   });
 
+  it("shows the calc result attachment with range, KO label and meter", () => {
+    const attachment = {
+      kind: "calc-result",
+      attacker: "Garchomp",
+      defender: "Onix",
+      move: "Earthquake",
+      min: 102,
+      max: 120,
+      minPercent: 48.6,
+      maxPercent: 57.1,
+      defenderMaxHp: 210,
+      rolls: [102, 105, 108, 112, 115, 120],
+      description: "Garchomp Earthquake vs. Onix",
+      koText: "guaranteed 2HKO",
+    };
+    renderCard(postRow({ attachment }));
+
+    expect(screen.getByText("Garchomp vs Onix")).toBeInTheDocument();
+    expect(screen.getByText("Earthquake")).toBeInTheDocument();
+    expect(screen.getByText("48.6 - 57.1%")).toBeInTheDocument();
+    expect(screen.getByText("102-120 damage")).toBeInTheDocument();
+    expect(screen.getByText("GUARANTEED 2HKO")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: /HP left after the hit/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the raw KO text when it is not a plain KO summary", () => {
+    const attachment = {
+      kind: "calc-result",
+      attacker: "Garchomp",
+      defender: "Onix",
+      move: "Earthquake",
+      min: 12,
+      max: 14,
+      minPercent: 5.7,
+      maxPercent: 6.7,
+      defenderMaxHp: 210,
+      rolls: [12, 13, 14],
+      description: "Garchomp Earthquake vs. Onix",
+      koText: "not a KO",
+    };
+    renderCard(postRow({ attachment }));
+
+    expect(screen.getByText("not a KO")).toBeInTheDocument();
+  });
+
   it("edits an own post through the overflow menu", async () => {
     const user = userEvent.setup();
     const mutateAsync = vi.fn(async () => ({ ok: true, data: undefined }));

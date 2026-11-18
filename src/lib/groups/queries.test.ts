@@ -11,6 +11,7 @@ import {
   useMyGroupMembership,
   useMyGroups,
   usePublicGroups,
+  useUserGroups,
 } from "@/lib/groups/queries";
 
 import {
@@ -165,6 +166,69 @@ describe("useMyGroups", () => {
 
     expect(result.current.data).toEqual([]);
     expect(recordsOn(fake, "groups").length).toBe(0);
+  });
+});
+
+describe("useUserGroups", () => {
+  it("joins a user's active memberships to their groups", async () => {
+    const fake = createFakeClient({
+      resolve: (record) => {
+        if (record.table === "group_members") {
+          return {
+            data: [
+              groupMemberRow({ groupId: "g1", userId: "user-2" }),
+              groupMemberRow({ groupId: "g2", userId: "user-2" }),
+            ],
+          };
+        }
+        if (record.table === "groups") {
+          return {
+            data: [
+              groupRow({ id: "g2", slug: "beta", name: "Beta" }),
+              groupRow({ id: "g1", slug: "alpha", name: "Alpha" }),
+            ],
+          };
+        }
+        return { data: [], error: null };
+      },
+    });
+    const { result } = renderHook(() => useUserGroups("user-2", fake.client), {
+      wrapper: createWrapper(queryClient, GUEST_AUTH),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.map((group) => group.slug)).toEqual([
+      "beta",
+      "alpha",
+    ]);
+    const memberRecord = recordsOn(fake, "group_members")[0];
+    expect(memberRecord?.eqFilters).toContainEqual(["user_id", "user-2"]);
+    expect(memberRecord?.eqFilters).toContainEqual(["status", "active"]);
+    const groupRecord = recordsOn(fake, "groups")[0];
+    expect(groupRecord?.inFilters).toContainEqual(["id", ["g1", "g2"]]);
+  });
+
+  it("returns nothing when the user has no active memberships", async () => {
+    const fake = createFakeClient({ tables: { group_members: { data: [] } } });
+    const { result } = renderHook(() => useUserGroups("user-2", fake.client), {
+      wrapper: createWrapper(queryClient, GUEST_AUTH),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toEqual([]);
+    expect(recordsOn(fake, "groups").length).toBe(0);
+  });
+
+  it("stays idle for an empty user id", async () => {
+    const fake = createFakeClient();
+    const { result } = renderHook(() => useUserGroups("", fake.client), {
+      wrapper: createWrapper(queryClient, GUEST_AUTH),
+    });
+
+    expect(result.current.data).toBeUndefined();
+    expect(fake.records.length).toBe(0);
   });
 });
 
