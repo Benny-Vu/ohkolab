@@ -252,4 +252,23 @@ describe("CalcPage in Japanese", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("ダブル専用")).toBeInTheDocument();
   });
+
+  it("renders the speed verdict and its modifier words in Japanese", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    const dialog = await openResults(user);
+    expect(dialog.getByText("Garchompが先に動きます")).toBeInTheDocument();
+
+    await user.click(dialog.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("radio", { name: "フィールド" }));
+    await user.click(screen.getByRole("switch", { name: "攻撃側 Tailwind" }));
+    await user.click(screen.getByRole("button", { name: "その他の条件" }));
+    await user.click(screen.getByRole("switch", { name: "Trick Room" }));
+
+    const reopened = await openResults(user);
+    expect(reopened.getByText(/Garchomp 338 \(おいかぜ\)/)).toBeInTheDocument();
+    expect(reopened.getByText("Incineroarが先に動きます")).toBeInTheDocument();
+    expect(reopened.getByText("トリックルーム")).toBeInTheDocument();
+  });
 });

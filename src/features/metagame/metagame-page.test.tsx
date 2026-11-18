@@ -306,6 +306,7 @@ describe("MetagamePage in Japanese", () => {
     expect(screen.getByRole("heading", { name: "環境" })).toBeInTheDocument();
     expect(screen.getByText("使用率ランキング")).toBeInTheDocument();
     expect(screen.getByText("レギュレーション")).toBeInTheDocument();
+    expect(screen.getByText(/レーティング1630以上/)).toBeInTheDocument();
     expect(await screen.findByText("素早さライン")).toBeInTheDocument();
   });
 

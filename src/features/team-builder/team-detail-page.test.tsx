@@ -10,6 +10,7 @@ import { AuthContext, GUEST_AUTH } from "@/lib/auth/use-auth";
 import type { AuthContextValue } from "@/lib/auth/types";
 import type { TeamRow } from "@/lib/database.types";
 import { createDefaultSet } from "@/data";
+import { setLocale } from "@/lib/i18n/locale";
 import { setTeamsSyncClient } from "@/lib/team/active-store";
 import { createTeam } from "@/lib/team/team-ops";
 import { localTeamStore } from "@/lib/team/team-store";
@@ -233,5 +234,34 @@ describe("TeamDetailPage", () => {
     renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
 
     expect(screen.getByText("3 Pokémon weak to Ice, no resist")).toBeTruthy();
+  });
+});
+
+describe("TeamDetailPage in Japanese", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    setLocale("ja");
+  });
+
+  afterEach(() => {
+    setLocale("en");
+    setTeamsSyncClient(null);
+  });
+
+  it("renders the analysis warnings and weak spots in Japanese", async () => {
+    const team = createTeam({
+      format: "doubles",
+      members: [createDefaultSet("Garchomp"), createDefaultSet("Garchomp")],
+    });
+    localTeamStore.save(team);
+    renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
+
+    expect(
+      screen.getByText("Garchompが構築に2匹含まれています。"),
+    ).toBeTruthy();
+    // The type name arrives with the Japanese names chunk.
+    expect(
+      await screen.findByText("こおりに弱いポケモンが2匹（耐性なし）"),
+    ).toBeTruthy();
   });
 });
