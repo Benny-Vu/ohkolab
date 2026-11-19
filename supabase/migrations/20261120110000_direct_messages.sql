@@ -292,6 +292,10 @@ $$;
 
 revoke execute on function public.user_id_participates(uuid, uuid)
   from public, anon, authenticated;
+-- The read policies below call it on the reader's behalf, so the API
+-- role needs execute. It only returns a boolean.
+grant execute on function public.user_id_participates(uuid, uuid)
+  to authenticated;
 
 do $$
 begin

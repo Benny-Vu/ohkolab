@@ -283,6 +283,7 @@ jobs:
             select id into reported from public.messages
             where conversation_id = conv and body = 'rate 19';
             perform public.report_message(reported, 'harassment');
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_mod, 'role', 'authenticated')::text, true);
             if not exists (
               select 1 from public.message_reports
               where message_id = reported
@@ -290,13 +291,14 @@ jobs:
             ) then
               raise exception 'DM-CHECK: report snapshot missing or wrong size';
             end if;
-            perform set_config('request.jwt.claims', json_build_object('sub', dm_mod, 'role', 'authenticated')::text, true);
             if exists (select 1 from public.messages where conversation_id = conv) then
               raise exception 'DM-CHECK: moderator read unreported messages after a report';
             end if;
 
-            -- A blocked user cannot send. dm_b blocks dm_a; dm_a's next
+            -- A blocked user cannot send. dm_b blocks dm_a (as dm_b; the
+            -- blocks policy only allows blocking as yourself); dm_a's next
             -- message is rejected with the block message.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_b, 'role', 'authenticated')::text, true);
             insert into public.blocks (blocker_id, blocked_id) values (dm_b, dm_a);
             perform set_config('request.jwt.claims', json_build_object('sub', dm_a, 'role', 'authenticated')::text, true);
             begin
