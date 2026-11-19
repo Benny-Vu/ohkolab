@@ -153,6 +153,7 @@ function feedRow(partial: Partial<FeedPostRow> & { id: string }): FeedPostRow {
     like_count: 0,
     comment_count: 0,
     liked_by_me: false,
+    language: null,
     group_id: null,
     ...partial,
   };

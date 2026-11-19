@@ -18,6 +18,7 @@ import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { Picker } from "@/components/picker";
 import { UserAvatar } from "@/components/user-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -48,14 +49,18 @@ import { directMessagesEnabled } from "@/lib/messages/flag";
 import {
   BIO_MAX_LENGTH,
   DISPLAY_NAME_MAX_LENGTH,
+  LOOKING_FOR_MAX_LENGTH,
   usernameRules,
   normalizeOptionalText,
   normalizeUsername,
   validateBio,
   validateDisplayName,
+  validateLookingFor,
+  validateProfileUrl,
+  validateShowdownName,
   validateUsername,
 } from "@/lib/auth/validation";
-import type { AuthFailure, Profile } from "@/lib/auth/types";
+import type { AuthFailure, MainFormat, Profile } from "@/lib/auth/types";
 import { LanguageSwitch } from "@/components/language-switch";
 import { BirthDateSettingsCard } from "@/features/account/birth-date-fields";
 import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
@@ -64,7 +69,18 @@ import { useProfilesByIds } from "@/features/profile/profile-queries";
 import { socialAvailability, useBlocks, useToggleBlock } from "@/lib/social";
 
 type ProfileFieldErrors = Partial<
-  Record<"username" | "displayName" | "bio" | "avatarSpecies", string>
+  Record<
+    | "username"
+    | "displayName"
+    | "bio"
+    | "avatarSpecies"
+    | "favouriteSpecies"
+    | "lookingFor"
+    | "youtubeUrl"
+    | "twitchUrl"
+    | "showdownName",
+    string
+  >
 >;
 
 // The species picker pulls the full dex; keep it out of the /profile route
@@ -150,6 +166,16 @@ function ProfileEditor({ profile }: { profile: Profile }) {
   const [displayName, setDisplayName] = useState(profile.displayName ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [avatarSpecies, setAvatarSpecies] = useState(profile.avatarSpecies);
+  const [favouriteSpecies, setFavouriteSpecies] = useState(
+    profile.favouriteSpecies,
+  );
+  const [mainFormat, setMainFormat] = useState<MainFormat | null>(
+    profile.mainFormat,
+  );
+  const [lookingFor, setLookingFor] = useState(profile.lookingFor ?? "");
+  const [youtubeUrl, setYoutubeUrl] = useState(profile.youtubeUrl ?? "");
+  const [twitchUrl, setTwitchUrl] = useState(profile.twitchUrl ?? "");
+  const [showdownName, setShowdownName] = useState(profile.showdownName ?? "");
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
   const [formError, setFormError] = useState<AuthFailure | null>(null);
   const [pending, setPending] = useState<"save" | "signOut" | "delete" | null>(
@@ -172,9 +198,21 @@ function ProfileEditor({ profile }: { profile: Profile }) {
     if (displayNameError) errors.displayName = displayNameError;
     const bioError = validateBio(nextBio);
     if (bioError) errors.bio = bioError;
+    const nextLookingFor = normalizeOptionalText(lookingFor);
+    const lookingForError = validateLookingFor(nextLookingFor);
+    if (lookingForError) errors.lookingFor = lookingForError;
+    const nextYoutube = normalizeOptionalText(youtubeUrl);
+    const youtubeError = validateProfileUrl(nextYoutube);
+    if (youtubeError) errors.youtubeUrl = youtubeError;
+    const nextTwitch = normalizeOptionalText(twitchUrl);
+    const twitchError = validateProfileUrl(nextTwitch);
+    if (twitchError) errors.twitchUrl = twitchError;
+    const nextShowdown = normalizeOptionalText(showdownName);
+    const showdownError = validateShowdownName(nextShowdown);
+    if (showdownError) errors.showdownName = showdownError;
     setFieldErrors(errors);
     setFormError(null);
-    if (errors.username || errors.displayName || errors.bio) return;
+    if (Object.keys(errors).length > 0) return;
 
     setPending("save");
     const result = await auth.updateProfile({
@@ -182,6 +220,12 @@ function ProfileEditor({ profile }: { profile: Profile }) {
       displayName: nextDisplayName,
       avatarSpecies,
       bio: nextBio,
+      favouriteSpecies,
+      mainFormat,
+      lookingFor: nextLookingFor,
+      youtubeUrl: nextYoutube,
+      twitchUrl: nextTwitch,
+      showdownName: nextShowdown,
     });
     setPending(null);
     if (result.ok) {
@@ -325,6 +369,149 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   {t("profile.bioHint", { max: BIO_MAX_LENGTH })}
                 </p>
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="favourite-species">
+                  {t("profile.favouriteSpecies")}
+                </Label>
+                <Suspense fallback={<Skeleton className="h-8 w-full" />}>
+                  <SpeciesPicker
+                    id="favourite-species"
+                    value={favouriteSpecies}
+                    onChange={(species) => setFavouriteSpecies(species)}
+                    placeholder={t("pokemonEditor.chooseSpecies")}
+                  />
+                </Suspense>
+                <p className="text-xs text-muted-foreground">
+                  {t("profile.favouriteHint")}
+                </p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="main-format">
+                  {t("profile.mainFormatLabel")}
+                </Label>
+                <Picker
+                  id="main-format"
+                  aria-label={t("profile.mainFormatLabel")}
+                  value={mainFormat ?? ""}
+                  onValueChange={(value) =>
+                    setMainFormat(value === "" ? null : (value as MainFormat))
+                  }
+                  placeholder="—"
+                  searchPlaceholder={t("common.search")}
+                  emptyMessage={t("common.noResults")}
+                  options={[
+                    {
+                      value: "singles",
+                      label: t("profile.mainFormatSingles"),
+                    },
+                    {
+                      value: "doubles",
+                      label: t("profile.mainFormatDoubles"),
+                    },
+                    { value: "both", label: t("profile.mainFormatBoth") },
+                  ]}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="looking-for">
+                  {t("profile.lookingForLabel")}
+                </Label>
+                <Input
+                  id="looking-for"
+                  value={lookingFor}
+                  onChange={(event) => setLookingFor(event.target.value)}
+                  aria-invalid={fieldErrors.lookingFor ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.lookingFor ? "looking-for-error" : undefined
+                  }
+                />
+                {fieldErrors.lookingFor ? (
+                  <p
+                    id="looking-for-error"
+                    className="text-sm text-destructive"
+                    role="alert"
+                  >
+                    {fieldErrors.lookingFor}
+                  </p>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  {t("profile.lookingForHint", {
+                    max: LOOKING_FOR_MAX_LENGTH,
+                  })}
+                </p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="youtube-url">{t("profile.youtubeLabel")}</Label>
+                <Input
+                  id="youtube-url"
+                  type="url"
+                  inputMode="url"
+                  value={youtubeUrl}
+                  onChange={(event) => setYoutubeUrl(event.target.value)}
+                  aria-invalid={fieldErrors.youtubeUrl ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.youtubeUrl ? "youtube-url-error" : undefined
+                  }
+                />
+                {fieldErrors.youtubeUrl ? (
+                  <p
+                    id="youtube-url-error"
+                    className="text-sm text-destructive"
+                    role="alert"
+                  >
+                    {fieldErrors.youtubeUrl}
+                  </p>
+                ) : null}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="twitch-url">{t("profile.twitchLabel")}</Label>
+                <Input
+                  id="twitch-url"
+                  type="url"
+                  inputMode="url"
+                  value={twitchUrl}
+                  onChange={(event) => setTwitchUrl(event.target.value)}
+                  aria-invalid={fieldErrors.twitchUrl ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.twitchUrl ? "twitch-url-error" : undefined
+                  }
+                />
+                {fieldErrors.twitchUrl ? (
+                  <p
+                    id="twitch-url-error"
+                    className="text-sm text-destructive"
+                    role="alert"
+                  >
+                    {fieldErrors.twitchUrl}
+                  </p>
+                ) : null}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="showdown-name">
+                  {t("profile.showdownLabel")}
+                </Label>
+                <Input
+                  id="showdown-name"
+                  value={showdownName}
+                  onChange={(event) => setShowdownName(event.target.value)}
+                  aria-invalid={fieldErrors.showdownName ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.showdownName ? "showdown-name-error" : undefined
+                  }
+                />
+                {fieldErrors.showdownName ? (
+                  <p
+                    id="showdown-name-error"
+                    className="text-sm text-destructive"
+                    role="alert"
+                  >
+                    {fieldErrors.showdownName}
+                  </p>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  {t("profile.linksHint")}
+                </p>
+              </div>
               {formError ? (
                 <p
                   id="profile-form-error"
@@ -358,6 +545,12 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                     setDisplayName(profile.displayName ?? "");
                     setBio(profile.bio ?? "");
                     setAvatarSpecies(profile.avatarSpecies);
+                    setFavouriteSpecies(profile.favouriteSpecies);
+                    setMainFormat(profile.mainFormat);
+                    setLookingFor(profile.lookingFor ?? "");
+                    setYoutubeUrl(profile.youtubeUrl ?? "");
+                    setTwitchUrl(profile.twitchUrl ?? "");
+                    setShowdownName(profile.showdownName ?? "");
                     setFieldErrors({});
                     setFormError(null);
                   }}

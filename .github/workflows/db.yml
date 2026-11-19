@@ -630,6 +630,144 @@ jobs:
           $shape$;
           SQL
 
+      # Exercises the community wave (20261121200000): the new profile
+      # fields are public but only the owner writes them, URL and enum
+      # checks fire, and posts/groups accept and expose their tags.
+      - name: Community profile fields and tags
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+          values
+            ('d1d1d1d1-d1d1-4d1d-8d1d-d1d1d1d1d1d1', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'comm-a@example.com', 'x', now(), now()),
+            ('e2e2e2e2-e2e2-4e2e-8e2e-e2e2e2e2e2e2', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'comm-b@example.com', 'x', now(), now());
+          insert into public.profiles (id, username) values
+            ('d1d1d1d1-d1d1-4d1d-8d1d-d1d1d1d1d1d1', 'comm_a'),
+            ('e2e2e2e2-e2e2-4e2e-8e2e-e2e2e2e2e2e2', 'comm_b')
+          on conflict (id) do update set username = excluded.username;
+
+          do $comm$
+          declare
+            comm_a constant uuid := 'd1d1d1d1-d1d1-4d1d-8d1d-d1d1d1d1d1d1';
+            comm_b constant uuid := 'e2e2e2e2-e2e2-4e2e-8e2e-e2e2e2e2e2e2';
+          begin
+            set local role authenticated;
+
+            -- The owner fills in every new field.
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_a, 'role', 'authenticated')::text, true);
+            update public.profiles set
+              favourite_species = 'Garchomp',
+              main_format = 'doubles',
+              looking_for = 'practice partners',
+              youtube_url = 'https://youtube.com/@example',
+              twitch_url = 'https://twitch.tv/example',
+              showdown_name = 'example'
+            where id = comm_a;
+            if not exists (
+              select 1 from public.profiles
+              where id = comm_a
+                and favourite_species = 'Garchomp'
+                and main_format = 'doubles'
+                and looking_for = 'practice partners'
+                and youtube_url = 'https://youtube.com/@example'
+                and showdown_name = 'example'
+            ) then
+              raise exception 'COMM-CHECK: owner cannot write the new profile fields';
+            end if;
+
+            -- The enum and https checks fire.
+            begin
+              update public.profiles set main_format = 'triples' where id = comm_a;
+              raise exception 'COMM-CHECK: a bad main_format was accepted';
+            exception when check_violation then
+              null;
+            end;
+            begin
+              update public.profiles set youtube_url = 'http://insecure.example' where id = comm_a;
+              raise exception 'COMM-CHECK: a non-https link was accepted';
+            exception when check_violation then
+              null;
+            end;
+
+            -- Anyone reads the fields; nobody else writes them.
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_b, 'role', 'authenticated')::text, true);
+            if not exists (
+              select 1 from public.profiles
+              where id = comm_a and looking_for = 'practice partners'
+            ) then
+              raise exception 'COMM-CHECK: the new fields are not public';
+            end if;
+            update public.profiles set looking_for = 'hijacked' where id = comm_a;
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_a, 'role', 'authenticated')::text, true);
+            if exists (
+              select 1 from public.profiles
+              where id = comm_a and looking_for = 'hijacked'
+            ) then
+              raise exception 'COMM-CHECK: another user changed the profile fields';
+            end if;
+
+            -- Posts: the author tags a language, and only the author may
+            -- change it.
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_a, 'role', 'authenticated')::text, true);
+            insert into public.posts (author_id, body, language)
+            values (comm_a, 'community check', 'ja');
+            if not exists (
+              select 1 from public.posts
+              where author_id = comm_a and language = 'ja'
+            ) then
+              raise exception 'COMM-CHECK: the post language tag did not save';
+            end if;
+            begin
+              insert into public.posts (author_id, body, language)
+              values (comm_a, 'bad tag', 'fr');
+              raise exception 'COMM-CHECK: a bad post language was accepted';
+            exception when check_violation then
+              null;
+            end;
+            update public.posts set language = 'en' where author_id = comm_a;
+            if not exists (
+              select 1 from public.posts where author_id = comm_a and language = 'en'
+            ) then
+              raise exception 'COMM-CHECK: the author could not retag their post';
+            end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_b, 'role', 'authenticated')::text, true);
+            update public.posts set language = 'ja' where author_id = comm_a;
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_a, 'role', 'authenticated')::text, true);
+            if exists (
+              select 1 from public.posts where author_id = comm_a and language = 'ja'
+            ) then
+              raise exception 'COMM-CHECK: another user retagged the post';
+            end if;
+
+            -- Groups: the owner sets a category and language; the checks
+            -- fire; the tags are public.
+            insert into public.groups (slug, name, owner_id, category, language)
+            values ('community-check', 'Community check', comm_a, 'team_building', 'ja');
+            if not exists (
+              select 1 from public.groups
+              where slug = 'community-check'
+                and category = 'team_building' and language = 'ja'
+            ) then
+              raise exception 'COMM-CHECK: the group tags did not save';
+            end if;
+            begin
+              update public.groups set category = 'casual' where slug = 'community-check';
+              raise exception 'COMM-CHECK: a bad group category was accepted';
+            exception when check_violation then
+              null;
+            end;
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_b, 'role', 'authenticated')::text, true);
+            if not exists (
+              select 1 from public.groups
+              where slug = 'community-check' and category = 'team_building'
+            ) then
+              raise exception 'COMM-CHECK: the group tags are not public';
+            end if;
+          end;
+          $comm$;
+          SQL
+
       - name: Stop
         if: always()
         run: supabase stop --no-backup
