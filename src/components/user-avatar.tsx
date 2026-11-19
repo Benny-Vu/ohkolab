@@ -1,6 +1,17 @@
+import { lazy, Suspense } from "react";
+
 import { cn } from "@/lib/utils";
 
-import { PokemonSprite } from "@/components/pokemon-sprite";
+// The sprite component statically imports the display-name lookup, whose
+// data lives in the 2.3 MB Pokémon data chunk. Loading it lazily keeps that
+// chunk (and the sprite helpers) off the startup path: visitors who never see
+// an avatar never download it, and avatar users see the initials circle
+// until the chunk arrives instead of waiting for it before the first paint.
+const PokemonSprite = lazy(() =>
+  import("@/components/pokemon-sprite").then((m) => ({
+    default: m.PokemonSprite,
+  })),
+);
 
 export type UserAvatarSize = "sm" | "md" | "lg";
 
@@ -49,29 +60,17 @@ interface UserAvatarProps {
   className?: string;
 }
 
-/**
- * One default avatar everywhere: the user's Pokémon when set, otherwise their
- * initial on a tinted circle. Never Missingno, never an empty box.
- */
-export function UserAvatar({
+function InitialsCircle({
   username,
-  displayName = null,
-  avatarSpecies = null,
-  size = "md",
+  displayName,
+  sizeClass,
   className,
-}: UserAvatarProps) {
-  const sizeClass = SIZE_CLASSES[size];
-
-  if (avatarSpecies) {
-    return (
-      <PokemonSprite
-        species={avatarSpecies}
-        size={SPRITE_SIZES[size]}
-        className={cn(sizeClass, "shrink-0", className)}
-      />
-    );
-  }
-
+}: {
+  username: string;
+  displayName: string | null;
+  sizeClass: string;
+  className?: string;
+}) {
   return (
     <span
       aria-hidden
@@ -84,5 +83,50 @@ export function UserAvatar({
     >
       {initialsFor(username, displayName)}
     </span>
+  );
+}
+
+/**
+ * One default avatar everywhere: the user's Pokémon when set, otherwise their
+ * initial on a tinted circle. Never Missingno, never an empty box. While the
+ * sprite's chunk is still loading the initial shows in its place.
+ */
+export function UserAvatar({
+  username,
+  displayName = null,
+  avatarSpecies = null,
+  size = "md",
+  className,
+}: UserAvatarProps) {
+  const sizeClass = SIZE_CLASSES[size];
+
+  if (avatarSpecies) {
+    return (
+      <Suspense
+        fallback={
+          <InitialsCircle
+            username={username}
+            displayName={displayName}
+            sizeClass={sizeClass}
+            className={className}
+          />
+        }
+      >
+        <PokemonSprite
+          species={avatarSpecies}
+          size={SPRITE_SIZES[size]}
+          className={cn(sizeClass, "shrink-0", className)}
+        />
+      </Suspense>
+    );
+  }
+
+  return (
+    <InitialsCircle
+      username={username}
+      displayName={displayName}
+      sizeClass={sizeClass}
+      className={className}
+    />
   );
 }

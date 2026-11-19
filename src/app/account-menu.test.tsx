@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -56,7 +56,11 @@ describe("AccountMenu", () => {
     renderAt("/", auth);
     const user = userEvent.setup();
 
-    expect(screen.getAllByRole("img", { name: "Pikachu" })).toHaveLength(2);
+    // The avatar sprite is lazy (the heavy data chunks stay off the startup
+    // path), so the images appear once its chunk has loaded.
+    await waitFor(() => {
+      expect(screen.getAllByRole("img", { name: "Pikachu" })).toHaveLength(2);
+    });
 
     const [headerTrigger, tabTrigger] = screen.getAllByRole("button", {
       name: "Account menu",

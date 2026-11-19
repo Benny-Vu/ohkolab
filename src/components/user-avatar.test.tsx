@@ -1,10 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { UserAvatar } from "@/components/user-avatar";
 
 describe("UserAvatar", () => {
-  it("renders the user's Pokémon when an avatar species is set", () => {
+  it("renders the user's Pokémon when an avatar species is set", async () => {
+    // The sprite component is lazy so the heavy data chunks stay off the
+    // startup path; the icon replaces the initials once it loads.
     render(
       <UserAvatar
         username="ashketchum"
@@ -14,7 +16,10 @@ describe("UserAvatar", () => {
       />,
     );
 
-    expect(screen.getByRole("img", { name: "Pikachu" })).toBeInTheDocument();
+    expect(screen.getByText("A")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("img", { name: "Pikachu" })).toBeInTheDocument();
+    });
   });
 
   it("falls back to the display name initial on a tinted circle", () => {
