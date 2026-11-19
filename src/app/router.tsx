@@ -9,6 +9,7 @@ import { feedbackRoutes } from "@/features/feedback/routes";
 import { groupsRoutes } from "@/features/groups/routes";
 import { homeRoutes } from "@/features/home/routes";
 import { legalRoutes } from "@/features/legal/routes";
+import { messagesRoutes } from "@/features/messages/routes";
 import { metagameRoutes } from "@/features/metagame/routes";
 import { moderationRoutes } from "@/features/moderation/routes";
 import { notificationRoutes } from "@/features/notifications/routes";
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
           ...feedbackRoutes,
           ...postRoutes,
           ...profileRoutes,
+          ...messagesRoutes,
           ...notificationRoutes,
           ...moderationRoutes,
           ...groupsRoutes,
