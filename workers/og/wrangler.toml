@@ -20,9 +20,9 @@ routes = [{ pattern = "ohkolab.com/*", zone_name = "ohkolab.com" }]
 # VITE_SUPABASE_ANON_KEY).
 SUPABASE_URL = "https://jzpyoyjnhuokprsdoiqf.supabase.co"
 SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6cHlveWpuaHVva3Byc2RvaXFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzOTYxNDAsImV4cCI6MjEwOTk3MjE0MH0.r7VyITji6P1R6OdlnMoRx5Vb7muU1CvjI2baTod7kng"
-# How the origin is reached. "host-header" (production): GitHub Pages with
-# the Host header set to ohkolab.com. "direct": the live site itself —
-# only for local `wrangler dev`, where workerd drops custom Host headers
-# and the Worker is not in front of ohkolab.com:
-#   npx wrangler dev --var ORIGIN_MODE=direct
-ORIGIN_MODE = "host-header"
+# How the origin is reached. "direct" (the default, production and local
+# dev): fetch https://ohkolab.com itself. Behind the ohkolab.com/* route a
+# Worker's subrequest to its own zone goes straight to the origin (GitHub
+# Pages via the proxied DNS record), so it cannot loop. "host-header" is an
+# explicit fallback only (see site.ts).
+ORIGIN_MODE = "direct"

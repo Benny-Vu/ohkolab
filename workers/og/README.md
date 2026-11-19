@@ -95,12 +95,10 @@ npm run typecheck
 
 # local dev server (needs no login for plain requests; Supabase reads
 # go to the real project with the anon key, which is read-only-ish: RLS
-# decides what it can see). ORIGIN_MODE=direct is required locally:
-# workerd drops custom Host headers, so the production host-header trick
-# cannot work in `wrangler dev`, and in "direct" mode the Worker fetches
-# the live ohkolab.com instead (it is not in front of the domain locally,
-# so that cannot loop).
-npx wrangler dev --var ORIGIN_MODE=direct
+# decides what it can see). The Worker fetches the live ohkolab.com
+# (ORIGIN_MODE "direct", the default); locally it is not in front of the
+# domain, so that cannot loop.
+npx wrangler dev
 
 # from the repo root — run the worker's unit tests
 npx vitest run workers/og

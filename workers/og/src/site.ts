@@ -39,18 +39,20 @@ export interface Origin {
 /**
  * The origin for one mode:
  *
- * - `"host-header"` (production, the default): GitHub Pages with the `Host`
- *   header set to ohkolab.com. On deployed Cloudflare Workers the custom
- *   Host header is honored, so this serves the site's content without the
- *   301 that would loop back into the Worker.
- * - `"direct"`: the live site itself. Local `wrangler dev` needs this:
- *   workerd drops custom Host headers (a fetch to vu-forge.github.io then
- *   hits the organization site and 404s), and the Worker is not in front
- *   of ohkolab.com locally, so fetching it cannot loop.
+ * - `"direct"` (production and local dev, the default): fetch
+ *   https://ohkolab.com itself. Deployed behind the `ohkolab.com/*` route, a
+ *   Worker's subrequest to its own zone goes straight to the origin (GitHub
+ *   Pages, through the proxied DNS record) and does not run the Worker
+ *   again, so it cannot loop. Locally the Worker isn't in front of the site
+ *   at all.
+ * - `"host-header"`: GitHub Pages with the `Host` header set to
+ *   ohkolab.com. Kept only as an explicit fallback: Cloudflare does not
+ *   reliably honour a custom Host header for another hostname outside
+ *   Enterprise, so it must never be the default.
  */
 export function originFor(mode: OriginMode | undefined): Origin {
-  if (mode === "direct") return { url: SITE_URL, host: null };
-  return { url: ORIGIN_URL, host: ORIGIN_HOST };
+  if (mode === "host-header") return { url: ORIGIN_URL, host: ORIGIN_HOST };
+  return { url: SITE_URL, host: null };
 }
 
 /** Approved post images are served from this CDN host (see workers/img). */

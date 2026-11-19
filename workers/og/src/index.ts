@@ -46,8 +46,8 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
   /**
-   * How the origin is reached: "host-header" (production, the default) or
-   * "direct" (local wrangler dev — see originFor in site.ts).
+   * How the origin is reached: "direct" (the default: same-zone fetch of
+   * ohkolab.com) or "host-header" (explicit fallback; see originFor in site.ts).
    */
   ORIGIN_MODE?: OriginMode;
 }
