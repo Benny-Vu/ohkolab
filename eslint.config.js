@@ -71,7 +71,9 @@ export default defineConfig([
         {
           patterns: [
             {
-              group: ["@/lib/social"],
+              // Only the barrel itself; specific modules under @/lib/social/*
+              // are fine for the shell (and are what it should import).
+              regex: "@/lib/social$",
               message:
                 "The app shell must not import the social barrel: it would pull the whole social data layer into the entry chunk. Import the specific module instead.",
             },
