@@ -199,11 +199,8 @@ export function initSentry(): void {
     return;
   }
   if (isNativeApp()) {
-    nativeInit = Promise.all([
-      import("@sentry/capacitor"),
-      import("@sentry/react"),
-    ]).then(([capacitor, react]) => {
-      capacitor.init(buildOptions(config), react.init);
+    nativeInit = import("@sentry/capacitor").then((capacitor) => {
+      capacitor.init(buildOptions(config), Sentry.init);
       // Native-captured events bypass the JS beforeSend (the native SDK
       // does not receive it), so withdrawal mid-session stops the native
       // reporter explicitly instead.
