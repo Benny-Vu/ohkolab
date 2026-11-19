@@ -107,7 +107,7 @@ export function DeleteAccountPage() {
               <li>保存した構築</li>
               <li>投稿・コメント・いいね・フォロー・ブロック</li>
               <li>グループへの参加と所有するグループ</li>
-              <li>通知{IMAGES ? "、" : ""}</li>
+              <li>通知</li>
               {IMAGES && <li>投稿に添付した画像</li>}
             </LegalList>
             <LegalText>
