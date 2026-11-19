@@ -167,7 +167,7 @@ function buildOptions(config: ReturnType<typeof getTelemetryConfig>) {
     // Tags every event with the platform it came from ("android" or "ios"
     // inside a native app shell, "web" in a browser).
     initialScope: { tags: { platform: platformName() } },
-    beforeSend: (event: Sentry.Event) => {
+    beforeSend: (event: Sentry.ErrorEvent) => {
       // Consent may have been withdrawn after start-up; check it on every event.
       if (!getTelemetryConsent().crashes) {
         return null;
@@ -175,7 +175,7 @@ function buildOptions(config: ReturnType<typeof getTelemetryConfig>) {
       if (isNoise(event) || isRepeated(event)) {
         return null;
       }
-      return scrubEvent(event) as typeof event;
+      return scrubEvent(event) as Sentry.ErrorEvent;
     },
   };
 }
