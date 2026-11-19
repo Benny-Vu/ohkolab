@@ -87,6 +87,14 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
+/**
+ * A non-React subscription to consent changes (used by the native crash
+ * reporter to stop itself when consent is withdrawn mid-session).
+ */
+export function onTelemetryConsentChange(callback: () => void): () => void {
+  return subscribe(callback);
+}
+
 /** React hook for the telemetry consent state. */
 export function useTelemetryConsent(): TelemetryConsent {
   return useSyncExternalStore(

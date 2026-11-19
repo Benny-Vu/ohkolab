@@ -1,19 +1,28 @@
 import * as Sentry from "@sentry/react";
+import * as CapacitorSentry from "@sentry/capacitor";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   overrideTelemetryConfig,
   type TelemetryConfig,
 } from "@/lib/telemetry/config";
+import { setTelemetryEnabled } from "@/lib/telemetry/consent";
 import {
   initSentry,
   isExpectedError,
   reportError,
+  stopNativeSentry,
 } from "@/lib/telemetry/sentry";
 
 vi.mock("@sentry/react", () => ({
   init: vi.fn(),
   captureException: vi.fn(() => "event-1"),
+}));
+
+vi.mock("@sentry/capacitor", () => ({
+  init: vi.fn(),
+  close: vi.fn(),
+  nativeCrash: vi.fn(),
 }));
 
 const ENABLED: TelemetryConfig = {
@@ -25,6 +34,19 @@ const ENABLED: TelemetryConfig = {
   crashEnabled: true,
   analyticsEnabled: false,
 };
+
+describe("stopNativeSentry", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    overrideTelemetryConfig(null);
+  });
+
+  it("is a no-op when nothing was initialized natively (the web)", () => {
+    stopNativeSentry();
+    expect(CapacitorSentry.close).not.toHaveBeenCalled();
+  });
+});
 
 describe("initSentry", () => {
   beforeEach(() => {
@@ -69,17 +91,49 @@ describe("initSentry", () => {
     });
   });
 
-  it("tags events with the Android platform inside the native app shell", () => {
+  it("in the native app, initializes through the capacitor SDK with the react sibling init", async () => {
     vi.stubGlobal("Capacitor", {
       getPlatform: () => "android",
       isNativePlatform: () => true,
     });
     overrideTelemetryConfig(ENABLED);
     initSentry();
-    const options = vi.mocked(Sentry.init).mock.calls[0]?.[0];
+
+    await vi.waitFor(() => {
+      expect(CapacitorSentry.init).toHaveBeenCalledTimes(1);
+    });
+    // The plain web init must not also run (that would double-init).
+    expect(Sentry.init).not.toHaveBeenCalled();
+
+    const [call] = vi.mocked(CapacitorSentry.init).mock.calls;
+    const options = call?.[0];
+    const siblingInit = call?.[1];
+    expect(options?.dsn).toBe(ENABLED.sentryDsn);
+    expect(options?.release).toBe("1.2.3");
+    expect(typeof options?.beforeSend).toBe("function");
     expect(options?.initialScope).toMatchObject({
       tags: { platform: "android" },
     });
+    expect(siblingInit).toBe(Sentry.init);
+  });
+
+  it("in the native app, closes the native SDK when consent is withdrawn", async () => {
+    vi.stubGlobal("Capacitor", {
+      getPlatform: () => "android",
+      isNativePlatform: () => true,
+    });
+    overrideTelemetryConfig(ENABLED);
+    initSentry();
+
+    await vi.waitFor(() => {
+      expect(CapacitorSentry.init).toHaveBeenCalledTimes(1);
+    });
+    setTelemetryEnabled(false);
+
+    await vi.waitFor(() => {
+      expect(CapacitorSentry.close).toHaveBeenCalled();
+    });
+    localStorage.clear();
   });
 });
 
