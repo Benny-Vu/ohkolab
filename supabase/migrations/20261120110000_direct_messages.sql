@@ -83,9 +83,10 @@ grant execute on function public.set_birth_date(date) to authenticated;
 
 -- True when the user has a birth date and is 18 or older. False when the
 -- birth date is missing (treated as a minor) or the user does not exist.
--- Security definer so policies and the messaging RPCs can call it without
--- granting reads on profile_birth_dates; it returns only a boolean, the
--- same deal as is_moderator() and is_suspended().
+-- Security definer so the messaging functions can call it without granting
+-- reads on profile_birth_dates. Unlike is_moderator(), it takes any user's
+-- id, so clients get no execute grant: otherwise anyone could ask whether a
+-- given user is a minor. Only the security definer functions below call it.
 create or replace function public.is_adult(target_user_id uuid)
 returns boolean
 language sql
@@ -101,8 +102,7 @@ as $$
   );
 $$;
 
-revoke execute on function public.is_adult(uuid) from public, anon;
-grant execute on function public.is_adult(uuid) to authenticated;
+revoke execute on function public.is_adult(uuid) from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Message settings: who may start a conversation with this user. "friends"
@@ -570,6 +570,15 @@ begin
       using errcode = '42501';
   end if;
 
+  -- One conversation per pair, regardless of who started it. Reopening an
+  -- existing conversation doesn't count against the daily limit below.
+  select id into existing_conversation
+  from public.conversations
+  where (user_a = least(caller, other) and user_b = greatest(caller, other));
+  if existing_conversation is not null then
+    return existing_conversation;
+  end if;
+
   -- At most 10 new conversations per sender per 24 hours.
   if (
     select count(*) from public.conversations
@@ -578,14 +587,6 @@ begin
   ) >= 10 then
     raise exception 'Too many new conversations today'
       using errcode = 'P0A08';
-  end if;
-
-  -- One conversation per pair, regardless of who started it.
-  select id into existing_conversation
-  from public.conversations
-  where (user_a = least(caller, other) and user_b = greatest(caller, other));
-  if existing_conversation is not null then
-    return existing_conversation;
   end if;
 
   insert into public.conversations (user_a, user_b, created_by)
@@ -688,8 +689,10 @@ create table if not exists public.message_reports (
   -- Not a foreign key: the message may be deleted (by its sender or with
   -- the account) while the reported snapshot must survive.
   message_id uuid not null,
-  conversation_id uuid not null
-    references public.conversations (id) on delete cascade,
+  -- Not a foreign key either: deleting either participant's account
+  -- cascades the conversation, and the reported snapshot must outlive it
+  -- (kept for one year, then purged with the report).
+  conversation_id uuid not null,
   -- The reported message plus the 20 before it, oldest first:
   -- [{id, sender_id, body, created_at}, ...]
   snapshot jsonb not null,

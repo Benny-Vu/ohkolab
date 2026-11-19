@@ -276,6 +276,20 @@ jobs:
               end if;
             end;
 
+            -- Reopening an existing conversation still works at the limit.
+            if public.start_conversation(dm_b) is distinct from conv then
+              raise exception 'DM-CHECK: reopening a conversation hit the daily limit';
+            end if;
+
+            -- Clients can't ask whether another user is an adult.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_c, 'role', 'authenticated')::text, true);
+            begin
+              perform public.is_adult(dm_teen);
+              raise exception 'DM-CHECK: a client could call is_adult';
+            exception when insufficient_privilege then
+              null;
+            end;
+
             -- Reporting: dm_b reports dm_a's last message; the moderator
             -- can then read the snapshot (all 20 messages: the reported
             -- one plus the 19 before it) but still not the messages table.
@@ -312,6 +326,21 @@ jobs:
             end;
           end;
           $dm$;
+
+          -- Account deletion, as postgres: deleting dm_a removes their
+          -- conversations and messages, but the reported snapshot stays
+          -- for its year.
+          do $keep$
+          begin
+            delete from auth.users where id = '77777777-7777-4777-8777-777777777777';
+            if exists (select 1 from public.messages where sender_id = '77777777-7777-4777-8777-777777777777') then
+              raise exception 'DM-CHECK: messages survived account deletion';
+            end if;
+            if not exists (select 1 from public.message_reports where jsonb_array_length(snapshot) = 20) then
+              raise exception 'DM-CHECK: the report snapshot was deleted with the account';
+            end if;
+          end;
+          $keep$;
           SQL
 
       - name: Stop
