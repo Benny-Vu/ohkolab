@@ -95,6 +95,7 @@ function renderCard(
   post: FeedPostRow,
   auth = createFakeAuth(),
   images?: PostImageRow[],
+  extra: { imagesLoadError?: boolean; onRetryImages?: () => void } = {},
 ) {
   const router = createMemoryRouter(
     [
@@ -102,7 +103,12 @@ function renderCard(
         path: "/",
         element: (
           <AuthContext.Provider value={auth}>
-            <PostCard post={post} images={images} />
+            <PostCard
+              post={post}
+              images={images}
+              imagesLoadError={extra.imagesLoadError}
+              onRetryImages={extra.onRetryImages}
+            />
           </AuthContext.Provider>
         ),
       },
@@ -460,5 +466,30 @@ describe("PostCard", () => {
 
     expect(screen.queryByRole("img", { name: "Nope" })).not.toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Fine" })).toBeInTheDocument();
+  });
+
+  it("shows a retryable images error without hiding the post", async () => {
+    const onRetryImages = vi.fn();
+    renderCard(postRow(), createFakeAuth(), [], {
+      imagesLoadError: true,
+      onRetryImages,
+    });
+
+    // The post itself stays: author, body and actions are all still there.
+    expect(screen.getByText("First post!")).toBeInTheDocument();
+    expect(screen.getByText("Brock")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /like/i })).toBeInTheDocument();
+
+    // The images area, inside the post, announces the failure with a retry.
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Couldn't load this post's images.");
+    await userEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(onRetryImages).toHaveBeenCalled();
+  });
+
+  it("shows no images error while the rows loaded fine", () => {
+    renderCard(postRow(), createFakeAuth(), []);
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

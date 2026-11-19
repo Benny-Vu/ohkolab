@@ -3,6 +3,13 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
+import { loadJapaneseDictionary } from "@/lib/i18n/ja-loader";
+
+// The Japanese dictionary loads lazily in production (its own chunk, with
+// the English strings as the fallback). Tests assert Japanese text right
+// away, so the setup loads it once before any test runs.
+await loadJapaneseDictionary();
+
 afterEach(() => {
   cleanup();
 });

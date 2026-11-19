@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PostImageRow } from "@/lib/database.types";
 import {
+  isSocialNotInstalled,
+  resetSocialInstallState,
+} from "@/lib/social/availability";
+import {
   createFakeClient,
   createQueryClient,
   createWrapper,
@@ -88,6 +92,7 @@ function imageFile(type = "image/png", size = 1024): File {
 afterEach(() => {
   vi.unstubAllEnvs();
   clearAllScreenFailures();
+  resetSocialInstallState();
 });
 
 describe("imagePostsEnabled", () => {
@@ -357,6 +362,48 @@ describe("usePostImages", () => {
     });
     await waitFor(() => expect(result.current.fetchStatus).toBe("idle"));
     expect(fake.records).toHaveLength(0);
+  });
+
+  it("surfaces a real read error instead of hiding the images", async () => {
+    const fake = createFakeClient({
+      tables: { post_images: { data: null, error: { message: "boom" } } },
+    });
+    const { result } = renderHook(
+      () => usePostImages(["post-1"], fake.client),
+      { wrapper: createWrapper(createQueryClient()) },
+    );
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
+    expect(result.current.error?.code).toBe("unknown");
+  });
+
+  it("maps a rate limit on the images table to rate_limited", async () => {
+    const fake = createFakeClient({
+      tables: {
+        post_images: { data: null, error: { code: "P0A07", message: "slow" } },
+      },
+    });
+    const { result } = renderHook(
+      () => usePostImages(["post-1"], fake.client),
+      { wrapper: createWrapper(createQueryClient()) },
+    );
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error?.code).toBe("rate_limited");
+  });
+
+  it("fails soft to an empty list while the table is missing", async () => {
+    const fake = createFakeClient({
+      tables: {
+        post_images: { data: null, error: { code: "42P01", message: "no" } },
+      },
+    });
+    const { result } = renderHook(
+      () => usePostImages(["post-1"], fake.client),
+      { wrapper: createWrapper(createQueryClient()) },
+    );
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual([]);
+    expect(isSocialNotInstalled()).toBe(true);
   });
 });
 

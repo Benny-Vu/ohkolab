@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ErrorState } from "@/components/error-state";
 import {
   Dialog,
   DialogContent,
@@ -82,6 +83,14 @@ interface PostCardProps {
    * only while the VITE_IMAGE_POSTS flag is on.
    */
   images?: PostImageRow[];
+  /**
+   * True when the parent's batched image query failed, so the rows are
+   * unknown rather than empty. Shown in the images area as a retryable
+   * error; the rest of the post stays as it is.
+   */
+  imagesLoadError?: boolean;
+  /** Retries the parent's batched image query ("Try again" in the error). */
+  onRetryImages?: () => void;
 }
 
 /**
@@ -93,6 +102,8 @@ export function PostCard({
   hideCommentLink = false,
   onRemoveFromGroup,
   images,
+  imagesLoadError,
+  onRetryImages,
 }: PostCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -123,6 +134,14 @@ export function PostCard({
     images ?? ownImagesQuery.data ?? [],
     isOwn,
   );
+  // A failed images batch (the card's own query or the parent's) leaves the
+  // rows unknown; the images area says so with a retry, the post stays.
+  const imagesFailed =
+    images !== undefined ? imagesLoadError === true : ownImagesQuery.isError;
+  const retryImages =
+    images !== undefined && onRetryImages
+      ? onRetryImages
+      : () => void ownImagesQuery.refetch();
   const team = parseTeamAttachment(post.attachment);
   const calcResult = parseCalcResultAttachment(post.attachment);
   const liked = post.liked_by_me === true;
@@ -351,6 +370,23 @@ export function PostCard({
 
           {imageItems.length > 0 && (
             <PostImageGrid images={imageItems} className="mt-3" />
+          )}
+
+          {imagesFailed && (
+            <ErrorState
+              title={t("social.images.loadError")}
+              action={
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={retryImages}
+                  disabled={ownImagesQuery.isRefetching}
+                >
+                  {t("common.retry")}
+                </Button>
+              }
+              className="mt-3 px-4 py-4"
+            />
           )}
         </div>
       </div>

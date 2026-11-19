@@ -57,21 +57,33 @@ describe("PokemonSprite", () => {
 });
 
 describe("PokemonIcon", () => {
+  it("announces the localized name, not the raw id", async () => {
+    setLocale("ja");
+    render(<PokemonIcon species="Garchomp" />);
+    // The Japanese names arrive from the lazy chunk; until then the
+    // English name (never the raw id) is the accessible label.
+    const wrapper = await screen.findByRole("img", { name: "ガブリアス" });
+    expect(wrapper).toBeInTheDocument();
+  });
+
   it("shows the localized name in a 40x30 placeholder when the sheet fails", async () => {
     setLocale("ja");
     render(<PokemonIcon species="Garchomp" />);
-    const wrapper = screen.getByRole("img", { name: "Garchomp" });
+    const wrapper = await screen.findByRole("img", { name: "ガブリアス" });
     const img = wrapper.querySelector("img");
     if (!img) throw new Error("the icon sheet img is missing");
     fireEvent.error(img);
 
-    // The Japanese names arrive from the lazy chunk; the placeholder's
-    // name re-renders with them.
-    await waitFor(() =>
-      expect(screen.getByText("ガブリアス")).toBeInTheDocument(),
-    );
     const placeholder = screen.getByRole("img", { name: "ガブリアス" });
     expect(placeholder).toHaveStyle({ width: "40px", height: "30px" });
+    expect(screen.getByText("ガブリアス")).toBeInTheDocument();
+  });
+
+  it("falls back to the raw id when the species is unknown", () => {
+    render(<PokemonIcon species="not-a-pokemon" />);
+    expect(
+      screen.getByRole("img", { name: "not-a-pokemon" }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -91,7 +103,9 @@ describe("ItemIcon", () => {
   it("shows the localized item name on the placeholder", async () => {
     setLocale("ja");
     render(<ItemIcon item="Choice Scarf" />);
-    const wrapper = screen.getByRole("img", { name: "Choice Scarf" });
+    const wrapper = await screen.findByRole("img", {
+      name: "こだわりスカーフ",
+    });
     const img = wrapper.querySelector("img");
     if (!img) throw new Error("the item sheet img is missing");
     fireEvent.error(img);
@@ -103,5 +117,20 @@ describe("ItemIcon", () => {
       width: "24px",
       height: "24px",
     });
+  });
+
+  it("announces the localized name, not the raw id", async () => {
+    setLocale("ja");
+    render(<ItemIcon item="Choice Scarf" />);
+    expect(
+      await screen.findByRole("img", { name: "こだわりスカーフ" }),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to the raw id when the item is unknown", () => {
+    render(<ItemIcon item="not-an-item" />);
+    expect(
+      screen.getByRole("img", { name: "not-an-item" }),
+    ).toBeInTheDocument();
   });
 });

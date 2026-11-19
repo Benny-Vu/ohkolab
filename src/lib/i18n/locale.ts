@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react";
 
+import { loadJapaneseDictionary } from "@/lib/i18n/ja-loader";
+
 /**
  * The active locale: a tiny external store in the shape of
  * `@/lib/preferences`. English is the default; the first visit picks
@@ -60,12 +62,19 @@ export function setLocale(locale: Locale): void {
     // session.
   }
   applyDocumentLanguage(locale);
+  // Japanese needs its dictionary chunk; until it arrives the English
+  // strings show as the fallback.
+  if (locale === "ja") void loadJapaneseDictionary().catch(() => {});
   for (const listener of listeners) listener();
 }
 
 /** Called once on startup so <html lang> matches the active locale. */
 export function initLocale(): void {
-  applyDocumentLanguage(getLocale());
+  const locale = getLocale();
+  applyDocumentLanguage(locale);
+  // A Japanese first start loads the dictionary before the first render,
+  // so it is usually in place by the first paint.
+  if (locale === "ja") void loadJapaneseDictionary().catch(() => {});
 }
 
 function subscribe(listener: () => void): () => void {

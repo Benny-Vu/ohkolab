@@ -86,6 +86,8 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
             <PostCard
               post={post}
               images={imagesByPost.get(post.id) ?? []}
+              imagesLoadError={imagesQuery.isError}
+              onRetryImages={() => void imagesQuery.refetch()}
               onRemoveFromGroup={
                 canModerate
                   ? () => {

@@ -24,6 +24,10 @@ async function renderPage(
   setLocale(locale);
   vi.resetModules();
   vi.stubEnv("VITE_IMAGE_POSTS", flag);
+  // resetModules also resets the lazy Japanese dictionary loader; preload
+  // the fresh instance so the composed ja phrases render, as in production.
+  const { loadJapaneseDictionary } = await import("@/lib/i18n/ja-loader");
+  await loadJapaneseDictionary();
   const { PrivacyPage } = await import("@/features/legal/privacy-page");
   const { TermsPage } = await import("@/features/legal/terms-page");
   const router = createMemoryRouter(
