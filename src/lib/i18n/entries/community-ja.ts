@@ -542,4 +542,27 @@ export const communityJa: { [K in CommunityKey]: string } = {
 
   // 画像投稿（followup ウェーブ）：投稿カード内の画像の読み込みエラー。
   "social.images.loadError": "画像を読み込めませんでした",
+
+  // 共有ボタン（share ウェーブ）：ネイティブの共有シート、またはリンクのコピー。
+  "share.share": "共有",
+  "share.copiedLink": "リンクをクリップボードにコピーしました。",
+  "share.copyFailed": "リンクをコピーできませんでした。",
+
+  // SEO：各ルートのメタディスクリプション（page-title.ts）。
+  "seo.homeDescription":
+    "Pokémon Championsのダメージ計算・構築作成・コミュニティ。非公式のファンプロジェクトです。",
+  "seo.calcDescription":
+    "Pokémon Championsのダメージ計算。もちもの・天候・フィールドに対応し、ダブルとシングルの両方で計算できます。",
+  "seo.metaDescription":
+    "Pokémon Championsの使用率データ：よく使われるポケモン・技・もちもの・ステータス配分。",
+  "seo.teamsDescription":
+    "OHKOLabでプレイヤーが公開しているPokémon Championsの構築です。",
+  "seo.postDescription":
+    "OHKOLabのPokémon Championsコミュニティからの投稿です。",
+  "seo.profileDescription": "OHKOLabでのプレイヤーの投稿・公開構築・グループ。",
+  "seo.groupDescription": "OHKOLabのPokémon Championsグループ。",
+  "seo.groupsDescription":
+    "OHKOLabのPokémon Championsグループを探して参加できます。",
+  "seo.termsDescription": "OHKOLabの利用規約。",
+  "seo.privacyDescription": "OHKOLabの個人情報の取り扱いについて。",
 };
