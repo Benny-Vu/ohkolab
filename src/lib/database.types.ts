@@ -690,19 +690,10 @@ export type Database = {
           /** Refreshed on every registration event (FCM rotates tokens). */
           last_seen_at: string;
         };
-        Insert: {
-          id?: string;
-          user_id: string;
-          token: string;
-          platform?: string;
-          created_at?: string;
-          last_seen_at?: string;
-        };
-        Update: {
-          token?: string;
-          platform?: string;
-          last_seen_at?: string;
-        };
+        /** Rows are created by `register_push_token()` only. */
+        Insert: { [_ in never]: never };
+        /** No client update grant; re-registering recreates the row. */
+        Update: { [_ in never]: never };
         Relationships: [];
       };
       push_settings: {
@@ -932,6 +923,15 @@ export type Database = {
         Returns: string;
       };
       /**
+       * Registers a device token for the calling user, taking the token
+       * over from whoever held it (shared or resold devices). The one
+       * write path for push_tokens.
+       */
+      register_push_token: {
+        Args: { p_token: string; p_platform: string };
+        Returns: undefined;
+      };
+      /**
        * Service role only: claims every unpushed pushable notification for
        * one recipient (setting pushed_at), newest first. Returns nothing
        * when a push went out in the last minute.
@@ -1011,10 +1011,6 @@ export type PostImageInsert =
   Database["public"]["Tables"]["post_images"]["Insert"];
 export type FeedPostRow = Database["public"]["Views"]["feed_posts"]["Row"];
 export type PushTokenRow = Database["public"]["Tables"]["push_tokens"]["Row"];
-export type PushTokenInsert =
-  Database["public"]["Tables"]["push_tokens"]["Insert"];
-export type PushTokenUpdate =
-  Database["public"]["Tables"]["push_tokens"]["Update"];
 export type PushSettingsRow =
   Database["public"]["Tables"]["push_settings"]["Row"];
 export type PushSettingsInsert =

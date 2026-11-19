@@ -19,10 +19,13 @@
 -- triggers created inside do-blocks, `alter policy` never used to drop.
 
 -- ---------------------------------------------------------------------------
--- push_tokens: one row per registered device token. Users manage only
--- their own rows; the FCM token itself is unique, so a token that moves
--- between accounts (device resale, second sign-in) re-registers to its
--- current owner. Deleting an account cascades the tokens away.
+-- push_tokens: one row per registered device token. A token identifies
+-- one DEVICE, not one user, so registration goes through the
+-- register_push_token() security-definer function below, which takes the
+-- token over from whoever held it (a shared or resold device must not
+-- keep pushing the previous user's notifications). Clients can read and
+-- delete their own rows; every other write path is closed. Deleting an
+-- account cascades the tokens away.
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.push_tokens (
@@ -43,7 +46,8 @@ create table if not exists public.push_tokens (
 alter table public.push_tokens enable row level security;
 
 revoke all on public.push_tokens from anon, authenticated;
-grant select, insert, update, delete on public.push_tokens to authenticated;
+-- Select and delete only: rows are created by register_push_token().
+grant select, delete on public.push_tokens to authenticated;
 
 do $$
 begin
@@ -61,29 +65,6 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'public' and tablename = 'push_tokens'
-      and policyname = 'users register their own push tokens'
-  ) then
-    create policy "users register their own push tokens" on public.push_tokens
-      for insert
-      to authenticated
-      with check (user_id = (select auth.uid()));
-  end if;
-
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'push_tokens'
-      and policyname = 'users refresh their own push tokens'
-  ) then
-    create policy "users refresh their own push tokens" on public.push_tokens
-      for update
-      to authenticated
-      using (user_id = (select auth.uid()))
-      with check (user_id = (select auth.uid()));
-  end if;
-
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'push_tokens'
       and policyname = 'users remove their own push tokens'
   ) then
     create policy "users remove their own push tokens" on public.push_tokens
@@ -93,6 +74,49 @@ begin
   end if;
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- register_push_token: the one write path for push_tokens, callable by
+-- signed-in users only. It deletes any existing row for the token (whoever
+-- held it — a shared or resold device changes hands) and inserts a fresh
+-- row for the caller, so the previous owner's pushes stop reaching the
+-- device immediately.
+-- ---------------------------------------------------------------------------
+
+create or replace function public.register_push_token(
+  p_token text,
+  p_platform text
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_user uuid := (select auth.uid());
+begin
+  if v_user is null then
+    raise exception 'register_push_token requires a signed-in user'
+      using errcode = '42501';
+  end if;
+  if p_token is null or char_length(p_token) not between 1 and 1024 then
+    raise exception 'Invalid push token'
+      using errcode = '23514';
+  end if;
+  if p_platform not in ('android', 'ios', 'web') then
+    raise exception 'Invalid push token platform'
+      using errcode = '23514';
+  end if;
+  delete from public.push_tokens where token = p_token;
+  insert into public.push_tokens (user_id, token, platform)
+  values (v_user, p_token, p_platform);
+end;
+$$;
+
+revoke execute on function public.register_push_token(text, text)
+  from public, anon, authenticated;
+grant execute on function public.register_push_token(text, text)
+  to authenticated;
 
 -- A user's tokens (the account-deletion cascade and the send lookups).
 create index if not exists push_tokens_user_idx on public.push_tokens (user_id);
