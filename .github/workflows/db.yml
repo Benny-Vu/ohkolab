@@ -813,11 +813,13 @@ jobs:
             ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '92929292-9292-4929-8929-929292929292');
           insert into public.groups (slug, name, owner_id) values
             ('fs-shared-group', 'Follow Check Group', '3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f');
+          -- fs_a owns the group, so the groups_add_owner trigger already
+          -- made them a member; only fs_shared needs an explicit row.
           insert into public.group_members (group_id, user_id, status)
           select g.id, p.id, 'active'
           from public.groups g, public.profiles p
           where g.slug = 'fs-shared-group'
-            and p.username in ('fs_a', 'fs_shared');
+            and p.username in ('fs_shared');
           insert into public.blocks (blocker_id, blocked_id) values
             ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '91919191-9191-4919-8919-919191919191');
           insert into public.user_suspensions (user_id, "until", reason) values
