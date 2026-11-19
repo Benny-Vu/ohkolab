@@ -322,4 +322,19 @@ describe("PostDetailPage", () => {
 
     expect(await screen.findByText("Checking image…")).toBeInTheDocument();
   });
+
+  it("shows a retryable images error while the post stays", async () => {
+    const refetch = vi.fn();
+    imagesMocks.usePostImages.mockReturnValue(
+      queryResult([], { isError: true, refetch }),
+    );
+    renderPostPage();
+
+    // The post itself stays; the images area offers a retry.
+    expect(await screen.findByText("First post!")).toBeInTheDocument();
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Couldn't load this post's images.");
+    await userEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(refetch).toHaveBeenCalled();
+  });
 });

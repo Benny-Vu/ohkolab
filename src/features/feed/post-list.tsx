@@ -43,7 +43,12 @@ export function PostList({ posts, emptyMessage, emptyAction }: PostListProps) {
     <ul className="grid gap-3">
       {posts.map((post) => (
         <li key={post.id}>
-          <PostCard post={post} images={imagesByPost.get(post.id) ?? []} />
+          <PostCard
+            post={post}
+            images={imagesByPost.get(post.id) ?? []}
+            imagesLoadError={imagesQuery.isError}
+            onRetryImages={() => void imagesQuery.refetch()}
+          />
         </li>
       ))}
     </ul>

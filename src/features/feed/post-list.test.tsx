@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
@@ -147,5 +148,28 @@ describe("PostList", () => {
     renderList([]);
 
     expect(screen.getByText("No posts yet")).toBeInTheDocument();
+  });
+
+  it("shows a retryable images error per post while the posts stay", async () => {
+    const refetch = vi.fn();
+    imagesMocks.usePostImages.mockReturnValue(
+      queryResult([], { isError: true, refetch }),
+    );
+    renderList([feedRow("post-1"), feedRow("post-2")]);
+
+    // The posts themselves stay on the page.
+    expect(screen.getByText("Post post-1")).toBeInTheDocument();
+    expect(screen.getByText("Post post-2")).toBeInTheDocument();
+
+    // Each post's images area announces the failed batch with a retry.
+    const alerts = screen.getAllByRole("alert");
+    expect(alerts).toHaveLength(2);
+    for (const alert of alerts) {
+      expect(alert).toHaveTextContent("Couldn't load this post's images.");
+    }
+    await userEvent.click(
+      screen.getAllByRole("button", { name: /try again/i })[0]!,
+    );
+    expect(refetch).toHaveBeenCalled();
   });
 });

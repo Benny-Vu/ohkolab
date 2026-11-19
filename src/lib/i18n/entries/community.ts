@@ -549,6 +549,9 @@ export const communityEn = {
 
   // Accessibility pass (quality wave): unread state on notification rows.
   "notifications.unreadSr": "Unread",
+
+  // Image posts (followup wave): a failed images batch inside a post card.
+  "social.images.loadError": "Couldn't load this post's images.",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;
@@ -1086,4 +1089,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
 
   // アクセシビリティ対応（quality ウェーブ）：通知行の未読状態。
   "notifications.unreadSr": "未読",
+
+  // 画像投稿（followup ウェーブ）：投稿カード内の画像の読み込みエラー。
+  "social.images.loadError": "画像を読み込めませんでした",
 };

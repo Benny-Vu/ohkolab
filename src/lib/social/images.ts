@@ -280,6 +280,11 @@ export function visiblePostImages(
  * not per card). The server's RLS policies decide which rows come back;
  * `visiblePostImages` re-checks on the client. Disabled while the
  * VITE_IMAGE_POSTS flag is off, so no query fires at all.
+ *
+ * A real read error surfaces as the query's error (`isError` true, a mapped
+ * `SocialFailure`), so the consumers can offer a retry instead of silently
+ * hiding the images. Only the "not installed" / "flag off" paths return an
+ * empty list: no images exist to show, so that is the truth.
  */
 export function usePostImages(
   postIds: string[],

@@ -130,7 +130,13 @@ export function PostDetailPage() {
       </Button>
 
       <div className="mt-4 grid gap-4">
-        <PostCard post={post} hideCommentLink images={imagesQuery.data ?? []} />
+        <PostCard
+          post={post}
+          hideCommentLink
+          images={imagesQuery.data ?? []}
+          imagesLoadError={imagesQuery.isError}
+          onRetryImages={() => void imagesQuery.refetch()}
+        />
 
         <section aria-label={t("postDetail.comments")} className="grid gap-3">
           <h2
