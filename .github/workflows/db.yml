@@ -362,6 +362,11 @@ jobs:
             ('90909090-9090-4909-8909-909090909090', 'push_b'),
             ('a0a0a0a0-a0a0-4a0a-8a0a-a0a0a0a0a0a0', 'push_c')
           on conflict (id) do update set username = excluded.username;
+          -- Adults, so the message rules treat them as adults (users
+          -- without a birth date message friends only).
+          insert into public.profile_birth_dates (user_id, birth_date) values
+            ('ffffffff-ffff-4fff-8fff-ffffffffffff', '1990-01-01'),
+            ('90909090-9090-4909-8909-909090909090', '1990-01-01');
 
           do $push$
           declare
