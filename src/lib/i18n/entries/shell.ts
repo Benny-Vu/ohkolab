@@ -294,6 +294,11 @@ export const shellEn = {
   "crash.reload": "Reload",
   "crash.goHome": "Go home",
   "crash.tellUs": "Tell us what happened",
+
+  // Direct messages (built but not launched; VITE_DIRECT_MESSAGES). Only
+  // the nav label lives here, because nav-items.ts is part of the entry
+  // graph. Everything else sits in the community domain.
+  "nav.messages": "Messages",
 } as const;
 
 export type ShellKey = keyof typeof shellEn;

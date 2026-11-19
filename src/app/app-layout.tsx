@@ -16,6 +16,13 @@ const BirthDatePrompt = lazy(() =>
     default: m.BirthDatePrompt,
   })),
 );
+// The Messages nav unread badge: same lazy, flag-gated mount. The nav item
+// itself is a plain entry in NAV_ITEMS; this is the only live part.
+const MessagesNavBadge = lazy(() =>
+  import("@/features/messages/nav-unread-badge").then((m) => ({
+    default: m.MessagesNavBadge,
+  })),
+);
 import { OnboardingDialog } from "@/features/account/onboarding-dialog";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { NotificationBell } from "@/features/notifications/notification-bell";
@@ -57,6 +64,11 @@ export function AppLayout() {
                 }
               >
                 {t(item.labelKey)}
+                {item.badge === "messages" && directMessagesEnabled() ? (
+                  <Suspense fallback={null}>
+                    <MessagesNavBadge />
+                  </Suspense>
+                ) : null}
               </NavLink>
             ))}
           </nav>
@@ -118,7 +130,13 @@ export function AppLayout() {
         aria-label={t("nav.main")}
         className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-safe backdrop-blur md:hidden"
       >
-        <ul className="mx-auto grid h-14 max-w-md grid-cols-5">
+        <ul
+          className={cn(
+            "mx-auto grid h-14 max-w-md",
+            // One more tab while the direct messages flag is on.
+            directMessagesEnabled() ? "grid-cols-6" : "grid-cols-5",
+          )}
+        >
           {NAV_ITEMS.filter((item) => item.to !== "/profile").map((item) => (
             <li key={item.to}>
               <NavLink
@@ -134,6 +152,11 @@ export function AppLayout() {
               >
                 <item.icon className="size-5" aria-hidden />
                 {t(item.labelKey)}
+                {item.badge === "messages" && directMessagesEnabled() ? (
+                  <Suspense fallback={null}>
+                    <MessagesNavBadge />
+                  </Suspense>
+                ) : null}
               </NavLink>
             </li>
           ))}

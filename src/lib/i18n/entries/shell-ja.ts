@@ -295,4 +295,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "crash.reload": "再読み込み",
   "crash.goHome": "ホームへ",
   "crash.tellUs": "発生したことを報告する",
+
+  // ダイレクトメッセージ（未リリース、VITE_DIRECT_MESSAGES）。ここにある
+  // のはナビラベルのみ。ほかはcommunityドメイン。
+  "nav.messages": "メッセージ",
 };
