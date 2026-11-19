@@ -90,14 +90,11 @@ export function PokemonSprite({ species, size = 96, className }: SpriteProps) {
 
 function SheetIcon({
   icon,
-  label,
   name,
   className,
 }: {
   icon: IconInfo;
-  /** The raw id, as the accessible label (unchanged behaviour). */
-  label: string;
-  /** The localized name, for the offline placeholder. */
+  /** The localized display name: the accessible label and placeholder text. */
   name: string;
   className?: string;
 }) {
@@ -117,7 +114,7 @@ function SheetIcon({
   return (
     <span
       role="img"
-      aria-label={label}
+      aria-label={name}
       className={cn(
         "relative inline-block shrink-0 overflow-hidden",
         className,
@@ -157,7 +154,6 @@ export function PokemonIcon({
   return (
     <SheetIcon
       icon={getPokemonIcon(species)}
-      label={species}
       name={nameFor("species", species)}
       className={className}
     />
@@ -176,7 +172,6 @@ export function ItemIcon({
   return (
     <SheetIcon
       icon={getItemIcon(item)}
-      label={item}
       name={nameFor("item", item)}
       className={className}
     />
