@@ -130,11 +130,14 @@ describe("TeamDetailPage", () => {
     setTeamsSyncClient(null);
   });
 
-  it("shows a loading state while teams load", () => {
+  it("shows a loading state while teams load", async () => {
     setTeamsSyncClient(createPendingClient());
     renderTeamRoutes(createFakeAuth(), ["/teams/t-1"]);
 
-    expect(screen.getAllByText("Loading your teams…")).toHaveLength(2);
+    // The page description stays visible; the skeleton (with its accessible
+    // label) waits out the anti-flash delay before it appears.
+    expect(screen.getAllByText("Loading your teams…")).toHaveLength(1);
+    expect(await screen.findByLabelText("Loading your teams…")).toBeVisible();
   });
 
   it("surfaces load errors and recovers on retry", async () => {

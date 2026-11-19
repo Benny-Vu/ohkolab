@@ -9,7 +9,7 @@ import { SegmentedControl } from "@/components/segmented-control";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { GroupListSkeleton, LoadingArea } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import {
@@ -129,20 +129,6 @@ interface GroupListProps {
 
 function GroupList({ query, emptyTitle, emptyDescription }: GroupListProps) {
   const t = useT();
-  if (query.isPending) {
-    return (
-      <div
-        className="grid gap-3"
-        role="status"
-        aria-label={t("groups.loadingGroups")}
-      >
-        <Skeleton className="h-20 w-full rounded-md" />
-        <Skeleton className="h-20 w-full rounded-md" />
-        <Skeleton className="h-20 w-full rounded-md" />
-      </div>
-    );
-  }
-
   if (query.isError) {
     return (
       <ErrorState
@@ -162,18 +148,24 @@ function GroupList({ query, emptyTitle, emptyDescription }: GroupListProps) {
 
   const groups = query.data ?? [];
 
-  if (groups.length === 0) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} />;
-  }
-
   return (
-    <ul className="grid gap-3">
-      {groups.map((group) => (
-        <li key={group.id}>
-          <GroupCard group={group} />
-        </li>
-      ))}
-    </ul>
+    <LoadingArea
+      pending={query.isPending}
+      label={t("groups.loadingGroups")}
+      skeleton={<GroupListSkeleton />}
+    >
+      {groups.length === 0 ? (
+        <EmptyState title={emptyTitle} description={emptyDescription} />
+      ) : (
+        <ul className="grid gap-3">
+          {groups.map((group) => (
+            <li key={group.id}>
+              <GroupCard group={group} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </LoadingArea>
   );
 }
 

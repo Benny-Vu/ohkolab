@@ -14,7 +14,11 @@ import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { Logo } from "@/components/logo";
 import { SegmentedControl } from "@/components/segmented-control";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  LoadingArea,
+  PostListSkeleton,
+  TextLinesSkeleton,
+} from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useMyGroups } from "@/lib/groups/queries";
 import { useT } from "@/lib/i18n/t";
@@ -244,10 +248,12 @@ function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
         {t("home.yourGroups")}
       </h2>
       {myGroups.isPending ? (
-        <div className="mt-3 grid gap-2" aria-label={t("groups.loadingGroups")}>
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
+        <LoadingArea
+          pending={true}
+          label={t("groups.loadingGroups")}
+          skeleton={<TextLinesSkeleton lines={2} />}
+          className="mt-3"
+        />
       ) : myGroups.isError ? (
         <ErrorState
           title={t("home.groupsLoadError")}
@@ -299,20 +305,6 @@ function FeedTabContent({
   const t = useT();
   const feed = useFeed(tab);
 
-  if (feed.isPending) {
-    return (
-      <div
-        className="grid gap-3"
-        role="status"
-        aria-label={t("home.loadingPosts")}
-      >
-        <Skeleton className="h-28 w-full rounded-md" />
-        <Skeleton className="h-28 w-full rounded-md" />
-        <Skeleton className="h-28 w-full rounded-md" />
-      </div>
-    );
-  }
-
   if (feed.isError) {
     return (
       <ErrorState
@@ -334,23 +326,29 @@ function FeedTabContent({
   const posts = feed.data?.pages.flat() ?? [];
 
   return (
-    <div className="grid gap-3">
-      {posts.length === 0 ? (
-        <EmptyState title={emptyTitle} description={emptyDescription} />
-      ) : (
-        <PostList posts={posts} />
-      )}
-      {feed.hasNextPage && (
-        <Button
-          variant="outline"
-          onClick={() => void feed.fetchNextPage()}
-          disabled={feed.isFetchingNextPage}
-        >
-          {feed.isFetchingNextPage
-            ? t("common.loading")
-            : t("notifications.loadMore")}
-        </Button>
-      )}
-    </div>
+    <LoadingArea
+      pending={feed.isPending}
+      label={t("home.loadingPosts")}
+      skeleton={<PostListSkeleton />}
+    >
+      <div className="grid gap-3">
+        {posts.length === 0 ? (
+          <EmptyState title={emptyTitle} description={emptyDescription} />
+        ) : (
+          <PostList posts={posts} />
+        )}
+        {feed.hasNextPage && (
+          <Button
+            variant="outline"
+            onClick={() => void feed.fetchNextPage()}
+            disabled={feed.isFetchingNextPage}
+          >
+            {feed.isFetchingNextPage
+              ? t("common.loading")
+              : t("notifications.loadMore")}
+          </Button>
+        )}
+      </div>
+    </LoadingArea>
   );
 }

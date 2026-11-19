@@ -8,7 +8,7 @@ import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingArea, ThreadSkeleton } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
@@ -116,11 +116,11 @@ export function ThreadPage({
       </div>
 
       {metaQuery.isPending || threadQuery.isPending ? (
-        <div className="grid gap-2" role="status">
-          <Skeleton className="h-12 w-2/3 rounded-md" />
-          <Skeleton className="ml-auto h-12 w-2/3 rounded-md" />
-          <Skeleton className="h-12 w-2/3 rounded-md" />
-        </div>
+        <LoadingArea
+          pending={true}
+          label={t("messages.loadingThreadAria")}
+          skeleton={<ThreadSkeleton />}
+        />
       ) : unavailable ? (
         <EmptyState title={t("messages.threadUnavailable")} />
       ) : (

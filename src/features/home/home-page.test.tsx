@@ -191,15 +191,18 @@ describe("HomePage", () => {
     );
   });
 
-  it("announces the loading feed as a live status", () => {
+  it("announces the loading feed as a live status", async () => {
     availabilityMocks.socialAvailability.mockReturnValue("ready");
     queriesMocks.useFeed.mockReturnValue(
       infiniteResult([], { isPending: true }),
     );
     renderHome();
 
-    // role=status makes the aria-label a live region screen readers announce.
-    expect(screen.getByRole("status", { name: "Loading posts" })).toBeVisible();
+    // The skeleton waits out the anti-flash delay, then role=status makes
+    // the aria-label a live region screen readers announce.
+    expect(
+      await screen.findByRole("status", { name: "Loading posts" }),
+    ).toBeVisible();
   });
 
   it("shows the composer for signed-in users when ready", async () => {

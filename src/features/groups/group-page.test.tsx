@@ -223,7 +223,7 @@ describe("GroupPage", () => {
     expect(screen.getByText(/3 members/i)).toBeInTheDocument();
   });
 
-  it("keeps the page frame with skeletons while the group loads", () => {
+  it("keeps the page frame with skeletons while the group loads", async () => {
     queriesMocks.useGroupBySlug.mockReturnValue(
       queryResult(undefined, { isPending: true }),
     );
@@ -232,7 +232,8 @@ describe("GroupPage", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Loading group" }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Loading group")).toBeInTheDocument();
+    // The skeleton waits out the anti-flash delay before it appears.
+    expect(await screen.findByLabelText("Loading group")).toBeInTheDocument();
   });
 
   it("shows the feed with the composer for active members", () => {
