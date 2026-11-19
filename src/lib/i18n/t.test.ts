@@ -21,6 +21,34 @@ describe("dictionaries", () => {
       );
     }
   });
+
+  it("translates every key whose Japanese value is not a known brand", () => {
+    // Values that legitimately stay the same in both languages: brands, the
+    // language endonyms (each language is named in its own tongue) and the
+    // official stat name HP.
+    const allowed = new Set([
+      "OK",
+      "OHKOLab",
+      "Vu Forge",
+      "Showdown",
+      "English",
+      "日本語",
+      "HP",
+    ]);
+    // Keys whose English value is intentionally not English (or not shown in
+    // the en locale at all).
+    const allowedKeys = new Set(["legal.japaneseNotice"]);
+    const untranslated: string[] = [];
+    for (const key of Object.keys(en) as TranslationKey[]) {
+      const english = en[key] as string;
+      if (allowed.has(english) || allowedKeys.has(key)) continue;
+      if (ja[key] === english) untranslated.push(key);
+    }
+    expect(
+      untranslated,
+      "keys whose Japanese value is the English text",
+    ).toEqual([]);
+  });
 });
 
 describe("t()", () => {
