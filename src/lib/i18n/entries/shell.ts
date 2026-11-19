@@ -110,6 +110,8 @@ export const shellEn = {
   "search.openAria": "Search Pokémon, moves, players",
   "search.placeholder": "Search Pokémon, moves, players",
   "search.noResults": "No results.",
+  "search.paletteTitle": "Search",
+  "search.paletteDescription": "Search Pokémon, moves, items and pages.",
   "search.pages": "Pages",
   "search.pokemon": "Pokémon",
   "search.moves": "Moves",

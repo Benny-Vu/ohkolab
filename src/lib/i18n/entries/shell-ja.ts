@@ -110,6 +110,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "search.openAria": "ポケモン・技・プレイヤーを検索",
   "search.placeholder": "ポケモン・技・プレイヤーを検索",
   "search.noResults": "見つかりません。",
+  "search.paletteTitle": "検索",
+  "search.paletteDescription": "ポケモン、技、道具、ページを検索します。",
   "search.pages": "ページ",
   "search.pokemon": "ポケモン",
   "search.moves": "技",
