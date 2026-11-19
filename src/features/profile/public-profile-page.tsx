@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { Page } from "@/components/page";
-import { PokemonIcon } from "@/components/pokemon-sprite";
+import { PokemonIcon, PokemonSprite } from "@/components/pokemon-sprite";
 import { TeamIdChip } from "@/components/team-id-chip";
 import { UserAvatar } from "@/components/user-avatar";
 import { EmptyState } from "@/components/empty-state";
@@ -747,6 +747,90 @@ function ProfileFollowCounts({
   );
 }
 
+/** The community fields of a profile: favourite Pokémon, main format,
+ * "looking for", and links. Only the rows the profile filled in. */
+function ProfileCommunityFields({ profile }: { profile: Profile }) {
+  const t = useT();
+  const hasAny =
+    profile.favouriteSpecies !== null ||
+    profile.mainFormat !== null ||
+    profile.lookingFor !== null ||
+    profile.youtubeUrl !== null ||
+    profile.twitchUrl !== null ||
+    profile.showdownName !== null;
+  if (!hasAny) return null;
+
+  const mainFormat =
+    profile.mainFormat === "singles"
+      ? t("calc.formatSingles")
+      : profile.mainFormat === "doubles"
+        ? t("calc.formatDoubles")
+        : profile.mainFormat === "both"
+          ? t("publicProfile.formatBoth")
+          : null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+      {profile.favouriteSpecies ? (
+        <span className="flex items-center gap-1.5">
+          <PokemonSprite species={profile.favouriteSpecies} size={24} />
+          <span className="text-muted-foreground">
+            {t("publicProfile.favouriteLabel")}
+          </span>
+        </span>
+      ) : null}
+      {mainFormat ? (
+        <span className="flex items-center gap-1.5">
+          <span className="text-muted-foreground">
+            {t("publicProfile.mainFormatLabel")}:
+          </span>
+          <span>{mainFormat}</span>
+        </span>
+      ) : null}
+      {profile.lookingFor ? (
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="text-muted-foreground">
+            {t("publicProfile.lookingForLabel")}:
+          </span>
+          <span className="min-w-0 truncate">{profile.lookingFor}</span>
+        </span>
+      ) : null}
+      {profile.youtubeUrl ? (
+        <a
+          href={profile.youtubeUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="flex items-center gap-1.5 underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline"
+        >
+          <ExternalLinkIcon className="size-4" aria-hidden />
+          {t("publicProfile.youtubeLabel")}
+        </a>
+      ) : null}
+      {profile.twitchUrl ? (
+        <a
+          href={profile.twitchUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="flex items-center gap-1.5 underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline"
+        >
+          <ExternalLinkIcon className="size-4" aria-hidden />
+          {t("publicProfile.twitchLabel")}
+        </a>
+      ) : null}
+      {profile.showdownName ? (
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="text-muted-foreground">
+            {t("publicProfile.showdownLabel")}:
+          </span>
+          <span className="min-w-0 truncate font-mono">
+            {profile.showdownName}
+          </span>
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function ProfileHeader({
   profile,
   client,
@@ -781,6 +865,7 @@ function ProfileHeader({
                 {profile.bio}
               </p>
             ) : null}
+            <ProfileCommunityFields profile={profile} />
             <p className="min-w-0 text-xs text-muted-foreground">
               {formatJoined(profile.createdAt)}
             </p>

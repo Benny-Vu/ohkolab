@@ -15,6 +15,9 @@ export const USERNAME_MAX_LENGTH = 20;
 export const DISPLAY_NAME_MAX_LENGTH = 40;
 export const BIO_MAX_LENGTH = 300;
 export const AVATAR_SPECIES_MAX_LENGTH = 60;
+export const LOOKING_FOR_MAX_LENGTH = 100;
+export const SHOWDOWN_NAME_MAX_LENGTH = 64;
+export const PROFILE_URL_MAX_LENGTH = 200;
 export const PASSWORD_MIN_LENGTH = 8;
 /** bcrypt, which the auth server uses, ignores everything past 72 bytes. */
 export const PASSWORD_MAX_LENGTH = 72;
@@ -72,6 +75,41 @@ export function validateBio(bio: string | null): string | null {
 export function validateAvatarSpecies(species: string | null): string | null {
   if (species !== null && species.length > AVATAR_SPECIES_MAX_LENGTH) {
     return t("auth.errAvatarSpecies");
+  }
+  return null;
+}
+
+/** The favourite Pokémon uses the same shape as the avatar species. */
+export function validateFavouriteSpecies(
+  species: string | null,
+): string | null {
+  if (species !== null && species.length > AVATAR_SPECIES_MAX_LENGTH) {
+    return t("auth.errAvatarSpecies");
+  }
+  return null;
+}
+
+/** The "looking for" line: free text, at most 100 characters. */
+export function validateLookingFor(value: string | null): string | null {
+  if (value !== null && value.length > LOOKING_FOR_MAX_LENGTH) {
+    return t("auth.errLookingForMax", { max: LOOKING_FOR_MAX_LENGTH });
+  }
+  return null;
+}
+
+/** A Showdown name: free text, at most 64 characters. */
+export function validateShowdownName(value: string | null): string | null {
+  if (value !== null && value.length > SHOWDOWN_NAME_MAX_LENGTH) {
+    return t("auth.errShowdownMax", { max: SHOWDOWN_NAME_MAX_LENGTH });
+  }
+  return null;
+}
+
+/** Profile links: https only, at most 200 characters. */
+export function validateProfileUrl(value: string | null): string | null {
+  if (value === null) return null;
+  if (!/^https:\/\//.test(value) || value.length > PROFILE_URL_MAX_LENGTH) {
+    return t("auth.errProfileUrl");
   }
   return null;
 }

@@ -61,6 +61,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "birthDate.later": "後で",
   "common.close": "閉じる",
   "common.search": "検索",
+  "common.noResults": "見つかりません",
   "common.signIn": "サインイン",
   "common.signUp": "サインアップ",
   "common.signOut": "サインアウト",
@@ -139,6 +140,9 @@ export const shellJa: { [K in ShellKey]: string } = {
   "auth.errDisplayNameMax": "表示名は{max}文字以内にしてください。",
   "auth.errBioMax": "プロフィールは{max}文字以内にしてください。",
   "auth.errAvatarSpecies": "そのポケモンはアバターに使えません。",
+  "auth.errLookingForMax": "{max}文字以内にしてください。",
+  "auth.errShowdownMax": "ポケモン対戦の名前は{max}文字以内です。",
+  "auth.errProfileUrl": "リンクはhttps://ではじめてください。",
   "auth.errEmailEmpty": "メールアドレスを入力してください。",
   "auth.errEmailInvalid": "有効なメールアドレスを入力してください。",
   "auth.errPasswordEmpty": "パスワードを入力してください。",
@@ -192,10 +196,28 @@ export const shellJa: { [K in ShellKey]: string } = {
   "onboarding.skip": "あとで設定する",
   "onboarding.avatarLabel": "アバターのポケモン",
 
+  // 初回ウェルカムフロー（オンボーディング後にレイアウトから表示。
+  // すべてのステップはスキップ可能）。
+  "welcome.title": "OHKOLabへようこそ",
+  "welcome.stepOf": "ステップ {n} / {total}",
+  "welcome.profileDescription":
+    "よく遊ぶルールとお気に入りのポケモンを選びましょう。どちらも任意です。",
+  "welcome.followDescription": "何人かフォローして、フィードを始めましょう。",
+  "welcome.joinDescription":
+    "グループに参加して、一緒に遊ぶ仲間を見つけましょう。",
+  "welcome.next": "次へ",
+  "welcome.noSuggestions": "今のおすすめはありません。あとで人を探せます。",
+  "welcome.noGroups": "まだ公開グループがありません。あとで作成できます。",
+
   // アカウントメニューとオンボーディングで表示されるプロフィール項目。
   "profile.usernameLabel": "ユーザー名",
   "profile.displayNameLabel": "表示名",
   "profile.displayNameHint": "任意。{max}文字以内。",
+  "profile.favouriteSpecies": "好きなポケモン",
+  "profile.mainFormatLabel": "メインフォーマット",
+  "profile.mainFormatSingles": "シングル",
+  "profile.mainFormatDoubles": "ダブル",
+  "profile.mainFormatBoth": "どちらも",
   "profile.savedToast": "プロフィールを保存しました。",
   "profile.accountSection": "アカウント",
   "profile.signedOutToast": "サインアウトしました。",

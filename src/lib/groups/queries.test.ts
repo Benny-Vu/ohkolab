@@ -5,6 +5,7 @@ import { GUEST_AUTH } from "@/lib/auth/use-auth";
 import { resetSocialInstallState } from "@/lib/social/availability";
 
 import {
+  useDiscoverGroups,
   useGroupBySlug,
   useGroupMemberCount,
   useGroupMembers,
@@ -408,5 +409,125 @@ describe("useGroupMemberCount", () => {
     const record = recordsOn(fake, "group_members")[0];
     expect(record?.selectOptions).toMatchObject({ count: "exact", head: true });
     expect(record?.eqFilters).toContainEqual(["status", "active"]);
+  });
+});
+
+describe("useDiscoverGroups", () => {
+  it("lists public groups with their active member counts", async () => {
+    const fake = createFakeClient({
+      resolve: (record) => {
+        if (record.table === "groups") {
+          return {
+            data: [
+              groupRow({ id: "g1", slug: "doubles-lab", name: "Doubles Lab" }),
+              groupRow({ id: "g2", slug: "kanto-club", name: "Kanto Club" }),
+            ],
+          };
+        }
+        if (record.table === "group_members") {
+          return {
+            data: [
+              groupMemberRow({ groupId: "g1", userId: "user-2" }),
+              groupMemberRow({ groupId: "g1", userId: "user-3" }),
+            ],
+          };
+        }
+        return { data: [], error: null };
+      },
+    });
+    const { result } = renderHook(() => useDiscoverGroups(fake.client), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toEqual([
+      expect.objectContaining({
+        slug: "doubles-lab",
+        memberCount: 2,
+        category: null,
+        language: null,
+      }),
+      expect.objectContaining({ slug: "kanto-club", memberCount: 0 }),
+    ]);
+    const groupsRecord = recordsOn(fake, "groups")[0];
+    expect(groupsRecord?.eqFilters).toContainEqual(["visibility", "public"]);
+    expect(groupsRecord?.orders).toContainEqual([
+      "created_at",
+      { ascending: false },
+    ]);
+    const membersRecord = recordsOn(fake, "group_members")[0];
+    expect(membersRecord?.eqFilters).toContainEqual(["status", "active"]);
+    expect(membersRecord?.inFilters[0]?.[1]).toEqual(["g1", "g2"]);
+  });
+
+  it("maps the category and language tags", async () => {
+    const fake = createFakeClient({
+      resolve: (record) => {
+        if (record.table === "groups") {
+          return {
+            data: [
+              groupRow({
+                id: "g1",
+                slug: "doubles-lab",
+                category: "doubles",
+                language: "ja",
+              }),
+            ],
+          };
+        }
+        return { data: [], error: null };
+      },
+    });
+    const { result } = renderHook(() => useDiscoverGroups(fake.client), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.[0]).toMatchObject({
+      category: "doubles",
+      language: "ja",
+    });
+  });
+
+  it("skips the member-count read when there are no groups", async () => {
+    const fake = createFakeClient({
+      resolve: (record) =>
+        record.table === "groups" ? { data: [] } : { data: [] },
+    });
+    const { result } = renderHook(() => useDiscoverGroups(fake.client), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toEqual([]);
+    expect(recordsOn(fake, "group_members")).toEqual([]);
+  });
+
+  it("fails soft while the tables are missing", async () => {
+    const fake = createFakeClient({
+      resolve: (record) =>
+        record.table === "groups"
+          ? { data: null, error: { code: "42P01", message: "missing" } }
+          : { data: [], error: null },
+    });
+    const { result } = renderHook(() => useDiscoverGroups(fake.client), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toEqual([]);
+  });
+
+  it("does not run against a null client", async () => {
+    const { result } = renderHook(() => useDiscoverGroups(null), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    expect(result.current.data).toBeUndefined();
+    expect(result.current.fetchStatus).toBe("idle");
   });
 });

@@ -43,6 +43,10 @@ const groupsMocks = vi.hoisted(() => ({
   useMyGroups: vi.fn(),
 }));
 
+const suggestionsMocks = vi.hoisted(() => ({
+  useFollowSuggestions: vi.fn(),
+}));
+
 const metagameMocks = vi.hoisted(() => ({
   useMetagameSnapshot: vi.fn(),
 }));
@@ -52,6 +56,7 @@ vi.mock("@/lib/social/queries", () => queriesMocks);
 vi.mock("@/lib/social/mutations", () => mutationsMocks);
 vi.mock("@/lib/social/moderation", () => moderationMocks);
 vi.mock("@/lib/groups/queries", () => groupsMocks);
+vi.mock("@/lib/social/suggestions", () => suggestionsMocks);
 vi.mock("@/features/metagame/use-metagame", () => metagameMocks);
 
 const infiniteResult = (
@@ -108,6 +113,13 @@ function stubSocial() {
     error: null,
     refetch: vi.fn(),
   });
+  suggestionsMocks.useFollowSuggestions.mockReturnValue({
+    data: [],
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  });
 }
 
 function postRow(overrides: Partial<FeedPostRow> = {}): FeedPostRow {
@@ -124,6 +136,7 @@ function postRow(overrides: Partial<FeedPostRow> = {}): FeedPostRow {
     like_count: 2,
     comment_count: 1,
     liked_by_me: false,
+    language: null,
     group_id: null,
     ...overrides,
   };
@@ -189,6 +202,25 @@ describe("HomePage", () => {
       "href",
       "/groups",
     );
+  });
+
+  it("filters the feed by language, defaulting to the site language", async () => {
+    const user = userEvent.setup();
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    renderHome();
+
+    // The default filter follows the site language (English in tests).
+    expect(queriesMocks.useFeed).toHaveBeenCalledWith("latest", "en");
+
+    await user.click(
+      screen.getByRole("combobox", { name: "Filter posts by language" }),
+    );
+    await user.click(
+      await screen.findByRole("option", { name: "All languages" }),
+    );
+
+    expect(queriesMocks.useFeed).toHaveBeenCalledWith("latest", "all");
   });
 
   it("announces the loading feed as a live status", async () => {
@@ -364,6 +396,50 @@ describe("HomePage", () => {
     renderHome();
 
     expect(await screen.findByText(/no posts yet/i)).toBeInTheDocument();
+  });
+
+  it("shows people to follow above the feed for signed-in users", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    suggestionsMocks.useFollowSuggestions.mockReturnValue({
+      data: [
+        {
+          id: "user-2",
+          username: "brock",
+          displayName: "Brock",
+          avatarSpecies: "Onix",
+          mainFormat: "doubles",
+          score: 4,
+        },
+      ],
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    renderHome();
+
+    expect(
+      await screen.findByRole("heading", { name: /people to follow/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /brock/i })).toHaveAttribute(
+      "href",
+      "/u/brock",
+    );
+    // The module also answers the empty feed: the empty state sits right
+    // below it.
+    expect(screen.getByText(/no posts yet/i)).toBeInTheDocument();
+  });
+
+  it("hides people to follow for signed-out visitors", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    renderHome(createFakeAuth({ user: null, session: null, profile: null }));
+
+    await screen.findByText(/no posts yet/i);
+    expect(
+      screen.queryByRole("heading", { name: /people to follow/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows an error with retry when the feed fails", async () => {

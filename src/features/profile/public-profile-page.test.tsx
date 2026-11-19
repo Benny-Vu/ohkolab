@@ -147,6 +147,12 @@ function profileRow(overrides: Partial<ProfileRow> = {}): ProfileRow {
     display_name: "Ash",
     avatar_species: "Pikachu",
     bio: "Pallet Town",
+    favourite_species: null,
+    main_format: null,
+    looking_for: null,
+    youtube_url: null,
+    twitch_url: null,
+    showdown_name: null,
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z",
     ...overrides,
@@ -176,6 +182,7 @@ function postRow(overrides: Partial<FeedPostRow> = {}): FeedPostRow {
     attachment: null,
     created_at: "2024-03-05T10:00:00Z",
     updated_at: "2024-03-05T10:00:00Z",
+    language: null,
     author_username: "brock",
     author_display_name: "Brock",
     author_avatar_species: "Onix",
@@ -194,6 +201,8 @@ function groupRow(overrides: Partial<GroupRow> = {}): GroupRow {
     name: "Vermilion Crew",
     description: "Surge's gym regulars.",
     visibility: "public",
+    category: null,
+    language: null,
     owner_id: "user-2",
     created_at: "2024-02-01T00:00:00Z",
     updated_at: "2024-02-01T00:00:00Z",
@@ -432,6 +441,44 @@ describe("PublicProfilePage", () => {
     expect(screen.getByRole("img", { name: "Garchomp" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Incineroar" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View" })).toBeInTheDocument();
+  });
+
+  it("shows the profile's community fields", async () => {
+    const client = createFakeClient({
+      profile: profileRow({
+        favourite_species: "Garchomp",
+        main_format: "both",
+        looking_for: "team feedback",
+        youtube_url: "https://youtube.com/@ash",
+        showdown_name: "ashketchum",
+      }),
+    });
+    renderProfilePage(client, "ashketchum");
+
+    expect(await screen.findByText("Singles and doubles")).toBeInTheDocument();
+    expect(screen.getByText("team feedback")).toBeInTheDocument();
+    expect(screen.getByAltText("Garchomp")).toBeInTheDocument();
+    const youtube = screen.getByRole("link", { name: /YouTube/ });
+    expect(youtube).toHaveAttribute("href", "https://youtube.com/@ash");
+    expect(screen.getByText("ashketchum")).toBeInTheDocument();
+  });
+
+  it("renders no community rows for a bare profile", async () => {
+    // Its own username: the query cache is shared across tests in the file.
+    const client = createFakeClient({
+      profile: profileRow({
+        id: "user-duplica",
+        username: "duplica",
+        display_name: "Duplica",
+      }),
+    });
+    renderProfilePage(client, "duplica");
+
+    await screen.findByText("@duplica");
+    expect(screen.queryByText(/Singles and doubles/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /YouTube/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("offers a retry when the teams could not be loaded", async () => {

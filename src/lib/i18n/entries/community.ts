@@ -47,6 +47,18 @@ export const communityEn = {
   "notifications.markRead": "Mark {name}'s notification as read",
   "notifications.delete": "Delete notification from {name}",
 
+  // Grouped rows: consecutive likes and comments on one post merge.
+  // The text follows the lead actor's name, like the single sentences.
+  "notifications.groupLikesOne": "and 1 other liked your post",
+  "notifications.groupLikesMany": "and {n} others liked your post",
+  "notifications.groupCommentsOne": "and 1 other commented on your post",
+  "notifications.groupCommentsMany": "and {n} others commented on your post",
+  "notifications.groupMixedOne": "and 1 other liked and commented on your post",
+  "notifications.groupMixedMany":
+    "and {n} others liked and commented on your post",
+  "notifications.markGroupRead": "Mark {name}'s notifications as read",
+  "notifications.deleteGroup": "Delete {name}'s notifications",
+
   // Notifications page.
   "notifications.description":
     "Likes, comments, follows and moderation updates.",
@@ -63,6 +75,16 @@ export const communityEn = {
   "notifications.emptyDescription":
     "When someone likes your post or follows you, it shows up here.",
   "notifications.loadMore": "Load more",
+
+  // Date sections, the caught-up end state and the follow-back button.
+  "notifications.sectionToday": "Today",
+  "notifications.sectionThisWeek": "This week",
+  "notifications.sectionEarlier": "Earlier",
+  "notifications.allCaughtUp": "You're all caught up",
+  "notifications.followBack": "Follow",
+  "notifications.followingBack": "Following",
+  "notifications.followedToast": "Following @{name}.",
+  "notifications.unfollowedToast": "Unfollowed @{name}.",
 
   // The push opt-in card (native app only, behind VITE_PUSH).
   "notifications.pushTitle": "Turn on notifications",
@@ -99,6 +121,11 @@ export const communityEn = {
   "composer.imageChecking":
     "An image is still being checked — it will appear once it is approved.",
   "composer.tooManyImages": "A post can have at most {n} images.",
+  "composer.language": "Post language",
+
+  // The feed's language filter (home page).
+  "feed.languageAria": "Filter posts by language",
+  "feed.languageAll": "All languages",
 
   // Image preparation failures (src/lib/social/images.ts).
   "social.images.tooBig": "Images must be under 15 MB. Pick a smaller file.",
@@ -321,6 +348,7 @@ export const communityEn = {
   "groups.noMatchesTitle": "No groups found",
   "groups.createFirst": "Create the first one.",
   "groups.noMatchesDescription": 'No groups match "{query}".',
+  "groups.noFilterMatches": "No groups match these filters.",
   "groups.loadingGroups": "Loading groups",
   "groups.noDescription": "No description yet.",
   "groups.signInToCreate": "Sign in to create a group",
@@ -538,6 +566,38 @@ export const communityEn = {
   "messages.settingsAria": "Who can message me",
   "messages.reportedBadge": "Reported",
   "messages.messageBy": "by {name}",
+
+  // People to follow (src/features/home/people-to-follow.tsx).
+  "followSuggest.title": "People to follow",
+  "followSuggest.loading": "Loading suggestions",
+  "followSuggest.loadError": "Could not load suggestions",
+  "followSuggest.follow": "Follow",
+  "followSuggest.followedToast": "Following {name}",
+  "followSuggest.dismiss": "Dismiss the suggestion for @{name}",
+  "followSuggest.formatSingles": "Plays singles",
+  "followSuggest.formatDoubles": "Plays doubles",
+  "followSuggest.formatBoth": "Plays singles and doubles",
+
+  // Group discovery: search, sort and the category/language filters, plus
+  // the category and language pickers on the new-group page.
+  "groups.discoverSearchAria": "Search groups by name or address",
+  "groups.sortAria": "Sort groups",
+  "groups.sortPopular": "Popular",
+  "groups.sortNew": "New",
+  "groups.categoryFilter": "Category",
+  "groups.categoryAll": "All categories",
+  "groups.categoryDoubles": "Doubles",
+  "groups.categorySingles": "Singles",
+  "groups.categoryTeamBuilding": "Team building",
+  "groups.categoryRegional": "Regional",
+  "groups.languageFilter": "Language",
+  "groups.languageAll": "All languages",
+  "groups.languageEn": "English",
+  "groups.languageJa": "Japanese",
+  "groups.newCategoryLabel": "Category (optional)",
+  "groups.newCategoryNone": "No category",
+  "groups.newLanguageLabel": "Language (optional)",
+  "groups.newLanguageNone": "No language",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;

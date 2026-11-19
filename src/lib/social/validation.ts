@@ -37,6 +37,20 @@ export type ReportReason = (typeof REPORT_REASONS)[number];
 export const REPORT_STATUSES = ["open", "actioned", "dismissed"] as const;
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
 
+/**
+ * The languages a post can be tagged with, mirroring the posts check
+ * constraint. Null means untagged (pre-tag posts).
+ */
+export const POST_LANGUAGES = ["en", "ja"] as const;
+export type PostLanguage = (typeof POST_LANGUAGES)[number];
+
+/** Narrows an unknown value to a PostLanguage; anything else is untagged. */
+export function asPostLanguage(
+  language: string | null | undefined,
+): PostLanguage | null {
+  return language === "en" || language === "ja" ? language : null;
+}
+
 export function normalizePostBody(body: string): string {
   return body.trim();
 }

@@ -32,7 +32,11 @@ import {
   validateCurrentPassword,
   validateDisplayName,
   validateEmail,
+  validateFavouriteSpecies,
+  validateLookingFor,
   validateNewPassword,
+  validateProfileUrl,
+  validateShowdownName,
   validateUsername,
 } from "@/lib/auth/validation";
 import type { AppSupabaseClient } from "@/lib/supabase";
@@ -87,6 +91,12 @@ export function toProfile(row: ProfileRow): Profile {
     displayName: row.display_name,
     avatarSpecies: row.avatar_species,
     bio: row.bio,
+    favouriteSpecies: row.favourite_species,
+    mainFormat: (row.main_format as Profile["mainFormat"]) ?? null,
+    lookingFor: row.looking_for,
+    youtubeUrl: row.youtube_url,
+    twitchUrl: row.twitch_url,
+    showdownName: row.showdown_name,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -130,6 +140,38 @@ function toProfileUpdate(changes: ProfileChanges): AuthResult<ProfileUpdate> {
     const error = validateAvatarSpecies(avatarSpecies);
     if (error) return fail("invalid_input", error, "avatarSpecies");
     update.avatar_species = avatarSpecies;
+  }
+  if (changes.favouriteSpecies !== undefined) {
+    const favouriteSpecies = normalizeOptionalText(changes.favouriteSpecies);
+    const error = validateFavouriteSpecies(favouriteSpecies);
+    if (error) return fail("invalid_input", error, "favouriteSpecies");
+    update.favourite_species = favouriteSpecies;
+  }
+  if (changes.mainFormat !== undefined) {
+    update.main_format = changes.mainFormat;
+  }
+  if (changes.lookingFor !== undefined) {
+    const lookingFor = normalizeOptionalText(changes.lookingFor);
+    const error = validateLookingFor(lookingFor);
+    if (error) return fail("invalid_input", error, "lookingFor");
+    update.looking_for = lookingFor;
+  }
+  for (const [field, column] of [
+    ["youtubeUrl", "youtube_url"],
+    ["twitchUrl", "twitch_url"],
+  ] as const) {
+    if (changes[field] !== undefined) {
+      const url = normalizeOptionalText(changes[field]);
+      const error = validateProfileUrl(url);
+      if (error) return fail("invalid_input", error, field);
+      update[column] = url;
+    }
+  }
+  if (changes.showdownName !== undefined) {
+    const showdownName = normalizeOptionalText(changes.showdownName);
+    const error = validateShowdownName(showdownName);
+    if (error) return fail("invalid_input", error, "showdownName");
+    update.showdown_name = showdownName;
   }
   return succeed(update);
 }

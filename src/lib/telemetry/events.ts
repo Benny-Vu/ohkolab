@@ -18,6 +18,8 @@ export type TelemetryEvent =
   | "sign_up_completed"
   | "onboarding_completed"
   | "onboarding_skipped"
+  | "welcome_completed"
+  | "welcome_skipped"
   | "post_created"
   | "comment_created"
   | "post_liked"
@@ -57,6 +59,8 @@ export interface EventProperties {
   sign_up_completed: { method: SignUpMethod };
   onboarding_completed: Record<string, never>;
   onboarding_skipped: Record<string, never>;
+  welcome_completed: Record<string, never>;
+  welcome_skipped: Record<string, never>;
   post_created: { attachment: PostAttachment; in_group: boolean };
   comment_created: Record<string, never>;
   post_liked: Record<string, never>;

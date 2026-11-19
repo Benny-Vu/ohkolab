@@ -10,6 +10,9 @@ export const OAUTH_PROVIDER_LABELS: Record<OAuthProvider, string> = {
   discord: "Discord",
 };
 
+/** The formats a player considers their main: singles, doubles or both. */
+export type MainFormat = "singles" | "doubles" | "both";
+
 /** A user's public profile (a row of `public.profiles`, in camelCase). */
 export interface Profile {
   /** Same id as the auth user. */
@@ -19,6 +22,16 @@ export interface Profile {
   /** Species name from the Champions roster, or null for no avatar. */
   avatarSpecies: string | null;
   bio: string | null;
+  /** The favourite Pokémon shown on the profile, or null for none. */
+  favouriteSpecies: string | null;
+  /** The player's main format, or null when unset. */
+  mainFormat: MainFormat | null;
+  /** The short "looking for" line, or null for none. */
+  lookingFor: string | null;
+  /** https-only profile links and a Showdown name; all null for none. */
+  youtubeUrl: string | null;
+  twitchUrl: string | null;
+  showdownName: string | null;
   /** ISO timestamps. */
   createdAt: string;
   updatedAt: string;
@@ -30,6 +43,12 @@ export interface ProfileChanges {
   displayName?: string | null;
   avatarSpecies?: string | null;
   bio?: string | null;
+  favouriteSpecies?: string | null;
+  mainFormat?: MainFormat | null;
+  lookingFor?: string | null;
+  youtubeUrl?: string | null;
+  twitchUrl?: string | null;
+  showdownName?: string | null;
 }
 
 export type AuthErrorCode =

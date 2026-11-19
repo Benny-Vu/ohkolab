@@ -24,6 +24,7 @@ const MessagesNavBadge = lazy(() =>
   })),
 );
 import { OnboardingDialog } from "@/features/account/onboarding-dialog";
+import { WelcomeFlow } from "@/features/account/welcome-flow";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useT } from "@/lib/i18n/t";
@@ -191,6 +192,7 @@ export function AppLayout() {
 
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <OnboardingDialog />
+      <WelcomeFlow />
       {directMessagesEnabled() ? (
         <Suspense fallback={null}>
           <BirthDatePrompt />

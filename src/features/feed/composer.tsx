@@ -17,8 +17,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
 import { displayTeamName } from "@/lib/team/display";
 import { useTeams } from "@/lib/team";
+import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { useCreatePost } from "@/lib/social/mutations";
+import type { PostLanguage } from "@/lib/social/validation";
 import {
   IMAGE_ALT_MAX,
   IMAGE_POSTS_MAX,
@@ -53,11 +55,15 @@ interface ImageDraft {
 export function Composer({ groupId }: { groupId?: string | null }) {
   const { user } = useAuth();
   const t = useT();
+  const [locale] = useLocale();
   const { teams } = useTeams();
   const createPost = useCreatePost();
   const attachImages = useAttachPostImages();
   const [body, setBody] = useState("");
   const [attachment, setAttachment] = useState<TeamAttachment | null>(null);
+  const [language, setLanguage] = useState<PostLanguage>(() =>
+    locale === "ja" ? "ja" : "en",
+  );
   const [expanded, setExpanded] = useState(false);
   const [imageDrafts, setImageDrafts] = useState<ImageDraft[]>([]);
   const [processingImages, setProcessingImages] = useState(false);
@@ -148,6 +154,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
       body,
       attachment: attachment ? teamAttachmentJson(attachment) : null,
       groupId: groupId ?? null,
+      language,
     });
     if (result.ok) {
       setBody("");
@@ -266,6 +273,18 @@ export function Composer({ groupId }: { groupId?: string | null }) {
               className="w-auto max-w-56"
             />
           )}
+          <Picker
+            aria-label={t("composer.language")}
+            options={[
+              { value: "en", label: t("language.english") },
+              { value: "ja", label: t("language.japanese") },
+            ]}
+            value={language}
+            onValueChange={(value) => {
+              if (value === "en" || value === "ja") setLanguage(value);
+            }}
+            className="w-auto max-w-40"
+          />
           {imagesOn && (
             <>
               <input

@@ -81,6 +81,7 @@ function feedRow(
     like_count: 1,
     comment_count: 0,
     liked_by_me: false,
+    language: null,
     group_id: null,
     ...overrides,
   };

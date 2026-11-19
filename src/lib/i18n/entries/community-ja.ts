@@ -47,6 +47,19 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "notifications.markRead": "{name}さんの通知を既読にする",
   "notifications.delete": "{name}さんの通知を削除する",
 
+  // グループ化された行：同じ投稿への連続したいいねとコメントを1行にまとめます。
+  "notifications.groupLikesOne": "と他1人があなたの投稿にいいねしました",
+  "notifications.groupLikesMany": "と他{n}人があなたの投稿にいいねしました",
+  "notifications.groupCommentsOne": "と他1人があなたの投稿にコメントしました",
+  "notifications.groupCommentsMany":
+    "と他{n}人があなたの投稿にコメントしました",
+  "notifications.groupMixedOne":
+    "と他1人があなたの投稿にいいねとコメントしました",
+  "notifications.groupMixedMany":
+    "と他{n}人があなたの投稿にいいねとコメントしました",
+  "notifications.markGroupRead": "{name}さんの通知を既読にする",
+  "notifications.deleteGroup": "{name}さんの通知を削除する",
+
   // 通知ページ。
   "notifications.description":
     "いいね、コメント、フォロー、モデレーションの更新。",
@@ -63,6 +76,16 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "notifications.emptyDescription":
     "誰かがあなたの投稿にいいねしたりフォローしたりすると、ここに表示されます。",
   "notifications.loadMore": "さらに表示",
+
+  // 日付セクション、確認済みの表示、フォローバックボタン。
+  "notifications.sectionToday": "今日",
+  "notifications.sectionThisWeek": "今週",
+  "notifications.sectionEarlier": "それ以前",
+  "notifications.allCaughtUp": "すべて確認済みです",
+  "notifications.followBack": "フォロー",
+  "notifications.followingBack": "フォロー中",
+  "notifications.followedToast": "@{name}をフォローしました。",
+  "notifications.unfollowedToast": "@{name}のフォローを解除しました。",
 
   // プッシュ通知の案内カード（ネイティブアプリのみ、VITE_PUSH のフラグ付き）。
   "notifications.pushTitle": "通知をオンにする",
@@ -97,6 +120,11 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "composer.postedImages": "投稿しました。画像は確認後に表示されます。",
   "composer.imageChecking": "画像を確認中です。承認後に表示されます。",
   "composer.tooManyImages": "投稿に添付できる画像は最大{n}枚です。",
+  "composer.language": "投稿の言語",
+
+  // フィードの言語フィルター（ホーム画面）。
+  "feed.languageAria": "投稿を言語で絞り込む",
+  "feed.languageAll": "すべての言語",
 
   // 画像の前処理エラー（src/lib/social/images.ts）。
   "social.images.tooBig":
@@ -319,6 +347,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "groups.noMatchesTitle": "グループが見つかりません",
   "groups.createFirst": "最初のグループを作りましょう。",
   "groups.noMatchesDescription": '"{query}" に一致するグループはありません。',
+  "groups.noFilterMatches": "この条件に一致するグループはありません。",
   "groups.loadingGroups": "グループを読み込み中",
   "groups.noDescription": "説明はまだありません。",
   "groups.signInToCreate": "グループを作成するにはサインインしてください",
@@ -528,4 +557,35 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "messages.settingsAria": "誰からメッセージを受け取るか",
   "messages.reportedBadge": "通報対象",
   "messages.messageBy": "送信者: {name}",
+
+  // おすすめのプレイヤー（people-to-follow.tsx）。
+  "followSuggest.title": "フォロー候補",
+  "followSuggest.loading": "候補を読み込み中",
+  "followSuggest.loadError": "候補を読み込めませんでした。",
+  "followSuggest.follow": "フォロー",
+  "followSuggest.followedToast": "{name}さんをフォローしました",
+  "followSuggest.dismiss": "@{name}の候補を閉じる",
+  "followSuggest.formatSingles": "シングルプレイヤー",
+  "followSuggest.formatDoubles": "ダブルスプレイヤー",
+  "followSuggest.formatBoth": "シングルもダブルスもプレイ",
+
+  // グループ検索：並び順、カテゴリーと言語の絞り込み、作成ページの選択欄。
+  "groups.discoverSearchAria": "グループを名前やアドレスで検索",
+  "groups.sortAria": "グループの並び順",
+  "groups.sortPopular": "人気",
+  "groups.sortNew": "新着",
+  "groups.categoryFilter": "カテゴリー",
+  "groups.categoryAll": "すべてのカテゴリー",
+  "groups.categoryDoubles": "ダブルス",
+  "groups.categorySingles": "シングル",
+  "groups.categoryTeamBuilding": "構築相談",
+  "groups.categoryRegional": "地域",
+  "groups.languageFilter": "言語",
+  "groups.languageAll": "すべての言語",
+  "groups.languageEn": "英語",
+  "groups.languageJa": "日本語",
+  "groups.newCategoryLabel": "カテゴリー（任意）",
+  "groups.newCategoryNone": "カテゴリーなし",
+  "groups.newLanguageLabel": "言語（任意）",
+  "groups.newLanguageNone": "言語なし",
 };

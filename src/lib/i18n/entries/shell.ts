@@ -61,6 +61,7 @@ export const shellEn = {
   "birthDate.later": "Later",
   "common.close": "Close",
   "common.search": "Search",
+  "common.noResults": "No results",
   "common.signIn": "Sign in",
   "common.signUp": "Sign up",
   "common.signOut": "Sign out",
@@ -140,6 +141,9 @@ export const shellEn = {
   "auth.errDisplayNameMax": "Display name must be at most {max} characters.",
   "auth.errBioMax": "Bio must be at most {max} characters.",
   "auth.errAvatarSpecies": "That Pokémon cannot be used as an avatar.",
+  "auth.errLookingForMax": "Keep it at most {max} characters.",
+  "auth.errShowdownMax": "Showdown names are at most {max} characters.",
+  "auth.errProfileUrl": "Links must be https:// addresses.",
   "auth.errEmailEmpty": "Enter your email address.",
   "auth.errEmailInvalid": "Enter a valid email address.",
   "auth.errPasswordEmpty": "Enter your password.",
@@ -191,10 +195,28 @@ export const shellEn = {
   "onboarding.skip": "Skip for now",
   "onboarding.avatarLabel": "Avatar Pokémon",
 
+  // The three-step welcome flow (mounted from the app layout after
+  // onboarding; every step is skippable).
+  "welcome.title": "Welcome to OHKOLab",
+  "welcome.stepOf": "Step {n} of {total}",
+  "welcome.profileDescription":
+    "Pick your main format and a favourite Pokémon — both optional.",
+  "welcome.followDescription": "Follow a few people to get your feed started.",
+  "welcome.joinDescription": "Join a group to meet people to play with.",
+  "welcome.next": "Next",
+  "welcome.noSuggestions":
+    "No suggestions right now — you can find people later.",
+  "welcome.noGroups": "No public groups yet — you can start one later.",
+
   // Profile bits the account menu and the onboarding dialog render.
   "profile.usernameLabel": "Username",
   "profile.displayNameLabel": "Display name",
   "profile.displayNameHint": "Optional. At most {max} characters.",
+  "profile.favouriteSpecies": "Favourite Pokémon",
+  "profile.mainFormatLabel": "Main format",
+  "profile.mainFormatSingles": "Singles",
+  "profile.mainFormatDoubles": "Doubles",
+  "profile.mainFormatBoth": "Both",
   "profile.savedToast": "Profile saved.",
   "profile.accountSection": "Account",
   "profile.signedOutToast": "Signed out.",

@@ -23,6 +23,12 @@ export const TEST_PROFILE: Profile = {
   displayName: "Ash",
   avatarSpecies: "Pikachu",
   bio: "Pallet Town",
+  favouriteSpecies: null,
+  mainFormat: null,
+  lookingFor: null,
+  youtubeUrl: null,
+  twitchUrl: null,
+  showdownName: null,
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };

@@ -38,6 +38,11 @@ vi.mock("@/features/notifications/push-permission-card", () => ({
   PushPermissionCard: () => <div>push permission card</div>,
 }));
 
+// Same for the follow-back button: its own test file covers its states.
+vi.mock("@/features/notifications/follow-back-button", () => ({
+  FollowBackButton: () => <div>follow back button</div>,
+}));
+
 function mutationResult(overrides: Record<string, unknown> = {}) {
   return {
     mutateAsync: vi.fn(async () => ({ ok: true, data: undefined })),
@@ -95,6 +100,14 @@ function item(overrides: Record<string, unknown> = {}) {
     moderationAction: null,
     ...overrides,
   };
+}
+
+const MINUTE = 60_000;
+const DAY = 24 * 60 * 60 * 1000;
+
+/** A timestamp this long before now, so section tests never go stale. */
+function ago(offsetMs: number): string {
+  return new Date(Date.now() - offsetMs).toISOString();
 }
 
 function renderNotificationsPage(auth: AuthContextValue) {
@@ -398,5 +411,179 @@ describe("NotificationsPage", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByText("push permission card")).not.toBeInTheDocument();
+  });
+
+  it("merges consecutive likes on one post into a grouped row", () => {
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([
+        item({ id: "n-1" }),
+        item({
+          id: "n-2",
+          actor: {
+            id: "user-3",
+            username: "misty",
+            displayName: "Misty",
+            avatarSpecies: null,
+          },
+        }),
+      ]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    expect(screen.getByText("and 1 other liked your post")).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "and 1 other liked your post" }),
+    ).toHaveAttribute("href", "/post/post-1");
+    // The row is named after the most recent actor.
+    expect(screen.getByRole("link", { name: "Brock" })).toBeVisible();
+  });
+
+  it("names both likes and comments in a mixed group", () => {
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([
+        item({ id: "n-1", type: "like" }),
+        item({
+          id: "n-2",
+          type: "comment",
+          actor: {
+            id: "user-3",
+            username: "misty",
+            displayName: "Misty",
+            avatarSpecies: null,
+          },
+        }),
+      ]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    expect(
+      screen.getByText("and 1 other liked and commented on your post"),
+    ).toBeVisible();
+  });
+
+  it("keeps same-post notifications separate when they are not consecutive", () => {
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([
+        item({ id: "n-1" }),
+        item({ id: "n-2", type: "follow", postId: null }),
+        item({ id: "n-3" }),
+      ]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    expect(screen.getAllByText("liked your post")).toHaveLength(2);
+    expect(screen.getByText("followed you")).toBeVisible();
+    expect(screen.queryByText(/others liked your post/)).toBeNull();
+  });
+
+  it("marks every notification in a group read from its row", async () => {
+    const markRead = mutationResult();
+    mocks.useMarkNotificationRead.mockReturnValue(markRead);
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([item({ id: "n-1" }), item({ id: "n-2" })]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    await userEvent.setup().click(
+      screen.getByRole("button", {
+        name: /mark brock's notifications as read/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(markRead.mutateAsync).toHaveBeenCalledWith("n-1");
+      expect(markRead.mutateAsync).toHaveBeenCalledWith("n-2");
+    });
+  });
+
+  it("deletes every notification in a group from its row", async () => {
+    const remove = mutationResult();
+    mocks.useDeleteNotification.mockReturnValue(remove);
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([item({ id: "n-1" }), item({ id: "n-2" })]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    await userEvent.setup().click(
+      screen.getByRole("button", {
+        name: /delete brock's notifications/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(remove.mutateAsync).toHaveBeenCalledWith("n-1");
+      expect(remove.mutateAsync).toHaveBeenCalledWith("n-2");
+    });
+  });
+
+  it("groups rows under Today, This week and Earlier headings", () => {
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([
+        // Different posts, so each row stays on its own line.
+        item({ id: "n-today", postId: "post-a", createdAt: ago(MINUTE) }),
+        item({ id: "n-week", postId: "post-b", createdAt: ago(3 * DAY) }),
+        item({ id: "n-earlier", postId: "post-c", createdAt: ago(30 * DAY) }),
+      ]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    expect(screen.getByRole("heading", { name: "Today" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "This week" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Earlier" })).toBeVisible();
+  });
+
+  it("shows only the sections that have rows", () => {
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([item({ id: "n-today", createdAt: ago(MINUTE) })]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    expect(screen.getByRole("heading", { name: "Today" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "This week" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Earlier" })).toBeNull();
+  });
+
+  it("waits while mark-all-read is in flight", () => {
+    mocks.useUnreadNotificationCount.mockReturnValue(countResult(2));
+    mocks.useMarkAllNotificationsRead.mockReturnValue(
+      mutationResult({ isPending: true }),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    expect(
+      screen.getByRole("button", { name: /mark all as read/i }),
+    ).toBeDisabled();
+  });
+
+  it("shows the caught-up line when everything has been read", () => {
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([item({ id: "n-1", readAt: "2026-11-18T11:00:00.000Z" })]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    expect(screen.getByText("You're all caught up")).toBeVisible();
+  });
+
+  it("does not show the caught-up line while something is unread", () => {
+    mocks.useNotifications.mockReturnValue(infiniteResult([item()]));
+    renderNotificationsPage(createFakeAuth());
+
+    expect(screen.queryByText("You're all caught up")).toBeNull();
+  });
+
+  it("shows the follow-back button on follow notifications", () => {
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([item({ id: "n-1", type: "follow", postId: null })]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    expect(screen.getByText("follow back button")).toBeVisible();
+  });
+
+  it("shows no follow-back button on like notifications", () => {
+    mocks.useNotifications.mockReturnValue(infiniteResult([item()]));
+    renderNotificationsPage(createFakeAuth());
+
+    expect(screen.queryByText("follow back button")).toBeNull();
   });
 });

@@ -84,6 +84,12 @@ function profileRow(overrides: Partial<ProfileRow> = {}): ProfileRow {
     display_name: "Target User",
     avatar_species: "Snorlax",
     bio: null,
+    favourite_species: null,
+    main_format: null,
+    looking_for: null,
+    youtube_url: null,
+    twitch_url: null,
+    showdown_name: null,
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z",
     ...overrides,
@@ -212,6 +218,7 @@ describe("AdminReportsPage", () => {
         like_count: 0,
         comment_count: 0,
         liked_by_me: false,
+        language: null,
       }),
     );
     renderReportsPage(createFakeClient());
@@ -464,6 +471,7 @@ describe("AdminReportsPage", () => {
         like_count: 0,
         comment_count: 0,
         liked_by_me: false,
+        language: null,
       }),
     );
     moderationMocks.useSuspendUser.mockReturnValue(
@@ -585,6 +593,7 @@ describe("AdminReportsPage", () => {
         like_count: 0,
         comment_count: 0,
         liked_by_me: false,
+        language: null,
       }),
     );
     renderReportsPage(createFakeClient());

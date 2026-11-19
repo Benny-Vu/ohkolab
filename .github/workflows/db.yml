@@ -630,6 +630,287 @@ jobs:
           $shape$;
           SQL
 
+      # Exercises the community wave (20261121200000): the new profile
+      # fields are public but only the owner writes them, URL and enum
+      # checks fire, and posts/groups accept and expose their tags.
+      - name: Community profile fields and tags
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+          values
+            ('d1d1d1d1-d1d1-4d1d-8d1d-d1d1d1d1d1d1', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'comm-a@example.com', 'x', now(), now()),
+            ('e2e2e2e2-e2e2-4e2e-8e2e-e2e2e2e2e2e2', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'comm-b@example.com', 'x', now(), now());
+          insert into public.profiles (id, username) values
+            ('d1d1d1d1-d1d1-4d1d-8d1d-d1d1d1d1d1d1', 'comm_a'),
+            ('e2e2e2e2-e2e2-4e2e-8e2e-e2e2e2e2e2e2', 'comm_b')
+          on conflict (id) do update set username = excluded.username;
+
+          do $comm$
+          declare
+            comm_a constant uuid := 'd1d1d1d1-d1d1-4d1d-8d1d-d1d1d1d1d1d1';
+            comm_b constant uuid := 'e2e2e2e2-e2e2-4e2e-8e2e-e2e2e2e2e2e2';
+          begin
+            set local role authenticated;
+
+            -- The owner fills in every new field.
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_a, 'role', 'authenticated')::text, true);
+            -- 'singles', not 'doubles': the follow-suggestions step below
+            -- gives its viewer 'doubles', and a shared main_format would
+            -- leak this user into that step's exact-ranking assertion.
+            update public.profiles set
+              favourite_species = 'Garchomp',
+              main_format = 'singles',
+              looking_for = 'practice partners',
+              youtube_url = 'https://youtube.com/@example',
+              twitch_url = 'https://twitch.tv/example',
+              showdown_name = 'example'
+            where id = comm_a;
+            if not exists (
+              select 1 from public.profiles
+              where id = comm_a
+                and favourite_species = 'Garchomp'
+                and main_format = 'singles'
+                and looking_for = 'practice partners'
+                and youtube_url = 'https://youtube.com/@example'
+                and showdown_name = 'example'
+            ) then
+              raise exception 'COMM-CHECK: owner cannot write the new profile fields';
+            end if;
+
+            -- The enum and https checks fire.
+            begin
+              update public.profiles set main_format = 'triples' where id = comm_a;
+              raise exception 'COMM-CHECK: a bad main_format was accepted';
+            exception when check_violation then
+              null;
+            end;
+            begin
+              update public.profiles set youtube_url = 'http://insecure.example' where id = comm_a;
+              raise exception 'COMM-CHECK: a non-https link was accepted';
+            exception when check_violation then
+              null;
+            end;
+
+            -- Anyone reads the fields; nobody else writes them.
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_b, 'role', 'authenticated')::text, true);
+            if not exists (
+              select 1 from public.profiles
+              where id = comm_a and looking_for = 'practice partners'
+            ) then
+              raise exception 'COMM-CHECK: the new fields are not public';
+            end if;
+            update public.profiles set looking_for = 'hijacked' where id = comm_a;
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_a, 'role', 'authenticated')::text, true);
+            if exists (
+              select 1 from public.profiles
+              where id = comm_a and looking_for = 'hijacked'
+            ) then
+              raise exception 'COMM-CHECK: another user changed the profile fields';
+            end if;
+
+            -- Posts: the author tags a language, and only the author may
+            -- change it.
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_a, 'role', 'authenticated')::text, true);
+            insert into public.posts (author_id, body, language)
+            values (comm_a, 'community check', 'ja');
+            if not exists (
+              select 1 from public.posts
+              where author_id = comm_a and language = 'ja'
+            ) then
+              raise exception 'COMM-CHECK: the post language tag did not save';
+            end if;
+            begin
+              insert into public.posts (author_id, body, language)
+              values (comm_a, 'bad tag', 'fr');
+              raise exception 'COMM-CHECK: a bad post language was accepted';
+            exception when check_violation then
+              null;
+            end;
+            update public.posts set language = 'en' where author_id = comm_a;
+            if not exists (
+              select 1 from public.posts where author_id = comm_a and language = 'en'
+            ) then
+              raise exception 'COMM-CHECK: the author could not retag their post';
+            end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_b, 'role', 'authenticated')::text, true);
+            update public.posts set language = 'ja' where author_id = comm_a;
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_a, 'role', 'authenticated')::text, true);
+            if exists (
+              select 1 from public.posts where author_id = comm_a and language = 'ja'
+            ) then
+              raise exception 'COMM-CHECK: another user retagged the post';
+            end if;
+
+            -- Groups: the owner sets a category and language; the checks
+            -- fire; the tags are public.
+            insert into public.groups (slug, name, owner_id, category, language)
+            values ('community-check', 'Community check', comm_a, 'team_building', 'ja');
+            if not exists (
+              select 1 from public.groups
+              where slug = 'community-check'
+                and category = 'team_building' and language = 'ja'
+            ) then
+              raise exception 'COMM-CHECK: the group tags did not save';
+            end if;
+            begin
+              update public.groups set category = 'casual' where slug = 'community-check';
+              raise exception 'COMM-CHECK: a bad group category was accepted';
+            exception when check_violation then
+              null;
+            end;
+            perform set_config('request.jwt.claims', json_build_object('sub', comm_b, 'role', 'authenticated')::text, true);
+            if not exists (
+              select 1 from public.groups
+              where slug = 'community-check' and category = 'team_building'
+            ) then
+              raise exception 'COMM-CHECK: the group tags are not public';
+            end if;
+          end;
+          $comm$;
+          SQL
+
+      # Exercises the follow-suggestions RPC (20261121210000) as two
+      # authenticated users: the viewer never sees themself, anyone they
+      # already follow, a blocked user or a suspended user, and the
+      # mutual-follow + shared-group candidate outranks the rest.
+      - name: Follow suggestions ranking and exclusions
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+          values
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-a@example.com', 'x', now(), now()),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-bridge@example.com', 'x', now(), now()),
+            ('5d5d5d5d-5d5d-45d5-85d5-5d5d5d5d5d5d', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-shared@example.com', 'x', now(), now()),
+            ('6c6c6c6c-6c6c-46c6-86c6-6c6c6c6c6c6c', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-conn@example.com', 'x', now(), now()),
+            ('7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-format@example.com', 'x', now(), now()),
+            ('8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-followed@example.com', 'x', now(), now()),
+            ('91919191-9191-4919-8919-919191919191', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-blocked@example.com', 'x', now(), now()),
+            ('92929292-9292-4929-8929-929292929292', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-suspended@example.com', 'x', now(), now()),
+            ('93939393-9393-4939-8939-939393939393', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-minor@example.com', 'x', now(), now());
+          insert into public.profiles (id, username) values
+            ('93939393-9393-4939-8939-939393939393', 'fs_minor'),
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', 'fs_a'),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', 'fs_bridge'),
+            ('5d5d5d5d-5d5d-45d5-85d5-5d5d5d5d5d5d', 'fs_shared'),
+            ('6c6c6c6c-6c6c-46c6-86c6-6c6c6c6c6c6c', 'fs_conn'),
+            ('7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b', 'fs_format'),
+            ('8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a', 'fs_followed'),
+            ('91919191-9191-4919-8919-919191919191', 'fs_blocked'),
+            ('92929292-9292-4929-8929-929292929292', 'fs_suspended')
+          on conflict (id) do update set username = excluded.username;
+          -- Everyone is an adult except fs_minor (17): suggestions only
+          -- ever show adults.
+          insert into public.profile_birth_dates (user_id, birth_date)
+          select id, '1990-01-01' from public.profiles
+          where username like 'fs\_%' and username <> 'fs_minor'
+          on conflict (user_id) do nothing;
+          insert into public.profile_birth_dates (user_id, birth_date)
+          values ('93939393-9393-4939-8939-939393939393', current_date - interval '17 years')
+          on conflict (user_id) do nothing;
+          update public.profiles set main_format = 'doubles'
+          where id in ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b', '93939393-9393-4939-8939-939393939393');
+          update public.profiles set display_name = 'Format Fan', avatar_species = 'Garchomp'
+          where id = '7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b';
+
+          -- The graph: fs_a follows the bridge and one more user; the
+          -- bridge follows the shared-group user, the connection-only user
+          -- and the suspended user. fs_a blocks fs_blocked.
+          insert into public.follows (follower_id, followee_id) values
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e'),
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a'),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '5d5d5d5d-5d5d-45d5-85d5-5d5d5d5d5d5d'),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '6c6c6c6c-6c6c-46c6-86c6-6c6c6c6c6c6c'),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '92929292-9292-4929-8929-929292929292'),
+            -- The bridge also follows the minor: a strong signal that must
+            -- still never surface them.
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '93939393-9393-4939-8939-939393939393');
+          insert into public.groups (slug, name, owner_id) values
+            ('fs-shared-group', 'Follow Check Group', '3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f');
+          -- fs_a owns the group, so the groups_add_owner trigger already
+          -- made them a member; only fs_shared needs an explicit row.
+          insert into public.group_members (group_id, user_id, status)
+          select g.id, p.id, 'active'
+          from public.groups g, public.profiles p
+          where g.slug = 'fs-shared-group'
+            and p.username in ('fs_shared');
+          insert into public.blocks (blocker_id, blocked_id) values
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '91919191-9191-4919-8919-919191919191');
+          insert into public.user_suspensions (user_id, "until", reason) values
+            ('92929292-9292-4929-8929-929292929292', now() + interval '1 day', 'CI suspension check');
+
+          -- Behaviour checks, as the authenticated role with each user's
+          -- claims. Every failure raises with FS-CHECK.
+          do $fs$
+          declare
+            fs_a constant uuid := '3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f';
+            fs_followed constant uuid := '8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a';
+            excluded_seen int;
+            suggested text[];
+          begin
+            set local role authenticated;
+
+            -- User A: the RPC excludes themself, both already-followed
+            -- users, the blocked user and the suspended user.
+            perform set_config('request.jwt.claims', json_build_object('sub', fs_a, 'role', 'authenticated')::text, true);
+            select count(*) into excluded_seen
+            from public.suggest_users(10) s
+            where s.id in (
+              '3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f',
+              '4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e',
+              '8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a',
+              '91919191-9191-4919-8919-919191919191',
+              '92929292-9292-4929-8929-929292929292',
+              '93939393-9393-4939-8939-939393939393'
+            );
+            if excluded_seen <> 0 then
+              raise exception 'FS-CHECK: % excluded users were suggested', excluded_seen;
+            end if;
+
+            -- The ranking: shared group + connection first, connection
+            -- second, same main format third.
+            select array_agg(s.username order by s.score desc, s.username) into suggested
+            from public.suggest_users(10) s;
+            if suggested is distinct from array['fs_shared', 'fs_conn', 'fs_format'] then
+              raise exception 'FS-CHECK: ranking was %, expected {fs_shared,fs_conn,fs_format}', suggested;
+            end if;
+
+            -- The scores are the weighted sums (3 per connection, 2 per
+            -- shared group, 1 for the same main format).
+            if not exists (
+              select 1 from public.suggest_users(10) s
+              where s.username = 'fs_shared' and s.score = 5
+            ) or not exists (
+              select 1 from public.suggest_users(10) s
+              where s.username = 'fs_format' and s.score = 1
+            ) then
+              raise exception 'FS-CHECK: the scores are not the weighted sums';
+            end if;
+
+            -- The result exposes the public profile fields plus the score.
+            if not exists (
+              select 1 from public.suggest_users(10) s
+              where s.username = 'fs_format'
+                and s.display_name = 'Format Fan'
+                and s.avatar_species = 'Garchomp'
+                and s.main_format = 'doubles'
+            ) then
+              raise exception 'FS-CHECK: the public profile fields are missing';
+            end if;
+
+            -- User B (a second authenticated user) has no signals at all:
+            -- no followees, no groups, no format: the RPC returns nothing.
+            perform set_config('request.jwt.claims', json_build_object('sub', fs_followed, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.suggest_users(10) s) then
+              raise exception 'FS-CHECK: a signal-less user got suggestions';
+            end if;
+          end;
+          $fs$;
+          SQL
+
       - name: Stop
         if: always()
         run: supabase stop --no-backup

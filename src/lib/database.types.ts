@@ -32,6 +32,16 @@ export type Database = {
           avatar_species: string | null;
           /** Up to 300 characters. */
           bio: string | null;
+          /** The profile's favourite Pokémon, as a roster species name. */
+          favourite_species: string | null;
+          /** One of "singles", "doubles", "both"; null when unset. */
+          main_format: string | null;
+          /** Up to 100 characters, e.g. "practice partners". */
+          looking_for: string | null;
+          /** https-only links and a Showdown name; all optional. */
+          youtube_url: string | null;
+          twitch_url: string | null;
+          showdown_name: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -45,15 +55,26 @@ export type Database = {
           display_name?: string | null;
           avatar_species?: string | null;
           bio?: string | null;
+          favourite_species?: string | null;
+          main_format?: string | null;
+          looking_for?: string | null;
+          youtube_url?: string | null;
+          twitch_url?: string | null;
+          showdown_name?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        /** Only these four columns are granted for update. */
         Update: {
           username?: string;
           display_name?: string | null;
           avatar_species?: string | null;
           bio?: string | null;
+          favourite_species?: string | null;
+          main_format?: string | null;
+          looking_for?: string | null;
+          youtube_url?: string | null;
+          twitch_url?: string | null;
+          showdown_name?: string | null;
         };
         Relationships: [];
       };
@@ -117,6 +138,8 @@ export type Database = {
           attachment: Json | null;
           /** The group the post belongs to, or null on the main feed. */
           group_id: string | null;
+          /** Optional language tag: "en" or "ja"; null means untagged. */
+          language: string | null;
           created_at: string;
           updated_at: string;
           /** Set by a moderator through `remove_post()`; null while visible. */
@@ -131,12 +154,14 @@ export type Database = {
           attachment?: Json | null;
           /** Row-level security forces active membership of this group. */
           group_id?: string | null;
+          language?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        /** Only `body` is granted for update; `updated_at` is set by a trigger. */
+        /** Only `body` and `language` are granted for update. */
         Update: {
           body?: string;
+          language?: string | null;
         };
         Relationships: [];
       };
@@ -385,6 +410,10 @@ export type Database = {
           description: string | null;
           /** One of "public", "invite_only". */
           visibility: string;
+          /** Optional discovery category, or null for none. */
+          category: string | null;
+          /** Optional language tag: "en" or "ja"; null means untagged. */
+          language: string | null;
           owner_id: string;
           created_at: string;
           updated_at: string;
@@ -395,16 +424,20 @@ export type Database = {
           name: string;
           description?: string | null;
           visibility?: string;
+          category?: string | null;
+          language?: string | null;
           /** Row-level security forces this to the signed-in user. */
           owner_id: string;
           created_at?: string;
           updated_at?: string;
         };
-        /** Only name, description and visibility are granted for update. */
+        /** Only the listed columns are granted for update. */
         Update: {
           name?: string;
           description?: string | null;
           visibility?: string;
+          category?: string | null;
+          language?: string | null;
         };
         Relationships: [];
       };
@@ -761,6 +794,8 @@ export type Database = {
           attachment: Json | null;
           created_at: string;
           updated_at: string;
+          /** The post's optional language tag; null when untagged. */
+          language: string | null;
           author_username: string;
           author_display_name: string | null;
           author_avatar_species: string | null;
@@ -959,6 +994,23 @@ export type Database = {
           conversation_id: string;
           sender_id: string;
           created_at: string;
+        }[];
+      };
+      /**
+       * Follow suggestions for the calling user, ranked server side:
+       * mutual-follow connections, shared public groups, then the same main
+       * format. Public profile fields only, plus a score.
+       * (20261121210000_follow_suggestions.sql)
+       */
+      suggest_users: {
+        Args: { p_limit?: number };
+        Returns: {
+          id: string;
+          username: string;
+          display_name: string | null;
+          avatar_species: string | null;
+          main_format: string | null;
+          score: number;
         }[];
       };
     };

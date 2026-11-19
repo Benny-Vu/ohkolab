@@ -53,6 +53,12 @@ function blockedProfile(overrides: Partial<Profile> = {}): Profile {
     displayName: "Jessie",
     avatarSpecies: "Wobbuffet",
     bio: null,
+    favouriteSpecies: null,
+    mainFormat: null,
+    lookingFor: null,
+    youtubeUrl: null,
+    twitchUrl: null,
+    showdownName: null,
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
     ...overrides,
@@ -174,6 +180,12 @@ describe("ProfilePage", () => {
           displayName: "Champion Ash",
           avatarSpecies: TEST_PROFILE.avatarSpecies,
           bio: TEST_PROFILE.bio,
+          favouriteSpecies: TEST_PROFILE.favouriteSpecies,
+          mainFormat: TEST_PROFILE.mainFormat,
+          lookingFor: TEST_PROFILE.lookingFor,
+          youtubeUrl: TEST_PROFILE.youtubeUrl,
+          twitchUrl: TEST_PROFILE.twitchUrl,
+          showdownName: TEST_PROFILE.showdownName,
         },
       ]);
     });
@@ -190,6 +202,49 @@ describe("ProfilePage", () => {
 
     expect(
       screen.getByText("Username must be at least 3 characters."),
+    ).toBeInTheDocument();
+    expect(auth.calls.map((c) => c.name)).not.toContain("updateProfile");
+  });
+
+  it("saves the community profile fields", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth();
+    renderPage(<ProfilePage />, auth, { path: "/profile" });
+
+    await user.type(screen.getByLabelText("Looking for"), "practice partners");
+    await user.type(
+      screen.getByLabelText("YouTube channel"),
+      "https://youtube.com/@ash",
+    );
+    await user.type(screen.getByLabelText("Showdown name"), "ashketchum");
+    await user.click(screen.getByRole("combobox", { name: "Main format" }));
+    await user.click(await screen.findByRole("option", { name: "Doubles" }));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => {
+      const call = auth.calls.find((c) => c.name === "updateProfile");
+      expect(call?.args[0]).toMatchObject({
+        lookingFor: "practice partners",
+        youtubeUrl: "https://youtube.com/@ash",
+        showdownName: "ashketchum",
+        mainFormat: "doubles",
+      });
+    });
+  });
+
+  it("rejects a non-https profile link", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth();
+    renderPage(<ProfilePage />, auth, { path: "/profile" });
+
+    await user.type(
+      screen.getByLabelText("YouTube channel"),
+      "http://youtube.com/@ash",
+    );
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    expect(
+      screen.getByText("Links must be https:// addresses."),
     ).toBeInTheDocument();
     expect(auth.calls.map((c) => c.name)).not.toContain("updateProfile");
   });

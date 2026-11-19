@@ -79,6 +79,8 @@ describe("useCreateGroup", () => {
         description: "For fans.",
         visibility: "public",
         owner_id: "user-1",
+        category: null,
+        language: null,
       },
     ]);
     expect(record?.isSingle).toBe(true);
@@ -114,6 +116,8 @@ describe("useCreateGroup", () => {
       name: "Test Group",
       description: "A group for testing.",
       visibility: "public",
+      category: null,
+      language: null,
       ownerId: "user-1",
       createdAt: "2026-11-18T10:00:00.000Z",
     });

@@ -104,10 +104,40 @@ describe("Composer", () => {
         body: "Hello world",
         attachment: null,
         groupId: null,
+        language: "en",
       }),
     );
     expect(screen.getByRole("textbox", { name: "Write a post" })).toHaveValue(
       "",
+    );
+  });
+
+  it("tags the post with the picked language", async () => {
+    const user = userEvent.setup();
+    const mutateAsync = vi.fn(async () => ({ ok: true, data: undefined }));
+    mutationsMocks.useCreatePost.mockReturnValue({
+      mutateAsync,
+      mutate: vi.fn(),
+      isPending: false,
+    });
+    renderComposer();
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Write a post" }),
+      "こんにちは",
+    );
+    await user.click(screen.getByRole("combobox", { name: "Post language" }));
+    await user.click(await screen.findByRole("option", { name: "日本語" }));
+
+    await user.click(screen.getByRole("button", { name: /^post$/i }));
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith({
+        body: "こんにちは",
+        attachment: null,
+        groupId: null,
+        language: "ja",
+      }),
     );
   });
 

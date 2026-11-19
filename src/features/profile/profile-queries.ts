@@ -13,6 +13,12 @@ export function mapProfileRow(row: ProfileRow): Profile {
     displayName: row.display_name,
     avatarSpecies: row.avatar_species,
     bio: row.bio,
+    favouriteSpecies: row.favourite_species,
+    mainFormat: (row.main_format as Profile["mainFormat"]) ?? null,
+    lookingFor: row.looking_for,
+    youtubeUrl: row.youtube_url,
+    twitchUrl: row.twitch_url,
+    showdownName: row.showdown_name,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
