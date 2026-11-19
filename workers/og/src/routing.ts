@@ -108,3 +108,15 @@ export function ogImageCacheControl(kind: OgImageKind): string {
     kind === "team" || kind === "calc" || kind === "brand" ? 86400 : 3600;
   return `public, max-age=${maxAge}`;
 }
+
+/**
+ * Whether a path is an app page (a candidate for a crawler preview) rather
+ * than a static file. Anything whose last segment has a file extension
+ * (robots.txt, sitemap.xml, llms.txt, favicon.svg, /assets/*.js) is a file,
+ * and crawlers must get the real file: Google reads robots.txt and the
+ * sitemap, and a preview page in their place breaks both.
+ */
+export function isPagePath(pathname: string): boolean {
+  const last = pathname.split("/").pop() ?? "";
+  return !/\.[A-Za-z0-9]+$/.test(last);
+}
