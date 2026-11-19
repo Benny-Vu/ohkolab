@@ -29,4 +29,15 @@ export const teamBuilderRoutes: RouteObject[] = [
       ).TeamDetailPage,
     }),
   },
+  {
+    path: "teams/:teamId/print",
+    lazy: async () => ({
+      Component: (
+        await Promise.all([
+          import("@/features/team-builder/team-print-page"),
+          ensureEnglishDomain("tools"),
+        ]).then(([module]) => module)
+      ).TeamPrintPage,
+    }),
+  },
 ];

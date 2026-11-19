@@ -130,6 +130,25 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "teams.exportDescription":
     "Showdown形式のテキストをコピーして構築を共有できます。",
 
+  // 構築：チームプレビューと一覧のパネル。
+  "teams.previewAria": "チームプレビュー",
+  "teams.previewNamed": "{name}をプレビュー",
+  "teams.previewNatureSr": "せいかく：{nature}",
+  "teams.sendToCalc": "計算機に送る",
+
+  // 構築：印刷用チームシート。
+  "teams.printTeamSheet": "チームシートを印刷",
+  "teams.printModeLabel": "シートの内容",
+  "teams.printModeFull": "完全な構築リスト",
+  "teams.printModeOpen": "公開用チームシート",
+  "teams.printPlayerName": "プレイヤー名",
+  "teams.printPlayerId": "プレイヤーID",
+  "teams.printPrivacyHint":
+    "プレイヤー情報は印刷用です。保存も送信もされません。",
+  "teams.printAction": "印刷",
+  "teams.printLevel": "レベル50",
+  "teams.printFooter": "OHKOLab で作成 · ohkolab.com",
+
   // 構築：ChampionsのチームID。
   "teams.gameIdLabel": "チームID",
   "teams.gameIdFieldLabel": "Champions チームID",

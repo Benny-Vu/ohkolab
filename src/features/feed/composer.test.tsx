@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Providers } from "@/app/providers";
 import { AuthContext } from "@/lib/auth/use-auth";
+import { createDefaultSet } from "@/data";
 import { createFakeAuth } from "@/features/account/test-utils";
 import { Composer } from "@/features/feed/composer";
 import { IMAGE_ALT_MAX, IMAGE_POSTS_MAX } from "@/lib/social/images";
@@ -147,6 +148,40 @@ describe("Composer", () => {
         }),
       ),
     );
+  });
+
+  it("shows the selected team as a preview before posting", async () => {
+    const user = userEvent.setup();
+    const team: Team = {
+      id: "team-1",
+      name: "Champion team",
+      format: "doubles",
+      members: [createDefaultSet("Garchomp")],
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    };
+    localStorage.setItem(
+      TEAMS_STORAGE_KEY,
+      JSON.stringify({ version: 1, teams: [team] }),
+    );
+    renderComposer();
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Write a post" }),
+      "Check this team",
+    );
+    await user.click(screen.getByRole("combobox", { name: "Attach a team" }));
+    await user.click(
+      await screen.findByRole("option", { name: "Champion team" }),
+    );
+
+    // The selected team shows as a preview: its Pokémon and its empty slots.
+    expect(screen.getByRole("img", { name: "Garchomp" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", {
+        name: 'Team "Champion team" will be attached to this post.',
+      }),
+    ).toBeInTheDocument();
   });
 
   it("shows the error message when posting fails", async () => {

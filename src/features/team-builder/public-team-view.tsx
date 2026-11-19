@@ -1,8 +1,14 @@
-import { Link } from "react-router";
-import { ArrowLeftIcon, CopyIcon, TriangleAlertIcon } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import {
+  ArrowLeftIcon,
+  CopyIcon,
+  PrinterIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { TeamPreview } from "@/components/team-preview/team-preview";
 import { TeamIdChip } from "@/components/team-id-chip";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -61,6 +67,7 @@ export function PublicTeamView({
   client?: AppSupabaseClient | null;
 }) {
   const t = useT();
+  const navigate = useNavigate();
   const teamQuery = usePublicTeam(teamId, client);
   const { create } = useTeams();
   const entry = teamQuery.data ?? null;
@@ -149,12 +156,25 @@ export function PublicTeamView({
             <CopyIcon aria-hidden />
             {t("postCard.copyTeam")}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void navigate(`/teams/${team.id}/print`)}
+          >
+            <PrinterIcon aria-hidden />
+            {t("teams.printTeamSheet")}
+          </Button>
         </>
       }
     >
       {team.gameTeamId ? (
         <div className="mb-4">
           <TeamIdChip id={team.gameTeamId} />
+        </div>
+      ) : null}
+      {team.members.length > 0 ? (
+        <div className="mb-4">
+          <TeamPreview team={team} variant="expanded" />
         </div>
       ) : null}
       {team.members.length > 0 ? (

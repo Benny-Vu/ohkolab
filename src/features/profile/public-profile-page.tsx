@@ -87,11 +87,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Team member details need the dex (battleTypes), so the row lives in its
-// own module and loads lazily when the team dialog opens.
-const TeamMemberRow = lazy(() =>
-  import("@/features/profile/team-member-row").then((m) => ({
-    default: m.TeamMemberRow,
+// The team preview needs the dex (localized names, sprites), so it loads
+// lazily when the team dialog opens, keeping pokemon-data out of the
+// profile route chunk.
+const TeamPreview = lazy(() =>
+  import("@/components/team-preview/team-preview").then((m) => ({
+    default: m.TeamPreview,
   })),
 );
 
@@ -174,24 +175,17 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
           </DialogDescription>
         </DialogHeader>
         {team.gameTeamId ? <TeamIdChip id={team.gameTeamId} /> : null}
-        <ul className="grid gap-3">
-          {team.members.map((_, index) => (
-            <Suspense
-              key={index}
-              fallback={
-                <li>
-                  <LoadingArea
-                    pending={true}
-                    label={t("teams.loading")}
-                    skeleton={<TeamMemberRowSkeleton />}
-                  />
-                </li>
-              }
-            >
-              <TeamMemberRow team={team} index={index} />
-            </Suspense>
-          ))}
-        </ul>
+        <Suspense
+          fallback={
+            <LoadingArea
+              pending={true}
+              label={t("teams.loading")}
+              skeleton={<TeamMemberRowSkeleton />}
+            />
+          }
+        >
+          <TeamPreview team={team} variant="expanded" />
+        </Suspense>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
             {t("common.cancel")}

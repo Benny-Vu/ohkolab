@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Picker } from "@/components/picker";
+import { TeamPreview } from "@/components/team-preview/team-preview";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
 import { displayTeamName } from "@/lib/team/display";
@@ -366,9 +367,20 @@ export function Composer({ groupId }: { groupId?: string | null }) {
         </ul>
       )}
       {attachment && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          {t("composer.attachedTeam", { name: attachment.name })}
-        </p>
+        <div className="mt-2">
+          {attachment.members.length > 0 ? (
+            <TeamPreview
+              team={attachment}
+              variant="compact"
+              ariaLabel={t("composer.attachedTeam", {
+                name: attachment.name,
+              })}
+            />
+          ) : null}
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t("composer.attachedTeam", { name: attachment.name })}
+          </p>
+        </div>
       )}
     </div>
   );

@@ -134,6 +134,25 @@ export const toolsEn = {
   "teams.exportTitle": "Export team",
   "teams.exportDescription": "Copy this Showdown export to share the team.",
 
+  // Team builder: the team preview and its panel on the teams list.
+  "teams.previewAria": "Team preview",
+  "teams.previewNamed": "Preview {name}",
+  "teams.previewNatureSr": "Nature: {nature}",
+  "teams.sendToCalc": "Send to calc",
+
+  // Team builder: the printable team sheet.
+  "teams.printTeamSheet": "Print team sheet",
+  "teams.printModeLabel": "Sheet contents",
+  "teams.printModeFull": "Full team list",
+  "teams.printModeOpen": "Open team sheet",
+  "teams.printPlayerName": "Player name",
+  "teams.printPlayerId": "Player ID",
+  "teams.printPrivacyHint":
+    "The player fields are only printed. They are never saved or sent anywhere.",
+  "teams.printAction": "Print",
+  "teams.printLevel": "Lv. 50",
+  "teams.printFooter": "Made with OHKOLab · ohkolab.com",
+
   // Team builder: the Champions team ID.
   "teams.gameIdLabel": "Team ID",
   "teams.gameIdFieldLabel": "Champions team ID",
