@@ -228,6 +228,16 @@ export function JaPrivacySections({ images }: { images: boolean }) {
         <LegalText>
           モデレーション記録は例外です。あなたに対して行われた処分とその理由、削除したコンテンツのコピー、申し立てとその結果、停止措置の記録です。決定後（停止の場合は停止終了後）12か月間、アカウント削除後も保管し続けます。これは、当方の決定を説明し、法令により要求される場合に警察へ証拠を提供するためです。アカウント削除後、記録はアカウントと紐付けられなくなります。12か月経過後、自動的に削除されます。
         </LegalText>
+        <LegalText>
+          手順は
+          <Link
+            to="/delete-account"
+            className="text-primary underline underline-offset-4"
+          >
+            アカウント削除ページ
+          </Link>
+          をご覧ください。
+        </LegalText>
       </LegalSection>
 
       <LegalSection id="changes" heading="ポリシーの変更">

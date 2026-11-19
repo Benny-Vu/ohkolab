@@ -26,6 +26,7 @@ const EXACT_TITLES: Record<string, TranslationKey> = {
   "/reset-password": "pageTitle.resetPassword",
   "/terms": "footer.terms",
   "/privacy": "footer.privacy",
+  "/delete-account": "pageTitle.deleteAccount",
 };
 
 /** Page titles for parameterised routes, keyed by path prefix. */
