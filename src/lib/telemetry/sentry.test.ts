@@ -164,6 +164,36 @@ describe("reportError", () => {
     expect(reportError(rateLimited)).toBeNull();
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
+
+  it("does not report an already-mapped SocialFailure", () => {
+    overrideTelemetryConfig(ENABLED);
+    // What the query layer rejects: a mapped failure, not an Error. This was
+    // the shape of the Sentry "Object captured as exception" noise.
+    const forbidden = { code: "forbidden", message: "You cannot do that." };
+    expect(reportError(forbidden)).toBeNull();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("reports a non-Error as an Error so Sentry can group it", () => {
+    overrideTelemetryConfig(ENABLED);
+    expect(reportError({ weird: "object", detail: 7 })).toBe("event-1");
+    const captured = vi.mocked(Sentry.captureException).mock.calls[0]?.[0];
+    expect(captured).toBeInstanceOf(Error);
+    expect((captured as Error).message).toBe(
+      'unknown: {"weird":"object","detail":7}',
+    );
+  });
+
+  it("reports an unmapped object with a JSON detail in the message", () => {
+    overrideTelemetryConfig(ENABLED);
+    // Not filtered as expected, but mapped: the message carries the code.
+    expect(reportError({ status: 500, message: "server broke" })).toBe(
+      "event-1",
+    );
+    const captured = vi.mocked(Sentry.captureException).mock.calls[0]?.[0];
+    expect(captured).toBeInstanceOf(Error);
+    expect((captured as Error).message).toMatch(/^unknown: /);
+  });
 });
 
 describe("isExpectedError", () => {

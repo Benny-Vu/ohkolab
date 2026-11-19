@@ -230,6 +230,35 @@ export function stopNativeSentry(): void {
   );
 }
 
+/**
+ * A short text view of an unknown value for an exception message. Never
+ * throws, also on circular structures.
+ */
+function summarizeValue(value: unknown): string {
+  try {
+    const text = JSON.stringify(value);
+    return typeof text === "string" && text.length > 0 ? text : String(value);
+  } catch {
+    return String(value);
+  }
+}
+
+/**
+ * Sentry groups events by the exception's message; a plain object arrives as
+ * "Object captured as exception" and lumps unrelated bugs into one issue.
+ * Anything that is not an Error is reported as an Error with the mapped code
+ * first in the message.
+ */
+function toCapturedError(error: unknown): unknown {
+  if (error instanceof Error) {
+    return error;
+  }
+  const described = describeSocialError(error);
+  const detail =
+    described.code === "unknown" ? summarizeValue(error) : described.message;
+  return new Error(`${described.code}: ${detail}`);
+}
+
 /** Reports an error to Sentry and returns the event id, or null when off. */
 export function reportError(
   error: unknown,
@@ -246,7 +275,7 @@ export function reportError(
   if (isExpectedError(error)) {
     return null;
   }
-  return Sentry.captureException(error, (scope) => {
+  return Sentry.captureException(toCapturedError(error), (scope) => {
     if (context) {
       for (const [key, value] of Object.entries(context)) {
         scope.setContext(key, { value });
