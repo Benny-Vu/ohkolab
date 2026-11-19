@@ -1,0 +1,40 @@
+# OHKOLab
+
+> OHKOLab (ohkolab.com) is a free community and toolkit for Pokémon Champions players, in English and Japanese. Players discuss VGC, share teams, find friends and practice partners, and use a damage calculator, a team builder and monthly metagame statistics. It is an unofficial fan project, not affiliated with Nintendo, Game Freak, Creatures or The Pokémon Company.
+
+Key facts:
+
+- Game: Pokémon Champions, singles and doubles (VGC). The site defaults to doubles.
+- Champions rules the tools follow: every Pokémon is level 50; Stat Points (SP) replace EVs and IVs, 0–32 per stat and 66 in total; Mega Evolution exists and is chosen through the held item.
+- Damage numbers come from `@smogon/calc`, which models Champions.
+- Metagame numbers are monthly Pokémon Showdown usage statistics from Smogon, for singles and doubles.
+- Languages: English and Japanese, with official Japanese Pokémon, move, item and ability names.
+- Accounts are free. The minimum age is 16. Users under 18 can only message friends.
+- The site is a single-page app: page content needs JavaScript, so fetch the pages below in a browser.
+
+## Community
+
+- [Home feed](https://ohkolab.com/): posts from the community (text, images and attached teams or calc results), with Latest and Following views
+- [Groups](https://ohkolab.com/groups): public and invite-only groups, each with its own feed
+- Public profiles: `https://ohkolab.com/u/<username>` shows a player's posts and shared teams
+- Direct messages: one-to-one text messages between signed-in users, with blocking and reporting
+
+## Tools
+
+- [Damage calculator](https://ohkolab.com/calc): Champions damage ranges, KO chances, doubles spread moves, a second defender, field effects and shareable calc links
+- [Team builder](https://ohkolab.com/teams): six-Pokémon teams with SP spreads, Showdown import and export, team analysis (weaknesses, coverage, speed tiers), Champions team IDs, a team preview and a printable tournament team sheet
+- [Metagame](https://ohkolab.com/meta): usage rankings with common moves, items, abilities, natures, SP spreads and teammates; any set opens in the calc or the team builder
+
+## About
+
+- [Credits](https://ohkolab.com/credits): data sources and licences (PokéAPI, @pkmn, @smogon/calc, Smogon usage statistics, fonts and libraries)
+- [Terms of service](https://ohkolab.com/terms)
+- [Privacy policy](https://ohkolab.com/privacy)
+- [Delete your account](https://ohkolab.com/delete-account)
+- Contact: contact@ohkolab.com
+- Made by Vu Forge
+
+## Optional
+
+- [Sitemap](https://ohkolab.com/sitemap.xml)
+- [robots.txt](https://ohkolab.com/robots.txt)
