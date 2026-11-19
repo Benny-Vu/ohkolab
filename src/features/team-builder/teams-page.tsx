@@ -115,7 +115,7 @@ function TeamCard({
                   {member.item ? (
                     <ItemIcon
                       item={member.item}
-                      className="absolute right-0 bottom-0 size-4 rounded-sm bg-background"
+                      className="absolute right-0 bottom-0 size-4 rounded-md bg-background"
                     />
                   ) : null}
                 </span>

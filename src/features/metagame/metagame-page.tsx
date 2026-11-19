@@ -212,23 +212,33 @@ function PokemonDetail({
   return (
     <div className="space-y-4">
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">{t("meta.moves")}</h3>
+        <h3 className="font-heading text-sm font-semibold">
+          {t("meta.moves")}
+        </h3>
         <ShareList kind="move" shares={pokemon.moves} />
       </section>
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">{t("meta.items")}</h3>
+        <h3 className="font-heading text-sm font-semibold">
+          {t("meta.items")}
+        </h3>
         <ShareList kind="item" shares={pokemon.items} />
       </section>
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">{t("meta.abilities")}</h3>
+        <h3 className="font-heading text-sm font-semibold">
+          {t("meta.abilities")}
+        </h3>
         <ShareList kind="ability" shares={pokemon.abilities} />
       </section>
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">{t("meta.teammates")}</h3>
+        <h3 className="font-heading text-sm font-semibold">
+          {t("meta.teammates")}
+        </h3>
         <ShareList kind="species" shares={pokemon.teammates} />
       </section>
       <section className="space-y-1.5">
-        <h3 className="text-sm font-semibold">{t("meta.spreads")}</h3>
+        <h3 className="font-heading text-sm font-semibold">
+          {t("meta.spreads")}
+        </h3>
         <SpreadList spreads={pokemon.spreads} />
       </section>
       <DialogFooter>
@@ -399,7 +409,7 @@ export function MetagamePage() {
         </div>
         <section className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base leading-tight font-semibold">
+            <h2 className="font-heading text-base leading-tight font-semibold">
               {t("meta.usageRanking")}
             </h2>
             <Input

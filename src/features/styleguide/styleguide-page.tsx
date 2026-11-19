@@ -30,7 +30,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mb-10">
+    <section className="mb-8">
       <h2 className="mb-3 font-heading text-lg font-semibold tracking-tight">
         {title}
       </h2>
@@ -120,7 +120,7 @@ export function StyleguidePage() {
           <BigNumber size="xl">56</BigNumber>
           <BigNumber size="lg">40</BigNumber>
           <BigNumber size="md">30</BigNumber>
-          <p className="text-xl font-semibold tracking-tight">
+          <p className="font-heading text-xl font-semibold tracking-tight">
             Heading 20 semibold
           </p>
           <p className="text-base font-medium">Interface 16 medium</p>

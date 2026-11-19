@@ -12,7 +12,6 @@ import {
   PencilIcon,
   PlusIcon,
   Trash2Icon,
-  TriangleAlertIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,7 +19,7 @@ import { Page } from "@/components/page";
 import { displayTeamName } from "@/lib/team/display";
 import { PokemonEditor } from "@/components/pokemon-editor";
 import { LoadingArea, TeamDetailSkeleton } from "@/components/skeletons";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ErrorState } from "@/components/error-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -199,16 +198,15 @@ export function TeamDetailPage() {
           title={t("teams.title")}
           description={t("teams.loadErrorDescription")}
         >
-          <div className="grid gap-4">
-            <Alert>
-              <TriangleAlertIcon aria-hidden />
-              <AlertTitle>{t("teams.loadError")}</AlertTitle>
-              <AlertDescription>{sync.error}</AlertDescription>
-            </Alert>
-            <Button className="justify-self-start" onClick={() => sync.retry()}>
-              {t("teams.retry")}
-            </Button>
-          </div>
+          <ErrorState
+            title={t("teams.loadError")}
+            description={sync.error}
+            action={
+              <Button variant="outline" size="sm" onClick={() => sync.retry()}>
+                {t("teams.retry")}
+              </Button>
+            }
+          />
         </Page>
       );
     }
@@ -539,7 +537,7 @@ export function TeamDetailPage() {
                   type="button"
                   onClick={openAdd}
                   aria-label={t("teams.addPokemon")}
-                  className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                  className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-md border border-dashed text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                 >
                   <PlusIcon className="size-5" aria-hidden />
                   {t("teams.addPokemon")}
