@@ -186,6 +186,9 @@ export default defineConfig(({ mode }) => {
         // Pure modules shared by the Edge Functions: no Deno imports, so
         // Vitest can run their tests in jsdom like any other module.
         "supabase/functions/_shared/**/*.test.ts",
+        // The OG Worker's pure logic (crawler detection, meta building,
+        // data rules) runs here too, so `npm run check` and CI cover it.
+        "workers/og/src/**/*.test.ts",
       ],
       setupFiles: ["./src/test/setup.ts"],
       passWithNoTests: true,
