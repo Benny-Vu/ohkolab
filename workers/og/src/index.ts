@@ -34,6 +34,7 @@ import {
 import { renderOgImage } from "./image";
 import { buildPreviewDocument, injectPreview } from "./meta";
 import {
+  isPagePath,
   matchOgImage,
   matchPage,
   ogImageCacheControl,
@@ -70,8 +71,11 @@ export default {
       return response;
     }
 
+    // Static files (robots.txt, sitemap.xml, llms.txt, assets) always pass
+    // through, even for crawlers: only app pages get a preview.
     const crawler =
       (request.method === "GET" || request.method === "HEAD") &&
+      isPagePath(url.pathname) &&
       isCrawlerUserAgent(request.headers.get("user-agent"));
     if (crawler) {
       return serveCrawlerPreview(
