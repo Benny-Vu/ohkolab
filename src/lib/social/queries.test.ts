@@ -680,10 +680,10 @@ describe("useBlocks", () => {
 });
 
 describe("useIsModerator", () => {
-  it("reads the moderator flag through rpc", async () => {
+  it("reads the moderator flag through rpc when signed in", async () => {
     const fake = createFakeClient(byTable({}), { data: true, error: null });
     const { result } = renderHook(() => useIsModerator(fake.client), {
-      wrapper: createWrapper(queryClient),
+      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -695,12 +695,68 @@ describe("useIsModerator", () => {
   it("is false for regular users", async () => {
     const fake = createFakeClient(byTable({}), { data: false, error: null });
     const { result } = renderHook(() => useIsModerator(fake.client), {
+      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toBe(false);
+  });
+
+  it("does not call the rpc when signed out", async () => {
+    // The function is revoked for the anon role; calling it signed out would
+    // be a guaranteed 401 (and was the source of Sentry noise).
+    const fake = createFakeClient(byTable({}), { data: true, error: null });
+    const { result } = renderHook(() => useIsModerator(fake.client), {
       wrapper: createWrapper(queryClient),
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toBe(false);
+    expect(fake.rpcCalls).toEqual([]);
+  });
+
+  it("treats a forbidden call as not being a moderator", async () => {
+    const fake = createFakeClient(byTable({}), {
+      data: null,
+      error: { code: "42501", message: "permission denied for table" },
+    });
+    const { result } = renderHook(() => useIsModerator(fake.client), {
+      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toBe(false);
+  });
+
+  it("treats an expired session as not being a moderator", async () => {
+    const fake = createFakeClient(byTable({}), {
+      data: null,
+      error: { status: 401, message: "unauthorized" },
+    });
+    const { result } = renderHook(() => useIsModerator(fake.client), {
+      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toBe(false);
+  });
+
+  it("still fails on unexpected errors", async () => {
+    const fake = createFakeClient(byTable({}), {
+      data: null,
+      error: { code: "XX000", message: "internal error" },
+    });
+    const { result } = renderHook(() => useIsModerator(fake.client), {
+      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(result.current.data).toBeUndefined();
   });
 });
 
