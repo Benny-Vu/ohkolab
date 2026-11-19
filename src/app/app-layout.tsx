@@ -28,7 +28,7 @@ export function AppLayout() {
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-40 border-b bg-background/90 pt-safe backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6">
-          <Link to="/" aria-label="OHKOLab home">
+          <Link to="/" aria-label={t("nav.homeAria")}>
             <Wordmark />
           </Link>
           <nav
@@ -64,7 +64,11 @@ export function AppLayout() {
       </header>
 
       {/* The phone tab bar is 56px plus the gesture-navigation inset. */}
-      <main className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
+      {/* tabIndex -1 lets deleted rows park focus on the page landmark. */}
+      <main
+        tabIndex={-1}
+        className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] outline-none md:pb-0"
+      >
         <Outlet />
       </main>
 

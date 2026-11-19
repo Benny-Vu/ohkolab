@@ -131,7 +131,11 @@ function GroupList({ query, emptyTitle, emptyDescription }: GroupListProps) {
   const t = useT();
   if (query.isPending) {
     return (
-      <div className="grid gap-3" aria-label={t("groups.loadingGroups")}>
+      <div
+        className="grid gap-3"
+        role="status"
+        aria-label={t("groups.loadingGroups")}
+      >
         <Skeleton className="h-20 w-full rounded-md" />
         <Skeleton className="h-20 w-full rounded-md" />
         <Skeleton className="h-20 w-full rounded-md" />

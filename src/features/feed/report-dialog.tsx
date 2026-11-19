@@ -206,7 +206,15 @@ export function ReportDialog({
               {details.length}/{REPORT_DETAILS_MAX}
             </p>
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p
+              id="report-error"
+              className="text-sm text-destructive"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
         </div>
         <DialogFooter>
           <Button
@@ -221,6 +229,7 @@ export function ReportDialog({
             type="button"
             onClick={submit}
             disabled={createReport.isPending}
+            aria-describedby={error ? "report-error" : undefined}
           >
             {createReport.isPending && (
               <LoaderCircleIcon className="animate-spin" aria-hidden />

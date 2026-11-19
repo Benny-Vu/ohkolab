@@ -62,6 +62,14 @@ import {
 import { koResultOf } from "@/features/calc/ko-result";
 import { ReportDialog } from "@/features/feed/report-dialog";
 
+/**
+ * The card unmounts when its post is deleted or removed, taking focus with it;
+ * park focus on the page landmark so keyboard users keep their place.
+ */
+function focusMainLandmark(): void {
+  (document.querySelector("main") as HTMLElement | null)?.focus();
+}
+
 interface PostCardProps {
   post: FeedPostRow;
   /** Hide the comment count link on the post detail page. */
@@ -164,6 +172,7 @@ export function PostCard({
     const result = await deletePost.mutateAsync(post.id);
     if (result.ok) {
       setConfirmDelete(false);
+      focusMainLandmark();
       toast.success(t("postCard.deletedToast"));
     } else {
       toast.error(result.error.message);
@@ -194,6 +203,7 @@ export function PostCard({
     if (result.ok) {
       setRemoving(false);
       setRemoveReason("");
+      focusMainLandmark();
       toast.success(t("postCard.removedToast"));
     } else {
       toast.error(result.error.message);

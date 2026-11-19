@@ -546,6 +546,9 @@ export const communityEn = {
   "pageTitle.group": "Group",
   "pageTitle.notFound": "Page not found",
   "pageTitle.deleteAccount": "Delete your account",
+
+  // Accessibility pass (quality wave): unread state on notification rows.
+  "notifications.unreadSr": "Unread",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;
@@ -1080,4 +1083,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "pageTitle.group": "グループ",
   "pageTitle.notFound": "ページが見つかりません",
   "pageTitle.deleteAccount": "アカウントの削除",
+
+  // アクセシビリティ対応（quality ウェーブ）：通知行の未読状態。
+  "notifications.unreadSr": "未読",
 };

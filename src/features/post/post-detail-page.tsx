@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeftIcon, LoaderCircleIcon, SendIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -38,11 +38,16 @@ export function PostDetailPage() {
   const [reportedCommentId, setReportedCommentId] = useState<string | null>(
     null,
   );
+  const commentsHeadingRef = useRef<HTMLHeadingElement>(null);
 
   if (postQuery.isPending) {
     return (
       <Page title={t("postDetail.title")} width="narrow">
-        <div className="grid gap-3" aria-label={t("postDetail.loadingAria")}>
+        <div
+          className="grid gap-3"
+          role="status"
+          aria-label={t("postDetail.loadingAria")}
+        >
           <Skeleton className="h-28 w-full rounded-md" />
           <Skeleton className="h-28 w-full rounded-md" />
         </div>
@@ -97,8 +102,14 @@ export function PostDetailPage() {
       commentId,
       postId: post.id,
     });
-    if (result.ok) toast.success(t("postDetail.commentDeleted"));
-    else toast.error(result.error.message);
+    if (result.ok) {
+      toast.success(t("postDetail.commentDeleted"));
+      // The row with focus unmounts; park focus on the section heading so the
+      // keyboard position is not lost.
+      commentsHeadingRef.current?.focus();
+    } else {
+      toast.error(result.error.message);
+    }
   };
 
   const canComment =
@@ -122,20 +133,30 @@ export function PostDetailPage() {
         <PostCard post={post} hideCommentLink images={imagesQuery.data ?? []} />
 
         <section aria-label={t("postDetail.comments")} className="grid gap-3">
-          <h2 className="text-sm font-semibold">{t("postDetail.comments")}</h2>
+          <h2
+            ref={commentsHeadingRef}
+            tabIndex={-1}
+            className="text-sm font-semibold outline-none"
+          >
+            {t("postDetail.comments")}
+          </h2>
 
           {user ? (
             <div className="rounded-md border bg-card p-4">
               <Textarea
                 aria-label={t("postDetail.writeComment")}
                 placeholder={t("postDetail.commentPlaceholder")}
+                aria-describedby="comment-count"
                 value={commentBody}
                 onChange={(event) => setCommentBody(event.target.value)}
                 rows={2}
                 disabled={createComment.isPending}
               />
               <div className="mt-3 flex items-center gap-2">
-                <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                <span
+                  id="comment-count"
+                  className="ml-auto text-xs text-muted-foreground tabular-nums"
+                >
                   {commentBody.length}/{COMMENT_BODY_MAX}
                 </span>
                 <Button

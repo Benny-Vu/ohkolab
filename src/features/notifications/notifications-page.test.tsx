@@ -145,6 +145,10 @@ describe("NotificationsPage", () => {
     renderNotificationsPage(createFakeAuth());
 
     expect(screen.getByLabelText("Loading notifications")).toBeVisible();
+    // role=status makes the label a live region screen readers announce.
+    expect(
+      screen.getByRole("status", { name: "Loading notifications" }),
+    ).toBeVisible();
   });
 
   it("shows an error with a retry button", () => {
@@ -192,6 +196,13 @@ describe("NotificationsPage", () => {
         name: /mark brock's notification as read/i,
       }),
     ).toBeVisible();
+  });
+
+  it("exposes the unread state to screen readers", () => {
+    mocks.useNotifications.mockReturnValue(infiniteResult([item()]));
+    renderNotificationsPage(createFakeAuth());
+
+    expect(screen.getByText("Unread")).toBeInTheDocument();
   });
 
   it("does not offer mark-as-read on read rows", () => {

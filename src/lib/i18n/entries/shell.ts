@@ -102,6 +102,11 @@ export const shellEn = {
 
   // The offline notice in the native apps (web never shows it).
   "shell.offlineNotice": "You're offline. Some content may not load.",
+
+  // Accessibility pass (quality wave): the home link and theme switch.
+  "nav.homeAria": "OHKOLab home",
+  "theme.toLight": "Switch to light theme",
+  "theme.toDark": "Switch to dark theme",
 } as const;
 
 export type ShellKey = keyof typeof shellEn;
@@ -201,4 +206,9 @@ export const shellJa: { [K in ShellKey]: string } = {
 
   // ネイティブアプリのオフライン表示（ウェブでは出ない）。
   "shell.offlineNotice": "オフラインのため、一部のコンテンツを読み込めません。",
+
+  // アクセシビリティ対応（quality ウェーブ）：ホームリンクとテーマ切り替え。
+  "nav.homeAria": "OHKOLab ホーム",
+  "theme.toLight": "ライトテーマに切り替える",
+  "theme.toDark": "ダークテーマに切り替える",
 };

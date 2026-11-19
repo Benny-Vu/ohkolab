@@ -92,4 +92,17 @@ describe("AppLayout", () => {
       screen.getByRole("heading", { name: "Page not found" }),
     ).toBeInTheDocument();
   });
+
+  it("names the home link and exposes the main landmark to focus", () => {
+    renderAt("/");
+    const main = screen.getByRole("main");
+
+    expect(
+      within(screen.getByRole("banner")).getByRole("link", {
+        name: "OHKOLab home",
+      }),
+    ).toHaveAttribute("href", "/");
+    // tabIndex -1 lets deletion flows park focus on the page landmark.
+    expect(main).toHaveAttribute("tabindex", "-1");
+  });
 });

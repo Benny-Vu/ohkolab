@@ -96,6 +96,14 @@ const WARNING_TITLE_KEYS: Record<TeamWarning["kind"], TranslationKey> = {
   set: "teams.warningSet",
 };
 
+/**
+ * A member card unmounts when it is removed, taking focus with it; park focus
+ * on the page landmark so keyboard users keep their place.
+ */
+function focusMainLandmark(): void {
+  (document.querySelector("main") as HTMLElement | null)?.focus();
+}
+
 export function TeamDetailPage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
@@ -144,7 +152,7 @@ export function TeamDetailPage() {
         >
           <div className="grid gap-4">
             <Alert>
-              <TriangleAlertIcon />
+              <TriangleAlertIcon aria-hidden />
               <AlertTitle>{t("teams.loadError")}</AlertTitle>
               <AlertDescription>{sync.error}</AlertDescription>
             </Alert>
@@ -259,7 +267,7 @@ export function TeamDetailPage() {
         <>
           <Button asChild variant="ghost" size="sm">
             <Link to="/teams">
-              <ArrowLeftIcon />
+              <ArrowLeftIcon aria-hidden />
               {t("teams.title")}
             </Link>
           </Button>
@@ -268,6 +276,7 @@ export function TeamDetailPage() {
             variant="outline"
             size="sm"
             value={team.format}
+            aria-label={t("calc.battleFormat")}
             onValueChange={(value) => {
               if (value) setFormat(team.id, value as BattleFormat);
             }}
@@ -324,7 +333,7 @@ export function TeamDetailPage() {
                     setInlineEditing(true);
                   }}
                 >
-                  <PencilIcon />
+                  <PencilIcon aria-hidden />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{t("teams.rename")}</TooltipContent>
@@ -336,7 +345,7 @@ export function TeamDetailPage() {
             className="hidden md:inline-flex"
             onClick={() => setExportOpen(true)}
           >
-            <DownloadIcon />
+            <DownloadIcon aria-hidden />
             {t("teams.export")}
           </Button>
           <Tooltip>
@@ -348,7 +357,7 @@ export function TeamDetailPage() {
                 className="md:hidden"
                 onClick={() => setExportOpen(true)}
               >
-                <DownloadIcon />
+                <DownloadIcon aria-hidden />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t("teams.export")}</TooltipContent>
@@ -359,7 +368,7 @@ export function TeamDetailPage() {
             className="hidden md:inline-flex"
             onClick={handleDuplicate}
           >
-            <CopyIcon />
+            <CopyIcon aria-hidden />
             {t("teams.duplicate")}
           </Button>
           <Tooltip>
@@ -371,7 +380,7 @@ export function TeamDetailPage() {
                 className="md:hidden"
                 onClick={handleDuplicate}
               >
-                <CopyIcon />
+                <CopyIcon aria-hidden />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{t("teams.duplicate")}</TooltipContent>
@@ -383,7 +392,7 @@ export function TeamDetailPage() {
                 size="icon-sm"
                 aria-label={t("teams.moreActions")}
               >
-                <MoreHorizontalIcon />
+                <MoreHorizontalIcon aria-hidden />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -458,7 +467,7 @@ export function TeamDetailPage() {
                   {t("common.cancel")}
                 </Button>
                 <Button onClick={copyExport}>
-                  <ClipboardCopyIcon />
+                  <ClipboardCopyIcon aria-hidden />
                   {t("calc.copy")}
                 </Button>
               </DialogFooter>
@@ -480,7 +489,7 @@ export function TeamDetailPage() {
                   aria-label={t("teams.addPokemon")}
                   className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                 >
-                  <PlusIcon className="size-5" />
+                  <PlusIcon className="size-5" aria-hidden />
                   {t("teams.addPokemon")}
                 </button>
               );
@@ -554,7 +563,7 @@ export function TeamDetailPage() {
                     disabled={index === 0}
                     onClick={() => moveMember(team.id, index, index - 1)}
                   >
-                    <ArrowUpIcon />
+                    <ArrowUpIcon aria-hidden />
                   </Button>
                   <Button
                     variant="ghost"
@@ -563,7 +572,7 @@ export function TeamDetailPage() {
                     disabled={index === team.members.length - 1}
                     onClick={() => moveMember(team.id, index, index + 1)}
                   >
-                    <ArrowDownIcon />
+                    <ArrowDownIcon aria-hidden />
                   </Button>
                   <Button
                     variant="ghost"
@@ -571,7 +580,7 @@ export function TeamDetailPage() {
                     aria-label={t("teams.editMember", { name: label })}
                     onClick={() => openEdit(index)}
                   >
-                    <PencilIcon />
+                    <PencilIcon aria-hidden />
                   </Button>
                   <Button
                     variant="ghost"
@@ -587,9 +596,12 @@ export function TeamDetailPage() {
                     variant="ghost"
                     size="icon-xs"
                     aria-label={t("teams.removeMember", { name: label })}
-                    onClick={() => removeMember(team.id, index)}
+                    onClick={() => {
+                      removeMember(team.id, index);
+                      focusMainLandmark();
+                    }}
                   >
-                    <Trash2Icon />
+                    <Trash2Icon aria-hidden />
                   </Button>
                 </CardFooter>
               </Card>
@@ -607,7 +619,7 @@ export function TeamDetailPage() {
                 <div className="flex flex-col gap-2">
                   {warnings.map((warning, index) => (
                     <Alert key={index} variant="destructive">
-                      <TriangleAlertIcon />
+                      <TriangleAlertIcon aria-hidden />
                       <AlertTitle>
                         {t(WARNING_TITLE_KEYS[warning.kind])}
                       </AlertTitle>

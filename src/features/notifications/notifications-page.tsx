@@ -35,6 +35,14 @@ import {
 import type { NotificationItem } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
 
+/**
+ * The row unmounts when its notification is deleted, taking focus with it;
+ * park focus on the page landmark so keyboard users keep their place.
+ */
+function focusMainLandmark(): void {
+  (document.querySelector("main") as HTMLElement | null)?.focus();
+}
+
 export function NotificationsPage() {
   const { user } = useAuth();
   const t = useT();
@@ -67,6 +75,7 @@ export function NotificationsPage() {
   async function handleDelete(id: string) {
     const result = await deleteNotification.mutateAsync(id);
     if (result.ok) {
+      focusMainLandmark();
       toast.success(t("notifications.deletedToast"));
     } else {
       toast.error(result.error.message);
@@ -105,7 +114,11 @@ export function NotificationsPage() {
           }
         />
       ) : notifications.isPending ? (
-        <div className="grid gap-3" aria-label={t("notifications.loadingAria")}>
+        <div
+          className="grid gap-3"
+          role="status"
+          aria-label={t("notifications.loadingAria")}
+        >
           <Skeleton className="h-16 w-full rounded-md" />
           <Skeleton className="h-16 w-full rounded-md" />
           <Skeleton className="h-16 w-full rounded-md" />
@@ -241,6 +254,9 @@ function NotificationRowCard({
         </span>
       )}
       <div className="min-w-0 flex-1">
+        {isUnread && (
+          <span className="sr-only">{t("notifications.unreadSr")}</span>
+        )}
         <p className="break-words text-sm">
           {profilePath ? (
             <Link
