@@ -11,10 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMove, useDisplayName } from "@/data";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { Panel, PanelTitle } from "@/features/calc/panel";
+import type { SecondDefenderData } from "@/features/calc/second-defender";
 import { useSideNames } from "@/features/calc/use-side-names";
 import type { Translate } from "@/components/stat-labels";
 import { useT } from "@/lib/i18n/t";
 import type { TranslationKey } from "@/lib/i18n/en";
+import { battleName } from "@/lib/calc/battle";
 import {
   outcomeRangeText,
   outcomeSummary,
@@ -34,7 +36,9 @@ import { track } from "@/lib/telemetry/analytics";
 import type { BattleFormat } from "@/types/battle";
 import type { MoveCategory } from "@/types/pokemon";
 
-const DIRECTION_ARROW = "\u2192";
+const DIRECTION_ARROW = "→";
+/** The damage multiplier a spread move takes in doubles. */
+const SPREAD_FACTOR = "0.75";
 
 /** The move categories shown next to a move's name, as translation keys. */
 const CATEGORY_KEYS: Record<MoveCategory, TranslationKey> = {
@@ -53,12 +57,22 @@ function categoryLabel(
 
 type Selection = ReturnType<typeof resolveSelection>;
 
+/** One defender as the result block sees it. */
+interface DefenderView {
+  /** Localized species name. */
+  name: string;
+  /** Current HP as a percentage of max HP. */
+  hpPercent: number;
+}
+
 type ResultsPanelProps = {
   state: CalcState;
   outcomes: Record<SideId, MoveOutcome[]>;
   format: BattleFormat;
   dispatch: Dispatch<CalcAction>;
   unframed?: boolean;
+  /** The doubles partner next to the defender, with the attacker's outcomes. */
+  second?: SecondDefenderData | null;
 };
 
 type DirectionContentProps = {
@@ -69,6 +83,7 @@ type DirectionContentProps = {
   names: Record<SideId, string>;
   format: BattleFormat;
   dispatch: Dispatch<CalcAction>;
+  second?: SecondDefenderData | null;
 };
 
 function MoveRow({
@@ -113,34 +128,46 @@ function MoveRow({
   );
 }
 
-function SelectedResult({
-  state,
-  outcome,
-  side,
-  names,
-  format,
-}: {
-  state: CalcState;
+type ResultBlockProps = {
+  attackerName: string;
+  defender: DefenderView;
   outcome: MoveOutcome;
-  side: SideId;
-  names: Record<SideId, string>;
   format: BattleFormat;
-}) {
+  /** True when a second defender's block sits next to this one. */
+  hasPartner: boolean;
+};
+
+/**
+ * The full result of the selected move into one defender: damage, KO chance,
+ * rolls and the description. In doubles with a second defender, two of these
+ * sit side by side, one per defender.
+ */
+function ResultBlock({
+  attackerName,
+  defender,
+  outcome,
+  format,
+  hasPartner,
+}: ResultBlockProps) {
   const t = useT();
   const displayName = useDisplayName();
   const result = outcome.result;
-  const defender = otherSide(side);
   const move = getMove(outcome.move);
   const summary = outcomeSummary(outcome);
   const ko = koResultOf(summary);
-  const hp = result
-    ? remainingHp(result, state.sides[defender].hpPercent)
-    : null;
+  const hp = result ? remainingHp(result, defender.hpPercent) : null;
   const hasDamage = Boolean(result && result.max > 0);
   const description =
-    (result?.description ||
-      `${names[side]} \u2014 ${summaryText(summary, t)}`) +
+    (result?.description || `${attackerName} — ${summaryText(summary, t)}`) +
     (outcome.crit ? t("calc.criticalHit") : "");
+  // A spread move hits both defenders at once, but takes the 0.75 cut in
+  // doubles; a single-target move hits only one of them per use.
+  const isSpread = format === "doubles" && (move?.isSpread ?? false);
+  const targetsOne =
+    hasPartner &&
+    format === "doubles" &&
+    !isSpread &&
+    outcome.kind !== "status";
 
   const handleCopy = () => {
     void navigator.clipboard.writeText(description).then(() => {
@@ -151,6 +178,11 @@ function SelectedResult({
 
   return (
     <div className="grid gap-3 rounded-lg border bg-muted/40 p-3">
+      {hasPartner ? (
+        <p className="text-xs font-medium text-muted-foreground">
+          {defender.name}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-center gap-2">
         {outcome.type ? <TypeBadge type={outcome.type} /> : null}
         <p className="min-w-0 font-heading text-lg leading-tight font-semibold">
@@ -158,10 +190,13 @@ function SelectedResult({
         </p>
         <p className="text-xs text-muted-foreground">
           {categoryLabel(outcome.category, t)}
-          {outcome.category !== "Status" && move
-            ? ` \u00b7 ${move.basePower}`
-            : ""}
+          {outcome.category !== "Status" && move ? ` · ${move.basePower}` : ""}
         </p>
+        {hasDamage && isSpread ? (
+          <span className="rounded-full border bg-card px-2 py-0.5 text-xs text-muted-foreground">
+            {t("calc.spreadMove", { factor: SPREAD_FACTOR })}
+          </span>
+        ) : null}
         {ko ? (
           <KoLabel className="ml-auto" result={ko} />
         ) : (
@@ -170,18 +205,28 @@ function SelectedResult({
           </span>
         )}
       </div>
+      {targetsOne ? (
+        <p className="text-xs text-muted-foreground">
+          {t("calc.singleTarget")}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <BigNumber size="2xl">{outcomeRangeText(outcome)}</BigNumber>
         {hasDamage && result ? (
           <DamageMeter
             className="min-w-24 flex-1"
-            hpPercent={state.sides[defender].hpPercent}
+            hpPercent={defender.hpPercent}
             maxPercent={result.maxPercent}
             minPercent={result.minPercent}
             size="md"
           />
         ) : null}
       </div>
+      {hasDamage && result?.koText ? (
+        <p className="text-sm font-medium text-accent-brand-text">
+          {result.koText}
+        </p>
+      ) : null}
       {hasDamage && result && hp ? (
         <p className="text-xs tabular-nums text-muted-foreground">
           {t("calc.damageLine", {
@@ -235,24 +280,52 @@ function DirectionContent({
   names,
   format,
   dispatch,
+  second,
 }: DirectionContentProps) {
   const t = useT();
+  const displayName = useDisplayName();
   const sideOutcomes = outcomes[side];
   const selectedOutcome = selection?.side === side ? selection.outcome : null;
   const rows = selectedOutcome
     ? sideOutcomes.filter((outcome) => outcome.slot !== selectedOutcome.slot)
     : sideOutcomes;
+  // The second defender stands on the defender's side of the field, so only
+  // the p1 direction can hit it, and only in doubles.
+  const secondOutcome =
+    second && selectedOutcome && side === "p1" && format === "doubles"
+      ? (second.outcomes.find(
+          (outcome) => outcome.slot === selectedOutcome.slot,
+        ) ?? null)
+      : null;
+  const showSecond = secondOutcome !== null;
 
   return (
     <div className="grid gap-2">
       {selectedOutcome ? (
-        <SelectedResult
-          format={format}
-          names={names}
-          outcome={selectedOutcome}
-          side={side}
-          state={state}
-        />
+        <div className="grid gap-3">
+          <ResultBlock
+            attackerName={names[side]}
+            defender={{
+              name: names[otherSide(side)],
+              hpPercent: state.sides[otherSide(side)].hpPercent,
+            }}
+            format={format}
+            hasPartner={showSecond}
+            outcome={selectedOutcome}
+          />
+          {showSecond && second && secondOutcome ? (
+            <ResultBlock
+              attackerName={names[side]}
+              defender={{
+                name: displayName("species", battleName(second.side)),
+                hpPercent: second.side.hpPercent,
+              }}
+              format={format}
+              hasPartner
+              outcome={secondOutcome}
+            />
+          ) : null}
+        </div>
       ) : null}
       {rows.map((outcome) => (
         <MoveRow
@@ -318,7 +391,7 @@ function SpeedLine({
         {speedText("p1")} vs {speedText("p2")}
       </span>
       <span aria-hidden="true" className="text-muted-foreground">
-        {"\u00b7"}
+        {"·"}
       </span>
       <span className="font-medium text-accent-brand-text">
         {first === "tie"
@@ -328,7 +401,7 @@ function SpeedLine({
       {state.trickRoom ? (
         <>
           <span aria-hidden="true" className="text-muted-foreground">
-            {"\u00b7"}
+            {"·"}
           </span>
           <span className="text-muted-foreground">{t("calc.trickRoom")}</span>
         </>
@@ -342,6 +415,7 @@ export function ResultsPanel({
   outcomes,
   format,
   dispatch,
+  second = null,
   unframed = false,
 }: ResultsPanelProps) {
   const titleId = useId();
@@ -372,6 +446,7 @@ export function ResultsPanel({
               format={format}
               names={names}
               outcomes={outcomes}
+              second={second}
               selection={selection}
               side={side}
               state={state}

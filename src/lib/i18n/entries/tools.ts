@@ -230,6 +230,14 @@ export const toolsEn = {
   "meta.maxMinSpeed": "Max {max} · Min {min}",
   "meta.noSpreadData": "No spread data.",
   "meta.noTierData": "No speed tier data for this snapshot.",
+
+  // Damage calculator: the second defender in doubles.
+  "calc.secondDefender": "Defender 2",
+  "calc.addSecondDefender": "Add second defender",
+  "calc.removeSecondDefender": "Remove second defender",
+  "calc.remove": "Remove",
+  "calc.spreadMove": "Spread move ×{factor}",
+  "calc.singleTarget": "Targets one Pokémon per use",
 } as const;
 
 export type ToolsKey = keyof typeof toolsEn;

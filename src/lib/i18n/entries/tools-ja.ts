@@ -228,4 +228,12 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "meta.noSpreadData": "配分データなし。",
   "meta.noTierData":
     "このスナップショットには素早さラインのデータがありません。",
+
+  // ダメージ計算：ダブルの2体目の防御側。
+  "calc.secondDefender": "防御側2",
+  "calc.addSecondDefender": "2体目の防御側を追加",
+  "calc.removeSecondDefender": "2体目の防御側を削除",
+  "calc.remove": "削除",
+  "calc.spreadMove": "全体技 ×{factor}",
+  "calc.singleTarget": "使用ごとに1体だけが対象",
 };
