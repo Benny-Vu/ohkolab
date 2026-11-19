@@ -13,4 +13,11 @@ export const legalRoutes: RouteObject[] = [
       Component: (await import("@/features/legal/privacy-page")).PrivacyPage,
     }),
   },
+  {
+    path: "delete-account",
+    lazy: async () => ({
+      Component: (await import("@/features/legal/delete-account-page"))
+        .DeleteAccountPage,
+    }),
+  },
 ];

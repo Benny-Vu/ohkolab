@@ -416,6 +416,16 @@ export function PrivacyPage() {
             longer link to it. We delete them automatically once the 12 months
             have passed.
           </LegalText>
+          <LegalText>
+            Step-by-step instructions are on the{" "}
+            <Link
+              to="/delete-account"
+              className="text-primary underline underline-offset-4"
+            >
+              account deletion page
+            </Link>
+            .
+          </LegalText>
         </LegalSection>
 
         <LegalSection id="changes" heading="Changes to this policy">
