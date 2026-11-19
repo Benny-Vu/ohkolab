@@ -44,7 +44,7 @@ export function KoLabel({ result, className }: KoLabelProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-[3px] px-1.5 py-0.5 font-heading text-[11px] font-semibold tracking-wide uppercase",
+        "inline-flex items-center justify-center rounded-md px-1.5 py-0.5 font-heading text-xs font-semibold tracking-wide uppercase",
         filled
           ? FILLED_CLASSES[result]
           : cn("bg-transparent", TEXT_CLASSES[result]),

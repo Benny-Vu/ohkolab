@@ -268,7 +268,7 @@ export function TeamDetailSkeleton({ slots = 6 }: { slots?: number }) {
       aria-hidden="true"
     >
       {Array.from({ length: slots }, (_, index) => (
-        <Skeleton key={index} className="min-h-40 rounded-xl" />
+        <Skeleton key={index} className="min-h-40 rounded-lg" />
       ))}
     </div>
   );

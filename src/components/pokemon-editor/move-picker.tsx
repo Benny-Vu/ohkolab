@@ -85,7 +85,7 @@ function renderMove(move: MoveInfo, name: string, category: string) {
     <>
       <TypeBadge
         type={move.type}
-        className="w-15 min-w-0 shrink-0 px-0 text-[10px]"
+        className="w-15 min-w-0 shrink-0 px-0 text-xs"
       />
       <span className="min-w-0 flex-1 truncate">{name}</span>
       <span className="w-10 shrink-0 text-xs text-muted-foreground">
@@ -188,7 +188,7 @@ function MoveOptions({
       header={
         <div
           aria-hidden
-          className="flex items-center gap-2 px-3 pt-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
+          className="flex items-center gap-2 px-3 pt-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase"
         >
           <span className="flex-1">{t("pokemonEditor.move")}</span>
           <span className="w-10">Cat.</span>
@@ -249,7 +249,7 @@ export function MovePicker({
             {known ? (
               <TypeBadge
                 type={known.type}
-                className="w-15 min-w-0 shrink-0 px-0 text-[10px]"
+                className="w-15 min-w-0 shrink-0 px-0 text-xs"
               />
             ) : null}
             <span className="min-w-0 flex-1 truncate text-left">

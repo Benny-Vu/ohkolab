@@ -143,14 +143,14 @@ function ExpandedSlot({
   const moves = member.moves.filter((move): move is string => Boolean(move));
 
   return (
-    <span className="block p-2.5">
+    <span className="block p-3">
       <span className="flex items-start gap-2">
         <span className="relative block shrink-0">
           <PokemonSprite species={member.species} size={56} />
           {member.item ? (
             <ItemIcon
               item={member.item}
-              className="absolute right-0 bottom-0 size-4 rounded-sm bg-background"
+              className="absolute right-0 bottom-0 size-4 rounded-md bg-background"
             />
           ) : null}
         </span>
