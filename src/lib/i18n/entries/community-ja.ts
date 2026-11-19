@@ -28,23 +28,6 @@ export const communityJa: { [K in CommunityKey]: string } = {
   // プライバシー：ブラウザーに保存されるものへ言語設定を追加。
   "privacy.languageChoice": "言語設定",
 
-  // ソーシャル機能のエラー（データ層で変換された失敗）。
-  "social.errors.not_configured": "コミュニティ機能は現在利用できません。",
-  "social.errors.not_installed":
-    "コミュニティ機能はまだ準備中です。しばらくしてからもう一度お試しください。",
-  "social.errors.not_signed_in":
-    "サインインしてコミュニティ機能を利用してください。",
-  "social.errors.rate_limited":
-    "投稿の間隔が短すぎます。少し待ってからもう一度お試しください。",
-  "social.errors.suspended": "このアカウントは現在投稿できません。",
-  "social.errors.too_long": "長すぎます。短くしてからもう一度お試しください。",
-  "social.errors.not_found": "そのコンテンツはすでに存在しません。",
-  "social.errors.forbidden": "この操作は行えません。",
-  "social.errors.invalid_input": "入力が正しくありません。",
-  "social.errors.network":
-    "サーバーに接続できませんでした。通信状況を確認してもう一度お試しください。",
-  "social.errors.unknown": "問題が発生しました。もう一度お試しください。",
-
   // 通知：文と行ごとの操作。文は投稿者名の後に続くため、
   // 日本語のフレーズは主語の助詞から始まります。
   "notifications.someone": "誰か",
@@ -65,7 +48,6 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "notifications.delete": "{name}さんの通知を削除する",
 
   // 通知ページ。
-  "notifications.title": "通知",
   "notifications.description":
     "いいね、コメント、フォロー、モデレーションの更新。",
   "notifications.markAllAsRead": "すべて既読にする",
@@ -81,7 +63,6 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "notifications.emptyDescription":
     "誰かがあなたの投稿にいいねしたりフォローしたりすると、ここに表示されます。",
   "notifications.loadMore": "さらに表示",
-  "notifications.bellAriaUnread": "通知、未読{badge}件",
 
   // 投稿フォーム。
   "composer.aria": "投稿を書く",
@@ -312,7 +293,6 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "groups.typeSlugToConfirm": "確認のためグループのアドレスを入力してください",
   "groups.deleteGroup": "グループを削除",
 
-  "groups.homeTitle": "グループ",
   "groups.homeDescription":
     "チーム・ルール・チャンピオンズのすべてのためのコミュニティ。",
   "groups.createGroup": "グループを作成",
@@ -330,7 +310,6 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "groups.noMatchesDescription": '"{query}" に一致するグループはありません。',
   "groups.loadingGroups": "グループを読み込み中",
   "groups.noDescription": "説明はまだありません。",
-  "groups.newTitle": "グループを作成",
   "groups.signInToCreate": "グループを作成するにはサインインしてください",
   "groups.newCreatedToast": "グループを作成しました",
   "groups.newPageDescription":
@@ -454,39 +433,10 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "admin.noStatusFeedback": "{status}のフィードバックはありません。",
   "admin.feedbackDescription": "コミュニティからのフィードバックを確認します。",
 
-  "feedback.kindBug": "バグ",
-  "feedback.kindIdea": "アイデア",
-  "feedback.kindOther": "その他",
-  "feedback.tooShort": "もう少し詳しく教えてください（{min}文字以上）。",
-  "feedback.tooLong": "フィードバックは{max}文字以内です。",
-  "feedback.sentToast": "ありがとうございます！フィードバックを送信しました。",
-  "feedback.rateLimited":
-    "最近フィードバックを多数送信しています。1時間ほど経ってからもう一度お送りください。",
-  "feedback.description":
-    "壊れているもの、足りないもの、見たいものをお聞かせください。すべて目を通しています。",
-  "feedback.signedOutBody":
-    "サイトからフィードバックを送るにはアカウントが必要です。メールでもご連絡いただけます。",
-  "feedback.emailUs": "{email}にメールする",
-  "feedback.kindAria": "フィードバックの種類",
-  "feedback.placeholder": "何が起きましたか？何を変えるべきですか？",
-  "feedback.messageAria": "フィードバック内容",
-  "feedback.includeDetails":
-    "技術情報を含める（ページ、アプリのバージョン、ブラウザー、画面サイズ",
-  "feedback.crashIdSuffix": "、クラッシュID",
-  "feedback.send": "送信",
-  "feedback.sending": "送信中…",
   "feedback.telemetryAria": "匿名の利用統計とクラッシュレポートを共有する",
   "feedback.telemetryBody":
     "匿名の利用統計とクラッシュレポートを共有します。利用統計にCookieは使われず、入力内容や構築が含まれることもありません。クラッシュレポートにはエラーと発生ページのみが含まれます。いつでもオフにできます。",
-  "crash.title": "問題が発生しました",
-  "crash.body":
-    "こちら側で問題が発生しました。データは安全です。ページの再読み込み、フィードへの戻る、または発生したことをお知らせいただければ、より早く修正できます。",
-  "crash.referencePrefix": "クラッシュ参照ID:",
-  "crash.reload": "再読み込み",
-  "crash.goHome": "ホームへ",
-  "crash.tellUs": "発生したことを報告する",
 
-  "moderation.noticeTitle": "モデレーションのお知らせ",
   "moderation.suspendedTitle": "アカウントが停止されました",
   "moderation.postRemovedTitle": "投稿が削除されました",
   "moderation.commentRemovedTitle": "コメントが削除されました",
@@ -521,21 +471,10 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "moderation.durationPermanent": "無期限",
   "moderation.noticeLoadError": "お知らせを読み込めませんでした",
 
-  "system.notFoundTitle": "ページが見つかりません",
   "system.notFoundBody":
     "このアドレスには何もありません。移動したか、元から存在しません。",
 
-  "pageTitle.appeals": "申し立て",
-  "pageTitle.feedback": "フィードバック",
-  "pageTitle.reports": "報告",
-  "pageTitle.styleguide": "スタイルガイド",
-  "pageTitle.signingIn": "サインイン中",
-  "pageTitle.resetPassword": "パスワードのリセット",
-  "pageTitle.team": "構築",
-  "pageTitle.post": "投稿",
-  "pageTitle.group": "グループ",
   "pageTitle.notFound": "ページが見つかりません",
-  "pageTitle.deleteAccount": "アカウントの削除",
 
   // アクセシビリティ対応（quality ウェーブ）：通知行の未読状態。
   "notifications.unreadSr": "未読",
@@ -547,22 +486,4 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "share.share": "共有",
   "share.copiedLink": "リンクをクリップボードにコピーしました。",
   "share.copyFailed": "リンクをコピーできませんでした。",
-
-  // SEO：各ルートのメタディスクリプション（page-title.ts）。
-  "seo.homeDescription":
-    "Pokémon Championsのダメージ計算・構築作成・コミュニティ。非公式のファンプロジェクトです。",
-  "seo.calcDescription":
-    "Pokémon Championsのダメージ計算。もちもの・天候・フィールドに対応し、ダブルとシングルの両方で計算できます。",
-  "seo.metaDescription":
-    "Pokémon Championsの使用率データ：よく使われるポケモン・技・もちもの・ステータス配分。",
-  "seo.teamsDescription":
-    "OHKOLabでプレイヤーが公開しているPokémon Championsの構築です。",
-  "seo.postDescription":
-    "OHKOLabのPokémon Championsコミュニティからの投稿です。",
-  "seo.profileDescription": "OHKOLabでのプレイヤーの投稿・公開構築・グループ。",
-  "seo.groupDescription": "OHKOLabのPokémon Championsグループ。",
-  "seo.groupsDescription":
-    "OHKOLabのPokémon Championsグループを探して参加できます。",
-  "seo.termsDescription": "OHKOLabの利用規約。",
-  "seo.privacyDescription": "OHKOLabの個人情報の取り扱いについて。",
 };

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { Providers } from "@/app/providers";
+import { preloadEnglishDomains } from "@/lib/i18n/test-preload";
 import { setLocale } from "@/lib/i18n/locale";
 
 /**
@@ -24,8 +25,9 @@ async function renderPage(
   setLocale(locale);
   vi.resetModules();
   vi.stubEnv("VITE_IMAGE_POSTS", flag);
-  // resetModules also resets the lazy Japanese dictionary loader; preload
-  // the fresh instance so the composed ja phrases render, as in production.
+  // resetModules also resets both lazy dictionary loaders; preload the
+  // fresh instances so the composed phrases render, as in production.
+  await preloadEnglishDomains();
   const { loadJapaneseDictionary } = await import("@/lib/i18n/ja-loader");
   await loadJapaneseDictionary();
   const { PrivacyPage } = await import("@/features/legal/privacy-page");

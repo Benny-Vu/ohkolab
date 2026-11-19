@@ -1,10 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { en, type TranslationKey } from "@/lib/i18n/en";
+import type { TranslationKey } from "@/lib/i18n/en";
+import { accountEn } from "@/lib/i18n/entries/account";
+import { communityEn } from "@/lib/i18n/entries/community";
+import { shellEn } from "@/lib/i18n/entries/shell";
+import { toolsEn } from "@/lib/i18n/entries/tools";
 import { ja } from "@/lib/i18n/ja";
 import { setLocale } from "@/lib/i18n/locale";
 import { t } from "@/lib/i18n/t";
 import { DEFAULT_TEAM_NAME } from "@/lib/team/team-ops";
+
+/**
+ * The full English dictionary, assembled the way the split loader does
+ * (the shell statically plus every domain overlay): the parity checks
+ * below need the complete key set.
+ */
+const en: Record<TranslationKey, string> = {
+  ...shellEn,
+  ...communityEn,
+  ...accountEn,
+  ...toolsEn,
+};
 
 describe("dictionaries", () => {
   it("has every English key in the Japanese dictionary", () => {
@@ -17,7 +33,7 @@ describe("dictionaries", () => {
     // The stored sentinel for new teams is shown localized via
     // displayTeamName; this ties the constant to the dictionary so the
     // two cannot drift apart (the footer bug class, but for defaults).
-    expect(en["teams.untitled" as TranslationKey]).toBe(DEFAULT_TEAM_NAME);
+    expect(en["teams.untitled"]).toBe(DEFAULT_TEAM_NAME);
   });
 
   it("uses the same placeholders in English and Japanese for each key", () => {
@@ -25,7 +41,7 @@ describe("dictionaries", () => {
       JSON.stringify((template ?? "").match(/\{(\w+)\}/g)?.sort() ?? []);
     for (const key of Object.keys(en) as TranslationKey[]) {
       expect(placeholders(ja[key]), `placeholders of "${key}"`).toBe(
-        placeholders(en[key] as string),
+        placeholders(en[key]),
       );
     }
   });
@@ -48,7 +64,7 @@ describe("dictionaries", () => {
     const allowedKeys = new Set(["legal.japaneseNotice"]);
     const untranslated: string[] = [];
     for (const key of Object.keys(en) as TranslationKey[]) {
-      const english = en[key] as string;
+      const english = en[key];
       if (allowed.has(english) || allowedKeys.has(key)) continue;
       if (ja[key] === english) untranslated.push(key);
     }

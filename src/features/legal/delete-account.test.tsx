@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { Providers } from "@/app/providers";
+import { preloadEnglishDomains } from "@/lib/i18n/test-preload";
 import { setLocale } from "@/lib/i18n/locale";
 
 /**
@@ -19,6 +20,9 @@ async function renderDeletePage(locale: "en" | "ja", flag = ""): Promise<void> {
   setLocale(locale);
   vi.resetModules();
   vi.stubEnv("VITE_IMAGE_POSTS", flag);
+  // resetModules also resets the lazy English dictionary loader; preload
+  // the fresh instance so the composed phrases render, as in production.
+  await preloadEnglishDomains();
   const { DeleteAccountPage } =
     await import("@/features/legal/delete-account-page");
   const router = createMemoryRouter(
@@ -101,6 +105,7 @@ describe("DeleteAccountPage", () => {
     // would otherwise still hold its in-memory locale.
     setLocale("en");
     vi.resetModules();
+    await preloadEnglishDomains();
     const { legalRoutes: routes } = await import("@/features/legal/routes");
     const router = createMemoryRouter(
       [
@@ -130,6 +135,7 @@ describe("DeleteAccountPage", () => {
     setLocale("en");
     vi.resetModules();
     vi.stubEnv("VITE_IMAGE_POSTS", "true");
+    await preloadEnglishDomains();
     const { PrivacyPage } = await import("@/features/legal/privacy-page");
     const router = createMemoryRouter(
       [{ path: "/privacy", element: <PrivacyPage /> }],
