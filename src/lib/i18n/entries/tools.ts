@@ -234,6 +234,14 @@ export const toolsEn = {
   // Damage calculator: shared links (share wave).
   "calc.shareLinkInvalid":
     "This calculator link could not be opened, so the calculator was reset.",
+
+  // Damage calculator: the second defender in doubles.
+  "calc.secondDefender": "Defender 2",
+  "calc.addSecondDefender": "Add second defender",
+  "calc.removeSecondDefender": "Remove second defender",
+  "calc.remove": "Remove",
+  "calc.spreadMove": "Spread move ×{factor}",
+  "calc.singleTarget": "Targets one Pokémon per use",
 } as const;
 
 export type ToolsKey = keyof typeof toolsEn;

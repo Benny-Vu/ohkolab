@@ -27,6 +27,7 @@ import {
   type StatusName,
 } from "@/types/battle";
 import type { TranslationKey } from "@/lib/i18n/en";
+import type { PokemonSet } from "@/types/pokemon";
 
 /** The stats a Pokémon can raise or lower in battle. */
 const BOOST_STATS: BoostStatId[] = ["atk", "def", "spa", "spd", "spe"];
@@ -45,6 +46,159 @@ function stageText(value: number): string {
   return value > 0 ? `+${value}` : String(value);
 }
 
+/** How a battle-state editor changes the Pokémon it edits. */
+export interface BattleStateHandlers {
+  onSetChange: (set: PokemonSet) => void;
+  onBoost: (stat: BoostStatId, value: number) => void;
+  onClearBoosts: () => void;
+  onStatus: (status: StatusName | null) => void;
+  onHpPercent: (value: number) => void;
+  onMega: (on: boolean) => void;
+}
+
+interface BattleStateEditorProps {
+  /** The Pokémon's localized label, for the aria labels. */
+  label: string;
+  side: CalcSide;
+  handlers: BattleStateHandlers;
+}
+
+/**
+ * The battle state of one Pokémon on top of its set: stat boosts, status,
+ * current HP and Mega Evolution. Shared by both defenders' editors.
+ */
+export function BattleStateEditor({
+  label,
+  side,
+  handlers,
+}: BattleStateEditorProps) {
+  const t = useT();
+  const displayName = useDisplayName();
+  const hpId = useId();
+  const megaForme = megaFormeOf(side.set);
+
+  const statusPickerOptions: PickerOption[] = [
+    { value: "", label: t("calc.none") },
+    ...STATUS_NAMES.map((status) => ({
+      value: status,
+      label: t(STATUS_LABEL_KEYS[status]),
+    })),
+  ];
+
+  return (
+    <div className="grid gap-3">
+      <div className="grid gap-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t("calc.statBoosts")}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={handlers.onClearBoosts}
+          >
+            {t("calc.clear")}
+          </Button>
+        </div>
+        <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-x-6">
+          {BOOST_STATS.map((stat) => {
+            const value = side.boosts[stat];
+            return (
+              <div key={stat} className="flex items-center gap-2">
+                <span className="w-10 text-xs text-muted-foreground">
+                  {statLabel(t, stat)}
+                </span>
+                <div className="ml-auto flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={t("calc.boostDown", {
+                      side: label,
+                      stat: statLabel(t, stat),
+                    })}
+                    disabled={value <= MIN_STAGE}
+                    onClick={() => handlers.onBoost(stat, value - 1)}
+                  >
+                    <MinusIcon />
+                  </Button>
+                  <span className="w-7 text-center text-sm font-medium tabular-nums">
+                    {stageText(value)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={t("calc.boostUp", {
+                      side: label,
+                      stat: statLabel(t, stat),
+                    })}
+                    disabled={value >= MAX_STAGE}
+                    onClick={() => handlers.onBoost(stat, value + 1)}
+                  >
+                    <PlusIcon />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="grid gap-1">
+          <span className="text-xs text-muted-foreground">
+            {t("calc.status")}
+          </span>
+          <Picker
+            options={statusPickerOptions}
+            value={side.status ?? ""}
+            onValueChange={(value) =>
+              handlers.onStatus(
+                STATUS_NAMES.find((name) => name === value) ?? null,
+              )
+            }
+            aria-label={t("calc.statusAria", { side: label })}
+          />
+        </div>
+        <label
+          className="grid gap-1 text-xs text-muted-foreground"
+          htmlFor={hpId}
+        >
+          {t("calc.currentHp")}
+          <Input
+            id={hpId}
+            type="number"
+            min={MIN_HP_PERCENT}
+            max={MAX_HP_PERCENT}
+            value={side.hpPercent}
+            onChange={(event) =>
+              handlers.onHpPercent(Number(event.target.value))
+            }
+          />
+        </label>
+      </div>
+
+      {megaForme ? (
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm">
+            {t("calc.megaEvolution")}{" "}
+            <span className="text-muted-foreground">
+              ({displayName("species", megaForme)})
+            </span>
+          </span>
+          <Switch
+            checked={side.mega}
+            onCheckedChange={handlers.onMega}
+            aria-label={t("calc.megaAria", { side: label })}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 interface SidePanelProps {
   side: SideId;
   calcSide: CalcSide;
@@ -56,189 +210,55 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
   const t = useT();
   const displayName = useDisplayName();
   const titleId = useId();
-  const hpId = useId();
   const label = calcSideLabel(t, side);
-  const megaForme = megaFormeOf(calcSide.set);
   const critSlots = calcSide.set.moves
     .map((move, slot) => ({ move, slot }))
     .filter(
       (entry): entry is { move: string; slot: number } => entry.move !== null,
     );
 
-  const statusPickerOptions: PickerOption[] = [
-    { value: "", label: t("calc.none") },
-    ...STATUS_NAMES.map((status) => ({
-      value: status,
-      label: t(STATUS_LABEL_KEYS[status]),
-    })),
-  ];
+  const handlers: BattleStateHandlers = {
+    onSetChange: (set) => dispatch({ type: "setSet", side, set }),
+    onBoost: (stat, value) => dispatch({ type: "setBoost", side, stat, value }),
+    onClearBoosts: () => dispatch({ type: "clearBoosts", side }),
+    onStatus: (status) => dispatch({ type: "setStatus", side, status }),
+    onHpPercent: (value) => dispatch({ type: "setHpPercent", side, value }),
+    onMega: (on) => dispatch({ type: "setMega", side, on }),
+  };
 
   return (
     <Panel labelledBy={titleId}>
       <PanelTitle id={titleId}>{label}</PanelTitle>
       <PokemonEditor
         value={calcSide.set}
-        onChange={(set) => dispatch({ type: "setSet", side, set })}
+        onChange={handlers.onSetChange}
         allowBattleOnly
       />
+      <BattleStateEditor label={label} side={calcSide} handlers={handlers} />
 
-      <div className="grid gap-3">
+      {critSlots.length > 0 ? (
         <div className="grid gap-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("calc.statBoosts")}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              onClick={() => dispatch({ type: "clearBoosts", side })}
-            >
-              {t("calc.clear")}
-            </Button>
-          </div>
-          <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-x-6">
-            {BOOST_STATS.map((stat) => {
-              const value = calcSide.boosts[stat];
-              return (
-                <div key={stat} className="flex items-center gap-2">
-                  <span className="w-10 text-xs text-muted-foreground">
-                    {statLabel(t, stat)}
-                  </span>
-                  <div className="ml-auto flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon-sm"
-                      aria-label={t("calc.boostDown", {
-                        side: label,
-                        stat: statLabel(t, stat),
-                      })}
-                      disabled={value <= MIN_STAGE}
-                      onClick={() =>
-                        dispatch({
-                          type: "setBoost",
-                          side,
-                          stat,
-                          value: value - 1,
-                        })
-                      }
-                    >
-                      <MinusIcon />
-                    </Button>
-                    <span className="w-7 text-center text-sm font-medium tabular-nums">
-                      {stageText(value)}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon-sm"
-                      aria-label={t("calc.boostUp", {
-                        side: label,
-                        stat: statLabel(t, stat),
-                      })}
-                      disabled={value >= MAX_STAGE}
-                      onClick={() =>
-                        dispatch({
-                          type: "setBoost",
-                          side,
-                          stat,
-                          value: value + 1,
-                        })
-                      }
-                    >
-                      <PlusIcon />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <span className="text-xs font-medium text-muted-foreground">
+            {t("calc.criticalHits")}
+          </span>
+          {critSlots.map(({ move, slot }) => (
+            <div key={slot} className="flex items-center justify-between gap-2">
+              <span className="text-sm">{displayName("move", move)}</span>
+              <Switch
+                size="sm"
+                checked={calcSide.crits[slot] ?? false}
+                onCheckedChange={(on) =>
+                  dispatch({ type: "setCrit", side, slot, on })
+                }
+                aria-label={t("calc.critAria", {
+                  side: label,
+                  move: displayName("move", move),
+                })}
+              />
+            </div>
+          ))}
         </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="grid gap-1">
-            <span className="text-xs text-muted-foreground">
-              {t("calc.status")}
-            </span>
-            <Picker
-              options={statusPickerOptions}
-              value={calcSide.status ?? ""}
-              onValueChange={(value) =>
-                dispatch({
-                  type: "setStatus",
-                  side,
-                  status: STATUS_NAMES.find((name) => name === value) ?? null,
-                })
-              }
-              aria-label={t("calc.statusAria", { side: label })}
-            />
-          </div>
-          <label
-            className="grid gap-1 text-xs text-muted-foreground"
-            htmlFor={hpId}
-          >
-            {t("calc.currentHp")}
-            <Input
-              id={hpId}
-              type="number"
-              min={MIN_HP_PERCENT}
-              max={MAX_HP_PERCENT}
-              value={calcSide.hpPercent}
-              onChange={(event) =>
-                dispatch({
-                  type: "setHpPercent",
-                  side,
-                  value: Number(event.target.value),
-                })
-              }
-            />
-          </label>
-        </div>
-
-        {megaForme ? (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm">
-              {t("calc.megaEvolution")}{" "}
-              <span className="text-muted-foreground">
-                ({displayName("species", megaForme)})
-              </span>
-            </span>
-            <Switch
-              checked={calcSide.mega}
-              onCheckedChange={(on) => dispatch({ type: "setMega", side, on })}
-              aria-label={t("calc.megaAria", { side: label })}
-            />
-          </div>
-        ) : null}
-
-        {critSlots.length > 0 ? (
-          <div className="grid gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("calc.criticalHits")}
-            </span>
-            {critSlots.map(({ move, slot }) => (
-              <div
-                key={slot}
-                className="flex items-center justify-between gap-2"
-              >
-                <span className="text-sm">{displayName("move", move)}</span>
-                <Switch
-                  size="sm"
-                  checked={calcSide.crits[slot] ?? false}
-                  onCheckedChange={(on) =>
-                    dispatch({ type: "setCrit", side, slot, on })
-                  }
-                  aria-label={t("calc.critAria", {
-                    side: label,
-                    move: displayName("move", move),
-                  })}
-                />
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
+      ) : null}
     </Panel>
   );
 }
