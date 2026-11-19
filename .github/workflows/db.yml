@@ -768,6 +768,129 @@ jobs:
           $comm$;
           SQL
 
+      # Exercises the follow-suggestions RPC (20261121210000) as two
+      # authenticated users: the viewer never sees themself, anyone they
+      # already follow, a blocked user or a suspended user, and the
+      # mutual-follow + shared-group candidate outranks the rest.
+      - name: Follow suggestions ranking and exclusions
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+          values
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-a@example.com', 'x', now(), now()),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-bridge@example.com', 'x', now(), now()),
+            ('5d5d5d5d-5d5d-45d5-85d5-5d5d5d5d5d5d', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-shared@example.com', 'x', now(), now()),
+            ('6c6c6c6c-6c6c-46c6-86c6-6c6c6c6c6c6c', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-conn@example.com', 'x', now(), now()),
+            ('7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-format@example.com', 'x', now(), now()),
+            ('8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-followed@example.com', 'x', now(), now()),
+            ('91919191-9191-4919-8919-919191919191', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-blocked@example.com', 'x', now(), now()),
+            ('92929292-9292-4929-8929-929292929292', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-suspended@example.com', 'x', now(), now());
+          insert into public.profiles (id, username) values
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', 'fs_a'),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', 'fs_bridge'),
+            ('5d5d5d5d-5d5d-45d5-85d5-5d5d5d5d5d5d', 'fs_shared'),
+            ('6c6c6c6c-6c6c-46c6-86c6-6c6c6c6c6c6c', 'fs_conn'),
+            ('7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b', 'fs_format'),
+            ('8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a', 'fs_followed'),
+            ('91919191-9191-4919-8919-919191919191', 'fs_blocked'),
+            ('92929292-9292-4929-8929-929292929292', 'fs_suspended')
+          on conflict (id) do update set username = excluded.username;
+          update public.profiles set main_format = 'doubles'
+          where id in ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b');
+          update public.profiles set display_name = 'Format Fan', avatar_species = 'Garchomp'
+          where id = '7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b';
+
+          -- The graph: fs_a follows the bridge and one more user; the
+          -- bridge follows the shared-group user, the connection-only user
+          -- and the suspended user. fs_a blocks fs_blocked.
+          insert into public.follows (follower_id, followee_id) values
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e'),
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a'),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '5d5d5d5d-5d5d-45d5-85d5-5d5d5d5d5d5d'),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '6c6c6c6c-6c6c-46c6-86c6-6c6c6c6c6c6c'),
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '92929292-9292-4929-8929-929292929292');
+          insert into public.groups (slug, name, owner_id) values
+            ('fs-shared-group', 'Follow Check Group', '3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f');
+          insert into public.group_members (group_id, user_id, status)
+          select g.id, p.id, 'active'
+          from public.groups g, public.profiles p
+          where g.slug = 'fs-shared-group'
+            and p.username in ('fs_a', 'fs_shared');
+          insert into public.blocks (blocker_id, blocked_id) values
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '91919191-9191-4919-8919-919191919191');
+          insert into public.user_suspensions (user_id, "until", reason) values
+            ('92929292-9292-4929-8929-929292929292', now() + interval '1 day', 'CI suspension check');
+
+          -- Behaviour checks, as the authenticated role with each user's
+          -- claims. Every failure raises with FS-CHECK.
+          do $fs$
+          declare
+            fs_a constant uuid := '3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f';
+            fs_followed constant uuid := '8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a';
+            excluded_seen int;
+            suggested text[];
+          begin
+            set local role authenticated;
+
+            -- User A: the RPC excludes themself, both already-followed
+            -- users, the blocked user and the suspended user.
+            perform set_config('request.jwt.claims', json_build_object('sub', fs_a, 'role', 'authenticated')::text, true);
+            select count(*) into excluded_seen
+            from public.suggest_users(10) s
+            where s.id in (
+              '3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f',
+              '4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e',
+              '8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a',
+              '91919191-9191-4919-8919-919191919191',
+              '92929292-9292-4929-8929-929292929292'
+            );
+            if excluded_seen <> 0 then
+              raise exception 'FS-CHECK: % excluded users were suggested', excluded_seen;
+            end if;
+
+            -- The ranking: shared group + connection first, connection
+            -- second, same main format third.
+            select array_agg(s.username order by s.score desc, s.username) into suggested
+            from public.suggest_users(10) s;
+            if suggested is distinct from array['fs_shared', 'fs_conn', 'fs_format'] then
+              raise exception 'FS-CHECK: ranking was %, expected {fs_shared,fs_conn,fs_format}', suggested;
+            end if;
+
+            -- The scores are the weighted sums (3 per connection, 2 per
+            -- shared group, 1 for the same main format).
+            if not exists (
+              select 1 from public.suggest_users(10) s
+              where s.username = 'fs_shared' and s.score = 5
+            ) or not exists (
+              select 1 from public.suggest_users(10) s
+              where s.username = 'fs_format' and s.score = 1
+            ) then
+              raise exception 'FS-CHECK: the scores are not the weighted sums';
+            end if;
+
+            -- The result exposes the public profile fields plus the score.
+            if not exists (
+              select 1 from public.suggest_users(10) s
+              where s.username = 'fs_format'
+                and s.display_name = 'Format Fan'
+                and s.avatar_species = 'Garchomp'
+                and s.main_format = 'doubles'
+            ) then
+              raise exception 'FS-CHECK: the public profile fields are missing';
+            end if;
+
+            -- User B (a second authenticated user) has no signals at all:
+            -- no followees, no groups, no format: the RPC returns nothing.
+            perform set_config('request.jwt.claims', json_build_object('sub', fs_followed, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.suggest_users(10) s) then
+              raise exception 'FS-CHECK: a signal-less user got suggestions';
+            end if;
+          end;
+          $fs$;
+          SQL
+
       - name: Stop
         if: always()
         run: supabase stop --no-backup

@@ -26,6 +26,7 @@ import { socialAvailability } from "@/lib/social/availability";
 import { useFeed } from "@/lib/social/queries";
 import { Composer } from "@/features/feed/composer";
 import { PostList } from "@/features/feed/post-list";
+import { PeopleToFollow } from "@/features/home/people-to-follow";
 
 interface Tool {
   to: string;
@@ -129,6 +130,14 @@ function FeedHome() {
         {user && (
           <div className="mb-4">
             <Composer />
+          </div>
+        )}
+
+        {/* People to follow sits right above the feed, so it also answers
+         * the empty-feed state ("find people to follow") on every size. */}
+        {user && (
+          <div className="mb-4">
+            <PeopleToFollow />
           </div>
         )}
 
