@@ -12,11 +12,14 @@ import { useAuth } from "@/lib/auth/use-auth";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { directMessagesEnabled } from "@/lib/messages/flag";
 import { threadMessages, type MessageRowLite } from "@/lib/messages/logic";
+import type { ThreadMessage } from "@/lib/messages/mutations";
 
 /**
  * Subscribes to new messages in one conversation and keeps the thread query
  * cache live. Incoming messages from the other player also refresh the
- * conversation list and the unread badge.
+ * conversation list and the unread badge. An echo of the viewer's own send
+ * never duplicates the optimistic copy `useSendMessage` already added: the
+ * pending row with the same text is replaced by the confirmed server row.
  */
 export function useThreadRealtime(
   conversationId: string,
@@ -30,6 +33,7 @@ export function useThreadRealtime(
     if (!directMessagesEnabled() || !client || !me || conversationId === "") {
       return;
     }
+    const threadKey = ["messages", "thread", conversationId] as const;
     const channel = client
       .channel(`messages:${conversationId}`)
       .on(
@@ -42,9 +46,20 @@ export function useThreadRealtime(
         },
         (payload) => {
           const message = payload.new as unknown as MessageRowLite;
-          queryClient.setQueryData<MessageRowLite[]>(
-            ["messages", "thread", conversationId],
-            (old) => threadMessages([...(old ?? []), message]),
+          const current = queryClient.getQueryData<ThreadMessage[]>(threadKey);
+          let rows: ThreadMessage[] = current ?? [];
+          if (message.sender_id === me) {
+            // My own echo: drop the optimistic copy it confirms, if any.
+            const echo = rows.find(
+              (row) => row.pending === true && row.body === message.body,
+            );
+            if (echo) {
+              rows = rows.filter((row) => row !== echo);
+            }
+          }
+          queryClient.setQueryData<ThreadMessage[]>(
+            threadKey,
+            threadMessages([...rows, message]),
           );
           if (message.sender_id !== me) {
             void queryClient.invalidateQueries({

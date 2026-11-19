@@ -256,6 +256,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "postDetail.loadingComments": "コメントを読み込み中…",
   "postDetail.noComments": "まだコメントはありません",
   "postDetail.deletedUser": "削除されたユーザー",
+  "postDetail.commentPending": "送信中",
   "postDetail.report": "報告",
   "postDetail.commentsError": "コメントを読み込めませんでした",
 
@@ -543,6 +544,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "messages.composerPlaceholder": "メッセージを入力…",
   "messages.send": "送信",
   "messages.tooLong": "メッセージは{max}文字以内です。",
+  "messages.notSent": "未送信",
   "messages.you": "自分",
   "messages.reportButtonAria": "このメッセージを通報する",
   "messages.targetLabel": "メッセージ",

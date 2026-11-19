@@ -1,6 +1,8 @@
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { GUEST_AUTH } from "@/lib/auth/use-auth";
+import type { AppSupabaseClient } from "@/lib/supabase";
 import { resetSocialInstallState } from "@/lib/social/availability";
 
 import {
@@ -22,11 +24,14 @@ import { GROUP_QUERY_KEYS } from "@/lib/groups/queries";
 import {
   createFakeClient,
   createQueryClient,
+  createWrapper,
   expectFailed,
   groupRow,
   runMutation,
   SIGNED_IN_AUTH,
   type ChainRecord,
+  type FakeClientConfig,
+  type FakeResult,
 } from "@/lib/groups/test-client";
 
 let queryClient: ReturnType<typeof createQueryClient>;
@@ -639,5 +644,246 @@ describe("useDeleteGroup", () => {
       { client: fake.client, auth: GUEST_AUTH, queryClient },
     );
     expectFailed(result, "not_signed_in");
+  });
+});
+
+/**
+ * A resolver whose every awaited chain resolves only when the test says so,
+ * so the optimistic cache writes can be observed mid-flight.
+ */
+function deferredChains() {
+  const gates: Array<(value: FakeResult) => void> = [];
+  const config: FakeClientConfig = {
+    resolve: () =>
+      new Promise<FakeResult>((resolve) => {
+        gates.push(resolve);
+      }) as unknown as FakeResult,
+  };
+  return {
+    config,
+    async settle(index: number, value: FakeResult): Promise<void> {
+      await waitFor(() => expect(gates.length).toBeGreaterThan(index));
+      gates[index]!(value);
+    },
+  };
+}
+
+const GROUP_ID = "g-opt";
+const ME = "user-1";
+
+/** Seeds the membership, count and member list one group page reads. */
+function seedMembership(
+  client: ReturnType<typeof createQueryClient>,
+  member: boolean,
+): void {
+  client.setQueryData(
+    [...GROUP_QUERY_KEYS.myMembership, GROUP_ID, ME],
+    member
+      ? {
+          role: "member",
+          status: "active",
+          createdAt: "2026-11-18T10:00:00.000Z",
+        }
+      : null,
+  );
+  client.setQueryData([...GROUP_QUERY_KEYS.memberCount, GROUP_ID], 3);
+  client.setQueryData(
+    [...GROUP_QUERY_KEYS.members, GROUP_ID],
+    [
+      {
+        userId: "user-9",
+        role: "owner",
+        status: "active",
+        joinedAt: "2026-11-17T10:00:00.000Z",
+        profile: null,
+      },
+    ],
+  );
+}
+
+/** Runs one mutation against the shared query client, mid-flight observable. */
+function begin<TVars>(
+  useHook: (client?: AppSupabaseClient | null) => {
+    mutateAsync: (variables: TVars) => Promise<unknown>;
+  },
+  variables: TVars,
+  client: AppSupabaseClient | null,
+) {
+  const hook = renderHook(() => useHook(client), {
+    wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+  });
+  let settled = false;
+  act(() => {
+    void hook.result.current.mutateAsync(variables).finally(() => {
+      settled = true;
+    });
+  });
+  return {
+    async done(): Promise<void> {
+      await waitFor(() => expect(settled).toBe(true));
+    },
+  };
+}
+
+describe("useJoinGroup (optimistic)", () => {
+  beforeEach(() => {
+    resetSocialInstallState();
+  });
+
+  it("flips the cached membership, count and member list at once", async () => {
+    const { config, settle } = deferredChains();
+    const fake = createFakeClient(config);
+    seedMembership(queryClient, false);
+
+    const run = begin(useJoinGroup, { groupId: GROUP_ID }, fake.client);
+
+    expect(
+      queryClient.getQueryData([
+        ...GROUP_QUERY_KEYS.myMembership,
+        GROUP_ID,
+        ME,
+      ]),
+    ).toMatchObject({ role: "member", status: "active" });
+    expect(
+      queryClient.getQueryData([...GROUP_QUERY_KEYS.memberCount, GROUP_ID]),
+    ).toBe(4);
+    expect(
+      queryClient
+        .getQueryData<Array<{ userId: string }>>([
+          ...GROUP_QUERY_KEYS.members,
+          GROUP_ID,
+        ])
+        ?.some((member) => member.userId === ME),
+    ).toBe(true);
+
+    await settle(0, { data: null, error: null });
+    await run.done();
+  });
+
+  it("rolls the optimistic membership back when the insert fails", async () => {
+    const { config, settle } = deferredChains();
+    const fake = createFakeClient(config);
+    seedMembership(queryClient, false);
+
+    const run = begin(useJoinGroup, { groupId: GROUP_ID }, fake.client);
+
+    expect(
+      queryClient.getQueryData([
+        ...GROUP_QUERY_KEYS.myMembership,
+        GROUP_ID,
+        ME,
+      ]),
+    ).toMatchObject({ role: "member" });
+
+    await settle(0, { data: null, error: { code: "42501", message: "no" } });
+    await run.done();
+
+    expect(
+      queryClient.getQueryData([
+        ...GROUP_QUERY_KEYS.myMembership,
+        GROUP_ID,
+        ME,
+      ]),
+    ).toBeNull();
+    expect(
+      queryClient.getQueryData([...GROUP_QUERY_KEYS.memberCount, GROUP_ID]),
+    ).toBe(3);
+    expect(
+      queryClient
+        .getQueryData<Array<{ userId: string }>>([
+          ...GROUP_QUERY_KEYS.members,
+          GROUP_ID,
+        ])
+        ?.some((member) => member.userId === ME),
+    ).toBe(false);
+  });
+});
+
+describe("useLeaveGroup (optimistic)", () => {
+  beforeEach(() => {
+    resetSocialInstallState();
+  });
+
+  it("removes the cached membership, count and member row at once", async () => {
+    const { config, settle } = deferredChains();
+    const fake = createFakeClient(config);
+    seedMembership(queryClient, true);
+    queryClient.setQueryData(
+      [...GROUP_QUERY_KEYS.members, GROUP_ID],
+      [
+        {
+          userId: "user-9",
+          role: "owner",
+          status: "active",
+          joinedAt: "2026-11-17T10:00:00.000Z",
+          profile: null,
+        },
+        {
+          userId: ME,
+          role: "member",
+          status: "active",
+          joinedAt: "2026-11-18T10:00:00.000Z",
+          profile: null,
+        },
+      ],
+    );
+
+    const run = begin(useLeaveGroup, { groupId: GROUP_ID }, fake.client);
+
+    expect(
+      queryClient.getQueryData([
+        ...GROUP_QUERY_KEYS.myMembership,
+        GROUP_ID,
+        ME,
+      ]),
+    ).toBeNull();
+    expect(
+      queryClient.getQueryData([...GROUP_QUERY_KEYS.memberCount, GROUP_ID]),
+    ).toBe(2);
+    expect(
+      queryClient
+        .getQueryData<Array<{ userId: string }>>([
+          ...GROUP_QUERY_KEYS.members,
+          GROUP_ID,
+        ])
+        ?.some((member) => member.userId === ME),
+    ).toBe(false);
+
+    await settle(0, {
+      data: [{ group_id: GROUP_ID, user_id: ME }],
+      error: null,
+    });
+    await run.done();
+  });
+
+  it("puts the membership back when the database deletes zero rows", async () => {
+    const { config, settle } = deferredChains();
+    const fake = createFakeClient(config);
+    seedMembership(queryClient, true);
+
+    const run = begin(useLeaveGroup, { groupId: GROUP_ID }, fake.client);
+
+    expect(
+      queryClient.getQueryData([
+        ...GROUP_QUERY_KEYS.myMembership,
+        GROUP_ID,
+        ME,
+      ]),
+    ).toBeNull();
+
+    // A zero-row delete: the database refused the change.
+    await settle(0, { data: [], error: null });
+    await run.done();
+
+    expect(
+      queryClient.getQueryData([
+        ...GROUP_QUERY_KEYS.myMembership,
+        GROUP_ID,
+        ME,
+      ]),
+    ).toMatchObject({ role: "member", status: "active" });
+    expect(
+      queryClient.getQueryData([...GROUP_QUERY_KEYS.memberCount, GROUP_ID]),
+    ).toBe(3);
   });
 });

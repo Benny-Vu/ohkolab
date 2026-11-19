@@ -11,6 +11,7 @@
 import {
   useMutation,
   useQueryClient,
+  type QueryKey,
   type UseMutationResult,
 } from "@tanstack/react-query";
 
@@ -219,13 +220,92 @@ export function useUpdateGroup(
   });
 }
 
+/** Snapshots restored when an optimistic membership write is refused. */
+export interface MembershipSnapshot {
+  snapshots: Array<[QueryKey, unknown]>;
+}
+
+/** Restores the snapshots taken before an optimistic membership write. */
+function rollbackMembership(
+  queryClient: ReturnType<typeof useQueryClient>,
+  context: MembershipSnapshot | undefined,
+): void {
+  if (!context) return;
+  for (const [key, data] of context.snapshots) {
+    queryClient.setQueryData(key, data);
+  }
+}
+
+/**
+ * Applies the signed-in user joining or leaving one group to the cached
+ * membership, member count and member list, so the button flips at once.
+ * `joining` false means leaving.
+ */
+function applyOptimisticMembership(
+  queryClient: ReturnType<typeof useQueryClient>,
+  groupId: string,
+  me: string,
+  joining: boolean,
+): void {
+  const stamp = new Date().toISOString();
+  for (const [key, data] of queryClient.getQueriesData({
+    queryKey: ["groups"],
+  })) {
+    if (key[0] === "groups" && key[1] === "my-membership") {
+      // The key is [prefix, groupId, me]; only our own row changes.
+      if (key[2] !== groupId || key[3] !== me) continue;
+      queryClient.setQueryData(
+        key,
+        joining
+          ? ({
+              role: "member",
+              status: "active",
+              createdAt: stamp,
+            } as MyGroupMembership)
+          : null,
+      );
+    } else if (key[0] === "groups" && key[1] === "member-count") {
+      if (key[2] !== groupId || typeof data !== "number") continue;
+      queryClient.setQueryData(key, Math.max(0, data + (joining ? 1 : -1)));
+    } else if (key[0] === "groups" && key[1] === "members") {
+      if (key[2] !== groupId || !Array.isArray(data)) continue;
+      const members = data as GroupMember[];
+      queryClient.setQueryData(
+        key,
+        joining
+          ? [
+              ...members.filter((member) => member.userId !== me),
+              {
+                userId: me,
+                role: "member",
+                status: "active",
+                joinedAt: stamp,
+                profile: null,
+              } satisfies GroupMember,
+            ]
+          : members.filter((member) => member.userId !== me),
+      );
+    }
+  }
+}
+
 /** Joins a public group as an active member. */
 export function useJoinGroup(
   client: AppSupabaseClient | null = supabase,
-): UseMutationResult<SocialResult<undefined>, SocialFailure, GroupRefInput> {
+): UseMutationResult<
+  SocialResult<undefined>,
+  SocialFailure,
+  GroupRefInput,
+  MembershipSnapshot
+> {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  return useMutation<SocialResult<undefined>, SocialFailure, GroupRefInput>({
+  return useMutation<
+    SocialResult<undefined>,
+    SocialFailure,
+    GroupRefInput,
+    MembershipSnapshot
+  >({
     mutationFn: async (input): Promise<SocialResult<undefined>> => {
       if (isSocialNotInstalled()) return socialFail("not_installed");
       if (!client) return socialFail("not_configured");
@@ -243,8 +323,25 @@ export function useJoinGroup(
       if (error) return { ok: false, error: describeWriteError(error) };
       return socialSucceed();
     },
-    onSuccess: (result) => {
-      if (!result.ok) return;
+    onMutate: (input) => {
+      const me = user?.id ?? null;
+      if (
+        !me ||
+        !input ||
+        input.groupId === "" ||
+        isSocialNotInstalled() ||
+        !client
+      ) {
+        return { snapshots: [] };
+      }
+      const snapshots = queryClient.getQueriesData({ queryKey: ["groups"] });
+      applyOptimisticMembership(queryClient, input.groupId, me, true);
+      return { snapshots };
+    },
+    onSuccess: (result, _variables, context) => {
+      if (!result.ok) rollbackMembership(queryClient, context);
+    },
+    onSettled: () => {
       invalidateGroupQueries(queryClient);
     },
   });
@@ -253,10 +350,20 @@ export function useJoinGroup(
 /** Leaves a group by deleting the signed-in user's own membership row. */
 export function useLeaveGroup(
   client: AppSupabaseClient | null = supabase,
-): UseMutationResult<SocialResult<undefined>, SocialFailure, GroupRefInput> {
+): UseMutationResult<
+  SocialResult<undefined>,
+  SocialFailure,
+  GroupRefInput,
+  MembershipSnapshot
+> {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  return useMutation<SocialResult<undefined>, SocialFailure, GroupRefInput>({
+  return useMutation<
+    SocialResult<undefined>,
+    SocialFailure,
+    GroupRefInput,
+    MembershipSnapshot
+  >({
     mutationFn: async (input): Promise<SocialResult<undefined>> => {
       if (isSocialNotInstalled()) return socialFail("not_installed");
       if (!client) return socialFail("not_configured");
@@ -277,8 +384,25 @@ export function useLeaveGroup(
       }
       return socialSucceed();
     },
-    onSuccess: (result) => {
-      if (!result.ok) return;
+    onMutate: (input) => {
+      const me = user?.id ?? null;
+      if (
+        !me ||
+        !input ||
+        input.groupId === "" ||
+        isSocialNotInstalled() ||
+        !client
+      ) {
+        return { snapshots: [] };
+      }
+      const snapshots = queryClient.getQueriesData({ queryKey: ["groups"] });
+      applyOptimisticMembership(queryClient, input.groupId, me, false);
+      return { snapshots };
+    },
+    onSuccess: (result, _variables, context) => {
+      if (!result.ok) rollbackMembership(queryClient, context);
+    },
+    onSettled: () => {
       invalidateGroupQueries(queryClient);
     },
   });

@@ -46,6 +46,11 @@ export function PeopleToFollow() {
     );
   };
 
+  // A follow that the server refused puts the row back.
+  const unhide = (suggestionId: string) => {
+    setHidden((ids) => ids.filter((id) => id !== suggestionId));
+  };
+
   const dismiss = (suggestionId: string) => {
     writeDismissedSuggestion(dismissedSuggestionsKey(user.id), suggestionId);
     hide(suggestionId);
@@ -106,6 +111,7 @@ export function PeopleToFollow() {
                 <SuggestionRow
                   suggestion={suggestion}
                   onFollowed={() => hide(suggestion.id)}
+                  onFailed={() => unhide(suggestion.id)}
                   onDismissed={() => dismiss(suggestion.id)}
                 />
               </li>
@@ -133,10 +139,12 @@ function formatLabelKey(mainFormat: FollowSuggestion["mainFormat"]) {
 function SuggestionRow({
   suggestion,
   onFollowed,
+  onFailed,
   onDismissed,
 }: {
   suggestion: FollowSuggestion;
   onFollowed: () => void;
+  onFailed: () => void;
   onDismissed: () => void;
 }) {
   const t = useT();
@@ -146,6 +154,8 @@ function SuggestionRow({
   const displayName = suggestion.displayName ?? suggestion.username;
 
   async function follow() {
+    // The row disappears at once; a refused follow brings it back.
+    onFollowed();
     const result = await toggleFollow.mutateAsync();
     if (result.ok) {
       // The RPC never suggests someone the caller follows, so the refetch
@@ -154,8 +164,8 @@ function SuggestionRow({
         queryKey: [...FOLLOW_SUGGESTIONS_QUERY_KEY],
       });
       toast.success(t("followSuggest.followedToast", { name: displayName }));
-      onFollowed();
     } else {
+      onFailed();
       toast.error(result.error.message);
     }
   }
