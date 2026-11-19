@@ -72,6 +72,54 @@ test("marks unknown species with a dash", () => {
   expect(typeCell(row, "Ice")).toHaveTextContent("—");
 });
 
+test("applies ability effects and names them under the table", () => {
+  render(
+    <TypeHeatMap
+      members={[set("Rotom-Wash", { ability: "Levitate" })]}
+      mode="defense"
+    />,
+  );
+
+  const row = screen
+    .getByRole("rowheader", { name: "Rotom-Wash" })
+    .closest("tr") as HTMLElement;
+  const ground = typeCell(row, "Ground");
+  expect(ground).toHaveTextContent("0");
+  expect(ground).toHaveAttribute(
+    "title",
+    "Rotom-Wash: Levitate makes it immune to Ground",
+  );
+  expect(
+    screen.getByText("Rotom-Wash: Levitate makes it immune to Ground"),
+  ).toBeInTheDocument();
+});
+
+test("highlights the columns three or more members are weak to", () => {
+  render(
+    <TypeHeatMap
+      members={[set("Garchomp"), set("Dragonite"), set("Salamence")]}
+      mode="defense"
+    />,
+  );
+
+  expect(screen.getByText("Ice").className).toContain("ring-destructive");
+  expect(screen.getByText("Fir").className).not.toContain("ring-destructive");
+});
+
+test("highlights the offense columns the team cannot cover", () => {
+  render(
+    <TypeHeatMap
+      members={[set("Garchomp", { moves: ["Earthquake", null, null, null] })]}
+      mode="offense"
+    />,
+  );
+
+  // Flying is immune to the team's only move type: a coverage gap.
+  expect(screen.getByText("Fly").className).toContain("ring-destructive");
+  // Rock, however, is hit super-effectively by Earthquake.
+  expect(screen.getByText("Roc").className).not.toContain("ring-destructive");
+});
+
 test("labels rows and columns with Japanese names", async () => {
   setLocale("ja");
   try {

@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import { createDefaultSet } from "@/data";
 import { t } from "@/lib/i18n/t";
 import {
+  abilityMatchupNotes,
   attackingTypes,
   battleTypes,
+  coverageGaps,
   defensiveOverview,
   memberLabel,
   offensiveCoverage,
@@ -95,6 +97,7 @@ describe("defensiveOverview", () => {
       immune: 0,
       neutral: 1,
       multipliers: [4, 1, 0.5],
+      abilityNotes: [null, null, null],
     });
     expect(byType(overview, "Ground")).toMatchObject({
       weak: 2,
@@ -154,6 +157,93 @@ describe("defensiveOverview", () => {
     );
     expect(base.multipliers).toEqual([4]);
     expect(mega.multipliers).toEqual([2]);
+  });
+
+  it("counts a Levitate holder as Ground-immune, naming the ability", () => {
+    const ground = byType(
+      defensiveOverview([set("Rotom-Wash", { ability: "Levitate" })]),
+      "Ground",
+    );
+    expect(ground).toMatchObject({
+      immune: 1,
+      weak: 0,
+      multipliers: [0],
+    });
+    expect(ground.abilityNotes).toEqual(["Levitate"]);
+  });
+
+  it("leaves the note off when the chart already made it immune", () => {
+    const ground = byType(
+      defensiveOverview([set("Charizard", { ability: "Levitate" })]),
+      "Ground",
+    );
+    expect(ground.multipliers).toEqual([0]);
+    expect(ground.abilityNotes).toEqual([null]);
+  });
+
+  it("halves Fire and Ice through Thick Fat", () => {
+    const members = [set("Mamoswine", { ability: "Thick Fat" })];
+    expect(byType(defensiveOverview(members), "Fire").multipliers).toEqual([1]);
+    expect(byType(defensiveOverview(members), "Fire").abilityNotes).toEqual([
+      "Thick Fat",
+    ]);
+    expect(byType(defensiveOverview(members), "Ice").multipliers).toEqual([
+      0.5,
+    ]);
+  });
+
+  it("immunizes Dry Skin against Water but boosts its Fire damage", () => {
+    const members = [set("Toxicroak", { ability: "Dry Skin" })];
+    expect(byType(defensiveOverview(members), "Water")).toMatchObject({
+      immune: 1,
+      multipliers: [0],
+    });
+    const fire = byType(defensiveOverview(members), "Fire");
+    expect(fire.multipliers).toEqual([1.25]);
+    expect(fire).toMatchObject({ weak: 1, resistant: 0, neutral: 0 });
+  });
+
+  it("applies the set's ability the way the damage calc does", () => {
+    // The calc honours the ability written on the set, species or not; the
+    // editor and validateSet keep real sets legal.
+    const ground = byType(
+      defensiveOverview([set("Garchomp", { ability: "Levitate" })]),
+      "Ground",
+    );
+    expect(ground.multipliers).toEqual([0]);
+  });
+});
+
+describe("abilityMatchupNotes", () => {
+  it("names the member, type, ability and effect of each changed matchup", () => {
+    const members = [
+      set("Rotom-Wash", { ability: "Levitate" }),
+      set("Mamoswine", { ability: "Thick Fat" }),
+    ];
+    expect(abilityMatchupNotes(members)).toEqual([
+      { member: 0, type: "Ground", ability: "Levitate", effect: "immune" },
+      { member: 1, type: "Fire", ability: "Thick Fat", effect: "resist" },
+      { member: 1, type: "Ice", ability: "Thick Fat", effect: "resist" },
+    ]);
+  });
+
+  it("marks Dry Skin's Fire boost as a weakness", () => {
+    const notes = abilityMatchupNotes([
+      set("Toxicroak", { ability: "Dry Skin" }),
+    ]);
+    expect(notes).toContainEqual({
+      member: 0,
+      type: "Fire",
+      ability: "Dry Skin",
+      effect: "weak",
+    });
+  });
+
+  it("returns nothing for an empty team or untracked abilities", () => {
+    expect(abilityMatchupNotes([])).toEqual([]);
+    expect(
+      abilityMatchupNotes([set("Garchomp", { ability: "Rough Skin" })]),
+    ).toEqual([]);
   });
 });
 
@@ -248,6 +338,44 @@ describe("offensiveCoverage", () => {
       best: 2,
       moveTypes: ["Fighting"],
     });
+  });
+});
+
+describe("coverageGaps", () => {
+  it("collects the defending types nothing hits super-effectively", () => {
+    const gaps = coverageGaps([
+      withMoves("Garchomp", "Earthquake", "Dragon Claw"),
+    ]);
+    expect(gaps).toContainEqual({ type: "Fairy", best: 1 });
+    expect(gaps.map((gap) => gap.type)).not.toContain("Steel");
+    expect(gaps.map((gap) => gap.type)).not.toContain("Dragon");
+  });
+
+  it("includes types the team can only resist-hit or not touch", () => {
+    const gaps = coverageGaps([withMoves("Rotom-Wash", "Thunderbolt", "Surf")]);
+    expect(gaps).toContainEqual({ type: "Grass", best: 0.5 });
+    expect(gaps).toContainEqual({ type: "Ghost", best: 1 });
+  });
+
+  it("returns nothing when the team covers every type", () => {
+    // Ten move types between them hit all 18 defending types
+    // super-effectively.
+    const gaps = coverageGaps([
+      withMoves(
+        "Garchomp",
+        "Earthquake",
+        "Close Combat",
+        "Rock Slide",
+        "Shadow Ball",
+      ),
+      withMoves("Rotom-Wash", "Thunderbolt", "Surf", "Flamethrower", "Psychic"),
+      withMoves("Sneasler", "Moonblast", "Sludge Bomb"),
+    ]);
+    expect(gaps).toEqual([]);
+  });
+
+  it("has nothing to report without damaging moves", () => {
+    expect(coverageGaps([set("Garchomp")])).toEqual([]);
   });
 });
 

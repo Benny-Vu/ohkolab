@@ -6,12 +6,19 @@ import {
   typeEffectiveness,
   validateSet,
 } from "@/data";
+import {
+  abilityOverrideFor,
+  type AbilityTypeOverride,
+} from "@/data/ability-effectiveness";
 import { TYPE_NAMES, type PokemonSet, type TypeName } from "@/types/pokemon";
 
 /**
- * Team analysis by type chart alone: abilities (Levitate, Flash Fire...),
- * items and moves with their own type rules (Freeze-Dry, Flying Press) are
- * not considered.
+ * Team analysis by type chart, with the abilities `@smogon/calc` itself
+ * models for Champions (Levitate, Flash Fire, Thick Fat...) bending the
+ * chart where the set names them — the same ability the calc would apply
+ * to that set, so the two never disagree. Items, moves with their own type
+ * rules (Freeze-Dry, Flying Press) and battle states (Gravity) are not
+ * considered.
  */
 
 /** The name to show for a member: its nickname, or its species. */
@@ -42,6 +49,13 @@ export interface DefensiveEntry {
   neutral: number;
   /** The multiplier for each member in team order; null for an unknown species. */
   multipliers: (number | null)[];
+  /**
+   * For each member: the ability that changed its matchup against this
+   * attacking type (its display name, e.g. "Levitate"), or null when no
+   * tracked ability applied. Never set when the type chart already made
+   * the member immune.
+   */
+  abilityNotes: (string | null)[];
 }
 
 /** For each of the 18 attacking types: how the team takes it. */
@@ -50,7 +64,8 @@ export function defensiveOverview(
 ): DefensiveEntry[] {
   const matchups = members.map((member) => {
     const types = battleTypes(member);
-    return types ? defensiveMatchups(types) : null;
+    if (!types) return null;
+    return { chart: defensiveMatchups(types), ability: member.ability };
   });
 
   return TYPE_NAMES.map((type) => {
@@ -61,11 +76,23 @@ export function defensiveOverview(
       immune: 0,
       neutral: 0,
       multipliers: [],
+      abilityNotes: [],
     };
     for (const matchup of matchups) {
-      const multiplier = matchup ? matchup[type] : null;
+      if (!matchup) {
+        entry.multipliers.push(null);
+        entry.abilityNotes.push(null);
+        continue;
+      }
+      const chart = matchup.chart[type];
+      const override = abilityOverrideFor(matchup.ability, type);
+      const multiplier = !override
+        ? chart
+        : override.multiplier === 0
+          ? 0
+          : chart * override.multiplier;
       entry.multipliers.push(multiplier);
-      if (multiplier === null) continue;
+      entry.abilityNotes.push(override && chart !== 0 ? matchup.ability : null);
       if (multiplier === 0) entry.immune += 1;
       else if (multiplier > 1) entry.weak += 1;
       else if (multiplier < 1) entry.resistant += 1;
@@ -73,6 +100,51 @@ export function defensiveOverview(
     }
     return entry;
   });
+}
+
+/** One matchup an ability changed for one member, as structured data. */
+export interface AbilityMatchupNote {
+  /** The member's position in team order. */
+  member: number;
+  /** The attacking type the ability changed the matchup against. */
+  type: TypeName;
+  /** The ability's name as stored on the set, e.g. "Levitate". */
+  ability: string;
+  /** How the ability changed the matchup. */
+  effect: "immune" | "resist" | "weak";
+}
+
+function noteEffect(
+  override: AbilityTypeOverride,
+): AbilityMatchupNote["effect"] {
+  if (override.multiplier === 0) return "immune";
+  return override.multiplier < 1 ? "resist" : "weak";
+}
+
+/**
+ * Every matchup an ability changed, member by member, for the analysis
+ * panel to name ("Ground — immune via Levitate").
+ */
+export function abilityMatchupNotes(
+  members: readonly PokemonSet[],
+): AbilityMatchupNote[] {
+  const overview = defensiveOverview(members);
+  const notes: AbilityMatchupNote[] = [];
+  members.forEach((_, member) => {
+    for (const entry of overview) {
+      const ability = entry.abilityNotes[member];
+      if (!ability) continue;
+      const override = abilityOverrideFor(ability, entry.type);
+      if (!override) continue;
+      notes.push({
+        member,
+        type: entry.type,
+        ability,
+        effect: noteEffect(override),
+      });
+    }
+  });
+  return notes;
 }
 
 export interface CoverageEntry {
@@ -118,6 +190,26 @@ export function offensiveCoverage(
     }
     return { type, best, moveTypes: reaching };
   });
+}
+
+/** A defending type no team move hits super-effectively. */
+export interface CoverageGap {
+  type: TypeName;
+  /** The best multiplier the team reaches against the type (0, 0.5 or 1). */
+  best: number;
+}
+
+/**
+ * The team's offensive coverage gaps: every defending type none of the
+ * team's move types hits super-effectively. A team with no damaging moves
+ * has no gaps to report — there is nothing to measure.
+ */
+export function coverageGaps(members: readonly PokemonSet[]): CoverageGap[] {
+  return offensiveCoverage(members).flatMap((entry) =>
+    entry.best !== null && entry.best < 2
+      ? [{ type: entry.type, best: entry.best }]
+      : [],
+  );
 }
 
 /**

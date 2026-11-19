@@ -232,4 +232,36 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   // ダメージ計算：共有リンク（share ウェーブ）。
   "calc.shareLinkInvalid":
     "計算機のリンクを読み込めなかったため、計算機をリセットしました。",
+
+  // ダメージ計算：ダブルの2体目の防御側。
+  "calc.secondDefender": "防御側2",
+  "calc.addSecondDefender": "2体目の防御側を追加",
+  "calc.removeSecondDefender": "2体目の防御側を削除",
+  "calc.remove": "削除",
+  "calc.spreadMove": "全体技 ×{factor}",
+  "calc.singleTarget": "使用ごとに1体だけが対象",
+
+  // 構築：開閉できる分析カード。
+  "teams.analysisExpand": "構築分析を開く",
+  "teams.analysisCollapse": "構築分析を閉じる",
+
+  // 構築：特性によって変わる相性（「ロトム（ウォッシュ）：浮遊で地面を無効化」）。
+  "teams.abilityImmune": "{pokemon}：{ability}で{type}を無効化",
+  "teams.abilityResist": "{pokemon}：{ability}で{type}技のダメージを軽減",
+  "teams.abilityVulnerable": "{pokemon}：{ability}で{type}技のダメージが増加",
+
+  // 構築：技の範囲。
+  "teams.coverageTitle": "技の範囲",
+  "teams.coverageCount": "{total}タイプ中{count}タイプに効果抜群で攻撃可能",
+  "teams.coverageGap": "{type}を効果抜群で攻撃できる技がありません",
+  "teams.coverageComplete": "すべてのタイプに効果抜群で攻撃できる技があります",
+
+  // 構築：素早さラインの表示。
+  "teams.speedViewLabel": "素早さラインの表示",
+  "teams.speedBase": "通常",
+  "teams.speedScarf": "スカーフ ×1.5",
+  "teams.speedTailwind": "追い風 ×2",
+  "teams.speedTrickRoom": "トリックルーム",
+  "teams.trickRoomNote":
+    "トリックルーム中は遅いポケモンから行動します。先制技は先に動き、同じ素早さなら順番は入れ替わりません。",
 };

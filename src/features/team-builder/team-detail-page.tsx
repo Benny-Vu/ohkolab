@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   ArrowDownIcon,
   ArrowLeftIcon,
   ArrowUpIcon,
+  ChevronDownIcon,
   ClipboardCopyIcon,
   CopyIcon,
   DownloadIcon,
@@ -20,7 +21,7 @@ import { displayTeamName } from "@/lib/team/display";
 import { PokemonEditor } from "@/components/pokemon-editor";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -45,8 +46,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
@@ -57,30 +58,22 @@ import {
 import { createDefaultSet, useDisplayName, validateSet } from "@/data";
 import { MemberCard } from "@/features/team-builder/member-card";
 import { PublicTeamView } from "@/features/team-builder/public-team-view";
-import { SpeedTiers } from "@/features/team-builder/speed-tiers";
-import { TypeHeatMap } from "@/features/team-builder/type-heat-map";
 import { ShareButton } from "@/features/share/share-button";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
-import type { TranslationKey } from "@/lib/i18n/en";
 import { track } from "@/lib/telemetry/analytics";
-import {
-  defensiveWeakSpots,
-  exportTeam,
-  memberLabel,
-  teamWarnings,
-  useTeams,
-} from "@/lib/team";
-import type { TeamWarning } from "@/lib/team";
+import { exportTeam, memberLabel, useTeams } from "@/lib/team";
 import type { BattleFormat } from "@/types/battle";
 import type { PokemonSet } from "@/types/pokemon";
 import { MAX_TEAM_SIZE } from "@/types/team";
 
-const WARNING_TITLE_KEYS: Record<TeamWarning["kind"], TranslationKey> = {
-  "duplicate-species": "teams.warningDuplicateSpecies",
-  "duplicate-item": "teams.warningDuplicateItem",
-  set: "teams.warningSet",
-};
+// The analysis tables are heavy and off by default: the section lives in
+// its own module and loads lazily, keeping the team routes chunk light.
+const AnalysisSection = lazy(() =>
+  import("@/features/team-builder/analysis-section").then((m) => ({
+    default: m.AnalysisSection,
+  })),
+);
 
 /**
  * A member card unmounts when it is removed, taking focus with it; park focus
@@ -121,6 +114,8 @@ export function TeamDetailPage() {
   const [editorIndex, setEditorIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<PokemonSet | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  // The analysis card starts collapsed on every visit; no persistence.
+  const [analysisOpen, setAnalysisOpen] = useState(false);
 
   if (!team) {
     if (sync.loading) {
@@ -154,8 +149,6 @@ export function TeamDetailPage() {
     return <PublicTeamView teamId={teamId ?? ""} />;
   }
 
-  const warnings = teamWarnings(team.members);
-  const weakSpots = defensiveWeakSpots(team.members);
   const exportText = exportTeam(team.members);
 
   const openAdd = () => {
@@ -543,62 +536,37 @@ export function TeamDetailPage() {
         {team.members.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>{t("teams.analysis")}</CardTitle>
+              <button
+                type="button"
+                aria-expanded={analysisOpen}
+                aria-label={
+                  analysisOpen
+                    ? t("teams.analysisCollapse")
+                    : t("teams.analysisExpand")
+                }
+                onClick={() => setAnalysisOpen((open) => !open)}
+                className="flex w-full items-center justify-between gap-2 text-left font-heading text-base leading-snug font-medium"
+              >
+                {t("teams.analysis")}
+                <ChevronDownIcon
+                  aria-hidden
+                  className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                    analysisOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              {warnings.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  {warnings.map((warning, index) => (
-                    <Alert key={index} variant="destructive">
-                      <TriangleAlertIcon aria-hidden />
-                      <AlertTitle>
-                        {t(WARNING_TITLE_KEYS[warning.kind])}
-                      </AlertTitle>
-                      <AlertDescription>
-                        {t(warning.message.key, warning.message.params)}
-                      </AlertDescription>
-                    </Alert>
-                  ))}
-                </div>
-              )}
-              {weakSpots.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  {weakSpots.map((spot) => (
-                    <p key={spot.type} className="text-sm">
-                      {spot.noResist
-                        ? t("teams.weakSpotNoResist", {
-                            count: spot.weak,
-                            type: displayName("type", spot.type),
-                          })
-                        : t("teams.weakSpot", {
-                            count: spot.weak,
-                            type: displayName("type", spot.type),
-                          })}
-                    </p>
-                  ))}
-                </div>
-              )}
-              <Tabs defaultValue="defense">
-                <TabsList>
-                  <TabsTrigger value="defense">
-                    {t("teams.defense")}
-                  </TabsTrigger>
-                  <TabsTrigger value="offense">
-                    {t("teams.offense")}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="defense">
-                  <TypeHeatMap members={team.members} mode="defense" />
-                </TabsContent>
-                <TabsContent value="offense">
-                  <TypeHeatMap members={team.members} mode="offense" />
-                </TabsContent>
-              </Tabs>
-              <div className="flex flex-col gap-2">
-                <h3 className="text-sm font-medium">{t("teams.speedTiers")}</h3>
-                <SpeedTiers members={team.members} />
-              </div>
-            </CardContent>
+            {analysisOpen && (
+              <Suspense
+                fallback={
+                  <CardContent>
+                    <Skeleton className="h-40 w-full" />
+                  </CardContent>
+                }
+              >
+                <AnalysisSection members={team.members} />
+              </Suspense>
+            )}
           </Card>
         )}
       </div>
