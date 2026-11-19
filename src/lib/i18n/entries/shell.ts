@@ -30,9 +30,9 @@ export const shellEn = {
     "OHKOLab is an unofficial fan project, not affiliated with Nintendo, Game Freak, Creatures or The Pokémon Company.",
   "footer.terms": "Terms",
   "footer.privacy": "Privacy",
+  "footer.credits": "Credits",
   "footer.sendFeedback": "Send feedback",
   "footer.madeBy": "OHKOLab is made by",
-  "footer.japaneseNames": "Japanese Pokémon names from PokéAPI",
 
   // Common actions and states, reused across features.
   "common.cancel": "Cancel",
@@ -62,6 +62,7 @@ export const shellEn = {
   "common.close": "Close",
   "common.search": "Search",
   "common.signIn": "Sign in",
+  "common.signUp": "Sign up",
   "common.signOut": "Sign out",
   "common.signedOut": "Signed out",
 
@@ -263,6 +264,8 @@ export const shellEn = {
     "Browse and join Pokémon Champions groups on OHKOLab.",
   "seo.termsDescription": "The terms of use for OHKOLab.",
   "seo.privacyDescription": "How OHKOLab handles your data and privacy.",
+  "seo.creditsDescription":
+    "The data sources and libraries OHKOLab is built on, and their licences.",
 
   // The feedback dialog and the crash screen (both mount from the app
   // frame; the telemetry switch strings stay with the community domain).

@@ -111,6 +111,13 @@ export function AppLayout() {
           >
             {t("footer.privacy")}
           </Link>
+          <Link
+            className="underline-offset-4 hover:underline"
+            to="/credits"
+            viewTransition
+          >
+            {t("footer.credits")}
+          </Link>
           <button
             type="button"
             className="underline-offset-4 hover:underline"
@@ -130,7 +137,6 @@ export function AppLayout() {
             Vu Forge
           </a>
         </p>
-        <p className="mt-2">{t("footer.japaneseNames")}</p>
         <div className="mt-3 flex justify-center">
           <LanguageSwitch />
         </div>

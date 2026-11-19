@@ -202,7 +202,6 @@ export const communityEn = {
   "home.noGroupsYet": "No groups yet",
   "home.loadingPosts": "Loading posts",
   "home.feedErrorTitle": "Could not load the feed",
-  "home.trending": "Trending in doubles",
   "home.groupsLoadError": "Could not load your groups",
 
   // The post page and its comments.

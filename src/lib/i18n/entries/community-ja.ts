@@ -200,7 +200,6 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "home.noGroupsYet": "グループはまだありません",
   "home.loadingPosts": "投稿を読み込み中",
   "home.feedErrorTitle": "フィードを読み込めませんでした",
-  "home.trending": "ダブルで人気のポケモン",
   "home.groupsLoadError": "グループを読み込めませんでした",
 
   // 投稿ページとコメント。

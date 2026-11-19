@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import {
   ArrowRightIcon,
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { Logo } from "@/components/logo";
 import { SegmentedControl } from "@/components/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth/use-auth";
@@ -21,12 +22,6 @@ import { socialAvailability } from "@/lib/social/availability";
 import { useFeed } from "@/lib/social/queries";
 import { Composer } from "@/features/feed/composer";
 import { PostList } from "@/features/feed/post-list";
-
-const TrendingStrip = lazy(() =>
-  import("@/features/home/trending-strip").then((module) => ({
-    default: module.TrendingStrip,
-  })),
-);
 
 interface Tool {
   to: string;
@@ -133,12 +128,6 @@ function FeedHome() {
           </div>
         )}
 
-        <Suspense fallback={null}>
-          <div className="mb-4 lg:hidden">
-            <TrendingStrip />
-          </div>
-        </Suspense>
-
         <div className="flex items-center justify-between gap-2">
           <SegmentedControl
             aria-label={t("home.feedAria")}
@@ -189,25 +178,25 @@ function FeedHome() {
   );
 }
 
+/**
+ * Signed-out welcome: the logo, one line about the community, and sign-up
+ * and sign-in buttons, right above the public feed. The tools stay one tap
+ * away in the nav.
+ */
 function SignedOutIntro() {
   const t = useT();
   return (
     <section className="mb-4 rounded-md border bg-card p-4">
-      <p className="font-heading text-xl font-bold">
-        <span className="text-primary">OHKO</span>Lab
-      </p>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <Logo className="text-xl" markClassName="size-7" />
+      <p className="mt-2 text-sm text-muted-foreground">
         {t("home.signedOutIntro")}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button asChild size="sm">
-          <Link to="/calc">
-            {t("home.calcTitle")}
-            <ArrowRightIcon aria-hidden />
-          </Link>
+        <Button asChild size="sm" variant="accent">
+          <Link to="/login?tab=signup&returnTo=/">{t("common.signUp")}</Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link to="/meta">{t("home.metaTitle")}</Link>
+          <Link to="/login?returnTo=/">{t("common.signIn")}</Link>
         </Button>
       </div>
     </section>
@@ -217,9 +206,6 @@ function SignedOutIntro() {
 function RightRail({ signedIn }: { signedIn: boolean }) {
   return (
     <div className="grid gap-4">
-      <Suspense fallback={null}>
-        <TrendingStrip />
-      </Suspense>
       <MyGroupsRail signedIn={signedIn} />
     </div>
   );

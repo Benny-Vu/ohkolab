@@ -55,6 +55,7 @@ const SITEMAP_ROUTES = new Set([
   "groups",
   "terms",
   "privacy",
+  "credits",
 ]);
 
 function seoFiles(): Plugin {
