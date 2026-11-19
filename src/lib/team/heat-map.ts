@@ -34,13 +34,27 @@ export interface SpeedTier {
   speed: number;
 }
 
+/**
+ * The speed scenario the tiers are shown for: plain stats, a Choice Scarf
+ * (×1.5, floored as in the games), Tailwind (×2) or Trick Room, where the
+ * order is simply reversed — the slowest Pokémon moves first. Priority
+ * and ties between equal speeds are a battle-time concern the numbers
+ * cannot show; the panel says so in a note.
+ */
+export type SpeedTierMode = "base" | "scarf" | "tailwind" | "trickRoom";
+
 /** Team members sorted by final Speed, fastest first. */
-export function speedTiers(members: PokemonSet[]): SpeedTier[] {
-  return members
+export function speedTiers(
+  members: PokemonSet[],
+  mode: SpeedTierMode = "base",
+): SpeedTier[] {
+  const factor = mode === "scarf" ? 1.5 : mode === "tailwind" ? 2 : 1;
+  const tiers = members
     .map((member) => ({
       member,
       label: memberLabel(member),
-      speed: calcStats(member).spe,
+      speed: Math.floor(calcStats(member).spe * factor),
     }))
     .sort((a, b) => b.speed - a.speed);
+  return mode === "trickRoom" ? tiers.reverse() : tiers;
 }

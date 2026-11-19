@@ -242,6 +242,33 @@ export const toolsEn = {
   "calc.remove": "Remove",
   "calc.spreadMove": "Spread move ×{factor}",
   "calc.singleTarget": "Targets one Pokémon per use",
+
+  // Team builder: the collapsible analysis card.
+  "teams.analysisExpand": "Show team analysis",
+  "teams.analysisCollapse": "Hide team analysis",
+
+  // Team builder: matchups an ability changed ("Rotom-Wash: Levitate makes
+  // it immune to Ground").
+  "teams.abilityImmune": "{pokemon}: {ability} makes it immune to {type}",
+  "teams.abilityResist": "{pokemon}: {ability} weakens {type} moves against it",
+  "teams.abilityVulnerable":
+    "{pokemon}: {ability} makes {type} hit harder than the chart says",
+
+  // Team builder: offensive coverage.
+  "teams.coverageTitle": "Coverage",
+  "teams.coverageCount": "{count} of {total} types hit super-effectively",
+  "teams.coverageGap": "Nothing hits {type} super-effectively",
+  "teams.coverageComplete":
+    "Every type is hit super-effectively by at least one move",
+
+  // Team builder: speed tier views.
+  "teams.speedViewLabel": "Speed tier view",
+  "teams.speedBase": "Base",
+  "teams.speedScarf": "Scarf ×1.5",
+  "teams.speedTailwind": "Tailwind ×2",
+  "teams.speedTrickRoom": "Trick Room",
+  "teams.trickRoomNote":
+    "Trick Room reverses the order: the slowest Pokémon moves first. Priority moves still go first, and equal Speeds still tie.",
 } as const;
 
 export type ToolsKey = keyof typeof toolsEn;

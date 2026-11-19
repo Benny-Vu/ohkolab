@@ -59,4 +59,21 @@ describe("speedTiers", () => {
   it("returns an empty list for an empty team", () => {
     expect(speedTiers([])).toEqual([]);
   });
+
+  it("multiplies Speed for the Choice Scarf and Tailwind views", () => {
+    const member = set("Garchomp");
+    const base = speedTiers([member], "base")[0]!.speed;
+    expect(speedTiers([member], "scarf")[0]!.speed).toBe(
+      Math.floor(base * 1.5),
+    );
+    expect(speedTiers([member], "tailwind")[0]!.speed).toBe(base * 2);
+  });
+
+  it("reverses the base order under Trick Room", () => {
+    const members = [set("Incineroar"), set("Gengar"), set("Garchomp")];
+    const base = speedTiers(members).map((tier) => tier.label);
+    expect(speedTiers(members, "trickRoom").map((tier) => tier.label)).toEqual(
+      [...base].reverse(),
+    );
+  });
 });

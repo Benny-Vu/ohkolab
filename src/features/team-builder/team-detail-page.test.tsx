@@ -221,7 +221,25 @@ describe("TeamDetailPage", () => {
     expect(screen.getByRole("button", { name: "More actions" })).toBeTruthy();
   });
 
-  it("summarises shared weaknesses in words", () => {
+  it("starts with the analysis collapsed and expands on demand", async () => {
+    const team = createTeam({
+      format: "doubles",
+      members: [createDefaultSet("Garchomp"), createDefaultSet("Dragonite")],
+    });
+    localTeamStore.save(team);
+    const user = userEvent.setup();
+    renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
+
+    const toggle = screen.getByRole("button", { name: "Show team analysis" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Speed tiers")).toBeNull();
+
+    await user.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(await screen.findByText("Speed tiers")).toBeTruthy();
+  });
+
+  it("summarises shared weaknesses in words", async () => {
     const team = createTeam({
       format: "doubles",
       members: [
@@ -231,9 +249,15 @@ describe("TeamDetailPage", () => {
       ],
     });
     localTeamStore.save(team);
+    const user = userEvent.setup();
     renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
 
-    expect(screen.getByText("3 Pokémon weak to Ice, no resist")).toBeTruthy();
+    await user.click(
+      screen.getByRole("button", { name: "Show team analysis" }),
+    );
+    expect(
+      await screen.findByText("3 Pokémon weak to Ice, no resist"),
+    ).toBeTruthy();
   });
 });
 
@@ -254,10 +278,12 @@ describe("TeamDetailPage in Japanese", () => {
       members: [createDefaultSet("Garchomp"), createDefaultSet("Garchomp")],
     });
     localTeamStore.save(team);
+    const user = userEvent.setup();
     renderTeamRoutes(GUEST_AUTH, [`/teams/${team.id}`]);
 
+    await user.click(screen.getByRole("button", { name: "構築分析を開く" }));
     expect(
-      screen.getByText("Garchompが構築に2匹含まれています。"),
+      await screen.findByText("Garchompが構築に2匹含まれています。"),
     ).toBeTruthy();
     // The type name arrives with the Japanese names chunk.
     expect(
