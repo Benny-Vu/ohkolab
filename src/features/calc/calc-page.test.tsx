@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Providers } from "@/app/providers";
 import { createDefaultSet } from "@/data";
 import { CalcPage } from "@/features/calc/calc-page";
+import { encodeCalcShare } from "@/lib/calc/share-url";
+import { createDefaultCalcState, createSide } from "@/lib/calc/state";
 import { setLocale } from "@/lib/i18n/locale";
 
 const DIRECTION_ARROW = "\u2192";
@@ -207,12 +209,85 @@ describe("CalcPage", () => {
   });
 });
 
+describe("CalcPage shared links", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  function renderCalcAt(entry: string) {
+    const router = createMemoryRouter(
+      [{ path: "/calc", element: <CalcPage /> }],
+      { initialEntries: [entry] },
+    );
+    render(
+      <Providers>
+        <RouterProvider router={router} />
+      </Providers>,
+    );
+    return router;
+  }
+
+  it("restores the state and format from a shared link, then clears the parameter", async () => {
+    const base = createDefaultCalcState();
+    const shared = {
+      ...base,
+      sides: {
+        ...base.sides,
+        p1: createSide(createDefaultSet("Charizard")),
+      },
+    };
+    const router = renderCalcAt(
+      `/calc?c=${encodeCalcShare(shared, "singles")}`,
+    );
+
+    expect(screen.getByRole("combobox", { name: "Species" })).toHaveTextContent(
+      "Charizard",
+    );
+    // The link's format becomes the active preference.
+    expect(localStorage.getItem("ohkolab:format")).toBe("singles");
+    // The parameter is used once and dropped, so a refresh keeps the
+    // visitor's own changes.
+    await waitFor(() => expect(router.state.location.search).toBe(""));
+  });
+
+  it("keeps other query parameters when clearing the share parameter", async () => {
+    const router = renderCalcAt(
+      `/calc?c=${encodeCalcShare(createDefaultCalcState(), "doubles")}&utm=x`,
+    );
+
+    await waitFor(() => expect(router.state.location.search).toBe("?utm=x"));
+  });
+
+  it("resets to the default calc with a toast for a broken link", async () => {
+    const router = renderCalcAt("/calc?c=v1.broken");
+
+    expect(
+      await screen.findByText(
+        "This calculator link could not be opened, so the calculator was reset.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Species" })).toHaveTextContent(
+      "Garchomp",
+    );
+    await waitFor(() => expect(router.state.location.search).toBe(""));
+  });
+
+  it("resets to the default calc with a toast for an old-version link", async () => {
+    renderCalcAt("/calc?c=v2.abc");
+
+    expect(
+      await screen.findByText(
+        "This calculator link could not be opened, so the calculator was reset.",
+      ),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("CalcPage in Japanese", () => {
   beforeEach(() => {
     localStorage.clear();
     setLocale("ja");
   });
-
   afterEach(() => {
     setLocale("en");
   });

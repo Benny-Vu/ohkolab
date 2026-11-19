@@ -552,6 +552,28 @@ export const communityEn = {
 
   // Image posts (followup wave): a failed images batch inside a post card.
   "social.images.loadError": "Couldn't load this post's images.",
+
+  // Share buttons (share wave): the native sheet, or a copied link.
+  "share.share": "Share",
+  "share.copiedLink": "Link copied to clipboard.",
+  "share.copyFailed": "The link could not be copied.",
+
+  // SEO: the meta description of a route (page-title.ts).
+  "seo.homeDescription":
+    "Damage calculator, team builder and community for Pokémon Champions. Unofficial fan project.",
+  "seo.calcDescription":
+    "Calculate damage between Pokémon Champions sets, with items, weather, terrains and Doubles and Singles support.",
+  "seo.metaDescription":
+    "Pokémon Champions usage statistics: the most used Pokémon, moves, items and spreads.",
+  "seo.teamsDescription": "A Pokémon Champions team shared on OHKOLab.",
+  "seo.postDescription": "A post from the OHKOLab Pokémon Champions community.",
+  "seo.profileDescription":
+    "A player's posts, shared teams and groups on OHKOLab.",
+  "seo.groupDescription": "A Pokémon Champions group on OHKOLab.",
+  "seo.groupsDescription":
+    "Browse and join Pokémon Champions groups on OHKOLab.",
+  "seo.termsDescription": "The terms of use for OHKOLab.",
+  "seo.privacyDescription": "How OHKOLab handles your data and privacy.",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;

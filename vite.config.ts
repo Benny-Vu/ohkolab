@@ -7,6 +7,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, URL } from "node:url";
@@ -34,6 +35,61 @@ function staticRoutePaths(root: string): string[] {
     }
   }
   return [...paths];
+}
+
+/**
+ * SEO files, built at deploy time: `sitemap.xml` and `robots.txt` in
+ * `dist/`. The sitemap lists only the public, parameter-free routes — no
+ * user content, and nothing behind a sign-in. `lastmod` is omitted: the
+ * pages are shells whose content changes with the data, so a build date
+ * would be misleading.
+ */
+const SITE_ORIGIN = "https://ohkolab.com";
+
+/** Routes worth offering to search engines, as `staticRoutePaths` returns them ("" is the home page). */
+const SITEMAP_ROUTES = new Set([
+  "",
+  "calc",
+  "teams",
+  "meta",
+  "groups",
+  "terms",
+  "privacy",
+]);
+
+function seoFiles(): Plugin {
+  let root = process.cwd();
+  return {
+    name: "seo-files",
+    apply: "build",
+    configResolved(config) {
+      root = config.root;
+    },
+    writeBundle(options) {
+      if (!options.dir) return;
+      const routes = staticRoutePaths(root).filter((path) =>
+        SITEMAP_ROUTES.has(path),
+      );
+      const urls = [
+        `${SITE_ORIGIN}/`,
+        ...routes
+          .filter((path) => path !== "")
+          .map((path) => `${SITE_ORIGIN}/${path}`),
+      ];
+      const sitemap =
+        '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+        urls.map((url) => `  <url><loc>${url}</loc></url>`).join("\n") +
+        "\n</urlset>\n";
+      writeFileSync(join(options.dir, "sitemap.xml"), sitemap);
+      const robots =
+        "User-agent: *\n" +
+        "Allow: /\n" +
+        "\n" +
+        `Sitemap: ${SITE_ORIGIN}/sitemap.xml\n`;
+      writeFileSync(join(options.dir, "robots.txt"), robots);
+    },
+  };
 }
 
 /**
@@ -90,6 +146,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       spaFallback(),
+      seoFiles(),
       ...(sentryAuthToken
         ? [
             sentryVitePlugin({
@@ -186,6 +243,9 @@ export default defineConfig(({ mode }) => {
         // Pure modules shared by the Edge Functions: no Deno imports, so
         // Vitest can run their tests in jsdom like any other module.
         "supabase/functions/_shared/**/*.test.ts",
+        // The OG Worker's pure logic (crawler detection, meta building,
+        // data rules) runs here too, so `npm run check` and CI cover it.
+        "workers/og/src/**/*.test.ts",
       ],
       setupFiles: ["./src/test/setup.ts"],
       passWithNoTests: true,

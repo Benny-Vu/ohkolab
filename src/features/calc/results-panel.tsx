@@ -12,6 +12,8 @@ import { getMove, useDisplayName } from "@/data";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import { useSideNames } from "@/features/calc/use-side-names";
+import { ShareButton } from "@/features/share/share-button";
+import { calcShareUrl } from "@/lib/calc/share-url";
 import type { Translate } from "@/components/stat-labels";
 import { useT } from "@/lib/i18n/t";
 import type { TranslationKey } from "@/lib/i18n/en";
@@ -213,15 +215,18 @@ function SelectedResult({
       ) : null}
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 text-sm font-medium">{description}</p>
-        <Button
-          className="shrink-0"
-          onClick={handleCopy}
-          size="xs"
-          variant="ghost"
-        >
-          <CopyIcon />
-          {t("calc.copy")}
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          <ShareButton
+            title={`${t("calc.title")} · ${displayName("move", outcome.move)}`}
+            url={calcShareUrl(state, format)}
+            size="xs"
+            variant="ghost"
+          />
+          <Button onClick={handleCopy} size="xs" variant="ghost">
+            <CopyIcon />
+            {t("calc.copy")}
+          </Button>
+        </div>
       </div>
     </div>
   );

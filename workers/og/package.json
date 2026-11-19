@@ -1,0 +1,21 @@
+{
+  "name": "@ohkolab/og-worker",
+  "private": true,
+  "type": "module",
+  "description": "Link-preview Cloudflare Worker for ohkolab.com: passes requests through to GitHub Pages unchanged and serves Open Graph cards to crawler user agents.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "wrangler dev"
+  },
+  "dependencies": {
+    "workers-og": "0.0.27"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261119.1",
+    "typescript": "~6.0.3",
+    "wrangler": "^4.165.0"
+  },
+  "allowScripts": {
+    "workerd@1.20261118.1": true
+  }
+}

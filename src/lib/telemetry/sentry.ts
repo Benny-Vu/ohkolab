@@ -1,8 +1,11 @@
 import * as Sentry from "@sentry/react";
 
-import { platformName } from "@/lib/platform";
+import { isNativeApp, platformName } from "@/lib/platform";
 import { getTelemetryConfig } from "@/lib/telemetry/config";
-import { getTelemetryConsent } from "@/lib/telemetry/consent";
+import {
+  getTelemetryConsent,
+  onTelemetryConsentChange,
+} from "@/lib/telemetry/consent";
 import { routeTemplate } from "@/lib/telemetry/route-template";
 import { describeSocialError } from "@/lib/social/errors";
 
@@ -154,7 +157,38 @@ function scrubEvent(event: Sentry.Event): Sentry.Event {
   return event;
 }
 
-/** Initializes Sentry when crash reporting is enabled; a no-op otherwise. */
+/** The options both the web and the native init share. */
+function buildOptions(config: ReturnType<typeof getTelemetryConfig>) {
+  return {
+    dsn: config.sentryDsn ?? undefined,
+    release: config.appVersion ?? undefined,
+    tracesSampleRate: 0,
+    environment: config.telemetryEnabled ? "production" : "development",
+    // Tags every event with the platform it came from ("android" or "ios"
+    // inside a native app shell, "web" in a browser).
+    initialScope: { tags: { platform: platformName() } },
+    beforeSend: (event: Sentry.ErrorEvent) => {
+      // Consent may have been withdrawn after start-up; check it on every event.
+      if (!getTelemetryConsent().crashes) {
+        return null;
+      }
+      if (isNoise(event) || isRepeated(event)) {
+        return null;
+      }
+      return scrubEvent(event) as Sentry.ErrorEvent;
+    },
+  };
+}
+
+/** The native init, once started (undefined on the web or before init). */
+let nativeInit: Promise<unknown> | undefined;
+
+/**
+ * Initializes Sentry when crash reporting is enabled; a no-op otherwise.
+ * In the native app the capacitor SDK wraps the same @sentry/react sibling
+ * and additionally starts the native crash reporter; its module is loaded
+ * dynamically so @capacitor/core never reaches the web bundle.
+ */
 export function initSentry(): void {
   const config = getTelemetryConfig();
   if (!config.crashEnabled) {
@@ -164,25 +198,36 @@ export function initSentry(): void {
   if (!consent.crashes) {
     return;
   }
-  Sentry.init({
-    dsn: config.sentryDsn ?? undefined,
-    release: config.appVersion ?? undefined,
-    tracesSampleRate: 0,
-    environment: config.telemetryEnabled ? "production" : "development",
-    // Tags every event with the platform it came from ("android" or "ios"
-    // inside a native app shell, "web" in a browser).
-    initialScope: { tags: { platform: platformName() } },
-    beforeSend: (event) => {
-      // Consent may have been withdrawn after start-up; check it on every event.
-      if (!getTelemetryConsent().crashes) {
-        return null;
-      }
-      if (isNoise(event) || isRepeated(event)) {
-        return null;
-      }
-      return scrubEvent(event) as typeof event;
-    },
-  });
+  if (isNativeApp()) {
+    nativeInit = import("@sentry/capacitor").then((capacitor) => {
+      capacitor.init(buildOptions(config), Sentry.init);
+      // Native-captured events bypass the JS beforeSend (the native SDK
+      // does not receive it), so withdrawal mid-session stops the native
+      // reporter explicitly instead.
+      const unsubscribe = onTelemetryConsentChange(() => {
+        if (getTelemetryConsent().crashes) {
+          return;
+        }
+        unsubscribe();
+        void nativeInit?.then(() =>
+          import("@sentry/capacitor").then((cap) => cap.close()),
+        );
+      });
+    });
+    return;
+  }
+  Sentry.init(buildOptions(config));
+}
+
+/**
+ * Stops the native crash reporter (the web SDK has nothing to stop: its
+ * beforeSend already drops everything without consent).
+ */
+export function stopNativeSentry(): void {
+  if (!nativeInit) return;
+  void nativeInit.then(() =>
+    import("@sentry/capacitor").then((cap) => cap.close()),
+  );
 }
 
 /** Reports an error to Sentry and returns the event id, or null when off. */
