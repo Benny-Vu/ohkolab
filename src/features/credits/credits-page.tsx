@@ -120,7 +120,10 @@ function SourceList({ sources }: { sources: Source[] }) {
   return (
     <ul className="grid gap-3">
       {sources.map((source) => (
-        <li key={source.name} className="rounded-md border bg-card p-4 text-sm">
+        <li
+          key={source.name}
+          className="min-w-0 rounded-md border bg-card p-4 text-sm"
+        >
           <a
             className="font-medium underline-offset-4 hover:underline"
             href={source.href}
@@ -132,7 +135,7 @@ function SourceList({ sources }: { sources: Source[] }) {
           <p className="mt-1 text-muted-foreground">{source.what}</p>
           <p className="mt-1 text-xs text-muted-foreground">{source.licence}</p>
           {source.notice && (
-            <p className="mt-2 break-words rounded-md bg-surface-sunken p-2 font-mono text-xs text-muted-foreground">
+            <p className="mt-2 rounded-md wrap-anywhere bg-surface-sunken p-2 font-mono text-xs text-muted-foreground">
               {source.notice}
             </p>
           )}
