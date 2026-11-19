@@ -5,3 +5,5 @@ android/app/src/main/assets/public
 android/app/build
 android/build
 android/.gradle
+# Local-only Firebase config (kept out of git via .git/info/exclude).
+android/app/google-services.json
