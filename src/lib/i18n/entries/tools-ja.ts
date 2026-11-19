@@ -228,4 +228,8 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "meta.noSpreadData": "配分データなし。",
   "meta.noTierData":
     "このスナップショットには素早さラインのデータがありません。",
+
+  // ダメージ計算：共有リンク（share ウェーブ）。
+  "calc.shareLinkInvalid":
+    "計算機のリンクを読み込めなかったため、計算機をリセットしました。",
 };

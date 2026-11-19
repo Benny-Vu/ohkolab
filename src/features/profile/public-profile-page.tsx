@@ -68,6 +68,7 @@ import {
 import { PostList } from "@/features/feed/post-list";
 import { ReportDialog } from "@/features/feed/report-dialog";
 import { SuspendDialog } from "@/features/admin/suspend-dialog";
+import { ShareButton } from "@/features/share/share-button";
 import { useUserGroups, type GroupSummary } from "@/lib/groups/queries";
 import {
   DropdownMenu,
@@ -760,6 +761,11 @@ function ProfileHeader({
           {socialReady ? (
             <ProfileSocialActions profile={profile} client={client} />
           ) : null}
+          <ShareButton
+            className="self-start"
+            title={profile.displayName ?? profile.username}
+            url={`${window.location.origin}/u/${profile.username}`}
+          />
         </div>
         {socialReady ? (
           <ProfileFollowCounts profile={profile} client={client} />

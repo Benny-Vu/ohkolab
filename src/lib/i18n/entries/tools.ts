@@ -230,6 +230,10 @@ export const toolsEn = {
   "meta.maxMinSpeed": "Max {max} · Min {min}",
   "meta.noSpreadData": "No spread data.",
   "meta.noTierData": "No speed tier data for this snapshot.",
+
+  // Damage calculator: shared links (share wave).
+  "calc.shareLinkInvalid":
+    "This calculator link could not be opened, so the calculator was reset.",
 } as const;
 
 export type ToolsKey = keyof typeof toolsEn;

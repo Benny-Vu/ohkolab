@@ -10,6 +10,7 @@ import {
   MessageCircleIcon,
   MoreHorizontalIcon,
   PencilIcon,
+  Share2Icon,
   ShieldOffIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -62,6 +63,7 @@ import {
 } from "@/features/feed/attachment";
 import { koResultOf } from "@/features/calc/ko-result";
 import { ReportDialog } from "@/features/feed/report-dialog";
+import { useShare } from "@/features/share/share-link";
 
 /**
  * The card unmounts when its post is deleted or removed, taking focus with it;
@@ -127,6 +129,7 @@ export function PostCard({
   const [blocking, setBlocking] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [removeReason, setRemoveReason] = useState("");
+  const share = useShare();
 
   const isOwn = user?.id === post.author_id;
   const ownImagesQuery = usePostImages(images === undefined ? [post.id] : []);
@@ -436,6 +439,18 @@ export function PostCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onSelect={() =>
+                void share({
+                  title: displayName,
+                  text: post.body.slice(0, 120),
+                  url: `${window.location.origin}/post/${post.id}`,
+                })
+              }
+            >
+              <Share2Icon aria-hidden />
+              {t("share.share")}
+            </DropdownMenuItem>
             {isOwn ? (
               <>
                 <DropdownMenuItem

@@ -18,18 +18,9 @@ import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { displayTeamName } from "@/lib/team/display";
 import { PokemonEditor } from "@/components/pokemon-editor";
-import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
-import { StatBar } from "@/components/stat-bar";
-import { TypeBadge } from "@/components/type-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -63,21 +54,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  calcStats,
-  createDefaultSet,
-  useDisplayName,
-  validateSet,
-} from "@/data";
+import { createDefaultSet, useDisplayName, validateSet } from "@/data";
+import { MemberCard } from "@/features/team-builder/member-card";
+import { PublicTeamView } from "@/features/team-builder/public-team-view";
 import { SpeedTiers } from "@/features/team-builder/speed-tiers";
 import { TypeHeatMap } from "@/features/team-builder/type-heat-map";
-import { statLabel } from "@/components/stat-labels";
+import { ShareButton } from "@/features/share/share-button";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import type { TranslationKey } from "@/lib/i18n/en";
 import { track } from "@/lib/telemetry/analytics";
 import {
-  battleTypes,
   defensiveWeakSpots,
   exportTeam,
   memberLabel,
@@ -86,7 +73,6 @@ import {
 } from "@/lib/team";
 import type { TeamWarning } from "@/lib/team";
 import type { BattleFormat } from "@/types/battle";
-import { STAT_IDS } from "@/types/pokemon";
 import type { PokemonSet } from "@/types/pokemon";
 import { MAX_TEAM_SIZE } from "@/types/team";
 
@@ -163,16 +149,9 @@ export function TeamDetailPage() {
         </Page>
       );
     }
-    return (
-      <Page
-        title={t("teams.notFound")}
-        description={t("teams.notFoundDescription")}
-      >
-        <Button asChild variant="outline">
-          <Link to="/teams">{t("teams.backToTeams")}</Link>
-        </Button>
-      </Page>
-    );
+    // Not one of the visitor's teams: it may still be a public team another
+    // player shared, so try that before giving up.
+    return <PublicTeamView teamId={teamId ?? ""} />;
   }
 
   const warnings = teamWarnings(team.members);
@@ -307,6 +286,12 @@ export function TeamDetailPage() {
               <Label htmlFor="team-public">{t("teams.public")}</Label>
             </div>
           )}
+          {team.isPublic ? (
+            <ShareButton
+              title={displayTeamName(team.name)}
+              url={`${window.location.origin}/teams/${team.id}`}
+            />
+          ) : null}
           {inlineEditing ? (
             <Input
               aria-label={t("teams.nameLabel")}
@@ -495,116 +480,62 @@ export function TeamDetailPage() {
               );
             }
             const label = displayName("species", memberLabel(member));
-            const types = battleTypes(member) ?? [];
-            const finalStats = calcStats(member);
-            const meta = [
-              member.item ? displayName("item", member.item) : null,
-              member.ability ? displayName("ability", member.ability) : null,
-            ]
-              .filter(Boolean)
-              .join(" · ");
-            const moves = member.moves
-              .filter((move): move is string => Boolean(move))
-              .map((move) => displayName("move", move))
-              .join(" · ");
             return (
-              <Card key={index} size="sm">
-                <CardContent className="flex flex-col gap-2">
-                  <div className="flex items-center gap-3">
-                    <PokemonSprite species={member.species} size={64} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{label}</p>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {types.map((type) => (
-                          <TypeBadge key={type} type={type} />
-                        ))}
-                      </div>
-                      {meta ? (
-                        <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-                          {member.item ? (
-                            <ItemIcon
-                              item={member.item}
-                              className="size-3.5 shrink-0"
-                            />
-                          ) : null}
-                          <span className="truncate">{meta}</span>
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                  {moves ? (
-                    <p className="text-xs text-muted-foreground">{moves}</p>
-                  ) : null}
-                  <div className="grid grid-cols-6 gap-1.5">
-                    {STAT_IDS.map((stat) => (
-                      <div key={stat} className="flex flex-col gap-1">
-                        <span className="flex items-baseline justify-between gap-1">
-                          <span className="text-[9px] text-muted-foreground">
-                            {statLabel(t, stat)}
-                          </span>
-                          <span className="font-mono text-[10px] tabular-nums">
-                            {finalStats[stat]}
-                          </span>
-                        </span>
-                        <StatBar
-                          value={finalStats[stat]}
-                          max={200}
-                          className="h-1!"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex-wrap gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label={t("teams.moveUp", { name: label })}
-                    disabled={index === 0}
-                    onClick={() => moveMember(team.id, index, index - 1)}
-                  >
-                    <ArrowUpIcon aria-hidden />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label={t("teams.moveDown", { name: label })}
-                    disabled={index === team.members.length - 1}
-                    onClick={() => moveMember(team.id, index, index + 1)}
-                  >
-                    <ArrowDownIcon aria-hidden />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label={t("teams.editMember", { name: label })}
-                    onClick={() => openEdit(index)}
-                  >
-                    <PencilIcon aria-hidden />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    onClick={() =>
-                      navigate("/calc", { state: { attacker: member } })
-                    }
-                  >
-                    {t("nav.calc")}
-                  </Button>
-                  <span className="flex-1" />
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label={t("teams.removeMember", { name: label })}
-                    onClick={() => {
-                      removeMember(team.id, index);
-                      focusMainLandmark();
-                    }}
-                  >
-                    <Trash2Icon aria-hidden />
-                  </Button>
-                </CardFooter>
-              </Card>
+              <MemberCard
+                key={index}
+                member={member}
+                footer={
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={t("teams.moveUp", { name: label })}
+                      disabled={index === 0}
+                      onClick={() => moveMember(team.id, index, index - 1)}
+                    >
+                      <ArrowUpIcon aria-hidden />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={t("teams.moveDown", { name: label })}
+                      disabled={index === team.members.length - 1}
+                      onClick={() => moveMember(team.id, index, index + 1)}
+                    >
+                      <ArrowDownIcon aria-hidden />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={t("teams.editMember", { name: label })}
+                      onClick={() => openEdit(index)}
+                    >
+                      <PencilIcon aria-hidden />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() =>
+                        navigate("/calc", { state: { attacker: member } })
+                      }
+                    >
+                      {t("nav.calc")}
+                    </Button>
+                    <span className="flex-1" />
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={t("teams.removeMember", { name: label })}
+                      onClick={() => {
+                        removeMember(team.id, index);
+                        focusMainLandmark();
+                      }}
+                    >
+                      <Trash2Icon aria-hidden />
+                    </Button>
+                  </>
+                }
+              />
             );
           })}
         </div>
