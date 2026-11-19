@@ -56,7 +56,7 @@ describe("AppLayout", () => {
     );
   });
 
-  it("labels the profile tab 'Profile' and shows the user's avatar when signed in", () => {
+  it("labels the profile tab 'Profile' and shows the user's avatar when signed in", async () => {
     renderAt("/calc", createSignedInAuth());
 
     const tabNav = screen.getAllByRole("navigation", { name: "Main" })[1]!;
@@ -64,8 +64,9 @@ describe("AppLayout", () => {
       name: "Account menu",
     });
     expect(tabTrigger).toHaveTextContent("Profile");
+    // The avatar sprite is lazy; the image appears once its chunk loads.
     expect(
-      within(tabTrigger).getByRole("img", { name: "Pikachu" }),
+      await within(tabTrigger).findByRole("img", { name: "Pikachu" }),
     ).toBeInTheDocument();
   });
 
