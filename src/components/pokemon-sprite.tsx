@@ -131,7 +131,9 @@ function SheetIcon({
         draggable={false}
         loading="lazy"
         onError={() => setFailed(true)}
-        className="pointer-events-none absolute select-none"
+        // max-w-none: Tailwind's base `img { max-width: 100% }` would
+        // otherwise shrink the whole sheet into the small window.
+        className="pointer-events-none absolute max-w-none select-none"
         style={{
           left: icon.left,
           top: icon.top,
