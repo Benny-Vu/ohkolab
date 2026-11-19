@@ -33,6 +33,9 @@ export function rowToTeam(row: TeamRow): Team | null {
     name: row.name,
     format: row.format,
     members: row.data,
+    // The check constraint means a stored ID is always well-formed; the
+    // sanitizer only re-validated it.
+    gameTeamId: row.game_team_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -47,6 +50,7 @@ export function teamToUpsert(team: Team): TeamInsert {
     data: team.members,
     format: team.format,
     is_public: team.isPublic ?? false,
+    game_team_id: team.gameTeamId || null,
     created_at: team.createdAt,
     updated_at: new Date().toISOString(),
   };

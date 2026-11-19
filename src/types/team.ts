@@ -15,4 +15,11 @@ export interface Team {
   updatedAt: string;
   /** Cloud only: visible to other players. Undefined for local teams. */
   isPublic?: boolean;
+  /**
+   * The Champions "Replica Team" ID: a 10-character, case-sensitive code
+   * the player shared in the game. Empty/undefined when the team has none.
+   * The site can only store and show it — there is no API to load a team
+   * from a code.
+   */
+  gameTeamId?: string | null;
 }

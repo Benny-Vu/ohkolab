@@ -349,8 +349,31 @@ describe("importTeam", () => {
     ];
     const text = exportTeam(members);
     const imported = importTeam(text);
-    expect(imported).toEqual({ name: null, sets: members, warnings: [] });
+    expect(imported).toEqual({
+      name: null,
+      gameTeamId: null,
+      sets: members,
+      warnings: [],
+    });
     expect(exportTeam(imported.sets)).toBe(text);
+  });
+
+  it("round-trips the Champions team ID through a comment line", () => {
+    const text = exportTeam([garchomp], "AbCd123456");
+    expect(text.startsWith("// Champions team ID: AbCd123456\n")).toBe(true);
+    const imported = importTeam(text);
+    expect(imported.gameTeamId).toBe("AbCd123456");
+    expect(imported.sets).toEqual([garchomp]);
+    // And the re-export keeps it.
+    expect(exportTeam(imported.sets, imported.gameTeamId)).toBe(text);
+  });
+
+  it("ignores a malformed ID comment instead of storing it", () => {
+    const imported = importTeam(
+      "// Champions team ID: short\n\n" + exportSet(garchomp),
+    );
+    expect(imported.gameTeamId).toBeNull();
+    expect(imported.sets).toEqual([garchomp]);
   });
 
   it("round-trips every legal Stat Point spread shape", () => {
@@ -370,6 +393,7 @@ describe("importTeam", () => {
     const text = `=== [gen9championsvgc2026regmc] Rain room ===\n\n${exportTeam([garchomp, sneasler])}`;
     expect(importTeam(text)).toEqual({
       name: "Rain room",
+      gameTeamId: null,
       sets: [garchomp, sneasler],
       warnings: [],
     });
@@ -407,9 +431,15 @@ describe("importTeam", () => {
   });
 
   it("gives an empty team for empty or meaningless text", () => {
-    expect(importTeam("")).toEqual({ name: null, sets: [], warnings: [] });
+    expect(importTeam("")).toEqual({
+      name: null,
+      gameTeamId: null,
+      sets: [],
+      warnings: [],
+    });
     expect(importTeam("\n\n  \n")).toEqual({
       name: null,
+      gameTeamId: null,
       sets: [],
       warnings: [],
     });

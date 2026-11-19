@@ -14,6 +14,8 @@ export interface NewTeamInit {
   name?: string;
   format: BattleFormat;
   members?: readonly PokemonSet[];
+  /** The Champions team ID, already sanitized; skipped when empty. */
+  gameTeamId?: string;
 }
 
 function timestamp(now: Date): string {
@@ -23,7 +25,7 @@ function timestamp(now: Date): string {
 /** A new team with a fresh id. Members beyond the team size are dropped. */
 export function createTeam(init: NewTeamInit, now = new Date()): Team {
   const stamp = timestamp(now);
-  return {
+  const team: Team = {
     id: crypto.randomUUID(),
     name: init.name?.trim() || DEFAULT_TEAM_NAME,
     format: init.format,
@@ -31,6 +33,8 @@ export function createTeam(init: NewTeamInit, now = new Date()): Team {
     createdAt: stamp,
     updatedAt: stamp,
   };
+  if (init.gameTeamId) team.gameTeamId = init.gameTeamId;
+  return team;
 }
 
 export function renameTeam(team: Team, name: string, now = new Date()): Team {
@@ -43,6 +47,15 @@ export function setTeamFormat(
   now = new Date(),
 ): Team {
   return { ...team, format, updatedAt: timestamp(now) };
+}
+
+/** Sets or clears the Champions team ID; an empty string removes it. */
+export function setGameTeamId(
+  team: Team,
+  gameTeamId: string,
+  now = new Date(),
+): Team {
+  return { ...team, gameTeamId: gameTeamId || null, updatedAt: timestamp(now) };
 }
 
 /**

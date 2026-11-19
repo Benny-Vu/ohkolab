@@ -21,6 +21,7 @@ import {
   type StatsTable,
 } from "@/types/pokemon";
 import { MAX_TEAM_SIZE } from "@/types/team";
+import { isValidGameTeamId } from "@/lib/team/game-id";
 
 /**
  * Pokémon Showdown's team text, the format every Pokémon tool can paste:
@@ -75,6 +76,8 @@ export interface ImportedSet {
 export interface ImportedTeam {
   /** The team name from a Showdown backup header (`=== [format] Name ===`). */
   name: string | null;
+  /** The Champions team ID from a `// Champions team ID:` comment, if any. */
+  gameTeamId: string | null;
   sets: PokemonSet[];
   warnings: string[];
 }
@@ -108,10 +111,34 @@ export function exportSet(set: PokemonSet): string {
   return lines.join("\n");
 }
 
-/** A whole team as Showdown text: the sets separated by blank lines. */
-export function exportTeam(members: readonly PokemonSet[]): string {
+/**
+ * A whole team as Showdown text: the sets separated by blank lines. When the
+ * team has a Champions team ID, it rides along as a comment on the first
+ * line — `// Champions team ID: XXXXXXXXXX` — so exports round-trip it and
+ * other tools ignore it as a comment.
+ */
+export function exportTeam(
+  members: readonly PokemonSet[],
+  gameTeamId?: string | null,
+): string {
   if (members.length === 0) return "";
-  return `${members.map(exportSet).join("\n\n")}\n`;
+  const body = `${members.map(exportSet).join("\n\n")}\n`;
+  return gameTeamId ? `// Champions team ID: ${gameTeamId}\n${body}` : body;
+}
+
+/** The comment prefix that carries a Champions team ID in an export. */
+const GAME_TEAM_ID_PREFIX = "// Champions team ID:";
+
+/** Reads the `// Champions team ID: XXXXXXXXXX` comment out of export text. */
+export function readGameTeamIdFromText(text: string): string | null {
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith(GAME_TEAM_ID_PREFIX)) {
+      const id = trimmed.slice(GAME_TEAM_ID_PREFIX.length).trim();
+      return isValidGameTeamId(id) ? id : null;
+    }
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------- import
@@ -494,6 +521,10 @@ function splitBlocks(text: string): Blocks {
       name ??= header[1] || null;
     } else if (line === "") {
       flush();
+    } else if (line.startsWith("//")) {
+      // A comment: our own exports carry the Champions team ID here, and
+      // other tools may leave notes. Comments are never set lines.
+      continue;
     } else {
       current.push(line);
     }
@@ -530,7 +561,7 @@ export function importTeam(text: string): ImportedTeam {
     );
   }
   if (convertedFromEvs) warnings.push(EV_NOTICE);
-  return { name, sets, warnings };
+  return { name, gameTeamId: readGameTeamIdFromText(text), sets, warnings };
 }
 
 /** Reads the first Pokémon in the text. */

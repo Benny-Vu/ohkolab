@@ -14,6 +14,7 @@ import {
 
 import { Page } from "@/components/page";
 import { PokemonIcon } from "@/components/pokemon-sprite";
+import { TeamIdChip } from "@/components/team-id-chip";
 import { UserAvatar } from "@/components/user-avatar";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
@@ -86,11 +87,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Team member details need the dex (battleTypes), so the row lives in its
-// own module and loads lazily when the team dialog opens.
-const TeamMemberRow = lazy(() =>
-  import("@/features/profile/team-member-row").then((m) => ({
-    default: m.TeamMemberRow,
+// The team preview needs the dex (localized names, sprites), so it loads
+// lazily when the team dialog opens, keeping pokemon-data out of the
+// profile route chunk.
+const TeamPreview = lazy(() =>
+  import("@/components/team-preview/team-preview").then((m) => ({
+    default: m.TeamPreview,
   })),
 );
 
@@ -144,6 +146,7 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
       name: team.name,
       format: team.format,
       members: team.members,
+      gameTeamId: team.gameTeamId ?? undefined,
     });
     setOpen(false);
     toast.success(
@@ -171,24 +174,18 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
             {t("publicProfile.sharedBy", { name: username })}
           </DialogDescription>
         </DialogHeader>
-        <ul className="grid gap-3">
-          {team.members.map((_, index) => (
-            <Suspense
-              key={index}
-              fallback={
-                <li>
-                  <LoadingArea
-                    pending={true}
-                    label={t("teams.loading")}
-                    skeleton={<TeamMemberRowSkeleton />}
-                  />
-                </li>
-              }
-            >
-              <TeamMemberRow team={team} index={index} />
-            </Suspense>
-          ))}
-        </ul>
+        {team.gameTeamId ? <TeamIdChip id={team.gameTeamId} /> : null}
+        <Suspense
+          fallback={
+            <LoadingArea
+              pending={true}
+              label={t("teams.loading")}
+              skeleton={<TeamMemberRowSkeleton />}
+            />
+          }
+        >
+          <TeamPreview team={team} variant="expanded" />
+        </Suspense>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
             {t("common.cancel")}
@@ -219,6 +216,11 @@ function TeamCard({ team, username }: { team: Team; username: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {team.gameTeamId ? (
+          <div className="mb-3">
+            <TeamIdChip id={team.gameTeamId} compact />
+          </div>
+        ) : null}
         <div className="flex flex-wrap gap-1">
           {Array.from({ length: MAX_TEAM_SIZE }, (_, index) => {
             const member = team.members[index];

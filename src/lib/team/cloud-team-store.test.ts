@@ -106,6 +106,7 @@ function row(partial: Partial<TeamRow> & { id: string }): TeamRow {
     data: [],
     format: "doubles",
     is_public: false,
+    game_team_id: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...partial,
@@ -214,12 +215,35 @@ describe("createCloudTeamStore", () => {
       data: saved.members,
       format: "doubles",
       is_public: false,
+      game_team_id: null,
       created_at: saved.createdAt,
       updated_at: expect.any(String),
     });
     await vi.waitFor(() => {
       expect(store.syncState().unsynced).toEqual([]);
     });
+  });
+
+  it("carries the Champions team ID both ways", async () => {
+    const { client, calls, setLoadResult } = createFakeClient();
+    setLoadResult({
+      data: [row({ id: "t-1", game_team_id: "AbCd123456" })],
+      error: null,
+    });
+    const store = createCloudTeamStore(client, "user-1");
+    await vi.waitFor(() => {
+      expect(store.syncState().status).toBe("ready");
+    });
+    expect(store.list()[0]?.gameTeamId).toBe("AbCd123456");
+
+    const saved = { ...team("Shared", "garchomp"), gameTeamId: "EfGh456789" };
+    store.save(saved);
+    await vi.waitFor(() => {
+      expect(calls.upserts).toHaveLength(1);
+    });
+    expect((calls.upserts[0] as { game_team_id: string }).game_team_id).toBe(
+      "EfGh456789",
+    );
   });
 
   it("flushes deletes with an id filter", async () => {

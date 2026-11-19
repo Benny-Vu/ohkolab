@@ -35,7 +35,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
-import { PokemonIcon } from "@/components/pokemon-sprite";
+import { TeamPreview } from "@/components/team-preview/team-preview";
+import { TeamIdChip } from "@/components/team-id-chip";
 import { UserAvatar } from "@/components/user-avatar";
 import { DamageMeter } from "@/components/damage-meter";
 import { KoLabel } from "@/components/ko-label";
@@ -168,6 +169,7 @@ export function PostCard({
       name: team.name,
       format: team.format,
       members: team.members,
+      gameTeamId: team.gameTeamId,
     });
     toast.success(
       t("postCard.copiedTeam", { name: displayTeamName(created.name) }),
@@ -309,16 +311,23 @@ export function PostCard({
                 <span className="shrink-0 text-xs text-muted-foreground capitalize">
                   {team.format}
                 </span>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {team.members.map((member, index) => (
-                  <PokemonIcon
-                    key={`${member.species}-${index}`}
-                    species={member.species}
-                    className="size-8"
+                {team.gameTeamId ? (
+                  <TeamIdChip
+                    id={team.gameTeamId}
+                    compact
+                    className="ml-auto"
                   />
-                ))}
+                ) : null}
               </div>
+              {team.members.length > 0 ? (
+                <div className="mt-2">
+                  <TeamPreview
+                    team={team}
+                    variant="compact"
+                    ariaLabel={displayTeamName(team.name)}
+                  />
+                </div>
+              ) : null}
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button size="xs" variant="outline" onClick={handleCopyTeam}>
                   <CopyIcon aria-hidden />

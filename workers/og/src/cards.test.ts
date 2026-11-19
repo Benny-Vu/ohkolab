@@ -94,6 +94,7 @@ describe("teamCard", () => {
     id: "3f2c8a4e-1b2d-4c5a-9e8f-7a6b5c4d3e2f",
     name: "Sand Balance",
     isPublic: true,
+    gameTeamId: null,
     species: ["Garchomp", "Rotom-Wash", "Talonflame"],
   };
 
@@ -112,6 +113,13 @@ describe("teamCard", () => {
   it("handles an empty team", () => {
     const card = teamCard(URL, { ...team, species: [] });
     expect(card.description).toContain("team on OHKOLab");
+  });
+
+  it("appends the Champions team ID to the description when there is one", () => {
+    const card = teamCard(URL, { ...team, gameTeamId: "AbCd123456" });
+    expect(card.description).toBe(
+      "Garchomp, Rotom-Wash, Talonflame · Champions team ID: AbCd123456",
+    );
   });
 
   it("gives private teams the generic card, even if a row leaks through", () => {

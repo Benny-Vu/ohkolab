@@ -4,9 +4,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { Providers } from "@/app/providers";
+import { createDefaultSet } from "@/data";
 import { TeamDetailPage } from "@/features/team-builder/team-detail-page";
 import { TeamsPage } from "@/features/team-builder/teams-page";
 import { setLocale } from "@/lib/i18n/locale";
+import { TEAMS_STORAGE_KEY } from "@/lib/team";
+import type { Team } from "@/types/team";
 
 function renderTeams() {
   const router = createMemoryRouter(
@@ -27,6 +30,46 @@ function renderTeams() {
 describe("team builder pages", () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  it("opens a team's preview panel with its actions", async () => {
+    const user = userEvent.setup();
+    const team: Team = {
+      id: "team-preview-1",
+      name: "Preview team",
+      format: "doubles",
+      members: [createDefaultSet("Garchomp")],
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+      gameTeamId: "Ab12Cd34Ef",
+    };
+    localStorage.setItem(
+      TEAMS_STORAGE_KEY,
+      JSON.stringify({ version: 1, teams: [team] }),
+    );
+    renderTeams();
+
+    await user.click(
+      screen.getByRole("button", { name: "Preview Preview team" }),
+    );
+
+    // The panel: the expanded preview, the team ID chip and the actions.
+    expect(await screen.findByText("Garchomp")).toBeInTheDocument();
+    expect(screen.getByText("Team ID")).toBeInTheDocument();
+    expect(screen.getByText("Ab12Cd34Ef")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Send to calc" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Share" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Print team sheet" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(
+      screen.queryByRole("button", { name: "Send to calc" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows an empty state when there are no teams", () => {

@@ -29,4 +29,17 @@ export const teamBuilderRoutes: RouteObject[] = [
       ).TeamDetailPage,
     }),
   },
+  {
+    path: "teams/:teamId/print",
+    lazy: async () => ({
+      Component: (
+        await Promise.all([
+          import("@/features/team-builder/team-print-page"),
+          ensureEnglishDomain("tools"),
+          // The sheet's "6 Pokémon" line lives in the account strings.
+          ensureEnglishDomain("account"),
+        ]).then(([module]) => module)
+      ).TeamPrintPage,
+    }),
+  },
 ];

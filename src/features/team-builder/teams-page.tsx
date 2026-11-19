@@ -13,6 +13,7 @@ import {
 import { displayTeamName } from "@/lib/team/display";
 import { Page } from "@/components/page";
 import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { TeamName } from "@/features/team-builder/team-name";
+import { TeamPreviewPanel } from "@/features/team-builder/team-preview-panel";
 import { formatDate } from "@/lib/format-date";
 import { useT } from "@/lib/i18n/t";
 import { useBattleFormat } from "@/lib/preferences";
@@ -53,17 +55,27 @@ function TeamCard({
   onDuplicate,
   onDelete,
   onRename,
+  onSelect,
 }: {
   team: Team;
   onDuplicate: (team: Team) => void;
   onDelete: (team: Team) => void;
   onRename: (name: string) => void;
+  /** Opens the team's preview panel. */
+  onSelect: (team: Team) => void;
 }) {
   const t = useT();
   return (
     <Card size="sm" className="flex flex-col">
       <CardHeader>
-        <TeamName name={team.name} onRename={onRename} />
+        <div className="flex items-center gap-1.5">
+          <TeamName name={team.name} onRename={onRename} />
+          {team.gameTeamId ? (
+            <Badge variant="outline" className="shrink-0">
+              {t("teams.gameIdBadge")}
+            </Badge>
+          ) : null}
+        </div>
         <p className="text-xs text-muted-foreground">
           {t("teams.cardMeta", {
             format: t(
@@ -77,31 +89,40 @@ function TeamCard({
         </p>
       </CardHeader>
       <CardContent className="flex-1">
-        <div className="grid grid-cols-6 gap-1">
-          {Array.from({ length: MAX_TEAM_SIZE }, (_, index) => {
-            const member = team.members[index];
-            if (!member) {
-              return (
-                <div
-                  key={index}
-                  aria-hidden="true"
-                  className="size-10 rounded-md border border-dashed"
-                />
-              );
-            }
-            return (
-              <div key={index} className="relative">
-                <PokemonSprite species={member.species} size={40} />
-                {member.item ? (
-                  <ItemIcon
-                    item={member.item}
-                    className="absolute right-0 bottom-0 size-4 rounded-sm bg-background"
-                  />
-                ) : null}
-              </div>
-            );
+        <button
+          type="button"
+          className="w-full rounded-md text-left focus-visible:outline-2 focus-visible:outline-accent-brand-text"
+          aria-label={t("teams.previewNamed", {
+            name: displayTeamName(team.name),
           })}
-        </div>
+          onClick={() => onSelect(team)}
+        >
+          <span className="grid grid-cols-6 gap-1">
+            {Array.from({ length: MAX_TEAM_SIZE }, (_, index) => {
+              const member = team.members[index];
+              if (!member) {
+                return (
+                  <span
+                    key={index}
+                    aria-hidden="true"
+                    className="block size-10 rounded-md border border-dashed"
+                  />
+                );
+              }
+              return (
+                <span key={index} className="relative block">
+                  <PokemonSprite species={member.species} size={40} />
+                  {member.item ? (
+                    <ItemIcon
+                      item={member.item}
+                      className="absolute right-0 bottom-0 size-4 rounded-sm bg-background"
+                    />
+                  ) : null}
+                </span>
+              );
+            })}
+          </span>
+        </button>
       </CardContent>
       <CardFooter className="gap-2">
         <Button
@@ -141,6 +162,8 @@ export function TeamsPage() {
     useTeams();
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
+  // The team whose preview panel is open, if any.
+  const [previewTeamId, setPreviewTeamId] = useState<string | null>(null);
 
   function handleImport(): void {
     const imported = importTeam(importText);
@@ -152,6 +175,7 @@ export function TeamsPage() {
       name: imported.name ?? undefined,
       format: preferredFormat,
       members: imported.sets,
+      gameTeamId: imported.gameTeamId ?? undefined,
     });
     track("team_imported", {
       format: preferredFormat,
@@ -191,6 +215,10 @@ export function TeamsPage() {
   }
 
   const sorted = sortByUpdated(teams);
+  const previewTeam =
+    previewTeamId === null
+      ? null
+      : (teams.find((team) => team.id === previewTeamId) ?? null);
 
   return (
     <Page
@@ -276,10 +304,20 @@ export function TeamsPage() {
               onRename={(name) => rename(team.id, name)}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
+              onSelect={(selected) => setPreviewTeamId(selected.id)}
             />
           ))}
         </div>
       )}
+      {previewTeam ? (
+        <TeamPreviewPanel
+          team={previewTeam}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setPreviewTeamId(null);
+          }}
+        />
+      ) : null}
     </Page>
   );
 }

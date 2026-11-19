@@ -64,10 +64,15 @@ import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/telemetry/analytics";
-import { exportTeam, memberLabel, useTeams } from "@/lib/team";
+import {
+  exportTeam,
+  memberLabel,
+  sanitizeGameTeamId,
+  useTeams,
+} from "@/lib/team";
 import type { BattleFormat } from "@/types/battle";
 import type { PokemonSet } from "@/types/pokemon";
-import { MAX_TEAM_SIZE } from "@/types/team";
+import { MAX_TEAM_SIZE, type Team } from "@/types/team";
 
 // The analysis tables are heavy and off by default: the section lives in
 // its own module and loads lazily, keeping the team routes chunk light.
@@ -83,6 +88,59 @@ const AnalysisSection = lazy(() =>
  */
 function focusMainLandmark(): void {
   (document.querySelector("main") as HTMLElement | null)?.focus();
+}
+
+/**
+ * The optional Champions team ID field. Remounts per team (keyed by id), so
+ * the draft starts from the stored ID and commits on blur or Enter. An empty
+ * input clears the ID; a malformed one shows the rule instead of saving.
+ */
+function GameTeamIdField({
+  team,
+  onSet,
+}: {
+  team: Team;
+  onSet: (id: string, gameTeamId: string) => void;
+}) {
+  const t = useT();
+  const [draft, setDraft] = useState(team.gameTeamId ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    const id = sanitizeGameTeamId(trimmed);
+    if (trimmed !== "" && !id) {
+      setError(t("teams.gameIdInvalid"));
+      return;
+    }
+    setError(null);
+    if (id !== (team.gameTeamId ?? "")) onSet(team.id, id);
+  };
+
+  return (
+    <div className="grid max-w-sm gap-1.5">
+      <Label htmlFor="team-game-id">{t("teams.gameIdFieldLabel")}</Label>
+      <Input
+        id="team-game-id"
+        aria-invalid={error ? true : undefined}
+        aria-describedby="team-game-id-hint"
+        value={draft}
+        placeholder="AbCd123456"
+        onChange={(event) => setDraft(event.target.value)}
+        onFocus={(event) => event.target.select()}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            commit();
+          }
+        }}
+      />
+      <p id="team-game-id-hint" className="text-xs text-muted-foreground">
+        {error ?? t("teams.gameIdHint")}
+      </p>
+    </div>
+  );
 }
 
 export function TeamDetailPage() {
@@ -102,6 +160,7 @@ export function TeamDetailPage() {
     moveMember,
     restore,
     setPublic,
+    setGameTeamId,
     sync,
   } = useTeams();
   const { user } = useAuth();
@@ -158,7 +217,7 @@ export function TeamDetailPage() {
     return <PublicTeamView teamId={teamId ?? ""} />;
   }
 
-  const exportText = exportTeam(team.members);
+  const exportText = exportTeam(team.members, team.gameTeamId);
 
   const openAdd = () => {
     setEditorIndex(null);
@@ -291,6 +350,11 @@ export function TeamDetailPage() {
           {team.isPublic ? (
             <ShareButton
               title={displayTeamName(team.name)}
+              text={
+                team.gameTeamId
+                  ? t("teams.gameIdShareText", { id: team.gameTeamId })
+                  : undefined
+              }
               url={`${window.location.origin}/teams/${team.id}`}
             />
           ) : null}
@@ -464,6 +528,7 @@ export function TeamDetailPage() {
       }
     >
       <div className="flex flex-col gap-4">
+        <GameTeamIdField key={team.id} team={team} onSet={setGameTeamId} />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: MAX_TEAM_SIZE }, (_, index) => {
             const member = team.members[index];

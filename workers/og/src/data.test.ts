@@ -97,6 +97,17 @@ describe("parseTeamRow", () => {
       id: row.id,
       name: "Sand Balance",
       isPublic: true,
+      gameTeamId: null,
+      species: ["Garchomp", "Rotom-Wash"],
+    });
+  });
+
+  it("reads the Champions team ID when the team has one", () => {
+    expect(parseTeamRow({ ...row, game_team_id: "AbCd123456" })).toEqual({
+      id: row.id,
+      name: "Sand Balance",
+      isPublic: true,
+      gameTeamId: "AbCd123456",
       species: ["Garchomp", "Rotom-Wash"],
     });
   });
@@ -255,12 +266,13 @@ describe("fetchTeam", () => {
     const id = "3f2c8a4e-1b2d-4c5a-9e8f-7a6b5c4d3e2f";
     const { fetcher, calls } = stubFetch([
       {
-        url: `${CONFIG.url}/rest/v1/teams?select=id,name,is_public,data&id=eq.${id}`,
+        url: `${CONFIG.url}/rest/v1/teams?select=id,name,is_public,game_team_id,data&id=eq.${id}`,
         json: [
           {
             id,
             name: "Sand Balance",
             is_public: true,
+            game_team_id: "AbCd123456",
             data: [{ species: "Garchomp" }],
           },
         ],
@@ -270,6 +282,7 @@ describe("fetchTeam", () => {
       id,
       name: "Sand Balance",
       isPublic: true,
+      gameTeamId: "AbCd123456",
       species: ["Garchomp"],
     });
     expect(calls[0].headers.apikey).toBe("anon-key");

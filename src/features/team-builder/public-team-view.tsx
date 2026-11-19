@@ -1,8 +1,15 @@
-import { Link } from "react-router";
-import { ArrowLeftIcon, CopyIcon, TriangleAlertIcon } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import {
+  ArrowLeftIcon,
+  CopyIcon,
+  PrinterIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { TeamPreview } from "@/components/team-preview/team-preview";
+import { TeamIdChip } from "@/components/team-id-chip";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MemberCard } from "@/features/team-builder/member-card";
@@ -60,6 +67,7 @@ export function PublicTeamView({
   client?: AppSupabaseClient | null;
 }) {
   const t = useT();
+  const navigate = useNavigate();
   const teamQuery = usePublicTeam(teamId, client);
   const { create } = useTeams();
   const entry = teamQuery.data ?? null;
@@ -109,6 +117,7 @@ export function PublicTeamView({
       name: team.name,
       format: team.format,
       members: team.members,
+      gameTeamId: team.gameTeamId ?? undefined,
     });
     toast.success(
       t("publicProfile.copyToast", { name: displayTeamName(copy.name) }),
@@ -136,15 +145,38 @@ export function PublicTeamView({
           </Button>
           <ShareButton
             title={displayTeamName(team.name)}
+            text={
+              team.gameTeamId
+                ? t("teams.gameIdShareText", { id: team.gameTeamId })
+                : undefined
+            }
             url={`${window.location.origin}/teams/${team.id}`}
           />
           <Button variant="outline" size="sm" onClick={copyToMyTeams}>
             <CopyIcon aria-hidden />
             {t("postCard.copyTeam")}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void navigate(`/teams/${team.id}/print`)}
+          >
+            <PrinterIcon aria-hidden />
+            {t("teams.printTeamSheet")}
+          </Button>
         </>
       }
     >
+      {team.gameTeamId ? (
+        <div className="mb-4">
+          <TeamIdChip id={team.gameTeamId} />
+        </div>
+      ) : null}
+      {team.members.length > 0 ? (
+        <div className="mb-4">
+          <TeamPreview team={team} variant="expanded" />
+        </div>
+      ) : null}
       {team.members.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {team.members.map((member, index) => (

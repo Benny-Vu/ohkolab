@@ -110,7 +110,8 @@ export function parseTeamRow(value: unknown): TeamData | null {
     if (!name2) return null;
     species.push(name2);
   }
-  return { id, name, isPublic: true, species };
+  const gameTeamId = asString(value.game_team_id);
+  return { id, name, isPublic: true, gameTeamId: gameTeamId || null, species };
 }
 
 /** The fields of a posts row the card needs. */
@@ -224,7 +225,7 @@ export async function fetchTeam(
     config,
     fetcher,
     "teams",
-    `select=id,name,is_public,data&id=eq.${encodeURIComponent(id)}`,
+    `select=id,name,is_public,game_team_id,data&id=eq.${encodeURIComponent(id)}`,
   );
   if (!Array.isArray(rows) || rows.length === 0) return null;
   return parseTeamRow(rows[0]);

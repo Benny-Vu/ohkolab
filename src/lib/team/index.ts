@@ -1,4 +1,5 @@
 /** Teams: storage, Showdown text and analysis. */
+export { isValidGameTeamId, sanitizeGameTeamId } from "@/lib/team/game-id";
 export {
   defensiveWeakSpots,
   speedTiers,

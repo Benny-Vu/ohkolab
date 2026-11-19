@@ -13,6 +13,7 @@ import {
   moveMember,
   removeMember,
   renameTeam,
+  setGameTeamId,
   setMembers,
   setTeamFormat,
   updateMember,
@@ -29,6 +30,8 @@ export interface TeamActions {
   create(init: NewTeamInit): Team;
   rename(id: string, name: string): void;
   setFormat(id: string, format: BattleFormat): void;
+  /** Sets or clears the Champions team ID; an empty string removes it. */
+  setGameTeamId(id: string, gameTeamId: string): void;
   /** Saves a copy under a new id and returns it; undefined for an unknown id. */
   duplicate(id: string): Team | undefined;
   remove(id: string): void;
@@ -63,6 +66,8 @@ export function createTeamActions(store: TeamStore): TeamActions {
     rename: (id, name) => change(id, (team) => renameTeam(team, name)),
     setFormat: (id, format) =>
       change(id, (team) => setTeamFormat(team, format)),
+    setGameTeamId: (id, gameTeamId) =>
+      change(id, (team) => setGameTeamId(team, gameTeamId)),
     duplicate(id) {
       const team = store.get(id);
       if (!team) return undefined;
