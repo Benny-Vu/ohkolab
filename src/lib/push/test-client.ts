@@ -21,9 +21,16 @@ export interface PushFakeResult {
   error?: unknown;
 }
 
+/** One recorded `rpc(name, args)` call, for assertions. */
+export interface PushRpcRecord {
+  fn: string;
+  args: Record<string, unknown>;
+}
+
 export interface FakePushClient {
   client: AppSupabaseClient;
   records: PushChainRecord[];
+  rpcCalls: PushRpcRecord[];
 }
 
 interface ChainNode {
@@ -31,6 +38,7 @@ interface ChainNode {
   eq(column: string, value: unknown): ChainNode;
   maybeSingle(): ChainNode;
   upsert(values: Record<string, unknown>): ChainNode;
+  delete(): ChainNode;
   then(
     onFulfilled?: (value: PushFakeResult) => unknown,
     onRejected?: (reason: unknown) => unknown,
@@ -47,8 +55,13 @@ export function createFakePushClient(
     data: null,
     error: null,
   }),
+  resolveRpc: (record: PushRpcRecord) => PushFakeResult = () => ({
+    data: null,
+    error: null,
+  }),
 ): FakePushClient {
   const records: PushChainRecord[] = [];
+  const rpcCalls: PushRpcRecord[] = [];
 
   function makeNode(record: PushChainRecord): ChainNode {
     const node: ChainNode = {
@@ -66,6 +79,9 @@ export function createFakePushClient(
       },
       upsert(values) {
         record.upsertValues = values;
+        return node;
+      },
+      delete() {
         return node;
       },
       then(onFulfilled, onRejected) {
@@ -89,7 +105,12 @@ export function createFakePushClient(
         isMaybeSingle: false,
       });
     },
+    rpc(fn: string, args: Record<string, unknown>) {
+      const record = { fn, args };
+      rpcCalls.push(record);
+      return Promise.resolve(resolveRpc(record));
+    },
   } as unknown as AppSupabaseClient;
 
-  return { client, records };
+  return { client, records, rpcCalls };
 }

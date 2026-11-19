@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { Providers } from "@/app/providers";
@@ -30,6 +30,12 @@ vi.mock("@/lib/notifications/mutations", () => ({
 
 vi.mock("@/features/feed/relative-time", () => ({
   formatRelativeTime: () => "2h ago",
+}));
+
+// The push opt-in card is lazy-loaded behind the flag; a marker mock keeps
+// the page tests about mounting, not about the card's own behaviour.
+vi.mock("@/features/notifications/push-permission-card", () => ({
+  PushPermissionCard: () => <div>push permission card</div>,
 }));
 
 function mutationResult(overrides: Record<string, unknown> = {}) {
@@ -119,11 +125,18 @@ function renderNotificationsPage(auth: AuthContextValue) {
 describe("NotificationsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("VITE_PUSH", "");
+    delete (globalThis as { Capacitor?: unknown }).Capacitor;
     mocks.useNotifications.mockReturnValue(infiniteResult([]));
     mocks.useUnreadNotificationCount.mockReturnValue(countResult(0));
     mocks.useMarkNotificationRead.mockReturnValue(mutationResult());
     mocks.useMarkAllNotificationsRead.mockReturnValue(mutationResult());
     mocks.useDeleteNotification.mockReturnValue(mutationResult());
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    delete (globalThis as { Capacitor?: unknown }).Capacitor;
   });
 
   it("shows a sign-in prompt while signed out", () => {
@@ -357,5 +370,33 @@ describe("NotificationsPage", () => {
     expect(
       screen.getByRole("link", { name: "invited you to Test Group" }),
     ).toHaveAttribute("href", "/g/test-group");
+  });
+
+  it("mounts the push opt-in card only in the native app with the flag on", async () => {
+    vi.stubEnv("VITE_PUSH", "true");
+    (globalThis as { Capacitor?: unknown }).Capacitor = {
+      isNativePlatform: () => true,
+    };
+    const native = renderNotificationsPage(createFakeAuth());
+
+    expect(await screen.findByText("push permission card")).toBeInTheDocument();
+    native.unmount();
+
+    // The web build never shows it, even with the flag on.
+    delete (globalThis as { Capacitor?: unknown }).Capacitor;
+    renderNotificationsPage(createFakeAuth());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByText("push permission card")).not.toBeInTheDocument();
+  });
+
+  it("never mounts the push opt-in card while the flag is off", async () => {
+    vi.stubEnv("VITE_PUSH", "");
+    (globalThis as { Capacitor?: unknown }).Capacitor = {
+      isNativePlatform: () => true,
+    };
+    renderNotificationsPage(createFakeAuth());
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByText("push permission card")).not.toBeInTheDocument();
   });
 });

@@ -12,7 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useT } from "@/lib/i18n/t";
 import type { TranslationKey } from "@/lib/i18n/en";
+import { supabase } from "@/lib/supabase";
 import { isPushAvailable } from "@/lib/push/flag";
+import { registerIfAlreadyGranted } from "@/lib/push/notifications";
+import { getPushPlugin } from "@/lib/push/plugin";
+import { deleteRememberedPushToken } from "@/lib/push/tokens";
 import {
   DEFAULT_PUSH_SETTINGS,
   PUSH_SETTING_KINDS,
@@ -83,6 +87,22 @@ export function PushSettingsCard() {
     });
   };
 
+  const handleMasterChange = (checked: boolean) => {
+    save({ ...value, enabled: checked });
+    if (checked) {
+      // Turning push back on re-registers this device (opting out deleted
+      // its token row). The silent flow never prompts: without the OS
+      // permission, the card on the notifications page does the asking.
+      void getPushPlugin()
+        .then((plugin) => registerIfAlreadyGranted(plugin))
+        .catch(() => {
+          // Push is optional; the settings themselves already saved.
+        });
+    } else {
+      void deleteRememberedPushToken(supabase);
+    }
+  };
+
   return (
     <section className="grid gap-3">
       <h2 className="font-heading text-lg font-semibold tracking-tight">
@@ -105,9 +125,7 @@ export function PushSettingsCard() {
                 label={t("profile.pushAllLabel")}
                 checked={value.enabled}
                 disabled={update.isPending}
-                onCheckedChange={(checked) =>
-                  save({ ...value, enabled: checked })
-                }
+                onCheckedChange={handleMasterChange}
               />
               <div
                 className="grid gap-4 border-t pt-4"

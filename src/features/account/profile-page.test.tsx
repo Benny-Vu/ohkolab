@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProfilePage } from "@/features/account/profile-page";
 import {
@@ -23,6 +23,12 @@ const profileQueriesMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/features/profile/profile-queries", () => profileQueriesMocks);
+
+// The push settings section is lazy-loaded behind the flag; a marker mock
+// keeps the page tests about mounting, not about the card's own behaviour.
+vi.mock("@/features/account/push-settings-card", () => ({
+  PushSettingsCard: () => <div>push settings card</div>,
+}));
 
 const queryResult = (data: unknown, extra: Record<string, unknown> = {}) => ({
   data,
@@ -56,10 +62,17 @@ function blockedProfile(overrides: Partial<Profile> = {}): Profile {
 describe("ProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("VITE_PUSH", "");
+    delete (globalThis as { Capacitor?: unknown }).Capacitor;
     socialMocks.socialAvailability.mockReturnValue("not-configured");
     socialMocks.useBlocks.mockReturnValue(queryResult([]));
     socialMocks.useToggleBlock.mockReturnValue(mutationResult());
     profileQueriesMocks.useProfilesByIds.mockReturnValue(queryResult([]));
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    delete (globalThis as { Capacitor?: unknown }).Capacitor;
   });
 
   it("shows a skeleton while loading", () => {
@@ -418,5 +431,50 @@ describe("ProfilePage blocked users", () => {
     await user.click(screen.getByRole("button", { name: /unblock/i }));
 
     await waitFor(() => expect(unblock).toHaveBeenCalled());
+  });
+});
+
+describe("ProfilePage push settings", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv("VITE_PUSH", "");
+    delete (globalThis as { Capacitor?: unknown }).Capacitor;
+    socialMocks.socialAvailability.mockReturnValue("not-configured");
+    socialMocks.useBlocks.mockReturnValue(queryResult([]));
+    socialMocks.useToggleBlock.mockReturnValue(mutationResult());
+    profileQueriesMocks.useProfilesByIds.mockReturnValue(queryResult([]));
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    delete (globalThis as { Capacitor?: unknown }).Capacitor;
+  });
+
+  it("mounts the push settings section only in the native app with the flag on", async () => {
+    vi.stubEnv("VITE_PUSH", "true");
+    (globalThis as { Capacitor?: unknown }).Capacitor = {
+      isNativePlatform: () => true,
+    };
+
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    expect(await screen.findByText("push settings card")).toBeInTheDocument();
+  });
+
+  it("keeps the web build and flag-off builds free of the push settings section", async () => {
+    // Web build: flag on, no native shell.
+    vi.stubEnv("VITE_PUSH", "true");
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByText("push settings card")).not.toBeInTheDocument();
+
+    // Native app, flag off.
+    vi.stubEnv("VITE_PUSH", "");
+    (globalThis as { Capacitor?: unknown }).Capacitor = {
+      isNativePlatform: () => true,
+    };
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByText("push settings card")).not.toBeInTheDocument();
   });
 });

@@ -30,6 +30,10 @@ describe("useNativeApp", () => {
     renderAt("/");
 
     await waitFor(() => expect(mountNativeShell).toHaveBeenCalledOnce());
+    // The shell is handed the router's navigate, so notification taps can
+    // deep-link in-app.
+    const options = vi.mocked(mountNativeShell).mock.calls[0]?.[0];
+    expect(options?.navigate).toBeTypeOf("function");
   });
 
   it("never mounts the glue on the web", async () => {

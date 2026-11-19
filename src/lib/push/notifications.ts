@@ -1,7 +1,12 @@
 import { isPushAvailable } from "@/lib/push/flag";
 import { permissionStateOf, silentStep, userStep } from "@/lib/push/permission";
 import { getPushPlugin, type PushPlugin } from "@/lib/push/plugin";
-import { notificationPath, upsertPushToken } from "@/lib/push/tokens";
+import {
+  deleteRememberedPushToken,
+  notificationPath,
+  registerPushToken,
+  rememberDeviceToken,
+} from "@/lib/push/tokens";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 
 /**
@@ -10,15 +15,17 @@ import { supabase, type AppSupabaseClient } from "@/lib/supabase";
  * app is native (`isPushAvailable()`); the module itself is imported lazily
  * from the native shell, so a flag-off or web build never loads it.
  *
- * - `registration` (first registration and every FCM token rotation) upserts
- *   the token into `push_tokens` for the signed-in user;
+ * - `registration` (first registration and every FCM token rotation)
+ *   registers the token for the signed-in user through the
+ *   `register_push_token` RPC — the only write path for `push_tokens`;
  * - the silent flow registers after sign-in or app start only when the OS
  *   permission is already granted — it never prompts;
  * - `pushNotificationActionPerformed` navigates the `data.path` of the tap,
  *   including the event that arrives right after a cold start (the plugin
  *   replays the launch tap to the first listener);
- * - sign-out keeps the token row (a nice-to-have cleanup, noted in the wave
- *   report); the listeners themselves are removed by the disposer.
+ * - sign-out deletes this device's remembered token row (RLS scopes the
+ *   delete to the caller's own rows); the listeners themselves are removed
+ *   by the disposer.
  */
 
 export interface PushGlueOptions {
@@ -106,15 +113,17 @@ export async function setupPushNotifications(
 
   const handles: Array<{ remove(): void }> = [];
 
-  // First registration and every FCM token rotation land here: upsert the
-  // row for the signed-in user (on token, so rotation refreshes it).
+  // First registration and every FCM token rotation land here: register the
+  // token for the signed-in user through the RPC (which also takes a token
+  // over from whoever held it) and remember it for the cleanups.
   handles.push(
     await plugin.addListener("registration", (event) => {
       const token = event.value;
+      rememberDeviceToken(token);
       void (async () => {
         const userId = await getUserId();
         if (userId === null) return;
-        await upsertPushToken(client, userId, token);
+        await registerPushToken(client, token);
       })();
     }),
   );
@@ -133,6 +142,13 @@ export async function setupPushNotifications(
   );
 
   const unsubscribeAuth = subscribeToAuth((event) => {
+    if (event === "SIGNED_OUT") {
+      // Sign-out stops pushes from this device: the remembered token's row
+      // is mine, so the delete passes RLS and the device goes quiet even
+      // before the next user signs in.
+      void deleteRememberedPushToken(client);
+      return;
+    }
     // INITIAL_SESSION covers app start while signed in (supabase-js fires it
     // to every new listener); SIGNED_IN covers an explicit sign-in.
     if (event !== "SIGNED_IN" && event !== "INITIAL_SESSION") return;
