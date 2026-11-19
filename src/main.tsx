@@ -34,21 +34,6 @@ if (bridge?.isNativePlatform?.() === true && supabase) {
 }
 
 function render() {
-  // TEMPORARY (share wave, Part C): a debug-only native crash for verifying
-  // that @sentry/capacitor delivers to Sentry from the emulator. Built with
-  // VITE_TEST_NATIVE_CRASH=true; removed again before the wave ships.
-  if (
-    bridge?.isNativePlatform?.() === true &&
-    (import.meta.env as unknown as Record<string, string | undefined>)
-      .VITE_TEST_NATIVE_CRASH === "true"
-  ) {
-    void import("@sentry/capacitor").then((capacitor) => {
-      setTimeout(() => {
-        capacitor.nativeCrash();
-      }, 4000);
-    });
-  }
-
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <Providers>
