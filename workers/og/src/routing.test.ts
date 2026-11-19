@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { matchOgImage, matchPage, ogImageCacheControl } from "./routing";
+import {
+  isPagePath,
+  matchOgImage,
+  matchPage,
+  ogImageCacheControl,
+} from "./routing";
 
 const UUID = "3f2c8a4e-1b2d-4c5a-9e8f-7a6b5c4d3e2f";
 
@@ -109,5 +114,32 @@ describe("ogImageCacheControl", () => {
   it("caches live content for an hour", () => {
     expect(ogImageCacheControl("post")).toBe("public, max-age=3600");
     expect(ogImageCacheControl("profile")).toBe("public, max-age=3600");
+  });
+});
+
+describe("isPagePath", () => {
+  it("treats app routes as pages", () => {
+    for (const path of [
+      "/",
+      "/calc",
+      "/teams/abc",
+      "/u/benny",
+      "/g/vgc-talk",
+    ]) {
+      expect(isPagePath(path)).toBe(true);
+    }
+  });
+
+  it("treats static files as files, so crawlers get the real file", () => {
+    for (const path of [
+      "/robots.txt",
+      "/sitemap.xml",
+      "/llms.txt",
+      "/favicon.svg",
+      "/assets/index-abc123.js",
+      "/manifest.webmanifest",
+    ]) {
+      expect(isPagePath(path)).toBe(false);
+    }
   });
 });
