@@ -552,6 +552,115 @@ export type Database = {
         Update: { [_ in never]: never };
         Relationships: [];
       };
+      /** Direct messages, built but not launched (VITE_DIRECT_MESSAGES). */
+      profile_birth_dates: {
+        Row: {
+          user_id: string;
+          /** Not in the future, at least 13 years ago. */
+          birth_date: string;
+          updated_at: string;
+        };
+        /**
+         * Rows are written by `set_birth_date()`; no role may insert
+         * through the API. The type exists because the client requires one.
+         */
+        Insert: { [_ in never]: never };
+        /** No update grant: `set_birth_date()` is the only writer. */
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
+      message_settings: {
+        Row: {
+          user_id: string;
+          /** "friends" (default), "following" or "nobody". */
+          who_can_message: string;
+          updated_at: string;
+        };
+        /**
+         * Rows are created by the profiles trigger; no role may insert
+         * through the API.
+         */
+        Insert: { [_ in never]: never };
+        /** Only who_can_message is granted for update. */
+        Update: { who_can_message?: string };
+        Relationships: [];
+      };
+      conversations: {
+        Row: {
+          id: string;
+          /** The two participants, sorted: user_a < user_b. */
+          user_a: string;
+          user_b: string;
+          /** Who started the conversation (rate limiting starts per sender). */
+          created_by: string;
+          created_at: string;
+        };
+        /** Rows are created by `start_conversation()` only. */
+        Insert: { [_ in never]: never };
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
+      conversation_participants: {
+        Row: {
+          conversation_id: string;
+          user_id: string;
+          /** Drives the unread markers. */
+          last_read_at: string;
+          /** Reserved for a manual "close conversation"; null for now. */
+          closed_at: string | null;
+        };
+        /** Rows are created by `start_conversation()` only. */
+        Insert: { [_ in never]: never };
+        /** Only last_read_at is granted for update. */
+        Update: { last_read_at?: string };
+        Relationships: [];
+      };
+      messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_id: string;
+          /** 1 to 2000 characters. */
+          body: string;
+          created_at: string;
+          /** Set when the sender deletes the message; the row stays. */
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          /** Must be the caller; checked again by the insert trigger. */
+          sender_id: string;
+          body: string;
+          created_at?: string;
+        };
+        /** Only deleted_at is granted for update, on the sender's own rows. */
+        Update: { deleted_at?: string };
+        Relationships: [];
+      };
+      message_reports: {
+        Row: {
+          id: string;
+          /** The moderation queue row this snapshot belongs to. */
+          report_id: string;
+          /** Null once the reporter's account is deleted; the report stays. */
+          reporter_id: string | null;
+          /** Not a foreign key: the message may be gone; the snapshot stays. */
+          message_id: string;
+          conversation_id: string;
+          /**
+           * The reported message plus the 20 before it, oldest first:
+           * `[{id, sender_id, body, created_at}, ...]`. Validate what you
+           * read before trusting it.
+           */
+          snapshot: Json;
+          created_at: string;
+        };
+        /** Rows are created by `report_message()` only. */
+        Insert: { [_ in never]: never };
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
     };
     Views: {
       /**
@@ -689,6 +798,44 @@ export type Database = {
       set_feedback_status: {
         Args: { feedback_id: string; new_status: string };
         Returns: undefined;
+      };
+      /** Direct messages (behind VITE_DIRECT_MESSAGES). */
+      /** Sets the caller's own birth date; rejects future and under-13. */
+      set_birth_date: {
+        Args: { new_birth_date: string };
+        Returns: undefined;
+      };
+      /** True when the user is 18 or older; false without a birth date. */
+      is_adult: {
+        Args: { target_user_id: string };
+        Returns: boolean;
+      };
+      /**
+       * Starts (or returns the existing) conversation with the other user,
+       * checking every rule server side. Error codes: P0A08 (too many new
+       * conversations today), 42501 (block, setting or minor rule), 23514
+       * (account too new or email not confirmed).
+       */
+      start_conversation: {
+        Args: { other: string };
+        Returns: string;
+      };
+      /**
+       * Whether the caller may start a conversation with the other user
+       * (the profile Message button asks this; the rules live server side).
+       */
+      can_message: {
+        Args: { other: string };
+        Returns: boolean;
+      };
+      /**
+       * Copies the message and the 20 before it into a snapshot, files the
+       * report in the moderation queue (reusing its rate limit) and returns
+       * the queue row's id.
+       */
+      report_message: {
+        Args: { message_id: string; reason: string };
+        Returns: string;
       };
     };
     Enums: { [_ in never]: never };
