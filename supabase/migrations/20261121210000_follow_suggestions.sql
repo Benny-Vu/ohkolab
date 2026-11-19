@@ -113,13 +113,19 @@ as $$
       -- Never suggest a suspended user.
       and not public.is_suspended(profiles.id)
       -- At least one signal: a connection, a shared public group, or the
-      -- same main format.
+      -- same main format (with 'both' matching either side — the same
+      -- condition the score uses, so no score-0 candidates slip through).
       and (
         connections.candidate_id is not null
         or shared_groups.candidate_id is not null
         or (
           profiles.main_format is not null
           and caller_profile.main_format is not null
+          and (
+            profiles.main_format = caller_profile.main_format
+            or profiles.main_format = 'both'
+            or caller_profile.main_format = 'both'
+          )
         )
       )
   )
