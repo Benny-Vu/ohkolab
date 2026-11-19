@@ -12,6 +12,7 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 
 import { NotFoundPage } from "@/features/system/not-found-page";
+import { getLocale } from "@/lib/i18n/locale";
 import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -66,7 +67,7 @@ function formatDate(iso: string): string {
   if (Number.isNaN(date.getTime())) {
     return iso;
   }
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(getLocale(), {
     year: "numeric",
     month: "short",
     day: "numeric",
