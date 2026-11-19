@@ -76,7 +76,9 @@ async function fetchFeedPage(
 ): Promise<FeedPostRow[]> {
   let query = client.from("feed_posts").select("*").is("group_id", null);
   if (language !== "all") {
-    query = query.eq("language", language);
+    // Untagged posts (older ones, and anyone who skips the tag) show in
+    // every language view, so a language filter never hides them.
+    query = query.or(`language.eq.${language},language.is.null`);
   }
   if (kind === "following") {
     if (!viewerId) {

@@ -216,7 +216,7 @@ describe("useFeed", () => {
     expect(result.current.hasNextPage).toBe(false);
   });
 
-  it("filters the feed by language tag and shows all without one", async () => {
+  it("filters the feed by language tag, keeping untagged posts, and shows all without one", async () => {
     const fake = createFakeClient(
       byTable({ feed_posts: { data: [], error: null } }),
     );
@@ -224,7 +224,9 @@ describe("useFeed", () => {
       wrapper: createWrapper(queryClient),
     });
     await waitFor(() => expect(filtered.result.current.isSuccess).toBe(true));
-    expect(callsOn(fake, "feed_posts", "eq")).toEqual([["language", "ja"]]);
+    expect(callsOn(fake, "feed_posts", "or")).toContainEqual([
+      "language.eq.ja,language.is.null",
+    ]);
 
     // "all" sends no language filter at all.
     const allFake = createFakeClient(
