@@ -164,6 +164,28 @@ describe("describeSocialError", () => {
     expect(describeSocialError(null).code).toBe("unknown");
   });
 
+  it("passes an already-mapped SocialFailure through unchanged", () => {
+    const failure = {
+      code: "forbidden",
+      message: "You cannot do that.",
+    } as const;
+    expect(describeSocialError(failure)).toEqual(failure);
+    expect(describeSocialError(socialFailure("not_installed"))).toEqual(
+      socialFailure("not_installed"),
+    );
+  });
+
+  it("does not mistake a database error for a mapped failure", () => {
+    // A Postgres code is never one of the social codes, so the original
+    // error still maps instead of passing through.
+    expect(describeSocialError({ code: "42501", message: "denied" }).code).toBe(
+      "forbidden",
+    );
+    expect(describeSocialError({ code: "unknown", message: "nope" }).code).toBe(
+      "unknown",
+    );
+  });
+
   it("always returns a user-facing message", () => {
     expect(
       describeSocialError({ code: "P0A03", message: "suspended" }).message,

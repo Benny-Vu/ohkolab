@@ -261,7 +261,11 @@ export function PrivacyPage() {
               or email). It never contains your posts, comments, bio, team
               details beyond Pokémon and move names, username, display name,
               email, password, auth tokens or IP address. Crash reports are kept
-              for about 30 days.
+              for about 30 days. In the Android app, crashes are also captured
+              by Sentry's native crash reporter. It sends the same information
+              as on the website (the error, the page you were on and the app
+              version) and nothing else. Nothing is sent unless crash reports
+              are turned on, and turning them off stops it immediately.
             </li>
             <li>
               <strong className="font-medium">Usage statistics.</strong> We use
@@ -354,6 +358,15 @@ export function PrivacyPage() {
             and PostHog's{" "}
             <a
               href="https://posthog.com/privacy/"
+              className="text-primary underline underline-offset-4"
+            >
+              privacy policy
+            </a>
+            . The website itself is delivered through Cloudflare's network, so
+            Cloudflare handles the requests your browser makes to ohkolab.com
+            (including your IP address), as any web host does; see Cloudflare's{" "}
+            <a
+              href="https://www.cloudflare.com/privacypolicy/"
               className="text-primary underline underline-offset-4"
             >
               privacy policy
