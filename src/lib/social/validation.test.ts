@@ -7,6 +7,7 @@ import {
   POST_BODY_MAX,
   REPORT_DETAILS_MAX,
   SUSPENSION_REASON_MAX,
+  asPostLanguage,
   measureAttachmentBytes,
   normalizeCommentBody,
   normalizePostBody,
@@ -46,11 +47,21 @@ describe("validatePostBody", () => {
   });
 });
 
+describe("asPostLanguage", () => {
+  it("narrows the tagged languages and treats the rest as untagged", () => {
+    expect(asPostLanguage("en")).toBe("en");
+    expect(asPostLanguage("ja")).toBe("ja");
+    expect(asPostLanguage("fr")).toBeNull();
+    expect(asPostLanguage("")).toBeNull();
+    expect(asPostLanguage(null)).toBeNull();
+    expect(asPostLanguage(undefined)).toBeNull();
+  });
+});
+
 describe("validateCommentBody", () => {
   it("accepts a normal body", () => {
     expect(validateCommentBody("Nice team")).toBeNull();
   });
-
   it("accepts the maximum length", () => {
     expect(validateCommentBody("x".repeat(COMMENT_BODY_MAX))).toBeNull();
   });

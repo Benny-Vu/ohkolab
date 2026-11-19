@@ -120,6 +120,11 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "composer.postedImages": "投稿しました。画像は確認後に表示されます。",
   "composer.imageChecking": "画像を確認中です。承認後に表示されます。",
   "composer.tooManyImages": "投稿に添付できる画像は最大{n}枚です。",
+  "composer.language": "投稿の言語",
+
+  // フィードの言語フィルター（ホーム画面）。
+  "feed.languageAria": "投稿を言語で絞り込む",
+  "feed.languageAll": "すべての言語",
 
   // 画像の前処理エラー（src/lib/social/images.ts）。
   "social.images.tooBig":

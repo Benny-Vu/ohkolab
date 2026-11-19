@@ -204,6 +204,25 @@ describe("HomePage", () => {
     );
   });
 
+  it("filters the feed by language, defaulting to the site language", async () => {
+    const user = userEvent.setup();
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    renderHome();
+
+    // The default filter follows the site language (English in tests).
+    expect(queriesMocks.useFeed).toHaveBeenCalledWith("latest", "en");
+
+    await user.click(
+      screen.getByRole("combobox", { name: "Filter posts by language" }),
+    );
+    await user.click(
+      await screen.findByRole("option", { name: "All languages" }),
+    );
+
+    expect(queriesMocks.useFeed).toHaveBeenCalledWith("latest", "all");
+  });
+
   it("announces the loading feed as a live status", async () => {
     availabilityMocks.socialAvailability.mockReturnValue("ready");
     queriesMocks.useFeed.mockReturnValue(

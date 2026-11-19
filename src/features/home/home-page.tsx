@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { Logo } from "@/components/logo";
+import { Picker } from "@/components/picker";
 import { SegmentedControl } from "@/components/segmented-control";
 import {
   LoadingArea,
@@ -21,9 +22,10 @@ import {
 } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useMyGroups } from "@/lib/groups/queries";
+import { getLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { socialAvailability } from "@/lib/social/availability";
-import { useFeed } from "@/lib/social/queries";
+import { useFeed, type FeedLanguage } from "@/lib/social/queries";
 import { Composer } from "@/features/feed/composer";
 import { PostList } from "@/features/feed/post-list";
 import { PeopleToFollow } from "@/features/home/people-to-follow";
@@ -118,6 +120,11 @@ function FeedHome() {
   const { user } = useAuth();
   const t = useT();
   const [tab, setTab] = useState<"latest" | "following">("latest");
+  // The filter starts from the site language; "all" shows every post,
+  // untagged ones included.
+  const [language, setLanguage] = useState<FeedLanguage>(() =>
+    getLocale() === "ja" ? "ja" : "en",
+  );
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
@@ -141,7 +148,7 @@ function FeedHome() {
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <SegmentedControl
             aria-label={t("home.feedAria")}
             value={tab}
@@ -151,24 +158,43 @@ function FeedHome() {
               { value: "following", label: t("home.following") },
             ]}
           />
-          <Button asChild variant="outline" size="sm">
-            <Link to="/groups">
-              <UsersIcon aria-hidden />
-              {t("home.groups")}
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Picker
+              aria-label={t("feed.languageAria")}
+              options={[
+                { value: "all", label: t("feed.languageAll") },
+                { value: "en", label: t("language.english") },
+                { value: "ja", label: t("language.japanese") },
+              ]}
+              value={language}
+              onValueChange={(value) => {
+                if (value === "all" || value === "en" || value === "ja") {
+                  setLanguage(value);
+                }
+              }}
+              className="w-auto max-w-44"
+            />
+            <Button asChild variant="outline" size="sm">
+              <Link to="/groups">
+                <UsersIcon aria-hidden />
+                {t("home.groups")}
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="mt-4">
           {tab === "latest" ? (
             <FeedTabContent
               tab="latest"
+              language={language}
               emptyTitle={t("home.emptyLatestTitle")}
               emptyDescription={t("home.emptyLatestDescription")}
             />
           ) : user ? (
             <FeedTabContent
               tab="following"
+              language={language}
               emptyTitle={t("home.emptyFollowingTitle")}
             />
           ) : (
@@ -302,17 +328,19 @@ function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
 
 interface FeedTabContentProps {
   tab: "latest" | "following";
+  language: FeedLanguage;
   emptyTitle: string;
   emptyDescription?: string;
 }
 
 function FeedTabContent({
   tab,
+  language,
   emptyTitle,
   emptyDescription,
 }: FeedTabContentProps) {
   const t = useT();
-  const feed = useFeed(tab);
+  const feed = useFeed(tab, language);
 
   if (feed.isError) {
     return (

@@ -34,6 +34,7 @@ import {
 } from "@/lib/social/errors";
 import { track } from "@/lib/telemetry/analytics";
 import {
+  asPostLanguage,
   normalizeCommentBody,
   normalizePostBody,
   normalizeReportDetails,
@@ -43,6 +44,7 @@ import {
   validateReportDetails,
   validateReportReason,
   validateReportTarget,
+  type PostLanguage,
   type ReportReason,
   type ReportTargetType,
 } from "@/lib/social/validation";
@@ -52,6 +54,8 @@ export interface CreatePostInput {
   attachment?: Json | null;
   /** The group to post into; null or omitted posts to the main feed. */
   groupId?: string | null;
+  /** The post's language tag; null or omitted leaves the post untagged. */
+  language?: PostLanguage | null;
 }
 
 export interface UpdatePostInput {
@@ -97,7 +101,13 @@ export function useCreatePost(
       const groupId = input.groupId ?? null;
       const { data, error } = await client
         .from("posts")
-        .insert({ author_id: me, body, attachment, group_id: groupId })
+        .insert({
+          author_id: me,
+          body,
+          attachment,
+          group_id: groupId,
+          language: asPostLanguage(input.language),
+        })
         .select("*")
         .single();
       if (error) return { ok: false, error: describeWriteError(error) };

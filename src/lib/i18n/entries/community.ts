@@ -121,6 +121,11 @@ export const communityEn = {
   "composer.imageChecking":
     "An image is still being checked — it will appear once it is approved.",
   "composer.tooManyImages": "A post can have at most {n} images.",
+  "composer.language": "Post language",
+
+  // The feed's language filter (home page).
+  "feed.languageAria": "Filter posts by language",
+  "feed.languageAll": "All languages",
 
   // Image preparation failures (src/lib/social/images.ts).
   "social.images.tooBig": "Images must be under 15 MB. Pick a smaller file.",

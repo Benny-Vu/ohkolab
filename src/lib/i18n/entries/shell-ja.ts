@@ -196,10 +196,28 @@ export const shellJa: { [K in ShellKey]: string } = {
   "onboarding.skip": "あとで設定する",
   "onboarding.avatarLabel": "アバターのポケモン",
 
+  // 初回ウェルカムフロー（オンボーディング後にレイアウトから表示。
+  // すべてのステップはスキップ可能）。
+  "welcome.title": "OHKOLabへようこそ",
+  "welcome.stepOf": "ステップ {n} / {total}",
+  "welcome.profileDescription":
+    "よく遊ぶルールとお気に入りのポケモンを選びましょう。どちらも任意です。",
+  "welcome.followDescription": "何人かフォローして、フィードを始めましょう。",
+  "welcome.joinDescription":
+    "グループに参加して、一緒に遊ぶ仲間を見つけましょう。",
+  "welcome.next": "次へ",
+  "welcome.noSuggestions": "今のおすすめはありません。あとで人を探せます。",
+  "welcome.noGroups": "まだ公開グループがありません。あとで作成できます。",
+
   // アカウントメニューとオンボーディングで表示されるプロフィール項目。
   "profile.usernameLabel": "ユーザー名",
   "profile.displayNameLabel": "表示名",
   "profile.displayNameHint": "任意。{max}文字以内。",
+  "profile.favouriteSpecies": "好きなポケモン",
+  "profile.mainFormatLabel": "メインフォーマット",
+  "profile.mainFormatSingles": "シングル",
+  "profile.mainFormatDoubles": "ダブル",
+  "profile.mainFormatBoth": "どちらも",
   "profile.savedToast": "プロフィールを保存しました。",
   "profile.accountSection": "アカウント",
   "profile.signedOutToast": "サインアウトしました。",

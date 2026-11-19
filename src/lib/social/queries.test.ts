@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+﻿import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createElement, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -206,7 +206,7 @@ describe("useFeed", () => {
     const fake = createFakeClient(
       byTable({ feed_posts: { data: rows, error: null } }),
     );
-    const { result } = renderHook(() => useFeed("latest", fake.client), {
+    const { result } = renderHook(() => useFeed("latest", "all", fake.client), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -214,6 +214,27 @@ describe("useFeed", () => {
 
     expect(result.current.data?.pages).toEqual([rows]);
     expect(result.current.hasNextPage).toBe(false);
+  });
+
+  it("filters the feed by language tag and shows all without one", async () => {
+    const fake = createFakeClient(
+      byTable({ feed_posts: { data: [], error: null } }),
+    );
+    const filtered = renderHook(() => useFeed("latest", "ja", fake.client), {
+      wrapper: createWrapper(queryClient),
+    });
+    await waitFor(() => expect(filtered.result.current.isSuccess).toBe(true));
+    expect(callsOn(fake, "feed_posts", "eq")).toEqual([["language", "ja"]]);
+
+    // "all" sends no language filter at all.
+    const allFake = createFakeClient(
+      byTable({ feed_posts: { data: [], error: null } }),
+    );
+    const all = renderHook(() => useFeed("latest", "all", allFake.client), {
+      wrapper: createWrapper(queryClient),
+    });
+    await waitFor(() => expect(all.result.current.isSuccess).toBe(true));
+    expect(callsOn(allFake, "feed_posts", "eq")).toEqual([]);
   });
 
   it("keyset-paginates with a (created_at, id) cursor", async () => {
@@ -226,7 +247,7 @@ describe("useFeed", () => {
     const fake = createFakeClient(
       byTable({ feed_posts: { data: rows, error: null } }),
     );
-    const { result } = renderHook(() => useFeed("latest", fake.client), {
+    const { result } = renderHook(() => useFeed("latest", "all", fake.client), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -266,9 +287,12 @@ describe("useFeed", () => {
       }
       return { data: rows, error: null };
     });
-    const { result } = renderHook(() => useFeed("following", fake.client), {
-      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
-    });
+    const { result } = renderHook(
+      () => useFeed("following", "all", fake.client),
+      {
+        wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+      },
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -283,9 +307,12 @@ describe("useFeed", () => {
     const fake = createFakeClient(
       byTable({ follows: { data: [], error: null } }),
     );
-    const { result } = renderHook(() => useFeed("following", fake.client), {
-      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
-    });
+    const { result } = renderHook(
+      () => useFeed("following", "all", fake.client),
+      {
+        wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+      },
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -295,16 +322,19 @@ describe("useFeed", () => {
 
   it("stays idle for guests on the following feed", () => {
     const fake = createFakeClient(byTable({}));
-    const { result } = renderHook(() => useFeed("following", fake.client), {
-      wrapper: createWrapper(queryClient),
-    });
+    const { result } = renderHook(
+      () => useFeed("following", "all", fake.client),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
 
     expect(result.current.fetchStatus).toBe("idle");
     expect(fake.queries).toHaveLength(0);
   });
 
   it("stays idle without a client", () => {
-    const { result } = renderHook(() => useFeed("latest", null), {
+    const { result } = renderHook(() => useFeed("latest", "all", null), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -321,7 +351,7 @@ describe("useFeed", () => {
         },
       }),
     );
-    const { result } = renderHook(() => useFeed("latest", fake.client), {
+    const { result } = renderHook(() => useFeed("latest", "all", fake.client), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -361,7 +391,7 @@ describe("useFeed", () => {
         feed_posts: { data: null, error: { code: "42501", message: "denied" } },
       }),
     );
-    const { result } = renderHook(() => useFeed("latest", fake.client), {
+    const { result } = renderHook(() => useFeed("latest", "all", fake.client), {
       wrapper: createWrapper(queryClient),
     });
 

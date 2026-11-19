@@ -20,10 +20,13 @@ import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 
 import { isSocialNotInstalled, softReadError } from "@/lib/social/availability";
 import type { SocialFailure } from "@/lib/social/errors";
-import type { ReportStatus } from "@/lib/social/validation";
+import type { PostLanguage, ReportStatus } from "@/lib/social/validation";
 
 /** Page size for the keyset-paginated feeds. */
 export const FEED_PAGE_SIZE = 20;
+
+/** What the feed is filtered by: one tagged language, or everything. */
+export type FeedLanguage = "all" | PostLanguage;
 
 /** Keyset cursor: the (created_at, id) pair of the last post of a page. */
 export interface FeedCursor {
@@ -68,9 +71,13 @@ async function fetchFeedPage(
   client: AppSupabaseClient,
   viewerId: string | null,
   kind: "latest" | "following",
+  language: FeedLanguage,
   cursor: FeedCursor | null,
 ): Promise<FeedPostRow[]> {
   let query = client.from("feed_posts").select("*").is("group_id", null);
+  if (language !== "all") {
+    query = query.eq("language", language);
+  }
   if (kind === "following") {
     if (!viewerId) {
       return [];
@@ -120,9 +127,14 @@ async function fetchGroupFeedPage(
   return data ?? [];
 }
 
-/** The community feed, keyset-paginated by (created_at desc, id desc). */
+/**
+ * The community feed, keyset-paginated by (created_at desc, id desc).
+ * `language` filters the feed to one tagged language; "all" shows
+ * everything, untagged posts included.
+ */
 export function useFeed(
   kind: "latest" | "following",
+  language: FeedLanguage,
   client: AppSupabaseClient | null = supabase,
 ): UseInfiniteQueryResult<
   InfiniteData<FeedPostRow[], FeedCursor | null>,
@@ -136,12 +148,12 @@ export function useFeed(
     QueryKey,
     FeedCursor | null
   >({
-    queryKey: ["social", "feed", kind],
+    queryKey: ["social", "feed", kind, language],
     queryFn: async ({ pageParam }) => {
       if (!client || isSocialNotInstalled()) {
         return [];
       }
-      return fetchFeedPage(client, user?.id ?? null, kind, pageParam);
+      return fetchFeedPage(client, user?.id ?? null, kind, language, pageParam);
     },
     initialPageParam: null,
     getNextPageParam: (lastPage) => {
