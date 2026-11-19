@@ -24,6 +24,9 @@ export const communityEn = {
     "日本語版は参考訳です。正式な内容は英語版に準じます。",
   "legal.onThisPage": "On this page",
 
+  // Account deletion page: the link in the profile Danger zone.
+  "legal.deleteDetailsLink": "What is deleted with your account",
+
   // Privacy page: the browser-storage list gains the language choice.
   "privacy.languageChoice": "your language choice",
 
@@ -268,6 +271,7 @@ export const communityEn = {
   "groups.members": "Members",
   "groups.settings": "Settings",
   "groups.feedError": "Could not load the group feed",
+  "groups.listError": "Could not load groups",
   "groups.emptyFeedTitle": "No posts yet",
   "groups.emptyFeedDescription": "Start the conversation.",
   "groups.enterUsername": "Enter a username.",
@@ -538,6 +542,7 @@ export const communityEn = {
   "pageTitle.post": "Post",
   "pageTitle.group": "Group",
   "pageTitle.notFound": "Page not found",
+  "pageTitle.deleteAccount": "Delete your account",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;
@@ -557,6 +562,9 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "legal.japaneseNotice":
     "日本語版は参考訳です。正式な内容は英語版に準じます。",
   "legal.onThisPage": "このページの内容",
+
+  // アカウント削除ページ：プロフィールの危険な操作セクションのリンク。
+  "legal.deleteDetailsLink": "アカウントと一緒に削除されるもの",
 
   // プライバシー：ブラウザーに保存されるものへ言語設定を追加。
   "privacy.languageChoice": "言語設定",
@@ -803,6 +811,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "groups.members": "メンバー",
   "groups.settings": "設定",
   "groups.feedError": "グループのフィードを読み込めませんでした",
+  "groups.listError": "グループを読み込めませんでした",
   "groups.emptyFeedTitle": "まだ投稿がありません",
   "groups.emptyFeedDescription": "最初の投稿をしてみましょう。",
   "groups.enterUsername": "ユーザー名を入力してください。",
@@ -1064,4 +1073,5 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "pageTitle.post": "投稿",
   "pageTitle.group": "グループ",
   "pageTitle.notFound": "ページが見つかりません",
+  "pageTitle.deleteAccount": "アカウントの削除",
 };

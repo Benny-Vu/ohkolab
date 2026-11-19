@@ -1,3 +1,6 @@
+import { useState } from "react";
+
+import { useDisplayName } from "@/data/display-names";
 import {
   getItemIcon,
   getPokemonIcon,
@@ -13,16 +16,72 @@ interface SpriteProps {
   className?: string;
 }
 
+/**
+ * Neutral placeholder with the localized name, shown when a remote sprite
+ * or icon cannot load (offline, blocked, 404): no broken-image glyph, and
+ * the exact box the image would have occupied, so nothing shifts.
+ */
+function NamePlaceholder({
+  name,
+  width,
+  height,
+  className,
+  textClassName,
+}: {
+  name: string;
+  width: number;
+  height: number;
+  className?: string;
+  textClassName?: string;
+}) {
+  return (
+    <span
+      role="img"
+      aria-label={name}
+      className={cn(
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-xs bg-muted px-1 text-center",
+        className,
+      )}
+      style={{ width, height }}
+    >
+      <span
+        className={cn(
+          "line-clamp-3 leading-tight text-muted-foreground",
+          textClassName,
+        )}
+      >
+        {name}
+      </span>
+    </span>
+  );
+}
+
 /** Battle sprite of a species or forme. */
 export function PokemonSprite({ species, size = 96, className }: SpriteProps) {
   const sprite = getSprite(species);
+  const nameFor = useDisplayName();
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <NamePlaceholder
+        name={nameFor("species", species)}
+        width={size}
+        height={size}
+        className={className}
+        textClassName="text-xs"
+      />
+    );
+  }
+
   return (
     <img
       src={sprite.url}
-      alt={species}
+      alt={nameFor("species", species)}
       width={size}
       height={size}
       loading="lazy"
+      onError={() => setFailed(true)}
       className={cn("object-contain", className)}
       style={{ imageRendering: sprite.pixelated ? "pixelated" : undefined }}
     />
@@ -32,24 +91,57 @@ export function PokemonSprite({ species, size = 96, className }: SpriteProps) {
 function SheetIcon({
   icon,
   label,
+  name,
   className,
 }: {
   icon: IconInfo;
+  /** The raw id, as the accessible label (unchanged behaviour). */
   label: string;
+  /** The localized name, for the offline placeholder. */
+  name: string;
   className?: string;
 }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <NamePlaceholder
+        name={name}
+        width={icon.width}
+        height={icon.height}
+        className={className}
+      />
+    );
+  }
+
   return (
     <span
       role="img"
       aria-label={label}
-      className={cn("inline-block shrink-0", className)}
-      style={{
-        width: icon.width,
-        height: icon.height,
-        imageRendering: "pixelated",
-        background: `transparent url(${icon.url}) no-repeat scroll ${icon.left}px ${icon.top}px`,
-      }}
-    />
+      className={cn(
+        "relative inline-block shrink-0 overflow-hidden",
+        className,
+      )}
+      style={{ width: icon.width, height: icon.height }}
+    >
+      {/* A real <img> (cropped by the wrapper) instead of a CSS background,
+          so load failures surface as onError and can swap in the
+          placeholder. The sheet image itself stays decorative. */}
+      <img
+        src={icon.url}
+        alt=""
+        aria-hidden
+        draggable={false}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className="pointer-events-none absolute select-none"
+        style={{
+          left: icon.left,
+          top: icon.top,
+          imageRendering: "pixelated",
+        }}
+      />
+    </span>
   );
 }
 
@@ -61,10 +153,12 @@ export function PokemonIcon({
   species: string;
   className?: string;
 }) {
+  const nameFor = useDisplayName();
   return (
     <SheetIcon
       icon={getPokemonIcon(species)}
       label={species}
+      name={nameFor("species", species)}
       className={className}
     />
   );
@@ -78,7 +172,13 @@ export function ItemIcon({
   item: string;
   className?: string;
 }) {
+  const nameFor = useDisplayName();
   return (
-    <SheetIcon icon={getItemIcon(item)} label={item} className={className} />
+    <SheetIcon
+      icon={getItemIcon(item)}
+      label={item}
+      name={nameFor("item", item)}
+      className={className}
+    />
   );
 }

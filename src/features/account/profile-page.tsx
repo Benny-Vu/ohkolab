@@ -372,7 +372,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               {t("profile.deleteAccountDescription")}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="grid gap-2">
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <DialogTrigger asChild>
                 <Button variant="destructive" disabled={busy}>
@@ -426,6 +426,14 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Button
+              variant="link"
+              size="sm"
+              asChild
+              className="justify-self-start px-0"
+            >
+              <Link to="/delete-account">{t("legal.deleteDetailsLink")}</Link>
+            </Button>
           </CardContent>
         </Card>
       </SettingsSection>

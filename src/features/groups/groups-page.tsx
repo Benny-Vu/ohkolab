@@ -4,6 +4,7 @@ import { LoaderCircleIcon, PlusIcon, SearchIcon } from "lucide-react";
 
 import { Page } from "@/components/page";
 import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { SegmentedControl } from "@/components/segmented-control";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -135,6 +136,23 @@ function GroupList({ query, emptyTitle, emptyDescription }: GroupListProps) {
         <Skeleton className="h-20 w-full rounded-md" />
         <Skeleton className="h-20 w-full rounded-md" />
       </div>
+    );
+  }
+
+  if (query.isError) {
+    return (
+      <ErrorState
+        title={t("groups.listError")}
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void query.refetch()}
+          >
+            {t("common.retry")}
+          </Button>
+        }
+      />
     );
   }
 
