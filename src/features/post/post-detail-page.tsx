@@ -170,7 +170,25 @@ export function PostDetailPage() {
             </p>
           )}
 
-          {comments.length === 0 && !commentsQuery.isPending ? (
+          {commentsQuery.isError && (
+            <ErrorState
+              title={t("postDetail.commentsError")}
+              description={commentsQuery.error.message}
+              action={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void commentsQuery.refetch()}
+                >
+                  {t("common.retry")}
+                </Button>
+              }
+            />
+          )}
+
+          {comments.length === 0 &&
+          !commentsQuery.isPending &&
+          !commentsQuery.isError ? (
             <p className="text-sm text-muted-foreground">
               {t("postDetail.noComments")}
             </p>
@@ -187,16 +205,17 @@ export function PostDetailPage() {
                       displayName={comment.author?.displayName ?? null}
                       avatarSpecies={comment.author?.avatarSpecies ?? null}
                       size="sm"
+                      className="shrink-0"
                     />
                     <Link
                       to={`/u/${comment.author?.username ?? ""}`}
-                      className="font-medium hover:underline"
+                      className="min-w-0 truncate font-medium hover:underline"
                     >
                       {comment.author?.displayName ??
                         comment.author?.username ??
                         t("postDetail.deletedUser")}
                     </Link>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="shrink-0 text-xs text-muted-foreground">
                       {formatRelativeTime(comment.createdAt)}
                     </span>
                     {comment.authorId === user?.id && (

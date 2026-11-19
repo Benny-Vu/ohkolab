@@ -264,10 +264,10 @@ export function PostCard({
           {team && (
             <div className="mt-3 rounded-md border bg-surface-sunken p-3">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">
+                <p className="min-w-0 truncate text-sm font-medium">
                   {displayTeamName(team.name)}
                 </p>
-                <span className="text-xs text-muted-foreground capitalize">
+                <span className="shrink-0 text-xs text-muted-foreground capitalize">
                   {team.format}
                 </span>
               </div>

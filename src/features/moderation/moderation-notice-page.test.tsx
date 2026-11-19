@@ -146,6 +146,29 @@ describe("ModerationNoticePage", () => {
     expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
   });
 
+  it("shows an error with retry instead of not-found when loading fails", async () => {
+    const refetch = vi.fn();
+    moderationMocks.useModerationAction.mockReturnValue(
+      queryResult(undefined, {
+        isError: true,
+        error: { code: "unknown", message: "Something went wrong" },
+        refetch,
+      }),
+    );
+    renderNoticePage();
+
+    expect(
+      await screen.findByText("Could not load this notice"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+    expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Try again" }));
+    expect(refetch).toHaveBeenCalled();
+  });
+
   it("shows the removal reason, date and stored text", () => {
     moderationMocks.useModerationAction.mockReturnValue(
       queryResult(

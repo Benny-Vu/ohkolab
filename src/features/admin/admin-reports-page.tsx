@@ -177,7 +177,7 @@ function PostContent({
   }
   return (
     <div className="grid gap-1">
-      <p className="text-sm">{post.body}</p>
+      <p className="break-words text-sm">{post.body}</p>
       <p className="text-xs text-muted-foreground">
         by @{post.author_username}
       </p>
@@ -213,7 +213,7 @@ function CommentContent({
   }
   return (
     <div className="grid gap-1">
-      <p className="text-sm">{comment.body}</p>
+      <p className="break-words text-sm">{comment.body}</p>
       <p className="text-xs text-muted-foreground">
         {t("admin.commentBy", { id: comment.author_id.slice(0, 8) })}
       </p>
@@ -547,7 +547,7 @@ function ReportRowView({
         <TableCell colSpan={4} className="whitespace-normal">
           <div className="grid gap-2">
             {report.details ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="break-words text-sm text-muted-foreground">
                 {t("admin.reporterDetails", { details: report.details })}
               </p>
             ) : null}

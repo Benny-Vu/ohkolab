@@ -4,6 +4,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 
 import { NotFoundPage } from "@/features/system/not-found-page";
+import { ErrorState } from "@/components/error-state";
 import { Page } from "@/components/page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,9 @@ function AppealStatus({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">{appeal.message}</p>
+        <p className="break-words text-sm text-muted-foreground">
+          {appeal.message}
+        </p>
         {appeal.status === "open" ? (
           <p className="mt-2 text-sm text-muted-foreground">
             {t("moderation.reviewPending")}
@@ -176,6 +179,26 @@ export function ModerationNoticePage({
     );
   }
 
+  if (actionQuery.isError) {
+    return (
+      <Page title={t("moderation.noticeTitle")} width="narrow">
+        <ErrorState
+          title={t("moderation.noticeLoadError")}
+          description={actionQuery.error.message}
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void actionQuery.refetch()}
+            >
+              {t("common.retry")}
+            </Button>
+          }
+        />
+      </Page>
+    );
+  }
+
   const action = actionQuery.data ?? null;
 
   if (action === null) {
@@ -197,7 +220,7 @@ export function ModerationNoticePage({
             <CardDescription>{formatDate(action.created_at)}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <p className="text-sm">
+            <p className="break-words text-sm">
               <span className="font-medium">
                 {t("moderation.reasonLabel")}{" "}
               </span>
@@ -208,7 +231,7 @@ export function ModerationNoticePage({
                 <p className="text-xs font-medium text-muted-foreground">
                   {t("moderation.removedContent")}
                 </p>
-                <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
                   {action.content_snapshot}
                 </p>
               </div>

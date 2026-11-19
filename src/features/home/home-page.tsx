@@ -254,11 +254,34 @@ function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
       <h2 className="font-heading text-sm font-semibold">
         {t("home.yourGroups")}
       </h2>
-      {groups.length > 0 ? (
+      {myGroups.isPending ? (
+        <div className="mt-3 grid gap-2" aria-label={t("groups.loadingGroups")}>
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      ) : myGroups.isError ? (
+        <ErrorState
+          title={t("home.groupsLoadError")}
+          description={myGroups.error.message}
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void myGroups.refetch()}
+            >
+              {t("common.retry")}
+            </Button>
+          }
+          className="border-none bg-transparent px-0 py-2"
+        />
+      ) : groups.length > 0 ? (
         <ul className="mt-2 grid gap-1.5">
           {groups.slice(0, 5).map((group) => (
-            <li key={group.id}>
-              <Link to={`/g/${group.slug}`} className="text-sm hover:underline">
+            <li key={group.id} className="min-w-0">
+              <Link
+                to={`/g/${group.slug}`}
+                className="block truncate text-sm hover:underline"
+              >
                 {group.name}
               </Link>
             </li>

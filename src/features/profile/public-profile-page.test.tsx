@@ -780,6 +780,35 @@ describe("PublicProfilePage social section", () => {
     expect(await screen.findByText(/no followers yet/i)).toBeInTheDocument();
   });
 
+  it("shows an error with retry in the followers dialog when loading fails", async () => {
+    const user = userEvent.setup();
+    const client = createFakeClient({
+      profile: profileRow({ id: "user-2", username: "brock" }),
+    });
+    const refetch = vi.fn();
+    stubSocial({
+      useFollowCounts: vi.fn(() => queryResult({ followers: 1, following: 0 })),
+      useFollowers: vi.fn(() =>
+        queryResult([], {
+          isError: true,
+          error: { code: "unknown", message: "Something went wrong" },
+          refetch,
+        }),
+      ),
+    });
+    renderSignedIn(client, "brock");
+
+    await user.click(
+      await screen.findByRole("button", { name: /1 followers/i }),
+    );
+
+    expect(await screen.findByText(/could not load this list/i)).toBeVisible();
+    expect(screen.queryByText(/no followers yet/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /try again/i }));
+    expect(refetch).toHaveBeenCalled();
+  });
+
   it("blocks a user through the overflow menu and confirm dialog", async () => {
     const user = userEvent.setup();
     const client = createFakeClient({

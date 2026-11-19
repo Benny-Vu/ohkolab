@@ -2,6 +2,7 @@ import { Link } from "react-router";
 
 import { BigNumber } from "@/components/big-number";
 import { PokemonIcon } from "@/components/pokemon-sprite";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatBar } from "@/components/stat-bar";
 import { useMetagameSnapshot } from "@/features/metagame/use-metagame";
 import { useDisplayName } from "@/data";
@@ -10,7 +11,9 @@ import { useT } from "@/lib/i18n/t";
 
 /**
  * Three most-used Pokémon in doubles with their usage share. Shown on phones
- * above the feed; the data loads lazily with the component.
+ * above the feed; the data loads lazily with the component. Loading shows a
+ * skeleton; an error stays hidden (the strip is a teaser, not the screen's
+ * main data).
  */
 export function TrendingStrip() {
   const t = useT();
@@ -19,6 +22,22 @@ export function TrendingStrip() {
   const top = (snapshot.data?.pokemon ?? [])
     .filter((entry) => entry.usage !== null)
     .slice(0, 3);
+
+  if (snapshot.isPending) {
+    return (
+      <section
+        aria-label={t("home.trending")}
+        className="rounded-md border bg-card p-3"
+      >
+        <Skeleton className="h-4 w-24" />
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+        </div>
+      </section>
+    );
+  }
 
   if (top.length === 0) return null;
 

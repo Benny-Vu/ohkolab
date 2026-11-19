@@ -518,6 +518,20 @@ function BlockedUsersCard() {
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
+        ) : blocksQuery.isError ? (
+          <div className="grid gap-2">
+            <p className="text-sm text-muted-foreground">
+              {t("profile.blocksLoadFailed")}
+            </p>
+            <Button
+              className="justify-self-start"
+              variant="outline"
+              size="sm"
+              onClick={() => void blocksQuery.refetch()}
+            >
+              {t("common.retry")}
+            </Button>
+          </div>
         ) : ids.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("profile.noBlocks")}
@@ -527,9 +541,19 @@ function BlockedUsersCard() {
             <Skeleton className="h-10 w-full" />
           </div>
         ) : profilesQuery.isError ? (
-          <p className="text-sm text-muted-foreground">
-            {t("profile.blocksLoadFailed")}
-          </p>
+          <div className="grid gap-2">
+            <p className="text-sm text-muted-foreground">
+              {t("profile.blocksLoadFailed")}
+            </p>
+            <Button
+              className="justify-self-start"
+              variant="outline"
+              size="sm"
+              onClick={() => void profilesQuery.refetch()}
+            >
+              {t("common.retry")}
+            </Button>
+          </div>
         ) : (
           <ul className="grid gap-2">
             {profilesQuery.data.map((profile) => (

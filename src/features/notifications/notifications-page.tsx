@@ -129,6 +129,8 @@ export function NotificationsPage() {
           items={notifications.data?.pages.flat() ?? []}
           onMarkRead={handleMarkRead}
           onDelete={handleDelete}
+          markPending={markRead.isPending}
+          deletePending={deleteNotification.isPending}
           hasNextPage={notifications.hasNextPage}
           isFetchingNextPage={notifications.isFetchingNextPage}
           onLoadMore={() => void notifications.fetchNextPage()}
@@ -142,6 +144,9 @@ interface NotificationsListProps {
   items: NotificationItem[];
   onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
+  /** A mark-read or delete is in flight: the row buttons wait for it. */
+  markPending: boolean;
+  deletePending: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
@@ -151,6 +156,8 @@ function NotificationsList({
   items,
   onMarkRead,
   onDelete,
+  markPending,
+  deletePending,
   hasNextPage,
   isFetchingNextPage,
   onLoadMore,
@@ -173,6 +180,8 @@ function NotificationsList({
           item={item}
           onMarkRead={onMarkRead}
           onDelete={onDelete}
+          markPending={markPending}
+          deletePending={deletePending}
         />
       ))}
       {hasNextPage && (
@@ -194,12 +203,16 @@ interface NotificationRowCardProps {
   item: NotificationItem;
   onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
+  markPending: boolean;
+  deletePending: boolean;
 }
 
 function NotificationRowCard({
   item,
   onMarkRead,
   onDelete,
+  markPending,
+  deletePending,
 }: NotificationRowCardProps) {
   const t = useT();
   const sentence = describeNotification(item);
@@ -228,7 +241,7 @@ function NotificationRowCard({
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm">
+        <p className="break-words text-sm">
           {profilePath ? (
             <Link
               to={profilePath}
@@ -267,6 +280,7 @@ function NotificationRowCard({
             size="icon-sm"
             aria-label={t("notifications.markRead", { name: actor })}
             onClick={() => onMarkRead(item.id)}
+            disabled={markPending}
           >
             <CheckIcon aria-hidden />
           </Button>
@@ -276,6 +290,7 @@ function NotificationRowCard({
           size="icon-sm"
           aria-label={t("notifications.delete", { name: actor })}
           onClick={() => onDelete(item.id)}
+          disabled={deletePending}
         >
           <Trash2Icon aria-hidden />
         </Button>

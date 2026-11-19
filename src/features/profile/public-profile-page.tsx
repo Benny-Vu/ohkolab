@@ -402,6 +402,20 @@ function FollowListDialog({
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </div>
+        ) : query.isError ? (
+          <ErrorState
+            title={t("publicProfile.followListError")}
+            description={query.error.message}
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void query.refetch()}
+              >
+                {t("common.retry")}
+              </Button>
+            }
+          />
         ) : (query.data ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">{emptyText}</p>
         ) : (
@@ -725,7 +739,7 @@ function ProfileHeader({
               @{profile.username}
             </p>
             {profile.bio ? (
-              <p className="min-w-0 whitespace-pre-wrap text-sm">
+              <p className="min-w-0 whitespace-pre-wrap break-words text-sm">
                 {profile.bio}
               </p>
             ) : null}
