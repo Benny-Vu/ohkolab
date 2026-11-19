@@ -370,6 +370,46 @@ export function useFollowState(
   });
 }
 
+/**
+ * Whether the signed-in user follows each of the given users, in ONE
+ * query — the batched form of useFollowState for lists (the follow-back
+ * rows on the notifications page). Users not in the map are not followed.
+ */
+export function useFollowStates(
+  userIds: string[],
+  client: AppSupabaseClient | null = supabase,
+): UseQueryResult<Map<string, boolean>, SocialFailure> {
+  const { user } = useAuth();
+  return useQuery<Map<string, boolean>, SocialFailure>({
+    queryKey: [
+      "social",
+      "follow-states",
+      user?.id ?? null,
+      [...new Set(userIds)].sort(),
+    ],
+    queryFn: async () => {
+      if (!client || isSocialNotInstalled()) {
+        return new Map();
+      }
+      const me = user?.id ?? null;
+      if (!me || userIds.length === 0) {
+        return new Map();
+      }
+      const { data, error } = await client
+        .from("follows")
+        .select("followee_id")
+        .eq("follower_id", me)
+        .in("followee_id", userIds);
+      if (error) {
+        return softReadError(error, new Map());
+      }
+      return new Map((data ?? []).map((row) => [row.followee_id, true]));
+    },
+    enabled: client !== null && user !== null && userIds.length > 0,
+    retry: false,
+  });
+}
+
 /** Follower and following counts for one user. */
 export function useFollowCounts(
   userId: string,
