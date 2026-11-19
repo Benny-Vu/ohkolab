@@ -180,7 +180,7 @@ describe("reportError", () => {
     const captured = vi.mocked(Sentry.captureException).mock.calls[0]?.[0];
     expect(captured).toBeInstanceOf(Error);
     expect((captured as Error).message).toBe(
-      'unknown: {"weird":"object","detail":7}',
+      "unknown: object with keys weird, detail",
     );
   });
 
@@ -193,6 +193,16 @@ describe("reportError", () => {
     const captured = vi.mocked(Sentry.captureException).mock.calls[0]?.[0];
     expect(captured).toBeInstanceOf(Error);
     expect((captured as Error).message).toMatch(/^unknown: /);
+  });
+
+  it("never puts an object's values into the message (they can be user content)", () => {
+    overrideTelemetryConfig(ENABLED);
+    reportError({ body: "my secret post text", email: "someone@example.com" });
+    const captured = vi.mocked(Sentry.captureException).mock.calls[0]?.[0];
+    const message = (captured as Error).message;
+    expect(message).toBe("unknown: object with keys body, email");
+    expect(message).not.toContain("secret");
+    expect(message).not.toContain("example.com");
   });
 });
 

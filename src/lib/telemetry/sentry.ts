@@ -231,16 +231,25 @@ export function stopNativeSentry(): void {
 }
 
 /**
- * A short text view of an unknown value for an exception message. Never
- * throws, also on circular structures.
+ * The shape of an unknown value for an exception message: its type and, for
+ * objects, its key names only. Never the values: they can hold user content
+ * (post text, emails), which must not reach Sentry. Never throws.
  */
 function summarizeValue(value: unknown): string {
-  try {
-    const text = JSON.stringify(value);
-    return typeof text === "string" && text.length > 0 ? text : String(value);
-  } catch {
-    return String(value);
+  if (value === null) return "null";
+  if (Array.isArray(value)) return `array of ${value.length}`;
+  if (typeof value === "object") {
+    let keys: string[] = [];
+    try {
+      keys = Object.keys(value).slice(0, 8);
+    } catch {
+      // A hostile proxy or exotic object; the type alone is enough.
+    }
+    return keys.length > 0
+      ? `object with keys ${keys.join(", ")}`
+      : "empty object";
   }
+  return typeof value;
 }
 
 /**
