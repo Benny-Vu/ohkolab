@@ -13,6 +13,9 @@ import { TYPE_NAMES } from "@/types/pokemon";
 export type NameKind =
   "species" | "move" | "ability" | "item" | "type" | "nature";
 
+/** The kinds that also carry a Japanese flavour-text description. */
+export type DescriptionKind = "ability" | "item";
+
 /** The shape of `@/data/i18n/ja-names.json`, keyed by `@/data` ids. */
 export interface JapaneseNames {
   species: Record<string, string>;
@@ -21,6 +24,9 @@ export interface JapaneseNames {
   item: Record<string, string>;
   type: Record<string, string>;
   nature: Record<string, string>;
+  /** Japanese flavour text, only where PokéAPI has any (most-recent game). */
+  abilityDescription: Record<string, string>;
+  itemDescription: Record<string, string>;
 }
 
 let names: JapaneseNames | undefined;
@@ -105,6 +111,52 @@ export function useDisplayName(): (kind: NameKind, id: string) => string {
   }, [locale]);
   return useCallback(
     (kind: NameKind, id: string) => displayName(kind, id, locale),
+    [locale],
+  );
+}
+
+/** The English short description a roster id stands for. */
+function rosterEnglishDescription(kind: DescriptionKind, id: string): string {
+  const key = toID(id);
+  if (kind === "ability") return getAbility(key)?.shortDesc ?? "";
+  return getItem(key)?.shortDesc ?? "";
+}
+
+/**
+ * An ability's or item's short description in a locale: the Japanese
+ * flavour text when the locale is "ja" and the chunk is loaded, otherwise
+ * the English `shortDesc` — also for "ja" until the chunk arrives, and
+ * for the entries PokéAPI has no Japanese text for (a handful of
+ * Champions-only abilities and Mega Stones).
+ */
+export function displayDescription(
+  kind: DescriptionKind,
+  id: string,
+  locale: Locale,
+): string {
+  const english = rosterEnglishDescription(kind, id);
+  if (locale !== "ja" || names === undefined) return english;
+  const section =
+    kind === "ability" ? names.abilityDescription : names.itemDescription;
+  return section[toID(id)] ?? english;
+}
+
+/**
+ * `displayDescription` for React, mirroring `useDisplayName`: loads the
+ * Japanese chunk once the locale is "ja" and re-renders when it arrives.
+ */
+export function useDisplayDescription(): (
+  kind: DescriptionKind,
+  id: string,
+) => string {
+  const [locale] = useLocale();
+  // Re-render when the Japanese names finish loading.
+  useSyncExternalStore(subscribe, isLoaded, () => false);
+  useEffect(() => {
+    if (locale === "ja") void loadJapaneseNames().catch(() => {});
+  }, [locale]);
+  return useCallback(
+    (kind: DescriptionKind, id: string) => displayDescription(kind, id, locale),
     [locale],
   );
 }

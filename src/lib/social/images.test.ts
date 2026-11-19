@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PostImageRow } from "@/lib/database.types";
@@ -6,19 +6,28 @@ import {
   createFakeClient,
   createQueryClient,
   createWrapper,
+  expectFailed,
   postImageRow,
   runMutation,
   SIGNED_IN_AUTH,
 } from "@/lib/social/test-client";
 import {
+  clearAllScreenFailures,
+  clearScreenFailure,
   clampImageAlt,
   imagePostsEnabled,
   imageUrl,
+  isStalePending,
   newImageId,
+  noteScreenFailure,
   prepareImage,
   scaledDimensions,
+  screenImageWithRetry,
   useAttachPostImages,
+  useFailedScreenings,
   usePostImages,
+  useRemovePendingImage,
+  useRetryScreenImage,
   visiblePostImages,
   IMAGE_ALT_MAX,
   IMAGE_MAX_INPUT_BYTES,
@@ -78,6 +87,7 @@ function imageFile(type = "image/png", size = 1024): File {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  clearAllScreenFailures();
 });
 
 describe("imagePostsEnabled", () => {
@@ -267,8 +277,36 @@ describe("visiblePostImages", () => {
     const broken = [postImageRow({ id: "img-x", public_path: null })];
     expect(visiblePostImages(broken, false)).toHaveLength(0);
     expect(visiblePostImages(broken, true)).toEqual([
-      { id: "img-x", status: "pending", url: null, alt: null },
+      {
+        id: "img-x",
+        status: "pending",
+        url: null,
+        alt: null,
+        pendingSince: "2026-11-19T10:00:00.000Z",
+      },
     ]);
+  });
+
+  it("carries the upload time on pending rows for the stale check", () => {
+    const rows = [
+      postImageRow({
+        id: "img-p",
+        status: "pending",
+        public_path: null,
+        created_at: "2026-11-18T09:00:00.000Z",
+      }),
+      postImageRow({
+        id: "img-r",
+        status: "rejected",
+        public_path: null,
+      }),
+    ];
+    const displays = visiblePostImages(rows, true);
+    expect(displays[0]).toMatchObject({
+      id: "img-p",
+      pendingSince: "2026-11-18T09:00:00.000Z",
+    });
+    expect(displays[1]).toMatchObject({ id: "img-r", pendingSince: null });
   });
 });
 
@@ -510,5 +548,237 @@ describe("useAttachPostImages", () => {
     if (result && !result.ok) {
       expect(result.error.code).toBe("not_signed_in");
     }
+  });
+
+  it("retries a failing screening call twice before giving up", async () => {
+    // A queue the fake drains one invoke at a time: fail, fail, succeed.
+    let outcomes: Array<{ data: unknown; error: unknown }> = [
+      { data: null, error: { message: "503" } },
+      { data: null, error: { message: "503" } },
+      { data: { ok: true }, error: null },
+    ];
+    const fake = createFakeClient({
+      resolve: (record) =>
+        record.table === "post_images"
+          ? { data: postImageRow({ id: "row-1" }), error: null }
+          : { data: [], error: null },
+      functions: {
+        get "screen-image"() {
+          const outcome = outcomes[0];
+          outcomes = outcomes.slice(1);
+          return outcome ?? { data: null, error: null };
+        },
+      },
+    });
+    const result = await runMutation(() => useAttachPostImages(fake.client), {
+      postId: "post-9",
+      images: [imageInput()],
+    });
+    expect(result?.ok).toBe(true);
+    if (result?.ok) {
+      expect(result.data[0]).toMatchObject({
+        imageId: "row-1",
+        screened: true,
+      });
+    }
+    expect(fake.invokes).toHaveLength(3);
+  });
+
+  it("notes the screening failure for the author's retry button", async () => {
+    const fake = createFakeClient({
+      resolve: (record) =>
+        record.table === "post_images"
+          ? { data: postImageRow({ id: "row-1" }), error: null }
+          : { data: [], error: null },
+      functions: { "screen-image": { data: null, error: { message: "503" } } },
+    });
+    const { result: registry } = renderHook(() => useFailedScreenings());
+    expect(registry.current.size).toBe(0);
+
+    const result = await runMutation(() => useAttachPostImages(fake.client), {
+      postId: "post-9",
+      images: [imageInput()],
+    });
+    expect(result?.ok).toBe(true);
+    if (result?.ok) {
+      expect(result.data[0]?.screened).toBe(false);
+    }
+    expect(registry.current.has("row-1")).toBe(true);
+
+    act(() => clearScreenFailure("row-1"));
+    expect(registry.current.has("row-1")).toBe(false);
+  });
+});
+
+describe("useFailedScreenings", () => {
+  it("re-renders with a new snapshot when a failure is noted or cleared", () => {
+    let renders = 0;
+    const { result } = renderHook(() => {
+      renders += 1;
+      return useFailedScreenings();
+    });
+    const before = result.current;
+    const rendersBefore = renders;
+
+    act(() => noteScreenFailure("img-a"));
+    expect(result.current).not.toBe(before);
+    expect(result.current.has("img-a")).toBe(true);
+    expect(before.has("img-a")).toBe(false);
+    expect(renders).toBeGreaterThan(rendersBefore);
+
+    const noted = result.current;
+    act(() => clearScreenFailure("img-a"));
+    expect(result.current).not.toBe(noted);
+    expect(result.current.has("img-a")).toBe(false);
+  });
+});
+
+describe("screenImageWithRetry", () => {
+  const invokeOk = { data: { ok: true }, error: null };
+  const invokeFail = { data: null, error: { message: "503" } };
+
+  function clientWithQueue(outcomes: Array<{ data: unknown; error: unknown }>) {
+    let queue = outcomes;
+    return createFakeClient({
+      functions: {
+        get "screen-image"() {
+          const outcome = queue[0];
+          queue = queue.slice(1);
+          return outcome ?? { data: null, error: null };
+        },
+      },
+    });
+  }
+
+  it("calls screen-image once when it succeeds", async () => {
+    const fake = clientWithQueue([invokeOk]);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    await expect(
+      screenImageWithRetry(fake.client, "img-1", { sleep }),
+    ).resolves.toBe(true);
+    expect(fake.invokes).toEqual([
+      { fn: "screen-image", options: { body: { imageId: "img-1" } } },
+    ]);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it("retries twice with the short backoff and then succeeds", async () => {
+    const fake = clientWithQueue([invokeFail, invokeFail, invokeOk]);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    await expect(
+      screenImageWithRetry(fake.client, "img-1", { sleep }),
+    ).resolves.toBe(true);
+    expect(fake.invokes).toHaveLength(3);
+    expect(sleep.mock.calls).toEqual([[400], [1200]]);
+  });
+
+  it("gives up after the two retries", async () => {
+    const fake = clientWithQueue([invokeFail, invokeFail, invokeFail]);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    await expect(
+      screenImageWithRetry(fake.client, "img-1", { sleep }),
+    ).resolves.toBe(false);
+    expect(fake.invokes).toHaveLength(3);
+    expect(sleep.mock.calls).toEqual([[400], [1200]]);
+  });
+});
+
+describe("isStalePending", () => {
+  const now = Date.parse("2026-11-19T12:00:00.000Z");
+
+  it("is false for a fresh upload and a missing timestamp", () => {
+    expect(isStalePending("2026-11-19T11:00:00.000Z", now)).toBe(false);
+    expect(isStalePending(null, now)).toBe(false);
+  });
+
+  it("is true once a day has passed without a screening", () => {
+    expect(isStalePending("2026-11-18T12:01:00.000Z", now)).toBe(false);
+    expect(isStalePending("2026-11-18T12:00:00.000Z", now)).toBe(true);
+    expect(isStalePending("2026-11-18T09:00:00.000Z", now)).toBe(true);
+  });
+
+  it("ignores unparseable timestamps", () => {
+    expect(isStalePending("not a date", now)).toBe(false);
+  });
+});
+
+describe("useRetryScreenImage", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_IMAGE_POSTS", "true");
+  });
+
+  it("screens again and forgets the failure on success", async () => {
+    noteScreenFailure("img-1");
+    const fake = createFakeClient({
+      functions: { "screen-image": { data: { ok: true }, error: null } },
+    });
+    const { result: registry } = renderHook(() => useFailedScreenings());
+    expect(registry.current.has("img-1")).toBe(true);
+
+    const result = await runMutation(
+      () => useRetryScreenImage(fake.client),
+      "img-1",
+    );
+    expect(result?.ok).toBe(true);
+    expect(registry.current.has("img-1")).toBe(false);
+    expect(fake.invokes).toEqual([
+      { fn: "screen-image", options: { body: { imageId: "img-1" } } },
+    ]);
+  });
+
+  it("keeps the failure when every retry fails", async () => {
+    noteScreenFailure("img-1");
+    const fake = createFakeClient({
+      functions: { "screen-image": { data: null, error: { message: "503" } } },
+    });
+    const result = await runMutation(
+      () => useRetryScreenImage(fake.client),
+      "img-1",
+    );
+    expect(result?.ok).toBe(false);
+    if (result && !result.ok) {
+      expect(result.error.code).toBe("unknown");
+    }
+  });
+});
+
+describe("useRemovePendingImage", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_IMAGE_POSTS", "true");
+  });
+
+  it("deletes the row and forgets the failure", async () => {
+    noteScreenFailure("img-1");
+    const fake = createFakeClient({
+      resolve: (record) =>
+        record.isDelete
+          ? { data: [{ id: "img-1" }], error: null }
+          : { data: [], error: null },
+    });
+    const { result: registry } = renderHook(() => useFailedScreenings());
+
+    const result = await runMutation(
+      () => useRemovePendingImage(fake.client),
+      "img-1",
+    );
+    expect(result?.ok).toBe(true);
+    expect(registry.current.has("img-1")).toBe(false);
+    const deleteRecord = fake.records.find((record) => record.isDelete);
+    expect(deleteRecord).toBeDefined();
+    expect(deleteRecord?.eqFilters).toContainEqual(["id", "img-1"]);
+    expect(deleteRecord?.eqFilters).toContainEqual(["author_id", "user-1"]);
+    expect(deleteRecord?.eqFilters).toContainEqual(["status", "pending"]);
+  });
+
+  it("reports forbidden when the server deletes nothing", async () => {
+    const fake = createFakeClient({
+      resolve: (record) =>
+        record.isDelete ? { data: [], error: null } : { data: [], error: null },
+    });
+    const result = await runMutation(
+      () => useRemovePendingImage(fake.client),
+      "img-1",
+    );
+    expectFailed(result, "forbidden");
   });
 });

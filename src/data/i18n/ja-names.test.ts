@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { toID } from "@/data/gen";
 import {
+  displayDescription,
   displayName,
   loadJapaneseNames,
   type JapaneseNames,
@@ -32,10 +33,12 @@ const rosterIds: Record<keyof JapaneseNames, Set<string>> = {
   item: new Set(listItems().map((info) => info.id)),
   type: new Set(TYPE_NAMES.map((name) => toID(name))),
   nature: new Set(listNatures().map((info) => toID(info.name))),
+  abilityDescription: new Set(listAbilities().map((info) => info.id)),
+  itemDescription: new Set(listItems().map((info) => info.id)),
 };
 
 describe("committed Japanese names", () => {
-  it("covers all six kinds", () => {
+  it("covers all eight sections", () => {
     for (const kind of Object.keys(rosterIds) as (keyof JapaneseNames)[]) {
       expect(names[kind], kind).toBeTruthy();
     }
@@ -63,5 +66,12 @@ describe("committed Japanese names", () => {
     );
     expect(displayName("type", "Fire", "ja")).toBe("ほのお");
     expect(displayName("nature", "Hardy", "ja")).toBe("がんばりや");
+  });
+
+  it("describes mainstream abilities and items in Japanese", () => {
+    expect(displayDescription("ability", "intimidate", "ja")).toMatch(
+      /^[぀-ヿ㐀-鿿]/,
+    );
+    expect(displayDescription("item", "lifeorb", "ja")).toMatch(/^[぀-ヿ㐀-鿿]/);
   });
 });
