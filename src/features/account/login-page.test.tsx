@@ -123,14 +123,14 @@ describe("LoginPage", () => {
 
     expect(
       screen.getByText(
-        "Confirm that you are 13 or older and accept the terms to create an account.",
+        "Confirm that you are 16 or older and accept the terms to create an account.",
       ),
     ).toBeInTheDocument();
     expect(auth.calls.map((c) => c.name)).not.toContain("signUp");
 
     await user.click(
       screen.getByLabelText(
-        "I am 13 or older and accept the terms and privacy policy",
+        "I am 16 or older and accept the terms and privacy policy",
       ),
     );
     await user.click(screen.getByRole("button", { name: "Sign up" }));
@@ -165,7 +165,7 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText("Password"), "staryu12345");
     await user.click(
       screen.getByLabelText(
-        "I am 13 or older and accept the terms and privacy policy",
+        "I am 16 or older and accept the terms and privacy policy",
       ),
     );
     await user.click(screen.getByRole("button", { name: "Sign up" }));
@@ -324,13 +324,13 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: "Sign up" }));
 
     const checkbox = screen.getByLabelText(
-      "I am 13 or older and accept the terms and privacy policy",
+      "I am 16 or older and accept the terms and privacy policy",
     );
     expect(checkbox).toHaveAttribute("aria-invalid", "true");
     expect(checkbox).toHaveAttribute("aria-describedby", "signup-terms-error");
     expect(
       screen.getByText(
-        "Confirm that you are 13 or older and accept the terms to create an account.",
+        "Confirm that you are 16 or older and accept the terms to create an account.",
       ),
     ).toHaveAttribute("id", "signup-terms-error");
   });

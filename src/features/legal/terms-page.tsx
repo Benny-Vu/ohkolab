@@ -9,11 +9,14 @@ import {
 import { JaTermsSections } from "@/features/legal/ja-terms";
 import { CONTACT_EMAIL, LAST_UPDATED } from "@/features/legal/legal-info";
 import { useLocale } from "@/lib/i18n/locale";
+import { directMessagesEnabled } from "@/lib/messages/flag";
 import { imagePostsEnabled } from "@/lib/social";
 
 // The image-post rules (approved by the owner on 2026-11-18) are shown only
-// when the VITE_IMAGE_POSTS flag is on.
+// when the VITE_IMAGE_POSTS flag is on; the direct message rules (approved
+// 2026-11-19) follow VITE_DIRECT_MESSAGES.
 const IMAGES = imagePostsEnabled();
+const MESSAGES = directMessagesEnabled();
 
 // Every section exists in both languages with the same id (a test enforces
 // it); the Japanese reference translation renders when the locale is ja.
@@ -40,6 +43,15 @@ const SECTIONS: Array<{ id: string; heading: string; headingJa: string }> = [
     headingJa: "モデレーションと停止",
   },
   { id: "groups", heading: "Groups", headingJa: "グループ" },
+  ...(MESSAGES
+    ? [
+        {
+          id: "direct-messages",
+          heading: "Direct messages",
+          headingJa: "ダイレクトメッセージ",
+        },
+      ]
+    : []),
   ...(IMAGES
     ? [
         {
@@ -99,7 +111,11 @@ export function TermsPage() {
       description={lastUpdated(locale)}
       sections={sections}
     >
-      {ja ? <JaTermsSections images={IMAGES} /> : <EnglishTermsSections />}
+      {ja ? (
+        <JaTermsSections images={IMAGES} messages={MESSAGES} />
+      ) : (
+        <EnglishTermsSections />
+      )}
     </LegalPage>
   );
 }
@@ -131,7 +147,7 @@ function EnglishTermsSections() {
 
       <LegalSection id="who-can-use" heading="Who can use OHKOLab">
         <LegalText>
-          You must be at least 13 years old to create an account. By using
+          You must be at least 16 years old to create an account. By using
           OHKOLab, you confirm that you meet this age requirement.
         </LegalText>
       </LegalSection>
@@ -167,6 +183,19 @@ function EnglishTermsSections() {
           away an owner's or moderator's role, if a group breaks these terms.
         </LegalText>
       </LegalSection>
+
+      {MESSAGES && (
+        <LegalSection id="direct-messages" heading="Direct messages">
+          <LegalText>
+            Direct messages are between you and the other player. Do not use
+            them to harass, threaten or spam anyone, and never to send sexual
+            content involving minors. You can report a message; reports are
+            reviewed using the copy described in the privacy policy. Breaking
+            these rules can lead to messages being removed, and to suspension or
+            deletion of your account.
+          </LegalText>
+        </LegalSection>
+      )}
 
       {IMAGES && (
         <LegalSection id="images" heading="Images in posts">

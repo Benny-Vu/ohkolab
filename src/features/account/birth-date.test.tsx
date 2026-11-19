@@ -73,15 +73,15 @@ describe("validateBirthDate", () => {
     return date.toISOString().slice(0, 10);
   };
 
-  it("accepts an adult's and a 13-year-old's date", () => {
+  it("accepts an adult's and a 16-year-old's date", () => {
     expect(validateBirthDate(yearsAgo(20), t)).toBeNull();
-    expect(validateBirthDate(yearsAgo(13), t)).toBeNull();
+    expect(validateBirthDate(yearsAgo(16), t)).toBeNull();
   });
 
-  it("rejects garbage, future dates and under-13", () => {
+  it("rejects garbage, future dates and under-16", () => {
     expect(validateBirthDate("not-a-date", t)).toBe("birthDate.invalid");
     expect(validateBirthDate("9999-01-01", t)).toBe("birthDate.invalid");
-    expect(validateBirthDate(yearsAgo(12), t)).toBe("birthDate.tooYoung");
+    expect(validateBirthDate(yearsAgo(15), t)).toBe("birthDate.tooYoung");
   });
 });
 
@@ -122,7 +122,7 @@ describe("BirthDateField", () => {
     });
   });
 
-  it("shows the under-13 message without calling the RPC", async () => {
+  it("shows the under-16 message without calling the RPC", async () => {
     const { client, calls } = fakeClient(null);
     const user = userEvent.setup();
     render(<BirthDateField client={client} />);
@@ -136,7 +136,7 @@ describe("BirthDateField", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(
-      screen.getByText("You must be at least 13 years old."),
+      screen.getByText("You must be at least 16 years old."),
     ).toBeInTheDocument();
     expect(calls.rpc).toEqual([]);
   });

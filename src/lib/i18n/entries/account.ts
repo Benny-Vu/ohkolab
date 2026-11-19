@@ -19,7 +19,7 @@ export const accountEn = {
   "login.accountCreatedToast": "Account created.",
   "login.resetSentToast": "Check your email for the reset link.",
   "login.acceptTermsError":
-    "Confirm that you are 13 or older and accept the terms to create an account.",
+    "Confirm that you are 16 or older and accept the terms to create an account.",
   "login.checkEmailTitle": "Check your email",
   "login.confirmAccountTitle": "Confirm your account",
   "login.confirmAccountPrefix": "We sent a link to",
@@ -30,7 +30,7 @@ export const accountEn = {
   "login.resetSentSuffix":
     ", a password reset link is on its way. The link opens the reset page.",
   "login.backToSignIn": "Back to sign in",
-  "login.termsPrefix": "I am 13 or older and accept the",
+  "login.termsPrefix": "I am 16 or older and accept the",
   "login.termsLink": "terms",
   "login.termsJoin": "and",
   "login.privacyLink": "privacy policy",

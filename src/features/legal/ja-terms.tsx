@@ -14,7 +14,13 @@ import { CONTACT_EMAIL } from "@/features/legal/legal-info";
  * the English page changes, this one must change with it. The section ids
  * match the English page exactly (a test enforces it).
  */
-export function JaTermsSections({ images }: { images: boolean }) {
+export function JaTermsSections({
+  images,
+  messages = false,
+}: {
+  images: boolean;
+  messages?: boolean;
+}) {
   return (
     <div className="space-y-8">
       <LegalSection id="operator" heading="OHKOLab の運営者">
@@ -42,7 +48,7 @@ export function JaTermsSections({ images }: { images: boolean }) {
 
       <LegalSection id="who-can-use" heading="利用できる人">
         <LegalText>
-          アカウントを作成するには満13歳以上である必要があります。OHKOLab
+          アカウントを作成するには満16歳以上である必要があります。OHKOLab
           を利用することで、あなたはこの年齢要件を満たしていることを確認したものとみなします。
         </LegalText>
       </LegalSection>
@@ -54,7 +60,7 @@ export function JaTermsSections({ images }: { images: boolean }) {
         </LegalText>
         <LegalList>
           <li>他の人物への嫌がらせ、脅迫、いじめ</li>
-          <li>任何人に対する憎悪や差別の助長</li>
+          <li>他者に対する憎悪や差別の助長</li>
           <li>性的なコンテンツ</li>
           <li>スパム、または意図的な偽装・誤解を招く内容</li>
           <li>違法な内容、またはあなたに適用される法令・ルールに反する内容</li>
@@ -73,6 +79,14 @@ export function JaTermsSections({ images }: { images: boolean }) {
           グループは、メンバー自身が作成・運営する場です。グループのオーナーとモデレーターは、そのグループ内の投稿やメンバーを含む運営に責任を負います。グループが本規約に違反した場合、グループを削除したり、オーナー・モデレーターの権限を取り消すことがあります。
         </LegalText>
       </LegalSection>
+
+      {messages && (
+        <LegalSection id="direct-messages" heading="ダイレクトメッセージ">
+          <LegalText>
+            ダイレクトメッセージは、あなたともう一人のプレイヤーとの間だけのものです。他のプレイヤーへの嫌がらせ、脅迫、スパム、そして未成年に関わる性的コンテンツの送信は禁止します。メッセージは報告でき、報告はプライバシーポリシーに記載のコピーを使って審査されます。これらのルールに違反すると、メッセージの削除、アカウントの停止や削除につながることがあります。
+          </LegalText>
+        </LegalSection>
+      )}
 
       {images && (
         <LegalSection id="images" heading="投稿内の画像">

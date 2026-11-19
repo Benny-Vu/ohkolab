@@ -50,7 +50,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "birthDate.hint":
     "若いプレイヤーの安全のために使います。他のプレイヤーには表示されません。",
   "birthDate.invalid": "正しい日付を入力してください。",
-  "birthDate.tooYoung": "13歳以上である必要があります。",
+  "birthDate.tooYoung": "16歳以上である必要があります。",
   "birthDate.saved": "生年月日を保存しました。",
   "birthDate.saveFailed":
     "生年月日を保存できませんでした。もう一度お試しください。",

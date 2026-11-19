@@ -17,7 +17,13 @@ import { t } from "@/lib/i18n/t";
  * match the English page exactly (a test enforces it), and the image-post
  * sections follow VITE_IMAGE_POSTS like the English ones.
  */
-export function JaPrivacySections({ images }: { images: boolean }) {
+export function JaPrivacySections({
+  images,
+  messages = false,
+}: {
+  images: boolean;
+  messages?: boolean;
+}) {
   return (
     <div className="space-y-8">
       <LegalSection id="operator" heading="OHKOLab の運営者">
@@ -46,7 +52,7 @@ export function JaPrivacySections({ images }: { images: boolean }) {
           アカウントを作成すると、サインインプロバイダーの Supabase
           が、メールアドレス、メールで登録した場合はハッシュ化されたパスワード、Google
           や Discord
-          でサインインした場合はそのプロバイダー名を保存します。また、13歳以上であることと利用規約への同意、およびその同意日も保存されます。
+          でサインインした場合はそのプロバイダー名を保存します。また、16歳以上であることと利用規約への同意、およびその同意日も保存されます。
         </LegalText>
       </LegalSection>
 
@@ -77,7 +83,7 @@ export function JaPrivacySections({ images }: { images: boolean }) {
             に再エンコードします。この処理で、位置情報を含むメタデータもアップロード前に除去されます。端末から送信されるのは処理後の画像だけです。
           </LegalText>
           <LegalText>
-            すべての画像は、他のユーザーが閲覧できるようになる前に自動で確認されます。画像の処理を委託する米国企社
+            すべての画像は、他のユーザーが閲覧できるようになる前に自動で確認されます。画像の処理を委託する米国企業
             OpenAI
             が、性的コンテンツ・暴力・自傷に関する審査を行い、審査に通らなかった画像が他のユーザーに表示されることはありません。画像を配信する
             Cloudflare
@@ -97,6 +103,20 @@ export function JaPrivacySections({ images }: { images: boolean }) {
           グループには、名前・説明・公開か招待制か・オーナーが保存されます。各メンバーについては、役割と参加状況を保存します。グループの名前と説明は誰でも閲覧でき、公開グループでは所属メンバーも誰でも閲覧できます。招待制グループでは、メンバーリストはメンバーだけが閲覧できます。自分自身の参加状況は常に閲覧できます。
         </LegalText>
       </LegalSection>
+
+      {messages && (
+        <LegalSection id="direct-messages" heading="ダイレクトメッセージ">
+          <LegalText>
+            ダイレクトメッセージは、やりとりする2人の参加者だけが閲覧できます。当方はあなたのメッセージを読みません。参加者の1人が報告した場合に限り、モデレーターがそのメッセージを確認できます。報告には、報告対象のメッセージとその直前の最大20件のコピーが保存され、報告内容の審査に使われます。報告のコピーは1年間保存したのち削除されます。各メッセージは、送信から1年経過すると自動的に削除されます。どちらかのアカウントが削除されると、会話とそのメッセージも削除されます。
+          </LegalText>
+          <LegalText>
+            若いプレイヤーを守るため、生年月日の入力をお願いしています。生年月日が他のプレイヤーに表示されることはありません。18歳未満のプレイヤー、および生年月日を未登録のプレイヤーは、誰が始めた場合でも、友達とのみメッセージをやりとりできます。生年月日はアカウントが存在する間保存され、アカウントとともに削除されます。
+          </LegalText>
+          <LegalText>
+            メッセージは、あなたが利用するメッセージ機能を提供するため（あなたとの契約の履行）に保存・配信します。生年月日、報告のコピー、若いプレイヤーを守るための制限は、サービスを安全に保つという正当な利益と、法令上の義務を果たすために処理します。
+          </LegalText>
+        </LegalSection>
+      )}
 
       <LegalSection id="notifications" heading="通知">
         <LegalText>
@@ -143,6 +163,8 @@ export function JaPrivacySections({ images }: { images: boolean }) {
           コンテンツの削除やアカウントの停止を行った際、何が削除・停止されたか、その理由、対応したモデレーター、日時を保存します。投稿やコメントを削除した場合は、削除前の本文のコピーも記録とともに保管し、あなたとモデレーターが確認できるようにします。申し立てがあった場合は、そのメッセージと結果を保存します。モデレーターはモデレーション記録と申し立てを閲覧できます。あなたは、自分に関わる記録と自分の申し立てを閲覧できます。
           {images &&
             " 画像つき投稿の場合、記録には削除とともにブロックされた画像ファイルも記載されます。"}
+          {messages &&
+            " メッセージを報告すると、「ダイレクトメッセージ」に記載のコピーが報告とともに保存されます。"}
         </LegalText>
       </LegalSection>
 

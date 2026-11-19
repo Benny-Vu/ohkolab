@@ -268,7 +268,7 @@ export function createAuthActions(
         if (!acceptedTerms) {
           return fail(
             "invalid_input",
-            "Confirm that you are 13 or older and accept the terms to create an account.",
+            "Confirm that you are 16 or older and accept the terms to create an account.",
             "acceptedTerms",
           );
         }

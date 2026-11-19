@@ -51,7 +51,7 @@ export const shellEn = {
   "birthDate.hint":
     "Used to keep young players safe. Never shown to other players.",
   "birthDate.invalid": "Enter a valid date.",
-  "birthDate.tooYoung": "You must be at least 13 years old.",
+  "birthDate.tooYoung": "You must be at least 16 years old.",
   "birthDate.saved": "Birth date saved.",
   "birthDate.saveFailed": "Could not save your birth date. Try again.",
   "birthDate.none": "Not added yet.",
