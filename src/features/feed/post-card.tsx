@@ -40,6 +40,7 @@ import { KoLabel } from "@/components/ko-label";
 import { useDisplayName } from "@/data";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
+import { displayTeamName } from "@/lib/team/display";
 import { useTeams } from "@/lib/team";
 import {
   useDeletePost,
@@ -134,7 +135,9 @@ export function PostCard({
       format: team.format,
       members: team.members,
     });
-    toast.success(t("postCard.copiedTeam", { name: created.name }));
+    toast.success(
+      t("postCard.copiedTeam", { name: displayTeamName(created.name) }),
+    );
   }
 
   function handleOpenInCalc() {
@@ -261,7 +264,9 @@ export function PostCard({
           {team && (
             <div className="mt-3 rounded-md border bg-surface-sunken p-3">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">{team.name}</p>
+                <p className="text-sm font-medium">
+                  {displayTeamName(team.name)}
+                </p>
                 <span className="text-xs text-muted-foreground capitalize">
                   {team.format}
                 </span>

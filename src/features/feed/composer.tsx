@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Picker } from "@/components/picker";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
+import { displayTeamName } from "@/lib/team/display";
 import { useTeams } from "@/lib/team";
 import { useT } from "@/lib/i18n/t";
 import { useCreatePost } from "@/lib/social/mutations";
@@ -190,7 +191,10 @@ export function Composer({ groupId }: { groupId?: string | null }) {
 
   const pickerOptions = [
     { value: "none", label: t("composer.noAttachment") },
-    ...teams.map((team) => ({ value: team.name, label: team.name })),
+    ...teams.map((team) => ({
+      value: team.name,
+      label: displayTeamName(team.name),
+    })),
   ];
 
   return (

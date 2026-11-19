@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { displayTeamName } from "@/lib/team/display";
 import { PokemonEditor } from "@/components/pokemon-editor";
 import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
 import { StatBar } from "@/components/stat-bar";
@@ -229,7 +230,7 @@ export function TeamDetailPage() {
   const handleDelete = () => {
     remove(team.id);
     navigate("/teams");
-    toast(t("teams.deleted", { name: team.name }), {
+    toast(t("teams.deleted", { name: displayTeamName(team.name) }), {
       action: {
         label: t("teams.undo"),
         onClick: () => restore(team),
@@ -249,7 +250,7 @@ export function TeamDetailPage() {
 
   return (
     <Page
-      title={team.name}
+      title={displayTeamName(team.name)}
       description={t("teams.memberCount", {
         count: team.members.length,
         max: MAX_TEAM_SIZE,

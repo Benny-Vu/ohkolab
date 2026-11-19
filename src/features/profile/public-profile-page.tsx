@@ -42,6 +42,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { normalizeUsername } from "@/lib/auth/validation";
+import { displayTeamName } from "@/lib/team/display";
 import { useTeams } from "@/lib/team/use-teams";
 import type { Team } from "@/types/team";
 import { MAX_TEAM_SIZE } from "@/types/team";
@@ -125,7 +126,9 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
       members: team.members,
     });
     setOpen(false);
-    toast.success(t("publicProfile.copyToast", { name: copy.name }));
+    toast.success(
+      t("publicProfile.copyToast", { name: displayTeamName(copy.name) }),
+    );
   };
 
   return (
@@ -137,7 +140,9 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
       </DialogTrigger>
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="min-w-0 truncate">{team.name}</DialogTitle>
+          <DialogTitle className="min-w-0 truncate">
+            {displayTeamName(team.name)}
+          </DialogTitle>
           <DialogDescription>
             {team.format === "doubles" ? "Doubles" : "Singles"} ·{" "}
             {t("publicProfile.pokemonCount", { n: team.members.length })} ·{" "}
@@ -176,7 +181,9 @@ function TeamCard({ team, username }: { team: Team; username: string }) {
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle className="min-w-0 truncate">{team.name}</CardTitle>
+        <CardTitle className="min-w-0 truncate">
+          {displayTeamName(team.name)}
+        </CardTitle>
         <CardDescription>
           {team.format === "doubles" ? "Doubles" : "Singles"} ·{" "}
           {team.members.length} Pokémon

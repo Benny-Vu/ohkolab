@@ -163,6 +163,7 @@ export const toolsEn = {
   "teams.editMember": "Edit {name}",
   "teams.removeMember": "Remove {name}",
   "teams.nameThis": "Name this team",
+  "teams.untitled": "Untitled team",
 
   // Team builder: analysis.
   "teams.analysis": "Team analysis",
@@ -387,6 +388,7 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "teams.editMember": "{name}を編集",
   "teams.removeMember": "{name}を削除",
   "teams.nameThis": "構築に名前をつける",
+  "teams.untitled": "無題の構築",
 
   // 構築：分析。
   "teams.analysis": "構築分析",

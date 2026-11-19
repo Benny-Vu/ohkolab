@@ -5,6 +5,7 @@ import { CopyIcon, DownloadIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { displayTeamName } from "@/lib/team/display";
 import { Page } from "@/components/page";
 import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,9 @@ function TeamCard({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={t("teams.duplicateNamed", { name: team.name })}
+          aria-label={t("teams.duplicateNamed", {
+            name: displayTeamName(team.name),
+          })}
           onClick={() => onDuplicate(team)}
         >
           <CopyIcon />
@@ -101,7 +104,9 @@ function TeamCard({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={t("teams.deleteNamed", { name: team.name })}
+          aria-label={t("teams.deleteNamed", {
+            name: displayTeamName(team.name),
+          })}
           onClick={() => onDelete(team)}
         >
           <Trash2Icon />
@@ -154,12 +159,16 @@ export function TeamsPage() {
 
   function handleDuplicate(team: Team): void {
     const copy = duplicate(team.id);
-    if (copy) toast.success(t("teams.duplicated", { name: team.name }));
+    if (copy) {
+      toast.success(
+        t("teams.duplicated", { name: displayTeamName(team.name) }),
+      );
+    }
   }
 
   function handleDelete(team: Team): void {
     remove(team.id);
-    toast(t("teams.deleted", { name: team.name }), {
+    toast(t("teams.deleted", { name: displayTeamName(team.name) }), {
       action: {
         label: t("teams.undo"),
         onClick: () => restore(team),

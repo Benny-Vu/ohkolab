@@ -4,12 +4,20 @@ import { en, type TranslationKey } from "@/lib/i18n/en";
 import { ja } from "@/lib/i18n/ja";
 import { setLocale } from "@/lib/i18n/locale";
 import { t } from "@/lib/i18n/t";
+import { DEFAULT_TEAM_NAME } from "@/lib/team/team-ops";
 
 describe("dictionaries", () => {
   it("has every English key in the Japanese dictionary", () => {
     const enKeys = Object.keys(en).sort();
     const jaKeys = Object.keys(ja).sort();
     expect(jaKeys).toEqual(enKeys);
+  });
+
+  it("keeps hard-coded display defaults in the dictionary", () => {
+    // The stored sentinel for new teams is shown localized via
+    // displayTeamName; this ties the constant to the dictionary so the
+    // two cannot drift apart (the footer bug class, but for defaults).
+    expect(en["teams.untitled" as TranslationKey]).toBe(DEFAULT_TEAM_NAME);
   });
 
   it("uses the same placeholders in English and Japanese for each key", () => {
