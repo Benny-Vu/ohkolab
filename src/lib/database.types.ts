@@ -996,6 +996,23 @@ export type Database = {
           created_at: string;
         }[];
       };
+      /**
+       * Follow suggestions for the calling user, ranked server side:
+       * mutual-follow connections, shared public groups, then the same main
+       * format. Public profile fields only, plus a score.
+       * (20261121210000_follow_suggestions.sql)
+       */
+      suggest_users: {
+        Args: { p_limit?: number };
+        Returns: {
+          id: string;
+          username: string;
+          display_name: string | null;
+          avatar_species: string | null;
+          main_format: string | null;
+          score: number;
+        }[];
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

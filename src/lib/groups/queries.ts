@@ -18,10 +18,17 @@ import { isSocialNotInstalled, softReadError } from "@/lib/social/availability";
 import type { SocialFailure } from "@/lib/social/errors";
 import type { SocialProfileSummary } from "@/lib/social/queries";
 
+/** A public group with its active member count, for the Discover list. */
+export type DiscoverGroup = GroupSummary & { memberCount: number };
+
 import {
+  asGroupCategory,
+  asGroupLanguage,
   asGroupMemberStatus,
   asGroupRole,
   asGroupVisibility,
+  type GroupCategory,
+  type GroupLanguage,
 } from "@/lib/groups/validation";
 
 /**
@@ -31,6 +38,7 @@ import {
  */
 export const GROUP_QUERY_KEYS = {
   public: ["groups", "public"] as const,
+  discover: ["groups", "discover"] as const,
   mine: ["groups", "mine"] as const,
   user: ["groups", "user"] as const,
   bySlug: ["groups", "by-slug"] as const,
@@ -50,6 +58,8 @@ export interface GroupSummary {
   name: string;
   description: string | null;
   visibility: "public" | "invite_only";
+  category: GroupCategory | null;
+  language: GroupLanguage | null;
   ownerId: string;
   createdAt: string;
 }
@@ -77,6 +87,8 @@ export function toGroupSummary(row: GroupRow): GroupSummary {
     name: row.name,
     description: row.description,
     visibility: asGroupVisibility(row.visibility),
+    category: asGroupCategory(row.category),
+    language: asGroupLanguage(row.language),
     ownerId: row.owner_id,
     createdAt: row.created_at,
   };
@@ -116,6 +128,60 @@ export function usePublicGroups(
         return softReadError(error, []);
       }
       return (data ?? []).map(toGroupSummary);
+    },
+    enabled: client !== null,
+    retry: false,
+  });
+}
+
+/**
+ * The public directory for the Discover tab: up to GROUPS_PAGE_SIZE public
+ * groups, newest first, each with its active member count. Search, category,
+ * language and sort run client side on this list (see discovery.ts).
+ * Invite-only groups never appear: the query only reads public ones.
+ */
+export function useDiscoverGroups(
+  client: AppSupabaseClient | null = supabase,
+): UseQueryResult<DiscoverGroup[], SocialFailure> {
+  return useQuery<DiscoverGroup[], SocialFailure>({
+    queryKey: [...GROUP_QUERY_KEYS.discover],
+    queryFn: async () => {
+      if (!client || isSocialNotInstalled()) {
+        return [];
+      }
+      const { data: groupRows, error: groupError } = await client
+        .from("groups")
+        .select("*")
+        .eq("visibility", "public")
+        .order("created_at", { ascending: false })
+        .limit(GROUPS_PAGE_SIZE);
+      if (groupError) {
+        return softReadError(groupError, []);
+      }
+      const groups = (groupRows ?? []).map(toGroupSummary);
+      if (groups.length === 0) {
+        return [];
+      }
+      // One aggregate read instead of one count query per group.
+      const { data: memberRows, error: memberError } = await client
+        .from("group_members")
+        .select("group_id")
+        .eq("status", "active")
+        .in(
+          "group_id",
+          groups.map((group) => group.id),
+        );
+      if (memberError) {
+        return softReadError(memberError, []);
+      }
+      const counts = new Map<string, number>();
+      for (const row of memberRows ?? []) {
+        counts.set(row.group_id, (counts.get(row.group_id) ?? 0) + 1);
+      }
+      return groups.map((group) => ({
+        ...group,
+        memberCount: counts.get(group.id) ?? 0,
+      }));
     },
     enabled: client !== null,
     retry: false,

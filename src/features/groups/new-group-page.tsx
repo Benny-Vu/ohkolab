@@ -24,10 +24,13 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
+import type { TranslationKey } from "@/lib/i18n/en";
 import { useT } from "@/lib/i18n/t";
 import { useCreateGroup } from "@/lib/groups/mutations";
 import {
+  GROUP_CATEGORIES,
   GROUP_DESCRIPTION_MAX,
+  GROUP_LANGUAGES,
   GROUP_NAME_MAX,
   GROUP_SLUG_MAX,
   normalizeGroupDescription,
@@ -37,8 +40,24 @@ import {
   validateGroupDescription,
   validateGroupName,
   validateSlug,
+  type GroupCategory,
+  type GroupLanguage,
   type GroupVisibility,
 } from "@/lib/groups/validation";
+
+const CATEGORY_LABELS: Record<GroupCategory, TranslationKey> = {
+  doubles: "groups.categoryDoubles",
+  singles: "groups.categorySingles",
+  team_building: "groups.categoryTeamBuilding",
+  regional: "groups.categoryRegional",
+};
+
+const LANGUAGE_LABELS: Record<GroupLanguage, TranslationKey> = {
+  en: "groups.languageEn",
+  ja: "groups.languageJa",
+};
+
+const NONE_OPTION = "none";
 
 /**
  * Create-group form: the address derives from the name until the user edits
@@ -55,6 +74,8 @@ export function NewGroupPage() {
   const [slugEdited, setSlugEdited] = useState(false);
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<GroupVisibility>("public");
+  const [category, setCategory] = useState<GroupCategory | null>(null);
+  const [language, setLanguage] = useState<GroupLanguage | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   if (!user) {
@@ -94,6 +115,8 @@ export function NewGroupPage() {
       slug: normalizedSlug,
       description,
       visibility,
+      category,
+      language,
     });
     if (result.ok) {
       toast.success(t("groups.newCreatedToast"));
@@ -193,6 +216,68 @@ export function NewGroupPage() {
                 <SelectItem value="invite_only">
                   {t("groups.inviteOnlyOption")}
                 </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="group-category">
+              {t("groups.newCategoryLabel")}
+            </Label>
+            <Select
+              value={category ?? NONE_OPTION}
+              onValueChange={(value) =>
+                setCategory(
+                  value === NONE_OPTION ? null : (value as GroupCategory),
+                )
+              }
+            >
+              <SelectTrigger
+                id="group-category"
+                aria-label={t("groups.newCategoryLabel")}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE_OPTION}>
+                  {t("groups.newCategoryNone")}
+                </SelectItem>
+                {GROUP_CATEGORIES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {t(CATEGORY_LABELS[value])}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="group-language">
+              {t("groups.newLanguageLabel")}
+            </Label>
+            <Select
+              value={language ?? NONE_OPTION}
+              onValueChange={(value) =>
+                setLanguage(
+                  value === NONE_OPTION ? null : (value as GroupLanguage),
+                )
+              }
+            >
+              <SelectTrigger
+                id="group-language"
+                aria-label={t("groups.newLanguageLabel")}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE_OPTION}>
+                  {t("groups.newLanguageNone")}
+                </SelectItem>
+                {GROUP_LANGUAGES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {t(LANGUAGE_LABELS[value])}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -102,6 +102,8 @@ function groupSummary(overrides: Partial<GroupSummary> = {}): GroupSummary {
     name: "Elite Four Fans",
     description: "For fans of the Elite Four.",
     visibility: "public",
+    category: null,
+    language: null,
     ownerId: "user-9",
     createdAt: "2024-03-05T10:00:00Z",
     ...overrides,

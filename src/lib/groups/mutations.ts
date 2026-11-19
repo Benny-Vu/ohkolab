@@ -49,6 +49,8 @@ import {
   validateGroupName,
   validateGroupVisibility,
   validateSlug,
+  type GroupCategory,
+  type GroupLanguage,
   type GroupRole,
   type GroupVisibility,
 } from "@/lib/groups/validation";
@@ -58,6 +60,9 @@ export interface CreateGroupInput {
   slug: string;
   description?: string | null;
   visibility: GroupVisibility;
+  /** Optional discovery tags; null leaves the group untagged. */
+  category?: GroupCategory | null;
+  language?: GroupLanguage | null;
 }
 
 export interface UpdateGroupInput {
@@ -126,6 +131,8 @@ export function useCreateGroup(
           description,
           visibility: input.visibility,
           owner_id: me,
+          category: input.category ?? null,
+          language: input.language ?? null,
         })
         .select("*")
         .single();

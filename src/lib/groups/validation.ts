@@ -16,6 +16,19 @@ export const GROUP_DESCRIPTION_MAX = 500;
 export const GROUP_VISIBILITIES = ["public", "invite_only"] as const;
 export type GroupVisibility = (typeof GROUP_VISIBILITIES)[number];
 
+/** Group categories for discovery, mirroring the groups.category check. */
+export const GROUP_CATEGORIES = [
+  "doubles",
+  "singles",
+  "team_building",
+  "regional",
+] as const;
+export type GroupCategory = (typeof GROUP_CATEGORIES)[number];
+
+/** Group language tags for discovery, mirroring the groups.language check. */
+export const GROUP_LANGUAGES = ["en", "ja"] as const;
+export type GroupLanguage = (typeof GROUP_LANGUAGES)[number];
+
 export const GROUP_ROLES = ["owner", "moderator", "member"] as const;
 export type GroupRole = (typeof GROUP_ROLES)[number];
 
@@ -120,4 +133,16 @@ export function asGroupRole(value: string): GroupRole {
 /** Narrows a database string to a GroupMemberStatus, defaulting to active. */
 export function asGroupMemberStatus(value: string): GroupMemberStatus {
   return value === "invited" || value === "requested" ? value : "active";
+}
+
+/** Narrows a database string to a category, or null when it is not tagged. */
+export function asGroupCategory(value: string | null): GroupCategory | null {
+  return (GROUP_CATEGORIES as readonly string[]).includes(value ?? "")
+    ? (value as GroupCategory)
+    : null;
+}
+
+/** Narrows a database string to a language, or null when it is not tagged. */
+export function asGroupLanguage(value: string | null): GroupLanguage | null {
+  return value === "en" || value === "ja" ? value : null;
 }

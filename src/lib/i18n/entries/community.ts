@@ -321,6 +321,7 @@ export const communityEn = {
   "groups.noMatchesTitle": "No groups found",
   "groups.createFirst": "Create the first one.",
   "groups.noMatchesDescription": 'No groups match "{query}".',
+  "groups.noFilterMatches": "No groups match these filters.",
   "groups.loadingGroups": "Loading groups",
   "groups.noDescription": "No description yet.",
   "groups.signInToCreate": "Sign in to create a group",
@@ -538,6 +539,38 @@ export const communityEn = {
   "messages.settingsAria": "Who can message me",
   "messages.reportedBadge": "Reported",
   "messages.messageBy": "by {name}",
+
+  // People to follow (src/features/home/people-to-follow.tsx).
+  "followSuggest.title": "People to follow",
+  "followSuggest.loading": "Loading suggestions",
+  "followSuggest.loadError": "Could not load suggestions",
+  "followSuggest.follow": "Follow",
+  "followSuggest.followedToast": "Following {name}",
+  "followSuggest.dismiss": "Dismiss the suggestion for @{name}",
+  "followSuggest.formatSingles": "Plays singles",
+  "followSuggest.formatDoubles": "Plays doubles",
+  "followSuggest.formatBoth": "Plays singles and doubles",
+
+  // Group discovery: search, sort and the category/language filters, plus
+  // the category and language pickers on the new-group page.
+  "groups.discoverSearchAria": "Search groups by name or address",
+  "groups.sortAria": "Sort groups",
+  "groups.sortPopular": "Popular",
+  "groups.sortNew": "New",
+  "groups.categoryFilter": "Category",
+  "groups.categoryAll": "All categories",
+  "groups.categoryDoubles": "Doubles",
+  "groups.categorySingles": "Singles",
+  "groups.categoryTeamBuilding": "Team building",
+  "groups.categoryRegional": "Regional",
+  "groups.languageFilter": "Language",
+  "groups.languageAll": "All languages",
+  "groups.languageEn": "English",
+  "groups.languageJa": "Japanese",
+  "groups.newCategoryLabel": "Category (optional)",
+  "groups.newCategoryNone": "No category",
+  "groups.newLanguageLabel": "Language (optional)",
+  "groups.newLanguageNone": "No language",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;

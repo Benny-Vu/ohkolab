@@ -111,9 +111,39 @@ describe("NewGroupPage", () => {
         slug: "elite-four-fans",
         description: "",
         visibility: "public",
+        category: null,
+        language: null,
       }),
     );
     expect(await screen.findByText("group page")).toBeInTheDocument();
+  });
+
+  it("passes the chosen category and language to the mutation", async () => {
+    const mutateAsync = vi.fn(async () => ({
+      ok: true,
+      data: { id: "g1", slug: "elite-four-fans" },
+    }));
+    mutationsMocks.useCreateGroup.mockReturnValue(mutationResult(mutateAsync));
+    const user = userEvent.setup();
+    renderNewGroupPage();
+
+    await user.type(screen.getByLabelText("Name"), "Elite Four Fans");
+    await user.click(screen.getByRole("combobox", { name: /category/i }));
+    await user.click(await screen.findByRole("option", { name: "Doubles" }));
+    await user.click(screen.getByRole("combobox", { name: /language/i }));
+    await user.click(await screen.findByRole("option", { name: "Japanese" }));
+    await user.click(screen.getByRole("button", { name: /create group/i }));
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith({
+        name: "Elite Four Fans",
+        slug: "elite-four-fans",
+        description: "",
+        visibility: "public",
+        category: "doubles",
+        language: "ja",
+      }),
+    );
   });
 
   it("shows the error message when creation fails", async () => {
