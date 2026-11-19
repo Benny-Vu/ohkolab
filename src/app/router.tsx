@@ -5,6 +5,7 @@ import { PageLoading } from "@/app/route-pages";
 import { accountRoutes } from "@/features/account/routes";
 import { adminRoutes } from "@/features/admin/routes";
 import { calcRoutes } from "@/features/calc/routes";
+import { creditsRoutes } from "@/features/credits/routes";
 import { feedbackRoutes } from "@/features/feedback/routes";
 import { groupsRoutes } from "@/features/groups/routes";
 import { homeRoutes } from "@/features/home/routes";
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
         children: [
           ...homeRoutes,
           ...legalRoutes,
+          ...creditsRoutes,
           ...calcRoutes,
           ...teamBuilderRoutes,
           ...metagameRoutes,

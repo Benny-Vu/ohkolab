@@ -138,14 +138,15 @@ describe("NotificationsPage", () => {
     );
   });
 
-  it("shows skeletons while loading", () => {
+  it("shows skeletons while loading", async () => {
     mocks.useNotifications.mockReturnValue(
       infiniteResult([], { isPending: true }),
     );
     renderNotificationsPage(createFakeAuth());
 
-    expect(screen.getByLabelText("Loading notifications")).toBeVisible();
-    // role=status makes the label a live region screen readers announce.
+    // The skeleton waits out the anti-flash delay, then role=status makes
+    // the label a live region screen readers announce.
+    expect(await screen.findByLabelText("Loading notifications")).toBeVisible();
     expect(
       screen.getByRole("status", { name: "Loading notifications" }),
     ).toBeVisible();

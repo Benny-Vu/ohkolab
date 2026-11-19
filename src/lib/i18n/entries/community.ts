@@ -202,7 +202,6 @@ export const communityEn = {
   "home.noGroupsYet": "No groups yet",
   "home.loadingPosts": "Loading posts",
   "home.feedErrorTitle": "Could not load the feed",
-  "home.trending": "Trending in doubles",
   "home.groupsLoadError": "Could not load your groups",
 
   // The post page and its comments.
@@ -505,6 +504,8 @@ export const communityEn = {
   "messages.empty": "No conversations yet.",
   "messages.signIn": "Sign in to see your messages.",
   "messages.loadError": "Could not load your messages.",
+  "messages.loadingConversationsAria": "Loading conversations",
+  "messages.loadingThreadAria": "Loading messages",
   "messages.previewDeleted": "Message deleted",
   "messages.threadUnavailable": "This conversation is no longer available.",
   "messages.composerAria": "Write a message",

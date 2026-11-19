@@ -25,7 +25,7 @@ interface SearchEntry {
   to: string;
 }
 
-/** Static page entries; Pokémon, moves and items load lazily on first open. */
+/** Static page entries; PokÃ©mon, moves and items load lazily on first open. */
 const PAGE_ENTRIES: {
   kind: "page";
   labelKey: TranslationKey;
@@ -106,8 +106,8 @@ const KIND_LABEL_KEYS: Record<SearchKind, TranslationKey> = {
 };
 
 /**
- * Global search palette (Ctrl/⌘K): pages plus every Pokémon, move and item.
- * Pokémon data is imported lazily so it stays out of the entry chunk.
+ * Global search palette (Ctrl/âŒ˜K): pages plus every PokÃ©mon, move and item.
+ * PokÃ©mon data is imported lazily so it stays out of the entry chunk.
  */
 export function SearchPalette() {
   const t = useT();
@@ -150,7 +150,7 @@ export function SearchPalette() {
   const choose = (entry: SearchEntry) => {
     setOpen(false);
     void track("search_result_chosen", { kind: entry.kind });
-    navigate(entry.to);
+    navigate(entry.to, { viewTransition: true });
   };
 
   const allEntries = [...pageEntries, ...entries];
@@ -161,7 +161,7 @@ export function SearchPalette() {
         type="button"
         onClick={openPalette}
         aria-label={t("search.openAria")}
-        className="hidden h-9 w-64 items-center gap-2 rounded-md bg-surface-sunken px-3 text-sm text-muted-foreground transition-colors duration-150 ease-out outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 md:flex"
+        className="hidden h-9 w-64 items-center gap-2 rounded-md bg-surface-sunken px-3 text-sm text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 md:flex"
       >
         <SearchIcon className="size-4" aria-hidden />
         <span className="flex-1 text-left">{t("common.search")}</span>
@@ -173,7 +173,7 @@ export function SearchPalette() {
         type="button"
         onClick={openPalette}
         aria-label={t("common.search")}
-        className="grid size-9 place-content-center rounded-md text-muted-foreground transition-colors duration-150 ease-out outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 md:hidden"
+        className="grid size-9 place-content-center rounded-md text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 md:hidden"
       >
         <SearchIcon className="size-5" aria-hidden />
       </button>

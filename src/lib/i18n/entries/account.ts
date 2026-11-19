@@ -127,6 +127,7 @@ export const accountEn = {
     "Blocking works both ways: you won't see their posts or profile, they won't see yours, and neither of you can follow the other. You can unblock them later from your account page.",
   "publicProfile.block": "Block",
   "publicProfile.loadingPostsAria": "Loading posts",
+  "publicProfile.loadingProfileAria": "Loading profile",
   "publicProfile.postsLoadError": "Could not load posts",
   "publicProfile.postsLoadErrorDescription":
     "Something went wrong while loading this trainer's posts. Check your connection and try again.",

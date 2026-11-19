@@ -8,6 +8,11 @@ import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { Page } from "@/components/page";
 import { Picker } from "@/components/picker";
+import {
+  CONTENT_FADE_IN,
+  LoadingArea,
+  MetagameSkeleton,
+} from "@/components/skeletons";
 import { PokemonIcon } from "@/components/pokemon-sprite";
 import { StatBar } from "@/components/stat-bar";
 import { Button } from "@/components/ui/button";
@@ -49,6 +54,7 @@ import {
 import { findSnapshot, listSnapshots } from "@/lib/metagame/snapshots";
 import type { PokemonUsage } from "@/lib/metagame/types";
 import { formatNumber } from "@/lib/i18n/format";
+import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n/t";
 import { useBattleFormat } from "@/lib/preferences";
 import { track } from "@/lib/telemetry/analytics";
@@ -107,7 +113,7 @@ function SortButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-6 items-center gap-1 rounded-md px-1 text-xs font-medium transition-colors duration-150 ease-out ${
+      className={`inline-flex h-6 items-center gap-1 rounded-md px-1 text-xs font-medium transition-colors duration-(--motion-fast) ease-(--motion-ease-out) ${
         active
           ? "text-foreground"
           : "text-muted-foreground hover:text-foreground"
@@ -316,10 +322,11 @@ export function MetagamePage() {
   let content: ReactNode;
   if (index.isPending) {
     content = (
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-40 w-full" />
-      </div>
+      <LoadingArea
+        pending={true}
+        label={t("meta.loadingAria")}
+        skeleton={<MetagameSkeleton />}
+      />
     );
   } else if (index.isError) {
     content = (
@@ -342,10 +349,11 @@ export function MetagamePage() {
     );
   } else if (snapshot.isPending) {
     content = (
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-40 w-full" />
-      </div>
+      <LoadingArea
+        pending={true}
+        label={t("meta.loadingAria")}
+        skeleton={<MetagameSkeleton />}
+      />
     );
   } else if (snapshot.isError) {
     content = (
@@ -377,7 +385,7 @@ export function MetagamePage() {
       .sort((a, b) => comparePokemon(a, b, sort.key, sort.dir));
 
     content = (
-      <div className="space-y-6">
+      <div className={cn("space-y-6", CONTENT_FADE_IN)}>
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
           <p className="text-sm text-muted-foreground">
             {t("meta.battles", { count: formatNumber(data.battles) })}
@@ -520,7 +528,15 @@ export function MetagamePage() {
             </div>
           )}
         </section>
-        <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+        <Suspense
+          fallback={
+            <LoadingArea
+              pending={true}
+              label={t("meta.loadingAria")}
+              skeleton={<Skeleton className="h-40 w-full" />}
+            />
+          }
+        >
           <SpeedTiersSection pokemon={data.pokemon} />
         </Suspense>
         <footer>

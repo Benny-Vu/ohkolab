@@ -17,6 +17,12 @@ import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { SegmentedControl } from "@/components/segmented-control";
 import { UserAvatar } from "@/components/user-avatar";
+import {
+  GroupMemberListSkeleton,
+  GroupPageSkeleton,
+  LoadingArea,
+  PostListSkeleton,
+} from "@/components/skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,7 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
@@ -86,14 +91,11 @@ export function GroupPage() {
   if (groupQuery.isPending) {
     return (
       <Page title={t("groups.loadingAria")}>
-        <div
-          className="grid gap-3"
-          role="status"
-          aria-label={t("groups.loadingAria")}
-        >
-          <Skeleton className="h-32 w-full rounded-md" />
-          <Skeleton className="h-64 w-full rounded-md" />
-        </div>
+        <LoadingArea
+          pending={true}
+          label={t("groups.loadingAria")}
+          skeleton={<GroupPageSkeleton />}
+        />
       </Page>
     );
   }
@@ -204,6 +206,14 @@ interface MembershipActionsProps {
   isOwner: boolean;
 }
 
+/**
+ * The membership buttons mount fresh whenever the viewer's state changes
+ * (join → leave, invite → member), so a short fade-and-zoom entrance on
+ * mount doubles as the state-change animation.
+ */
+const STATE_CHANGE_ENTRANCE =
+  "animate-in fade-in zoom-in-95 duration-(--motion-fast) ease-(--motion-ease-out)";
+
 function MembershipActions({
   slug,
   groupId,
@@ -247,6 +257,7 @@ function MembershipActions({
         </span>
         <Button
           size="sm"
+          className={STATE_CHANGE_ENTRANCE}
           onClick={async () => {
             const result = await acceptInvite.mutateAsync({ groupId });
             if (result.ok) toast.success(t("groups.joinedToast"));
@@ -260,6 +271,7 @@ function MembershipActions({
         <Button
           size="sm"
           variant="outline"
+          className={STATE_CHANGE_ENTRANCE}
           onClick={async () => {
             const result = await declineInvite.mutateAsync({ groupId });
             if (result.ok) toast(t("groups.declinedToast"));
@@ -279,6 +291,7 @@ function MembershipActions({
       <Button
         size="sm"
         variant="outline"
+        className={STATE_CHANGE_ENTRANCE}
         onClick={async () => {
           const result = await leaveGroup.mutateAsync({ groupId });
           if (result.ok) toast(t("groups.leftToast"));
@@ -299,6 +312,7 @@ function MembershipActions({
   return (
     <Button
       size="sm"
+      className={STATE_CHANGE_ENTRANCE}
       onClick={async () => {
         const result = await joinGroup.mutateAsync({ groupId });
         if (result.ok) {
@@ -372,20 +386,6 @@ function GroupFeedTab({
   const t = useT();
   const feed = useGroupFeed(groupId);
 
-  if (feed.isPending) {
-    return (
-      <div
-        className="grid gap-3"
-        role="status"
-        aria-label={t("home.loadingPosts")}
-      >
-        <Skeleton className="h-28 w-full rounded-md" />
-        <Skeleton className="h-28 w-full rounded-md" />
-        <Skeleton className="h-28 w-full rounded-md" />
-      </div>
-    );
-  }
-
   if (feed.isError) {
     return (
       <ErrorState
@@ -406,28 +406,34 @@ function GroupFeedTab({
   const posts = feed.data?.pages.flat() ?? [];
 
   return (
-    <div className="grid gap-4">
-      {user && <Composer groupId={groupId} />}
-      {posts.length === 0 ? (
-        <EmptyState
-          title={t("groups.emptyFeedTitle")}
-          description={t("groups.emptyFeedDescription")}
-        />
-      ) : (
-        <GroupPostList posts={posts} canModerate={canModerate} />
-      )}
-      {feed.hasNextPage && (
-        <Button
-          variant="outline"
-          onClick={() => void feed.fetchNextPage()}
-          disabled={feed.isFetchingNextPage}
-        >
-          {feed.isFetchingNextPage
-            ? t("common.loading")
-            : t("notifications.loadMore")}
-        </Button>
-      )}
-    </div>
+    <LoadingArea
+      pending={feed.isPending}
+      label={t("home.loadingPosts")}
+      skeleton={<PostListSkeleton />}
+    >
+      <div className="grid gap-4">
+        {user && <Composer groupId={groupId} />}
+        {posts.length === 0 ? (
+          <EmptyState
+            title={t("groups.emptyFeedTitle")}
+            description={t("groups.emptyFeedDescription")}
+          />
+        ) : (
+          <GroupPostList posts={posts} canModerate={canModerate} />
+        )}
+        {feed.hasNextPage && (
+          <Button
+            variant="outline"
+            onClick={() => void feed.fetchNextPage()}
+            disabled={feed.isFetchingNextPage}
+          >
+            {feed.isFetchingNextPage
+              ? t("common.loading")
+              : t("notifications.loadMore")}
+          </Button>
+        )}
+      </div>
+    </LoadingArea>
   );
 }
 
@@ -520,14 +526,11 @@ function MembersTab({
       )}
 
       {membersQuery.isPending ? (
-        <div
-          className="grid gap-3"
-          role="status"
-          aria-label={t("groups.loadingMembers")}
-        >
-          <Skeleton className="h-16 w-full rounded-md" />
-          <Skeleton className="h-16 w-full rounded-md" />
-        </div>
+        <LoadingArea
+          pending={true}
+          label={t("groups.loadingMembers")}
+          skeleton={<GroupMemberListSkeleton />}
+        />
       ) : members.length === 0 ? (
         <EmptyState title={t("groups.noMembers")} />
       ) : (

@@ -186,6 +186,7 @@ export const toolsEn = {
   "meta.month": "Month",
   "meta.retry": "Retry",
   "meta.loadError": "Could not load metagame data",
+  "meta.loadingAria": "Loading metagame data",
   "meta.loadErrorIndex": "The metagame index could not be loaded.",
   "meta.loadErrorSnapshot": "The snapshot for this month could not be loaded.",
   "meta.emptyTitle": "No data for this format yet",

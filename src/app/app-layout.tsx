@@ -7,8 +7,8 @@ import { usePageTitle, usePageView } from "@/app/page-title";
 import { SearchPalette } from "@/app/search-palette";
 import { useNativeApp } from "@/app/use-native-app";
 import { LanguageSwitch } from "@/components/language-switch";
+import { Logo } from "@/components/logo";
 import { OfflineNotice } from "@/components/offline-notice";
-import { Wordmark } from "@/components/wordmark";
 // The birth date prompt only exists while VITE_DIRECT_MESSAGES is on; it
 // loads lazily so flag-off builds never download it.
 const BirthDatePrompt = lazy(() =>
@@ -43,8 +43,8 @@ export function AppLayout() {
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-40 border-b bg-background/90 pt-safe backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-6 px-4 sm:px-6">
-          <Link to="/" aria-label={t("nav.homeAria")}>
-            <Wordmark />
+          <Link to="/" aria-label={t("nav.homeAria")} viewTransition>
+            <Logo />
           </Link>
           <nav
             aria-label={t("nav.main")}
@@ -55,11 +55,15 @@ export function AppLayout() {
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                viewTransition
                 className={({ isActive }) =>
                   cn(
-                    "relative px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-150 ease-out outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+                    "relative px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+                    // The underline is always in the DOM; it scales and
+                    // fades between destinations instead of popping in.
+                    "after:absolute after:inset-x-3 after:-bottom-[13px] after:h-0.5 after:origin-center after:bg-accent-brand-text after:scale-x-0 after:opacity-0 after:transition-[opacity,transform] after:duration-(--motion-base) after:ease-(--motion-ease-out)",
                     isActive &&
-                      "text-foreground after:absolute after:inset-x-3 after:-bottom-[13px] after:h-0.5 after:bg-accent-brand-text",
+                      "text-foreground after:scale-x-100 after:opacity-100",
                   )
                 }
               >
@@ -93,13 +97,29 @@ export function AppLayout() {
       </main>
 
       <footer className="border-t px-6 pt-4 pb-[calc(3.5rem+env(safe-area-inset-bottom))] text-center text-xs text-muted-foreground md:pb-4">
+        <Logo className="mb-3 justify-center" markClassName="size-5" />
         <p>{t("footer.disclaimer")}</p>
         <p className="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <Link className="underline-offset-4 hover:underline" to="/terms">
+          <Link
+            className="underline-offset-4 hover:underline"
+            to="/terms"
+            viewTransition
+          >
             {t("footer.terms")}
           </Link>
-          <Link className="underline-offset-4 hover:underline" to="/privacy">
+          <Link
+            className="underline-offset-4 hover:underline"
+            to="/privacy"
+            viewTransition
+          >
             {t("footer.privacy")}
+          </Link>
+          <Link
+            className="underline-offset-4 hover:underline"
+            to="/credits"
+            viewTransition
+          >
+            {t("footer.credits")}
           </Link>
           <button
             type="button"
@@ -120,7 +140,6 @@ export function AppLayout() {
             Vu Forge
           </a>
         </p>
-        <p className="mt-2">{t("footer.japaneseNames")}</p>
         <div className="mt-3 flex justify-center">
           <LanguageSwitch />
         </div>
@@ -142,11 +161,15 @@ export function AppLayout() {
               <NavLink
                 to={item.to}
                 end={item.end}
+                viewTransition
                 className={({ isActive }) =>
                   cn(
                     "relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground",
+                    // The top bar is always in the DOM; it scales and fades
+                    // between tabs instead of popping in.
+                    "before:absolute before:top-0 before:h-0.5 before:w-8 before:origin-center before:bg-accent-brand-text before:scale-x-0 before:opacity-0 before:transition-[opacity,transform] before:duration-(--motion-base) before:ease-(--motion-ease-out)",
                     isActive &&
-                      "text-foreground before:absolute before:top-0 before:h-0.5 before:w-8 before:bg-accent-brand-text",
+                      "text-foreground before:scale-x-100 before:opacity-100",
                   )
                 }
               >

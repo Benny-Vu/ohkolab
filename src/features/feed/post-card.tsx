@@ -42,6 +42,7 @@ import { KoLabel } from "@/components/ko-label";
 import { useDisplayName } from "@/data";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
+import { cn } from "@/lib/utils";
 import { displayTeamName } from "@/lib/team/display";
 import { useTeams } from "@/lib/team";
 import {
@@ -129,6 +130,8 @@ export function PostCard({
   const [blocking, setBlocking] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [removeReason, setRemoveReason] = useState("");
+  // Counts like activations so the heart can play its one-shot pop.
+  const [likePop, setLikePop] = useState(0);
   const share = useShare();
 
   const isOwn = user?.id === post.author_id;
@@ -154,6 +157,7 @@ export function PostCard({
     post.author_username.trim().toLowerCase();
 
   async function handleLike() {
+    setLikePop((count) => count + 1);
     const result = await toggleLike.mutateAsync();
     if (!result.ok) toast.error(result.error.message);
   }
@@ -233,7 +237,10 @@ export function PostCard({
   }
 
   return (
-    <Card size="sm">
+    <Card
+      size="sm"
+      className="transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:border-accent-brand-text/40 hover:bg-accent-brand-subtle"
+    >
       <div className="flex items-start gap-3 px-4 pt-4">
         <UserAvatar
           username={post.author_username}
@@ -405,7 +412,12 @@ export function PostCard({
           className="text-muted-foreground tabular-nums"
         >
           <HeartIcon
-            className={liked ? "fill-current text-primary" : undefined}
+            key={likePop}
+            className={cn(
+              liked ? "fill-current text-primary" : undefined,
+              likePop > 0 &&
+                "animate-in zoom-in-125 duration-(--motion-fast) ease-(--motion-ease-out)",
+            )}
             aria-hidden
           />
           {post.like_count}

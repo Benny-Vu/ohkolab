@@ -1,5 +1,6 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Page } from "@/components/page";
+import { Logo, LogoMark } from "@/components/logo";
 import { Wordmark } from "@/components/wordmark";
 import { TypeBadge } from "@/components/type-badge";
 import { StatBar } from "@/components/stat-bar";
@@ -63,8 +64,28 @@ export function StyleguidePage() {
       description="Every token and component, both themes, phone first."
       actions={<ThemeToggle />}
     >
-      <Section title="Wordmark">
-        <Wordmark className="text-2xl" />
+      <Section title="Logo and wordmark">
+        <div className="flex flex-wrap items-center gap-6">
+          <Logo className="text-2xl" />
+          <LogoMark className="size-10" />
+          <Wordmark className="text-2xl" />
+        </div>
+      </Section>
+
+      <Section title="Motion tokens">
+        <div className="max-w-md space-y-1 font-mono text-xs text-muted-foreground">
+          <p>--motion-fast 120ms — hover and press feedback</p>
+          <p>--motion-base 160ms — default transitions, page changes</p>
+          <p>--motion-slow 240ms — dialogs, sheets, large surfaces</p>
+          <p>
+            --motion-ease-out entrances · --motion-ease-in-out between two
+            visible states
+          </p>
+          <p>
+            Use as duration-(--motion-base) ease-(--motion-ease-out);
+            prefers-reduced-motion turns all of it off.
+          </p>
+        </div>
       </Section>
 
       <Section title="Colours">
@@ -78,6 +99,9 @@ export function StyleguidePage() {
           <Swatch name="Muted text" token="--muted-foreground" />
           <Swatch name="Primary" token="--primary" />
           <Swatch name="Accent lime" token="--accent-brand" />
+          <Swatch name="Accent hover" token="--accent-brand-hover" />
+          <Swatch name="Accent pressed" token="--accent-brand-pressed" />
+          <Swatch name="Accent subtle" token="--accent-brand-subtle" />
           <Swatch name="Olive" token="--accent-brand-text" />
           <Swatch name="Destructive" token="--destructive" />
           <Swatch name="Success" token="--success" />

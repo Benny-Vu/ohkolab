@@ -12,9 +12,10 @@ import { CheckIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingArea, NotificationListSkeleton } from "@/components/skeletons";
 import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
+import { ROW_ENTRANCE, staggerDelay } from "@/lib/motion/entrance";
 import { useAuth } from "@/lib/auth/use-auth";
 import { formatRelativeTime } from "@/features/feed/relative-time";
 import { useT } from "@/lib/i18n/t";
@@ -113,16 +114,6 @@ export function NotificationsPage() {
             </Button>
           }
         />
-      ) : notifications.isPending ? (
-        <div
-          className="grid gap-3"
-          role="status"
-          aria-label={t("notifications.loadingAria")}
-        >
-          <Skeleton className="h-16 w-full rounded-md" />
-          <Skeleton className="h-16 w-full rounded-md" />
-          <Skeleton className="h-16 w-full rounded-md" />
-        </div>
       ) : notifications.isError ? (
         <ErrorState
           title={t("notifications.errorTitle")}
@@ -138,16 +129,22 @@ export function NotificationsPage() {
           }
         />
       ) : (
-        <NotificationsList
-          items={notifications.data?.pages.flat() ?? []}
-          onMarkRead={handleMarkRead}
-          onDelete={handleDelete}
-          markPending={markRead.isPending}
-          deletePending={deleteNotification.isPending}
-          hasNextPage={notifications.hasNextPage}
-          isFetchingNextPage={notifications.isFetchingNextPage}
-          onLoadMore={() => void notifications.fetchNextPage()}
-        />
+        <LoadingArea
+          pending={notifications.isPending}
+          label={t("notifications.loadingAria")}
+          skeleton={<NotificationListSkeleton />}
+        >
+          <NotificationsList
+            items={notifications.data?.pages.flat() ?? []}
+            onMarkRead={handleMarkRead}
+            onDelete={handleDelete}
+            markPending={markRead.isPending}
+            deletePending={deleteNotification.isPending}
+            hasNextPage={notifications.hasNextPage}
+            isFetchingNextPage={notifications.isFetchingNextPage}
+            onLoadMore={() => void notifications.fetchNextPage()}
+          />
+        </LoadingArea>
       )}
     </Page>
   );
@@ -187,15 +184,23 @@ function NotificationsList({
 
   return (
     <div className="grid gap-3">
-      {items.map((item) => (
-        <NotificationRowCard
+      {items.map((item, index) => (
+        // Rows stagger in when their notification arrives (first load or
+        // "Load more"); a re-render (marking one read) never replays the
+        // entrance — see src/lib/motion/entrance.ts.
+        <div
           key={item.id}
-          item={item}
-          onMarkRead={onMarkRead}
-          onDelete={onDelete}
-          markPending={markPending}
-          deletePending={deletePending}
-        />
+          className={ROW_ENTRANCE}
+          style={{ animationDelay: `${staggerDelay(index)}ms` }}
+        >
+          <NotificationRowCard
+            item={item}
+            onMarkRead={onMarkRead}
+            onDelete={onDelete}
+            markPending={markPending}
+            deletePending={deletePending}
+          />
+        </div>
       ))}
       {hasNextPage && (
         <Button

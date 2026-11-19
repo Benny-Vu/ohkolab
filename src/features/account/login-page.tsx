@@ -59,6 +59,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = sanitizeReturnTo(searchParams.get("returnTo") ?? "/");
+  // `?tab=signup` (the signed-out home welcome) opens on the sign-up tab.
+  const initialTab = searchParams.get("tab") === "signup" ? "signup" : "signin";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -248,7 +250,7 @@ export function LoginPage() {
           <Wordmark className="text-3xl" />
         </Link>
 
-        <Tabs defaultValue="signin" className="w-full">
+        <Tabs defaultValue={initialTab} className="w-full">
           <TabsList className="w-full">
             <TabsTrigger value="signin">{t("common.signIn")}</TabsTrigger>
             <TabsTrigger value="signup">{t("login.signUpTab")}</TabsTrigger>

@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import { cn } from "@/lib/utils";
 
 interface StatBarProps {
@@ -11,7 +13,10 @@ interface StatBarProps {
 
 /**
  * Horizontal stat bar. With Stat Points the fill is the accent colour; a
- * plain stat shows muted.
+ * plain stat shows muted. The fill grows in from zero on mount (one frame
+ * at zero width gives the transition a start value); later value changes
+ * glide on the same transition. `prefers-reduced-motion` turns it off
+ * globally, so the bar just appears.
  */
 export function StatBar({
   value,
@@ -21,6 +26,12 @@ export function StatBar({
 }: StatBarProps) {
   const safeMax = max > 0 ? max : 1;
   const percent = Math.max(0, Math.min(100, (value / safeMax) * 100));
+  const [filled, setFilled] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setFilled(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <div
@@ -33,10 +44,10 @@ export function StatBar({
     >
       <div
         className={cn(
-          "h-full rounded-sm transition-[width] duration-150 ease-out",
+          "h-full rounded-sm transition-[width] duration-(--motion-slow) ease-(--motion-ease-out)",
           tone === "accent" ? "bg-accent-brand-text" : "bg-muted-foreground/40",
         )}
-        style={{ width: `${percent}%` }}
+        style={{ width: filled ? `${percent}%` : "0%" }}
       />
     </div>
   );

@@ -183,6 +183,7 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "meta.month": "月",
   "meta.retry": "再試行",
   "meta.loadError": "環境データを読み込めませんでした",
+  "meta.loadingAria": "環境データを読み込み中",
   "meta.loadErrorIndex": "環境データのインデックスを読み込めませんでした。",
   "meta.loadErrorSnapshot": "この月のスナップショットを読み込めませんでした。",
   "meta.emptyTitle": "このルールのデータはまだありません",

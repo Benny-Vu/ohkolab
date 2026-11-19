@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { LoaderCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { ROW_ENTRANCE, staggerDelay } from "@/lib/motion/entrance";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -81,8 +82,15 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
   return (
     <>
       <ul className="grid gap-3">
-        {posts.map((post) => (
-          <li key={post.id}>
+        {posts.map((post, index) => (
+          // Rows stagger in when their post arrives; a re-render (the
+          // removal dialog opening, a like) never replays the entrance —
+          // see src/lib/motion/entrance.ts.
+          <li
+            key={post.id}
+            className={ROW_ENTRANCE}
+            style={{ animationDelay: `${staggerDelay(index)}ms` }}
+          >
             <PostCard
               post={post}
               images={imagesByPost.get(post.id) ?? []}

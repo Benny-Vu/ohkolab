@@ -104,7 +104,7 @@ function MoveRow({
 
   return (
     <button
-      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-left transition-colors duration-150 ease-out hover:bg-muted/50"
+      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-left transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-muted/50"
       onClick={() => dispatch({ type: "selectMove", side, slot: outcome.slot })}
       type="button"
     >
@@ -216,7 +216,16 @@ function ResultBlock({
         </p>
       ) : null}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <BigNumber size="2xl">{outcomeRangeText(outcome)}</BigNumber>
+        {/* Keyed by the range so each new result rises the number in:
+            opacity stays 1, only a small translate plays, so fast
+            recalculations never blink. */}
+        <BigNumber
+          key={outcomeRangeText(outcome)}
+          className="animate-in slide-in-from-bottom-1 duration-(--motion-fast) ease-(--motion-ease-out)"
+          size="2xl"
+        >
+          {outcomeRangeText(outcome)}
+        </BigNumber>
         {hasDamage && result ? (
           <DamageMeter
             className="min-w-24 flex-1"

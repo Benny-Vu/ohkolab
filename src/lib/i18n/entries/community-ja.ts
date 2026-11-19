@@ -200,7 +200,6 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "home.noGroupsYet": "グループはまだありません",
   "home.loadingPosts": "投稿を読み込み中",
   "home.feedErrorTitle": "フィードを読み込めませんでした",
-  "home.trending": "ダブルで人気のポケモン",
   "home.groupsLoadError": "グループを読み込めませんでした",
 
   // 投稿ページとコメント。
@@ -495,6 +494,8 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "messages.empty": "まだ会話がありません。",
   "messages.signIn": "メッセージを見るにはサインインしてください。",
   "messages.loadError": "メッセージを読み込めませんでした。",
+  "messages.loadingConversationsAria": "トークを読み込み中",
+  "messages.loadingThreadAria": "メッセージを読み込み中",
   "messages.previewDeleted": "削除されたメッセージ",
   "messages.threadUnavailable": "この会話は利用できません。",
   "messages.composerAria": "メッセージを入力",

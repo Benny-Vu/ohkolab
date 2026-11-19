@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import {
   ArrowRightIcon,
@@ -12,8 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { Logo } from "@/components/logo";
 import { SegmentedControl } from "@/components/segmented-control";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  LoadingArea,
+  PostListSkeleton,
+  TextLinesSkeleton,
+} from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useMyGroups } from "@/lib/groups/queries";
 import { useT } from "@/lib/i18n/t";
@@ -21,12 +26,6 @@ import { socialAvailability } from "@/lib/social/availability";
 import { useFeed } from "@/lib/social/queries";
 import { Composer } from "@/features/feed/composer";
 import { PostList } from "@/features/feed/post-list";
-
-const TrendingStrip = lazy(() =>
-  import("@/features/home/trending-strip").then((module) => ({
-    default: module.TrendingStrip,
-  })),
-);
 
 interface Tool {
   to: string;
@@ -84,7 +83,7 @@ function ToolsIntro() {
               to={tool.to}
               className="block rounded-md focus-visible:outline-2"
             >
-              <div className="flex items-center gap-4 rounded-md border bg-card p-4 transition-colors duration-150 ease-out hover:bg-surface-sunken">
+              <div className="flex items-center gap-4 rounded-md border bg-card p-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-surface-sunken">
                 <tool.icon
                   className="size-6 shrink-0 text-muted-foreground"
                   aria-hidden
@@ -132,12 +131,6 @@ function FeedHome() {
             <Composer />
           </div>
         )}
-
-        <Suspense fallback={null}>
-          <div className="mb-4 lg:hidden">
-            <TrendingStrip />
-          </div>
-        </Suspense>
 
         <div className="flex items-center justify-between gap-2">
           <SegmentedControl
@@ -189,25 +182,25 @@ function FeedHome() {
   );
 }
 
+/**
+ * Signed-out welcome: the logo, one line about the community, and sign-up
+ * and sign-in buttons, right above the public feed. The tools stay one tap
+ * away in the nav.
+ */
 function SignedOutIntro() {
   const t = useT();
   return (
     <section className="mb-4 rounded-md border bg-card p-4">
-      <p className="font-heading text-xl font-bold">
-        <span className="text-primary">OHKO</span>Lab
-      </p>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <Logo className="text-xl" markClassName="size-7" />
+      <p className="mt-2 text-sm text-muted-foreground">
         {t("home.signedOutIntro")}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button asChild size="sm">
-          <Link to="/calc">
-            {t("home.calcTitle")}
-            <ArrowRightIcon aria-hidden />
-          </Link>
+        <Button asChild size="sm" variant="accent">
+          <Link to="/login?tab=signup&returnTo=/">{t("common.signUp")}</Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link to="/meta">{t("home.metaTitle")}</Link>
+          <Link to="/login?returnTo=/">{t("common.signIn")}</Link>
         </Button>
       </div>
     </section>
@@ -217,9 +210,6 @@ function SignedOutIntro() {
 function RightRail({ signedIn }: { signedIn: boolean }) {
   return (
     <div className="grid gap-4">
-      <Suspense fallback={null}>
-        <TrendingStrip />
-      </Suspense>
       <MyGroupsRail signedIn={signedIn} />
     </div>
   );
@@ -258,10 +248,12 @@ function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
         {t("home.yourGroups")}
       </h2>
       {myGroups.isPending ? (
-        <div className="mt-3 grid gap-2" aria-label={t("groups.loadingGroups")}>
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
+        <LoadingArea
+          pending={true}
+          label={t("groups.loadingGroups")}
+          skeleton={<TextLinesSkeleton lines={2} />}
+          className="mt-3"
+        />
       ) : myGroups.isError ? (
         <ErrorState
           title={t("home.groupsLoadError")}
@@ -313,20 +305,6 @@ function FeedTabContent({
   const t = useT();
   const feed = useFeed(tab);
 
-  if (feed.isPending) {
-    return (
-      <div
-        className="grid gap-3"
-        role="status"
-        aria-label={t("home.loadingPosts")}
-      >
-        <Skeleton className="h-28 w-full rounded-md" />
-        <Skeleton className="h-28 w-full rounded-md" />
-        <Skeleton className="h-28 w-full rounded-md" />
-      </div>
-    );
-  }
-
   if (feed.isError) {
     return (
       <ErrorState
@@ -348,23 +326,29 @@ function FeedTabContent({
   const posts = feed.data?.pages.flat() ?? [];
 
   return (
-    <div className="grid gap-3">
-      {posts.length === 0 ? (
-        <EmptyState title={emptyTitle} description={emptyDescription} />
-      ) : (
-        <PostList posts={posts} />
-      )}
-      {feed.hasNextPage && (
-        <Button
-          variant="outline"
-          onClick={() => void feed.fetchNextPage()}
-          disabled={feed.isFetchingNextPage}
-        >
-          {feed.isFetchingNextPage
-            ? t("common.loading")
-            : t("notifications.loadMore")}
-        </Button>
-      )}
-    </div>
+    <LoadingArea
+      pending={feed.isPending}
+      label={t("home.loadingPosts")}
+      skeleton={<PostListSkeleton />}
+    >
+      <div className="grid gap-3">
+        {posts.length === 0 ? (
+          <EmptyState title={emptyTitle} description={emptyDescription} />
+        ) : (
+          <PostList posts={posts} />
+        )}
+        {feed.hasNextPage && (
+          <Button
+            variant="outline"
+            onClick={() => void feed.fetchNextPage()}
+            disabled={feed.isFetchingNextPage}
+          >
+            {feed.isFetchingNextPage
+              ? t("common.loading")
+              : t("notifications.loadMore")}
+          </Button>
+        )}
+      </div>
+    </LoadingArea>
   );
 }

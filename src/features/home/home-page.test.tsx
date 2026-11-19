@@ -191,15 +191,18 @@ describe("HomePage", () => {
     );
   });
 
-  it("announces the loading feed as a live status", () => {
+  it("announces the loading feed as a live status", async () => {
     availabilityMocks.socialAvailability.mockReturnValue("ready");
     queriesMocks.useFeed.mockReturnValue(
       infiniteResult([], { isPending: true }),
     );
     renderHome();
 
-    // role=status makes the aria-label a live region screen readers announce.
-    expect(screen.getByRole("status", { name: "Loading posts" })).toBeVisible();
+    // The skeleton waits out the anti-flash delay, then role=status makes
+    // the aria-label a live region screen readers announce.
+    expect(
+      await screen.findByRole("status", { name: "Loading posts" }),
+    ).toBeVisible();
   });
 
   it("shows the composer for signed-in users when ready", async () => {
@@ -226,21 +229,27 @@ describe("HomePage", () => {
     expect(heading).toHaveClass("sr-only");
   });
 
-  it("shows the compact intro for signed-out visitors", async () => {
+  it("shows the compact welcome for signed-out visitors", async () => {
     availabilityMocks.socialAvailability.mockReturnValue("ready");
     queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
     renderHome(createFakeAuth({ user: null, session: null, profile: null }));
 
-    // Exactly one h1, plus the visible (non-heading) intro wordmark.
+    // Exactly one h1 (sr-only), the logo in the welcome, and the two
+    // auth calls to action right above the public feed.
     expect(
       screen.getByRole("heading", { level: 1, name: /ohko ?lab/i }),
-    ).toBeInTheDocument();
-    const visibleIntro = document.querySelector<HTMLElement>("p.font-heading");
-    expect(visibleIntro?.textContent).toBe("OHKOLab");
+    ).toHaveClass("sr-only");
     expect(
-      screen.getByRole("link", { name: /damage calculator/i }),
+      screen.getByText(/a community for pokémon champions players/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /metagame/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute(
+      "href",
+      "/login?tab=signup&returnTo=/",
+    );
+    // The groups rail has its own sign-in link; both point at the login page.
+    for (const link of screen.getAllByRole("link", { name: "Sign in" })) {
+      expect(link).toHaveAttribute("href", "/login?returnTo=/");
+    }
   });
 
   it("shows the sign-in prompt on the Following tab when signed out", async () => {

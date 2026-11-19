@@ -29,9 +29,9 @@ export const shellJa: { [K in ShellKey]: string } = {
     "OHKOLabは非公式のファンプロジェクトであり、任天堂・ゲームフリーク・クリーチャーズ・ポケモンとは一切関係ありません。",
   "footer.terms": "利用規約",
   "footer.privacy": "プライバシー",
+  "footer.credits": "クレジット",
   "footer.sendFeedback": "フィードバックを送る",
   "footer.madeBy": "OHKOLabの制作:",
-  "footer.japaneseNames": "日本語のポケモン名はPokéAPIのデータを使用しています",
 
   // 各機能で共通のアクションと状態。
   "common.cancel": "キャンセル",
@@ -62,6 +62,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "common.close": "閉じる",
   "common.search": "検索",
   "common.signIn": "サインイン",
+  "common.signUp": "サインアップ",
   "common.signOut": "サインアウト",
   "common.signedOut": "サインアウトしました",
 
@@ -264,6 +265,8 @@ export const shellJa: { [K in ShellKey]: string } = {
     "OHKOLabのPokémon Championsグループを探して参加できます。",
   "seo.termsDescription": "OHKOLabの利用規約。",
   "seo.privacyDescription": "OHKOLabの個人情報の取り扱いについて。",
+  "seo.creditsDescription":
+    "OHKOLabで使っているデータソースとライブラリ、そのライセンス。",
 
   // フィードバックダイアログとクラッシュ画面（どちらもアプリの
   // フレームから表示。テレメトリー切り替えの文言はcommunity側）。
