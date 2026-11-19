@@ -28,6 +28,9 @@ const mutationsMocks = vi.hoisted(() => ({
   useToggleLike: vi.fn(),
   useToggleFollow: vi.fn(),
   useToggleBlock: vi.fn(),
+  // The pure helper the page uses to spot optimistic comment rows.
+  isPendingComment: (comment: { pending?: boolean }) =>
+    comment.pending === true,
 }));
 
 const moderationMocks = vi.hoisted(() => ({
@@ -265,6 +268,37 @@ describe("PostDetailPage", () => {
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: /comments/i })).toHaveFocus(),
     );
+  });
+
+  it("renders an in-flight comment as pending, without actions", async () => {
+    queriesMocks.useComments.mockReturnValue(
+      queryResult([
+        commentRow(),
+        {
+          ...commentRow({
+            id: "comment-pending",
+            body: "On its way",
+            authorId: TEST_PROFILE.id,
+            author: {
+              id: TEST_PROFILE.id,
+              username: "ashketchum",
+              displayName: "Ash",
+              avatarSpecies: "Pikachu",
+            },
+          }),
+          pending: true,
+        } as SocialComment,
+      ]),
+    );
+    renderPostPage();
+
+    // The optimistic copy shows, flagged as sending, and carries no
+    // delete or report buttons until the server confirms it.
+    expect(await screen.findByText("On its way")).toBeInTheDocument();
+    expect(screen.getByText("Sending")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
+    // Only the other player's comment offers a report button.
+    expect(screen.getAllByRole("button", { name: /report/i })).toHaveLength(1);
   });
 
   it("reports someone else's comment", async () => {

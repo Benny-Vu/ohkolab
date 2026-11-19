@@ -10,6 +10,7 @@ import {
 } from "@/lib/messages/test-client";
 import { useThread } from "@/lib/messages/queries";
 import { useThreadRealtime } from "@/lib/messages/realtime";
+import type { ThreadMessage } from "@/lib/messages/mutations";
 
 const CONV = "conv-1";
 const OTHER = "user-2";
@@ -98,6 +99,72 @@ describe("thread realtime with the flag on", () => {
       expect(thread.result.current.data?.map((row) => row.id)).toEqual([
         "m1",
         "m2",
+      ]),
+    );
+  });
+
+  it("never duplicates the pending copy an optimistic send left behind", async () => {
+    const fake = createFakeClient({
+      resolve: (record) =>
+        record.table === "messages" && record.selectColumns
+          ? { data: [], error: null }
+          : { data: [], error: null },
+    });
+    const { queryClient, thread } = renderThread(fake);
+    await waitFor(() => expect(thread.result.current.data).toBeDefined());
+
+    // What useSendMessage's onMutate wrote: a pending local copy.
+    queryClient.setQueryData<ThreadMessage[]>(
+      ["messages", "thread", CONV],
+      [
+        {
+          id: "local-1",
+          conversation_id: CONV,
+          sender_id: SIGNED_IN_AUTH.user?.id ?? "user-1",
+          body: "Hi",
+          created_at: "2026-11-19T10:00:00+00:00",
+          deleted_at: null,
+          pending: true,
+        },
+      ],
+    );
+
+    // The Realtime echo of that same message arrives before the send's
+    // success handler: it must replace the pending copy, not stack on it.
+    emitFakeMessage(fake, `messages:${CONV}`, {
+      id: "m-live",
+      conversation_id: CONV,
+      sender_id: SIGNED_IN_AUTH.user?.id ?? "user-1",
+      body: "Hi",
+      created_at: "2026-11-19T10:00:01+00:00",
+      deleted_at: null,
+    });
+    await waitFor(() =>
+      expect(thread.result.current.data?.map((row) => row.id)).toEqual([
+        "m-live",
+      ]),
+    );
+  });
+
+  it("still appends my own message when no pending copy matches", async () => {
+    const fake = createFakeClient({
+      resolve: () => ({ data: [], error: null }),
+    });
+    const { thread } = renderThread(fake);
+    await waitFor(() => expect(thread.result.current.data).toBeDefined());
+
+    // A message sent from another device: nothing pending matches it.
+    emitFakeMessage(fake, `messages:${CONV}`, {
+      id: "m-elsewhere",
+      conversation_id: CONV,
+      sender_id: SIGNED_IN_AUTH.user?.id ?? "user-1",
+      body: "From my other phone",
+      created_at: "2026-11-19T10:02:00+00:00",
+      deleted_at: null,
+    });
+    await waitFor(() =>
+      expect(thread.result.current.data?.map((row) => row.id)).toEqual([
+        "m-elsewhere",
       ]),
     );
   });
