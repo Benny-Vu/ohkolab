@@ -280,7 +280,9 @@ begin
       and pushed_at is null
       -- Moderation and appeal notifications never push; leave them
       -- unclaimed so they cannot ride along with a push either.
-      and type in ('like', 'comment', 'follow', 'group_invite')
+      -- (notifications.type is table-qualified: `type` is also this
+      -- function's OUT parameter name, and a bare `type` is ambiguous.)
+      and notifications.type in ('like', 'comment', 'follow', 'group_invite')
     returning *
   )
   select claim.id, claim.type, claim.actor_id, claim.post_id, claim.group_id, claim.created_at
