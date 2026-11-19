@@ -369,6 +369,7 @@ jobs:
             push_b constant uuid := '90909090-9090-4909-8909-909090909090';
             push_c constant uuid := 'a0a0a0a0-a0a0-4a0a-8a0a-a0a0a0a0a0a0';
             claimed int;
+            push_post uuid;
           begin
             set local role authenticated;
 
@@ -455,13 +456,16 @@ jobs:
             end if;
 
             -- A like and a follow both notify push_a (the webhook trigger
-            -- is silent: push_config is empty here).
+            -- is silent: push_config is empty here). The post id comes
+            -- from the insert: the authenticated role has no insert grant
+            -- on posts.id.
             perform set_config('request.jwt.claims', json_build_object('sub', push_a, 'role', 'authenticated')::text, true);
-            insert into public.posts (id, author_id, body) values
-              ('b1b1b1b1-b1b1-4b1b-8b1b-b1b1b1b1b1b1', push_a, 'push check');
+            insert into public.posts (author_id, body) values
+              (push_a, 'push check')
+              returning id into push_post;
             perform set_config('request.jwt.claims', json_build_object('sub', push_b, 'role', 'authenticated')::text, true);
             insert into public.post_likes (post_id, user_id) values
-              ('b1b1b1b1-b1b1-4b1b-8b1b-b1b1b1b1b1b1', push_b);
+              (push_post, push_b);
             insert into public.follows (follower_id, followee_id) values (push_b, push_a);
 
             reset role;
