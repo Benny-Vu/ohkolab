@@ -121,6 +121,9 @@ function FeedHome() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
+      {/* One h1 per page: the feed has no visible title, so it is screen-reader
+       * only; the signed-out intro keeps its visible heading as plain text. */}
+      <h1 className="sr-only">OHKOLab</h1>
       <div className="min-w-0">
         {!user && <SignedOutIntro />}
 
@@ -190,9 +193,9 @@ function SignedOutIntro() {
   const t = useT();
   return (
     <section className="mb-4 rounded-md border bg-card p-4">
-      <h1 className="font-heading text-xl font-bold">
+      <p className="font-heading text-xl font-bold">
         <span className="text-primary">OHKO</span>Lab
-      </h1>
+      </p>
       <p className="mt-1 text-sm text-muted-foreground">
         {t("home.signedOutIntro")}
       </p>
@@ -289,7 +292,11 @@ function FeedTabContent({
 
   if (feed.isPending) {
     return (
-      <div className="grid gap-3" aria-label={t("home.loadingPosts")}>
+      <div
+        className="grid gap-3"
+        role="status"
+        aria-label={t("home.loadingPosts")}
+      >
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />

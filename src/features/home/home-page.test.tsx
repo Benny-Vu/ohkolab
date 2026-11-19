@@ -191,6 +191,17 @@ describe("HomePage", () => {
     );
   });
 
+  it("announces the loading feed as a live status", () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(
+      infiniteResult([], { isPending: true }),
+    );
+    renderHome();
+
+    // role=status makes the aria-label a live region screen readers announce.
+    expect(screen.getByRole("status", { name: "Loading posts" })).toBeVisible();
+  });
+
   it("shows the composer for signed-in users when ready", async () => {
     availabilityMocks.socialAvailability.mockReturnValue("ready");
     queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
@@ -201,16 +212,18 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
   });
 
-  it("hides the hero for signed-in users", async () => {
+  it("hides the visible hero for signed-in users but keeps a page heading", async () => {
     availabilityMocks.socialAvailability.mockReturnValue("ready");
     queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
     renderHome();
 
-    // Wait for the feed to settle, then confirm no hero heading remains.
+    // Wait for the feed to settle, then confirm the only h1 is sr-only.
     await screen.findByRole("radio", { name: /latest/i });
-    expect(
-      screen.queryByRole("heading", { name: /ohko ?lab/i }),
-    ).not.toBeInTheDocument();
+    const heading = screen.getByRole("heading", {
+      level: 1,
+      name: /ohko ?lab/i,
+    });
+    expect(heading).toHaveClass("sr-only");
   });
 
   it("shows the compact intro for signed-out visitors", async () => {
@@ -218,9 +231,12 @@ describe("HomePage", () => {
     queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
     renderHome(createFakeAuth({ user: null, session: null, profile: null }));
 
+    // Exactly one h1, plus the visible (non-heading) intro wordmark.
     expect(
-      await screen.findByRole("heading", { name: /ohko ?lab/i }),
+      screen.getByRole("heading", { level: 1, name: /ohko ?lab/i }),
     ).toBeInTheDocument();
+    const visibleIntro = document.querySelector<HTMLElement>("p.font-heading");
+    expect(visibleIntro?.textContent).toBe("OHKOLab");
     expect(
       screen.getByRole("link", { name: /damage calculator/i }),
     ).toBeInTheDocument();

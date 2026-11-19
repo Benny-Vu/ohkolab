@@ -197,10 +197,23 @@ export function NewGroupPage() {
             </Select>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p
+              id="new-group-error"
+              className="text-sm text-destructive"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
 
           <div className="flex items-center gap-2">
-            <Button type="button" onClick={submit} disabled={!canSubmit}>
+            <Button
+              type="button"
+              onClick={submit}
+              disabled={!canSubmit}
+              aria-describedby={error ? "new-group-error" : undefined}
+            >
               {createGroup.isPending && (
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               )}

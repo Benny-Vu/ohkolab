@@ -235,6 +235,12 @@ describe("PostDetailPage", () => {
         postId: "post-1",
       }),
     );
+
+    // The deleted row's button disappears; focus moves to the section
+    // heading so keyboard users do not land on the page body.
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: /comments/i })).toHaveFocus(),
+    );
   });
 
   it("reports someone else's comment", async () => {

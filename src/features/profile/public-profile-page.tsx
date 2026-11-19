@@ -97,7 +97,7 @@ function UnconfiguredNotice() {
   const t = useT();
   return (
     <Alert>
-      <AlertCircleIcon />
+      <AlertCircleIcon aria-hidden />
       <AlertTitle>{t("publicProfile.unconfiguredTitle")}</AlertTitle>
       <AlertDescription>{t("publicProfile.unconfiguredBody")}</AlertDescription>
     </Alert>
@@ -139,8 +139,10 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
         <DialogHeader>
           <DialogTitle className="min-w-0 truncate">{team.name}</DialogTitle>
           <DialogDescription>
-            {team.format === "doubles" ? "Doubles" : "Singles"} ·{" "}
-            {t("publicProfile.pokemonCount", { n: team.members.length })} ·{" "}
+            {team.format === "doubles"
+              ? t("calc.formatDoubles")
+              : t("calc.formatSingles")}{" "}
+            · {t("publicProfile.pokemonCount", { n: team.members.length })} ·{" "}
             {t("publicProfile.sharedBy", { name: username })}
           </DialogDescription>
         </DialogHeader>
@@ -163,7 +165,7 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
             {t("common.cancel")}
           </Button>
           <Button onClick={copyToMyTeams}>
-            <CopyIcon />
+            <CopyIcon aria-hidden />
             {t("postCard.copyTeam")}
           </Button>
         </DialogFooter>
@@ -173,13 +175,16 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
 }
 
 function TeamCard({ team, username }: { team: Team; username: string }) {
+  const t = useT();
   return (
     <Card size="sm">
       <CardHeader>
         <CardTitle className="min-w-0 truncate">{team.name}</CardTitle>
         <CardDescription>
-          {team.format === "doubles" ? "Doubles" : "Singles"} ·{" "}
-          {team.members.length} Pokémon
+          {team.format === "doubles"
+            ? t("calc.formatDoubles")
+            : t("calc.formatSingles")}{" "}
+          · {t("publicProfile.pokemonCount", { n: team.members.length })}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -297,7 +302,11 @@ function GroupsSection({
 
   if (groupsQuery.isPending) {
     return (
-      <div className="grid gap-3" aria-label={t("groups.loadingGroups")}>
+      <div
+        className="grid gap-3"
+        role="status"
+        aria-label={t("groups.loadingGroups")}
+      >
         <Skeleton className="h-20 w-full rounded-md" />
         <Skeleton className="h-20 w-full rounded-md" />
       </div>
@@ -487,8 +496,8 @@ function ProfileSocialActions({
     if (result.ok) {
       toast.success(
         following
-          ? `Unfollowed @${profile.username}.`
-          : `Following @${profile.username}.`,
+          ? t("publicProfile.unfollowedToast", { name: profile.username })
+          : t("publicProfile.followingToast", { name: profile.username }),
       );
     } else {
       toast.error(result.error.message);
@@ -512,7 +521,7 @@ function ProfileSocialActions({
           <>
             <Button variant="outline" size="sm" asChild>
               <Link to={signInTo}>
-                <LogInIcon />
+                <LogInIcon aria-hidden />
                 {t("publicProfile.signInToFollow")}
               </Link>
             </Button>
@@ -523,13 +532,13 @@ function ProfileSocialActions({
                   size="icon-sm"
                   aria-label={t("publicProfile.moreOptions")}
                 >
-                  <EllipsisIcon />
+                  <EllipsisIcon aria-hidden />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
                   <Link to={signInTo}>
-                    <LogInIcon />
+                    <LogInIcon aria-hidden />
                     {t("publicProfile.signInToBlock")}
                   </Link>
                 </DropdownMenuItem>
@@ -545,7 +554,7 @@ function ProfileSocialActions({
               onClick={() => void handleToggleFollow()}
             >
               {toggleFollow.isPending ? (
-                <LoaderCircleIcon className="animate-spin" />
+                <LoaderCircleIcon className="animate-spin" aria-hidden />
               ) : null}
               {following
                 ? t("publicProfile.unfollow")
@@ -558,7 +567,7 @@ function ProfileSocialActions({
                   size="icon-sm"
                   aria-label={t("publicProfile.moreOptions")}
                 >
-                  <EllipsisIcon />
+                  <EllipsisIcon aria-hidden />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -566,11 +575,11 @@ function ProfileSocialActions({
                   variant="destructive"
                   onSelect={() => setBlockOpen(true)}
                 >
-                  <BanIcon />
+                  <BanIcon aria-hidden />
                   {t("publicProfile.blockUser")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setReportOpen(true)}>
-                  <FlagIcon />
+                  <FlagIcon aria-hidden />
                   {t("publicProfile.reportUser")}
                 </DropdownMenuItem>
                 {isModerator ? (
@@ -578,7 +587,7 @@ function ProfileSocialActions({
                     variant="destructive"
                     onSelect={() => setSuspendOpen(true)}
                   >
-                    <BanIcon />
+                    <BanIcon aria-hidden />
                     {t("publicProfile.suspendUser")}
                   </DropdownMenuItem>
                 ) : null}
@@ -604,7 +613,7 @@ function ProfileSocialActions({
               onClick={() => setBlockOpen(false)}
               disabled={toggleBlock.isPending}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -612,9 +621,9 @@ function ProfileSocialActions({
               disabled={toggleBlock.isPending}
             >
               {toggleBlock.isPending ? (
-                <LoaderCircleIcon className="animate-spin" />
+                <LoaderCircleIcon className="animate-spin" aria-hidden />
               ) : (
-                <BanIcon />
+                <BanIcon aria-hidden />
               )}
               {t("publicProfile.block")}
             </Button>
@@ -646,6 +655,7 @@ function ProfileFollowCounts({
   profile: Profile;
   client: AppSupabaseClient;
 }) {
+  const t = useT();
   const countsQuery = useFollowCounts(profile.id, client);
   const [listOpen, setListOpen] = useState<"followers" | "following" | null>(
     null,
@@ -660,14 +670,14 @@ function ProfileFollowCounts({
           className="text-muted-foreground underline-offset-4 transition-colors duration-150 ease-out hover:text-foreground hover:underline"
           onClick={() => setListOpen("followers")}
         >
-          {counts ? counts.followers : "…"} followers
+          {counts ? counts.followers : "…"} {t("publicProfile.followersLabel")}
         </button>
         <button
           type="button"
           className="text-muted-foreground underline-offset-4 transition-colors duration-150 ease-out hover:text-foreground hover:underline"
           onClick={() => setListOpen("following")}
         >
-          {counts ? counts.following : "…"} following
+          {counts ? counts.following : "…"} {t("publicProfile.followingLabel")}
         </button>
       </div>
       {listOpen === "followers" ? (
@@ -752,6 +762,7 @@ function PostsSection({
     return (
       <div
         className="grid gap-3"
+        role="status"
         aria-label={t("publicProfile.loadingPostsAria")}
       >
         <Skeleton className="h-28 w-full rounded-md" />
@@ -856,7 +867,7 @@ export function PublicProfilePage({
           <div>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/">
-                <ExternalLinkIcon />
+                <ExternalLinkIcon aria-hidden />
                 {t("authCallback.backHome")}
               </Link>
             </Button>

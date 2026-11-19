@@ -34,6 +34,14 @@ import { track } from "@/lib/telemetry/analytics";
 import type { Team } from "@/types/team";
 import { MAX_TEAM_SIZE } from "@/types/team";
 
+/**
+ * The card unmounts when its team is deleted, taking focus with it; park focus
+ * on the page landmark so keyboard users keep their place.
+ */
+function focusMainLandmark(): void {
+  (document.querySelector("main") as HTMLElement | null)?.focus();
+}
+
 function TeamCard({
   team,
   onDuplicate,
@@ -96,7 +104,7 @@ function TeamCard({
           aria-label={t("teams.duplicateNamed", { name: team.name })}
           onClick={() => onDuplicate(team)}
         >
-          <CopyIcon />
+          <CopyIcon aria-hidden />
         </Button>
         <Button
           variant="ghost"
@@ -104,7 +112,7 @@ function TeamCard({
           aria-label={t("teams.deleteNamed", { name: team.name })}
           onClick={() => onDelete(team)}
         >
-          <Trash2Icon />
+          <Trash2Icon aria-hidden />
         </Button>
         <span className="flex-1" />
         <Button variant="outline" size="sm" asChild>
@@ -159,6 +167,7 @@ export function TeamsPage() {
 
   function handleDelete(team: Team): void {
     remove(team.id);
+    focusMainLandmark();
     toast(t("teams.deleted", { name: team.name }), {
       action: {
         label: t("teams.undo"),
@@ -178,7 +187,7 @@ export function TeamsPage() {
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
-                <DownloadIcon />
+                <DownloadIcon aria-hidden />
                 {t("teams.import")}
               </Button>
             </DialogTrigger>
@@ -212,7 +221,7 @@ export function TeamsPage() {
               navigate(`/teams/${create({ format: preferredFormat }).id}`);
             }}
           >
-            <PlusIcon />
+            <PlusIcon aria-hidden />
             {t("teams.newTeam")}
           </Button>
         </>

@@ -99,6 +99,11 @@ export const shellEn = {
   "search.pokemon": "Pokémon",
   "search.moves": "Moves",
   "search.items": "Items",
+
+  // Accessibility pass (quality wave): the home link and theme switch.
+  "nav.homeAria": "OHKOLab home",
+  "theme.toLight": "Switch to light theme",
+  "theme.toDark": "Switch to dark theme",
 } as const;
 
 export type ShellKey = keyof typeof shellEn;
@@ -195,4 +200,9 @@ export const shellJa: { [K in ShellKey]: string } = {
   "search.pokemon": "ポケモン",
   "search.moves": "技",
   "search.items": "もちもの",
+
+  // アクセシビリティ対応（quality ウェーブ）：ホームリンクとテーマ切り替え。
+  "nav.homeAria": "OHKOLab ホーム",
+  "theme.toLight": "ライトテーマに切り替える",
+  "theme.toDark": "ダークテーマに切り替える",
 };

@@ -86,7 +86,11 @@ export function GroupPage() {
   if (groupQuery.isPending) {
     return (
       <Page title={t("groups.loadingAria")}>
-        <div className="grid gap-3" aria-label={t("groups.loadingAria")}>
+        <div
+          className="grid gap-3"
+          role="status"
+          aria-label={t("groups.loadingAria")}
+        >
           <Skeleton className="h-32 w-full rounded-md" />
           <Skeleton className="h-64 w-full rounded-md" />
         </div>
@@ -370,7 +374,11 @@ function GroupFeedTab({
 
   if (feed.isPending) {
     return (
-      <div className="grid gap-3" aria-label={t("home.loadingPosts")}>
+      <div
+        className="grid gap-3"
+        role="status"
+        aria-label={t("home.loadingPosts")}
+      >
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
@@ -474,6 +482,8 @@ function MembersTab({
                 aria-label={t("groups.usernameToInvite")}
                 placeholder="username"
                 value={inviteUsername}
+                aria-invalid={inviteError ? true : undefined}
+                aria-describedby={inviteError ? "invite-error" : undefined}
                 onChange={(event) => {
                   setInviteUsername(event.target.value);
                   setInviteError(null);
@@ -496,14 +506,24 @@ function MembersTab({
               </Button>
             </div>
             {inviteError && (
-              <p className="text-sm text-destructive">{inviteError}</p>
+              <p
+                id="invite-error"
+                className="text-sm text-destructive"
+                role="alert"
+              >
+                {inviteError}
+              </p>
             )}
           </CardContent>
         </Card>
       )}
 
       {membersQuery.isPending ? (
-        <div className="grid gap-3" aria-label={t("groups.loadingMembers")}>
+        <div
+          className="grid gap-3"
+          role="status"
+          aria-label={t("groups.loadingMembers")}
+        >
           <Skeleton className="h-16 w-full rounded-md" />
           <Skeleton className="h-16 w-full rounded-md" />
         </div>
@@ -762,7 +782,11 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
               </SelectContent>
             </Select>
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          )}
           {saved && (
             <p className="text-sm text-muted-foreground">
               {t("groups.changesSaved")}
@@ -805,7 +829,9 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
             </p>
           </div>
           {deleteError && (
-            <p className="text-sm text-destructive">{deleteError}</p>
+            <p className="text-sm text-destructive" role="alert">
+              {deleteError}
+            </p>
           )}
           <div>
             <Button
