@@ -63,7 +63,7 @@ declare
   caller uuid := auth.uid();
 begin
   if caller is null then
-    raise exception 'Not signed in' using errcode = 'PGRST301';
+    raise exception 'Not signed in' using errcode = '42501';
   end if;
   if new_birth_date > current_date then
     raise exception 'Birth date is in the future' using errcode = '23514';
@@ -404,7 +404,7 @@ declare
   recipient_setting text;
 begin
   if sender is null then
-    raise exception 'Not signed in' using errcode = 'PGRST301';
+    raise exception 'Not signed in' using errcode = '42501';
   end if;
 
   -- The other participant of this conversation.
@@ -413,7 +413,7 @@ begin
   from public.conversations c
   where c.id = new.conversation_id;
   if other is null then
-    raise exception 'Conversation not found' using errcode = 'PGRST116';
+    raise exception 'Conversation not found' using errcode = '42501';
   end if;
 
   -- A block in either direction stops delivery: the blocked user cannot
@@ -495,7 +495,10 @@ revoke execute on function public.are_friends(uuid, uuid)
 -- conversation. Every rule is checked server side; the client only renders
 -- the errors. Error codes:
 --   P0A08 - too many new conversations today
---   42501 - a rule (block, setting, minor) forbids it
+--   42501 - a rule (block, setting, minor) forbids it, or the caller is not
+--           signed in / the user does not exist (the same 5-character
+--           SQLSTATE the account-deletion migration uses; PGRST-prefixed
+--           codes are not valid SQLSTATEs, so plpgsql_check rejects them)
 --   23514 - the account is too new or the email is not confirmed
 -- ---------------------------------------------------------------------------
 
@@ -513,13 +516,13 @@ declare
   existing_conversation uuid;
 begin
   if caller is null then
-    raise exception 'Not signed in' using errcode = 'PGRST301';
+    raise exception 'Not signed in' using errcode = '42501';
   end if;
   if other = caller then
     raise exception 'You cannot message yourself' using errcode = '23514';
   end if;
   if not exists (select 1 from public.profiles where id = other) then
-    raise exception 'User not found' using errcode = 'PGRST116';
+    raise exception 'User not found' using errcode = '42501';
   end if;
 
   -- The account must be at least 3 days old with a confirmed email.
@@ -752,7 +755,7 @@ declare
   queue_id uuid;
 begin
   if caller is null then
-    raise exception 'Not signed in' using errcode = 'PGRST301';
+    raise exception 'Not signed in' using errcode = '42501';
   end if;
   if reason not in ('spam', 'harassment', 'inappropriate', 'other') then
     raise exception 'Invalid report reason' using errcode = '23514';
@@ -763,7 +766,7 @@ begin
   from public.messages m
   where m.id = report_message.message_id and m.deleted_at is null;
   if reported is null then
-    raise exception 'Message not found' using errcode = 'PGRST116';
+    raise exception 'Message not found' using errcode = '42501';
   end if;
 
   -- Only participants can report from inside a conversation.
