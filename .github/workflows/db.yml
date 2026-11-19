@@ -399,12 +399,14 @@ jobs:
             end;
 
             -- Another user sees none of the owner's tokens and cannot
-            -- remove them.
+            -- remove them (verified with the owner's claims, since the
+            -- other user cannot even see the row).
             perform set_config('request.jwt.claims', json_build_object('sub', push_b, 'role', 'authenticated')::text, true);
             if exists (select 1 from public.push_tokens where user_id = push_a) then
               raise exception 'PUSH-CHECK: another user read a foreign token';
             end if;
             delete from public.push_tokens where user_id = push_a;
+            perform set_config('request.jwt.claims', json_build_object('sub', push_a, 'role', 'authenticated')::text, true);
             if not exists (select 1 from public.push_tokens where user_id = push_a) then
               raise exception 'PUSH-CHECK: another user deleted a foreign token';
             end if;
@@ -445,6 +447,9 @@ jobs:
               raise exception 'PUSH-CHECK: another user read foreign push settings';
             end if;
             update public.push_settings set enabled = true where user_id = push_a;
+            -- Verified with the owner's claims: the blocked update must
+            -- have changed nothing.
+            perform set_config('request.jwt.claims', json_build_object('sub', push_a, 'role', 'authenticated')::text, true);
             if exists (select 1 from public.push_settings where user_id = push_a and enabled = true) then
               raise exception 'PUSH-CHECK: another user changed foreign push settings';
             end if;
