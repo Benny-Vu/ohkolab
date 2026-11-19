@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorState } from "@/components/error-state";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CommentListSkeleton,
+  LoadingArea,
+  PostCardSkeleton,
+} from "@/components/skeletons";
 import { Page } from "@/components/page";
 import { NotFoundPage } from "@/features/system/not-found-page";
 import { UserAvatar } from "@/components/user-avatar";
@@ -43,14 +47,11 @@ export function PostDetailPage() {
   if (postQuery.isPending) {
     return (
       <Page title={t("postDetail.title")} width="narrow">
-        <div
-          className="grid gap-3"
-          role="status"
-          aria-label={t("postDetail.loadingAria")}
-        >
-          <Skeleton className="h-28 w-full rounded-md" />
-          <Skeleton className="h-28 w-full rounded-md" />
-        </div>
+        <LoadingArea
+          pending
+          label={t("postDetail.loadingAria")}
+          skeleton={<PostCardSkeleton />}
+        />
       </Page>
     );
   }
@@ -192,9 +193,11 @@ export function PostDetailPage() {
           )}
 
           {commentsQuery.isPending && (
-            <p className="text-sm text-muted-foreground">
-              {t("postDetail.loadingComments")}
-            </p>
+            <LoadingArea
+              pending
+              label={t("postDetail.loadingComments")}
+              skeleton={<CommentListSkeleton />}
+            />
           )}
 
           {commentsQuery.isError && (
