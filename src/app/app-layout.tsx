@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration } from "react-router";
 
 import { AccountMenu } from "@/app/account-menu";
@@ -30,6 +30,7 @@ import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useT } from "@/lib/i18n/t";
 import { directMessagesEnabled } from "@/lib/messages/flag";
 import { cn } from "@/lib/utils";
+import { PREFETCH_EVENT, prefetchDestination } from "@/app/prefetch";
 
 /** App frame: desktop header, page content, phone top bar and tab bar. */
 export function AppLayout() {
@@ -39,6 +40,16 @@ export function AppLayout() {
   useNativeApp();
   const t = useT();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  // Pages that want a destination prefetched dispatch the event instead of
+  // importing the prefetch module (their feature graphs must stay chunk-free).
+  useEffect(() => {
+    const handler = (event: Event) => {
+      prefetchDestination((event as CustomEvent<string>).detail);
+    };
+    window.addEventListener(PREFETCH_EVENT, handler);
+    return () => window.removeEventListener(PREFETCH_EVENT, handler);
+  }, []);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -57,6 +68,10 @@ export function AppLayout() {
                 to={item.to}
                 end={item.end}
                 viewTransition
+                // Warming the next screen on hover keeps the main nav
+                // feeling instant; it acts once per destination.
+                onMouseEnter={() => prefetchDestination(item.to)}
+                onFocus={() => prefetchDestination(item.to)}
                 className={({ isActive }) =>
                   cn(
                     "relative px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -163,6 +178,8 @@ export function AppLayout() {
                 to={item.to}
                 end={item.end}
                 viewTransition
+                onMouseEnter={() => prefetchDestination(item.to)}
+                onFocus={() => prefetchDestination(item.to)}
                 className={({ isActive }) =>
                   cn(
                     "relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground",

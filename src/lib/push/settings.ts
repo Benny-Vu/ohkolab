@@ -112,7 +112,9 @@ export function usePushSettings(client: AppSupabaseClient | null = supabase) {
     queryKey: ["push", "settings", user?.id ?? null],
     enabled: isPushAvailable() && client !== null && user !== null,
     retry: false,
-    staleTime: 60_000,
+    // Own settings: the switch mutations invalidate this key, so the
+    // staleTime only serves revisits.
+    staleTime: 10 * 60_000,
     queryFn: () => readPushSettings(client, user!.id),
   });
 }

@@ -217,6 +217,9 @@ export interface PostImageDisplay {
   /** The CDN URL; null unless approved with a public path. */
   url: string | null;
   alt: string | null;
+  /** Stored pixel size, for reserving the box before the bytes arrive. */
+  width: number | null;
+  height: number | null;
   /**
    * The row's `created_at`, for pending images only: the UI uses it to spot
    * images stuck pending for a day (a screening that never succeeded).
@@ -246,6 +249,8 @@ export function visiblePostImages(
           status: "approved",
           url: imageUrl(row.public_path),
           alt: row.alt,
+          width: row.width,
+          height: row.height,
           pendingSince: null,
         });
       } else if (isAuthor) {
@@ -255,6 +260,8 @@ export function visiblePostImages(
           status: "pending",
           url: null,
           alt: row.alt,
+          width: null,
+          height: null,
           pendingSince: row.created_at,
         });
       }
@@ -267,6 +274,8 @@ export function visiblePostImages(
           status: row.status,
           url: null,
           alt: row.alt,
+          width: null,
+          height: null,
           pendingSince: row.status === "pending" ? row.created_at : null,
         });
       }

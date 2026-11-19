@@ -250,6 +250,10 @@ describe("visiblePostImages", () => {
       id: "img-0",
       status: "approved",
       url: "https://img.ohkolab.com/user-1/post-1/image-a.webp",
+      // The stored size travels with the display so the card can reserve
+      // its box before the image loads.
+      width: 1600,
+      height: 900,
     });
   });
 
@@ -287,6 +291,8 @@ describe("visiblePostImages", () => {
         status: "pending",
         url: null,
         alt: null,
+        width: null,
+        height: null,
         pendingSince: "2026-11-19T10:00:00.000Z",
       },
     ]);

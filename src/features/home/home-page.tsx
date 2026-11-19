@@ -38,6 +38,17 @@ interface Tool {
 }
 
 /**
+ * Asks the app layout to warm the Groups screen on hover/focus. The
+ * event (not an import) keeps this feature's graph free of other
+ * features' chunks; see src/app/prefetch.ts.
+ */
+function prefetchGroups(): void {
+  window.dispatchEvent(
+    new CustomEvent("ohkolab:prefetch", { detail: "/groups" }),
+  );
+}
+
+/**
  * Home screen: the community feed once the social layer is ready, with the
  * tools intro as the fallback.
  */
@@ -175,7 +186,11 @@ function FeedHome() {
               className="w-auto max-w-44"
             />
             <Button asChild variant="outline" size="sm">
-              <Link to="/groups">
+              <Link
+                to="/groups"
+                onMouseEnter={prefetchGroups}
+                onFocus={prefetchGroups}
+              >
                 <UsersIcon aria-hidden />
                 {t("home.groups")}
               </Link>

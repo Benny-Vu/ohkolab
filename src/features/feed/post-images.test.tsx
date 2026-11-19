@@ -46,6 +46,8 @@ function approved(partial: Partial<PostImageDisplay> = {}): PostImageDisplay {
     status: "approved",
     url: "https://img.ohkolab.com/user-1/post-1/img-1.webp",
     alt: "A Garchomp on the beach",
+    width: 1600,
+    height: 900,
     pendingSince: null,
     ...partial,
   };
@@ -57,6 +59,8 @@ function pending(partial: Partial<PostImageDisplay> = {}): PostImageDisplay {
     status: "pending",
     url: null,
     alt: null,
+    width: null,
+    height: null,
     pendingSince: new Date().toISOString(),
     ...partial,
   };
@@ -68,6 +72,8 @@ function rejected(): PostImageDisplay {
     status: "rejected",
     url: null,
     alt: null,
+    width: null,
+    height: null,
     pendingSince: null,
   };
 }
