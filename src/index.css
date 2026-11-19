@@ -13,16 +13,35 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design tokens (Wave 5 redesign). The app is dark-first: `:root` holds the
- * light theme and `.dark` the default one. Values come from the Scoreboard in
- * ui-redesign-plan.md, as OKLCH.
+ * Design tokens — the "competitive lab" identity. The app is dark-first:
+ * `:root` holds the light theme and `.dark` the default one. Values are
+ * OKLCH, originally from the Scoreboard pass in ui-redesign-plan.md.
+ *
+ * Surfaces read as one stack: `--background` (page) → `--card` (panel) →
+ * `--surface-raised` / `--popover` (raised) → `--surface-sunken` (inputs),
+ * separated by `--border` hairlines. Focus is always `--ring`.
+ *
+ * The signature accent is lime, in four states:
+ * - `--accent-brand` is the base fill (bars, dots, tiles);
+ * - `--accent-brand-hover` / `--accent-brand-pressed` are its interactive
+ *   states (fills stay fills: the near-black `--accent-brand-foreground`
+ *   sits on top at AA in every state);
+ * - `--accent-brand-subtle` is a low-alpha tint for hovered rows and
+ *   accent-tinted backgrounds;
+ * - `--accent-brand-text` is the lime-safe TEXT colour: lime on dark,
+ *   olive on light. Never lime text on a light background.
+ *
+ * Motion tokens (when to use which):
+ * - `--motion-fast` (120ms): hover and press feedback, colour changes;
+ * - `--motion-base` (160ms): the default; page transitions, small panels;
+ * - `--motion-slow` (240ms): large surfaces — dialogs, sheets, drawers.
+ * Easings: `--motion-ease-out` for entrances and interactions (the default
+ * below), `--motion-ease-in-out` for moves between two visible states.
+ * Use them as `duration-(--motion-base) ease-(--motion-ease-out)`.
+ * `prefers-reduced-motion` turns every animation and transition off, and
+ * view transitions snap instantly instead of sliding.
  *
  * - `--primary` is neutral: near-white on dark, near-black on light.
- * - `--accent-brand` is the lime fill; `--accent-brand-text` is the lime-safe
- *   text colour (lime on dark, olive on light). Never lime text on light.
- * - `--ring` is the focus accent: lime on dark, olive on light, so it stays
- *   visible in both themes.
- * - `--surface-raised` and `--surface-sunken` layer panels and inputs.
  * - `--damage-*` is the KO scale; a label always accompanies the colour.
  */
 
@@ -42,9 +61,15 @@
   --text-xs: 0.8125rem;
   --text-xs--line-height: 1rem;
 
-  /* Motion: 120 to 200ms, ease-out. */
-  --default-transition-duration: 160ms;
-  --default-transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  /* Motion tokens: fast = hover/press feedback, base = default transitions
+   * and page changes, slow = large surfaces (dialogs, sheets). */
+  --motion-fast: 120ms;
+  --motion-base: 160ms;
+  --motion-slow: 240ms;
+  --motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --default-transition-duration: var(--motion-base);
+  --default-transition-timing-function: var(--motion-ease-out);
 }
 
 /* Japanese: no web font is shipped — the system Japanese fonts take over,
@@ -80,6 +105,9 @@ html[lang="ja"] {
   --color-accent-brand: var(--accent-brand);
   --color-accent-brand-foreground: var(--accent-brand-foreground);
   --color-accent-brand-text: var(--accent-brand-text);
+  --color-accent-brand-hover: var(--accent-brand-hover);
+  --color-accent-brand-pressed: var(--accent-brand-pressed);
+  --color-accent-brand-subtle: var(--accent-brand-subtle);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
@@ -145,6 +173,9 @@ html[lang="ja"] {
   --surface-raised: oklch(0.988 0.002 247.8); /* #FAFBFC */
   --surface-sunken: oklch(0.936 0.005 258.3); /* #E8EAED */
   --accent-brand: oklch(0.896 0.204 121.5); /* lime #C8F031 */
+  --accent-brand-hover: oklch(0.87 0.198 121.5); /* dimmer on light */
+  --accent-brand-pressed: oklch(0.83 0.19 122);
+  --accent-brand-subtle: oklch(0.896 0.204 121.5 / 0.18);
   --accent-brand-foreground: oklch(0.158 0.007 258.4);
   --accent-brand-text: oklch(0.43 0.111 127.1); /* olive #3F5A00 */
   --damage-ohko: oklch(0.62 0.22 330); /* #CA44C3 */
@@ -195,6 +226,9 @@ html[lang="ja"] {
   --surface-raised: oklch(0.234 0.015 261.6); /* #1A1E25 */
   --surface-sunken: oklch(0.177 0.011 260.6); /* #0E1116 */
   --accent-brand: oklch(0.896 0.204 121.5); /* lime #C8F031 */
+  --accent-brand-hover: oklch(0.916 0.19 121.5); /* brighter on dark */
+  --accent-brand-pressed: oklch(0.856 0.2 121.5);
+  --accent-brand-subtle: oklch(0.896 0.204 121.5 / 0.14);
   --accent-brand-foreground: oklch(0.158 0.007 258.4);
   --accent-brand-text: oklch(0.896 0.204 121.5); /* lime on dark */
   --damage-ohko: oklch(0.7 0.2 330); /* #E068D8 */
@@ -248,6 +282,47 @@ html[lang="ja"] {
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/*
+ * Page transitions (View Transitions API). React Router navigations with
+ * `viewTransition` snapshot `main` as the "page" group and cross-fade it
+ * with a slight slide. Everything outside `main` — header, tab bar, footer —
+ * is the root group and is deliberately not animated, so the shell stays
+ * still. Browsers without View Transitions (and jsdom) fall back to an
+ * instant switch. Reduced motion snaps instead of sliding (rule below).
+ */
+main {
+  view-transition-name: page;
+}
+@keyframes view-page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes view-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+::view-transition-old(page) {
+  animation: view-page-out var(--motion-base) var(--motion-ease-out) both;
+}
+::view-transition-new(page) {
+  animation: view-page-in var(--motion-base) var(--motion-ease-out) both;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.01ms !important;
   }
 }
 

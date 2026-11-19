@@ -127,6 +127,8 @@ const TEXT_PAIRS: Array<[string, string]> = [
   ["muted-foreground", "surface-sunken"],
   ["primary", "primary-foreground"],
   ["accent-brand-foreground", "accent-brand"],
+  ["accent-brand-foreground", "accent-brand-hover"],
+  ["accent-brand-foreground", "accent-brand-pressed"],
   ["accent-brand-text", "background"],
   ["accent-brand-text", "card"],
   ["destructive", "card"],
