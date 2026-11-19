@@ -443,6 +443,44 @@ describe("PublicProfilePage", () => {
     expect(screen.getByRole("button", { name: "View" })).toBeInTheDocument();
   });
 
+  it("shows the profile's community fields", async () => {
+    const client = createFakeClient({
+      profile: profileRow({
+        favourite_species: "Garchomp",
+        main_format: "both",
+        looking_for: "team feedback",
+        youtube_url: "https://youtube.com/@ash",
+        showdown_name: "ashketchum",
+      }),
+    });
+    renderProfilePage(client, "ashketchum");
+
+    expect(await screen.findByText("Singles and doubles")).toBeInTheDocument();
+    expect(screen.getByText("team feedback")).toBeInTheDocument();
+    expect(screen.getByAltText("Garchomp")).toBeInTheDocument();
+    const youtube = screen.getByRole("link", { name: /YouTube/ });
+    expect(youtube).toHaveAttribute("href", "https://youtube.com/@ash");
+    expect(screen.getByText("ashketchum")).toBeInTheDocument();
+  });
+
+  it("renders no community rows for a bare profile", async () => {
+    // Its own username: the query cache is shared across tests in the file.
+    const client = createFakeClient({
+      profile: profileRow({
+        id: "user-duplica",
+        username: "duplica",
+        display_name: "Duplica",
+      }),
+    });
+    renderProfilePage(client, "duplica");
+
+    await screen.findByText("@duplica");
+    expect(screen.queryByText(/Singles and doubles/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /YouTube/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("offers a retry when the teams could not be loaded", async () => {
     const user = userEvent.setup();
     const client = createFakeClient({

@@ -206,6 +206,49 @@ describe("ProfilePage", () => {
     expect(auth.calls.map((c) => c.name)).not.toContain("updateProfile");
   });
 
+  it("saves the community profile fields", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth();
+    renderPage(<ProfilePage />, auth, { path: "/profile" });
+
+    await user.type(screen.getByLabelText("Looking for"), "practice partners");
+    await user.type(
+      screen.getByLabelText("YouTube channel"),
+      "https://youtube.com/@ash",
+    );
+    await user.type(screen.getByLabelText("Showdown name"), "ashketchum");
+    await user.click(screen.getByRole("combobox", { name: "Main format" }));
+    await user.click(await screen.findByRole("option", { name: "Doubles" }));
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => {
+      const call = auth.calls.find((c) => c.name === "updateProfile");
+      expect(call?.args[0]).toMatchObject({
+        lookingFor: "practice partners",
+        youtubeUrl: "https://youtube.com/@ash",
+        showdownName: "ashketchum",
+        mainFormat: "doubles",
+      });
+    });
+  });
+
+  it("rejects a non-https profile link", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth();
+    renderPage(<ProfilePage />, auth, { path: "/profile" });
+
+    await user.type(
+      screen.getByLabelText("YouTube channel"),
+      "http://youtube.com/@ash",
+    );
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    expect(
+      screen.getByText("Links must be https:// addresses."),
+    ).toBeInTheDocument();
+    expect(auth.calls.map((c) => c.name)).not.toContain("updateProfile");
+  });
+
   it("links the username error to the field via aria-describedby", async () => {
     const user = userEvent.setup();
     const auth = createFakeAuth();
