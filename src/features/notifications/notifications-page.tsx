@@ -35,6 +35,14 @@ import {
 import type { NotificationItem } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
 
+/**
+ * The row unmounts when its notification is deleted, taking focus with it;
+ * park focus on the page landmark so keyboard users keep their place.
+ */
+function focusMainLandmark(): void {
+  (document.querySelector("main") as HTMLElement | null)?.focus();
+}
+
 export function NotificationsPage() {
   const { user } = useAuth();
   const t = useT();
@@ -67,6 +75,7 @@ export function NotificationsPage() {
   async function handleDelete(id: string) {
     const result = await deleteNotification.mutateAsync(id);
     if (result.ok) {
+      focusMainLandmark();
       toast.success(t("notifications.deletedToast"));
     } else {
       toast.error(result.error.message);
@@ -105,7 +114,11 @@ export function NotificationsPage() {
           }
         />
       ) : notifications.isPending ? (
-        <div className="grid gap-3" aria-label={t("notifications.loadingAria")}>
+        <div
+          className="grid gap-3"
+          role="status"
+          aria-label={t("notifications.loadingAria")}
+        >
           <Skeleton className="h-16 w-full rounded-md" />
           <Skeleton className="h-16 w-full rounded-md" />
           <Skeleton className="h-16 w-full rounded-md" />
@@ -129,6 +142,8 @@ export function NotificationsPage() {
           items={notifications.data?.pages.flat() ?? []}
           onMarkRead={handleMarkRead}
           onDelete={handleDelete}
+          markPending={markRead.isPending}
+          deletePending={deleteNotification.isPending}
           hasNextPage={notifications.hasNextPage}
           isFetchingNextPage={notifications.isFetchingNextPage}
           onLoadMore={() => void notifications.fetchNextPage()}
@@ -142,6 +157,9 @@ interface NotificationsListProps {
   items: NotificationItem[];
   onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
+  /** A mark-read or delete is in flight: the row buttons wait for it. */
+  markPending: boolean;
+  deletePending: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
@@ -151,6 +169,8 @@ function NotificationsList({
   items,
   onMarkRead,
   onDelete,
+  markPending,
+  deletePending,
   hasNextPage,
   isFetchingNextPage,
   onLoadMore,
@@ -173,6 +193,8 @@ function NotificationsList({
           item={item}
           onMarkRead={onMarkRead}
           onDelete={onDelete}
+          markPending={markPending}
+          deletePending={deletePending}
         />
       ))}
       {hasNextPage && (
@@ -194,12 +216,16 @@ interface NotificationRowCardProps {
   item: NotificationItem;
   onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
+  markPending: boolean;
+  deletePending: boolean;
 }
 
 function NotificationRowCard({
   item,
   onMarkRead,
   onDelete,
+  markPending,
+  deletePending,
 }: NotificationRowCardProps) {
   const t = useT();
   const sentence = describeNotification(item);
@@ -228,7 +254,10 @@ function NotificationRowCard({
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm">
+        {isUnread && (
+          <span className="sr-only">{t("notifications.unreadSr")}</span>
+        )}
+        <p className="break-words text-sm">
           {profilePath ? (
             <Link
               to={profilePath}
@@ -267,6 +296,7 @@ function NotificationRowCard({
             size="icon-sm"
             aria-label={t("notifications.markRead", { name: actor })}
             onClick={() => onMarkRead(item.id)}
+            disabled={markPending}
           >
             <CheckIcon aria-hidden />
           </Button>
@@ -276,6 +306,7 @@ function NotificationRowCard({
           size="icon-sm"
           aria-label={t("notifications.delete", { name: actor })}
           onClick={() => onDelete(item.id)}
+          disabled={deletePending}
         >
           <Trash2Icon aria-hidden />
         </Button>

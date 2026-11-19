@@ -203,11 +203,11 @@ export function CalcPage() {
               onClick={() => dispatch({ type: "swapSides" })}
               variant="outline"
             >
-              <ArrowLeftRightIcon />
+              <ArrowLeftRightIcon aria-hidden />
               {t("calc.swapSides")}
             </Button>
             <Button onClick={handleReset} variant="outline">
-              <RotateCcwIcon />
+              <RotateCcwIcon aria-hidden />
               {t("calc.reset")}
             </Button>
           </>
@@ -245,7 +245,7 @@ export function CalcPage() {
     <Page
       actions={
         <Button onClick={handleReset} variant="outline">
-          <RotateCcwIcon />
+          <RotateCcwIcon aria-hidden />
           {t("calc.reset")}
         </Button>
       }
@@ -263,7 +263,7 @@ export function CalcPage() {
             size="icon-sm"
             variant="outline"
           >
-            <ArrowLeftRightIcon />
+            <ArrowLeftRightIcon aria-hidden />
           </Button>
           <MatchupChip
             name={displayNames.p2}

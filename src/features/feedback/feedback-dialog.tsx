@@ -43,9 +43,9 @@ const KIND_LABELS: Record<FeedbackKind, TranslationKey> = {
 };
 
 const KIND_ICONS: Record<FeedbackKind, ReactNode> = {
-  bug: <BugIcon className="size-4" />,
-  idea: <LightbulbIcon className="size-4" />,
-  other: <MessageCircleIcon className="size-4" />,
+  bug: <BugIcon className="size-4" aria-hidden />,
+  idea: <LightbulbIcon className="size-4" aria-hidden />,
+  other: <MessageCircleIcon className="size-4" aria-hidden />,
 };
 
 export interface FeedbackDialogProps {

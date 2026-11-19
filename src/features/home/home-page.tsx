@@ -121,6 +121,9 @@ function FeedHome() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
+      {/* One h1 per page: the feed has no visible title, so it is screen-reader
+       * only; the signed-out intro keeps its visible heading as plain text. */}
+      <h1 className="sr-only">OHKOLab</h1>
       <div className="min-w-0">
         {!user && <SignedOutIntro />}
 
@@ -190,9 +193,9 @@ function SignedOutIntro() {
   const t = useT();
   return (
     <section className="mb-4 rounded-md border bg-card p-4">
-      <h1 className="font-heading text-xl font-bold">
+      <p className="font-heading text-xl font-bold">
         <span className="text-primary">OHKO</span>Lab
-      </h1>
+      </p>
       <p className="mt-1 text-sm text-muted-foreground">
         {t("home.signedOutIntro")}
       </p>
@@ -254,11 +257,34 @@ function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
       <h2 className="font-heading text-sm font-semibold">
         {t("home.yourGroups")}
       </h2>
-      {groups.length > 0 ? (
+      {myGroups.isPending ? (
+        <div className="mt-3 grid gap-2" aria-label={t("groups.loadingGroups")}>
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      ) : myGroups.isError ? (
+        <ErrorState
+          title={t("home.groupsLoadError")}
+          description={myGroups.error.message}
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void myGroups.refetch()}
+            >
+              {t("common.retry")}
+            </Button>
+          }
+          className="border-none bg-transparent px-0 py-2"
+        />
+      ) : groups.length > 0 ? (
         <ul className="mt-2 grid gap-1.5">
           {groups.slice(0, 5).map((group) => (
-            <li key={group.id}>
-              <Link to={`/g/${group.slug}`} className="text-sm hover:underline">
+            <li key={group.id} className="min-w-0">
+              <Link
+                to={`/g/${group.slug}`}
+                className="block truncate text-sm hover:underline"
+              >
                 {group.name}
               </Link>
             </li>
@@ -289,7 +315,11 @@ function FeedTabContent({
 
   if (feed.isPending) {
     return (
-      <div className="grid gap-3" aria-label={t("home.loadingPosts")}>
+      <div
+        className="grid gap-3"
+        role="status"
+        aria-label={t("home.loadingPosts")}
+      >
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />
         <Skeleton className="h-28 w-full rounded-md" />

@@ -13,6 +13,19 @@ describe("SpeciesPicker", () => {
     );
   });
 
+  it("forwards its id so a <label htmlFor> can point at the trigger", () => {
+    render(
+      <SpeciesPicker
+        id="avatar-species"
+        value={null}
+        onChange={() => undefined}
+      />,
+    );
+
+    const trigger = screen.getByRole("combobox", { name: "Species" });
+    expect(trigger).toHaveAttribute("id", "avatar-species");
+  });
+
   it("picks a species from the search results", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

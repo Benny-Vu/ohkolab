@@ -4,12 +4,20 @@ import { en, type TranslationKey } from "@/lib/i18n/en";
 import { ja } from "@/lib/i18n/ja";
 import { setLocale } from "@/lib/i18n/locale";
 import { t } from "@/lib/i18n/t";
+import { DEFAULT_TEAM_NAME } from "@/lib/team/team-ops";
 
 describe("dictionaries", () => {
   it("has every English key in the Japanese dictionary", () => {
     const enKeys = Object.keys(en).sort();
     const jaKeys = Object.keys(ja).sort();
     expect(jaKeys).toEqual(enKeys);
+  });
+
+  it("keeps hard-coded display defaults in the dictionary", () => {
+    // The stored sentinel for new teams is shown localized via
+    // displayTeamName; this ties the constant to the dictionary so the
+    // two cannot drift apart (the footer bug class, but for defaults).
+    expect(en["teams.untitled" as TranslationKey]).toBe(DEFAULT_TEAM_NAME);
   });
 
   it("uses the same placeholders in English and Japanese for each key", () => {
@@ -20,6 +28,34 @@ describe("dictionaries", () => {
         placeholders(en[key] as string),
       );
     }
+  });
+
+  it("translates every key whose Japanese value is not a known brand", () => {
+    // Values that legitimately stay the same in both languages: brands, the
+    // language endonyms (each language is named in its own tongue) and the
+    // official stat name HP.
+    const allowed = new Set([
+      "OK",
+      "OHKOLab",
+      "Vu Forge",
+      "Showdown",
+      "English",
+      "日本語",
+      "HP",
+    ]);
+    // Keys whose English value is intentionally not English (or not shown in
+    // the en locale at all).
+    const allowedKeys = new Set(["legal.japaneseNotice"]);
+    const untranslated: string[] = [];
+    for (const key of Object.keys(en) as TranslationKey[]) {
+      const english = en[key] as string;
+      if (allowed.has(english) || allowedKeys.has(key)) continue;
+      if (ja[key] === english) untranslated.push(key);
+    }
+    expect(
+      untranslated,
+      "keys whose Japanese value is the English text",
+    ).toEqual([]);
   });
 });
 

@@ -486,6 +486,27 @@ describe("GroupPage", () => {
     );
   });
 
+  it("does not send a second invite while one is pending", async () => {
+    const mutateAsync = vi.fn(async () => ({ ok: true, data: undefined }));
+    mutationsMocks.useInviteMember.mockReturnValue({
+      mutateAsync,
+      mutate: vi.fn(),
+      isPending: true,
+    });
+    stubQueries(groupSummary(), membership({ role: "owner" }));
+    const user = userEvent.setup();
+    renderGroupPage();
+
+    await user.click(screen.getByRole("radio", { name: /members/i }));
+    const input = screen.getByLabelText("Username to invite");
+    expect(screen.getByRole("button", { name: /^invite$/i })).toBeDisabled();
+
+    // Enter in the input must not bypass the disabled invite button.
+    await user.type(input, "misty{Enter}");
+
+    expect(mutateAsync).not.toHaveBeenCalled();
+  });
+
   it("shows role controls for the owner on other members", async () => {
     stubQueries(
       groupSummary({ ownerId: "user-1" }),

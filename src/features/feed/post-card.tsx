@@ -40,6 +40,7 @@ import { KoLabel } from "@/components/ko-label";
 import { useDisplayName } from "@/data";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
+import { displayTeamName } from "@/lib/team/display";
 import { useTeams } from "@/lib/team";
 import {
   useDeletePost,
@@ -60,6 +61,14 @@ import {
 } from "@/features/feed/attachment";
 import { koResultOf } from "@/features/calc/ko-result";
 import { ReportDialog } from "@/features/feed/report-dialog";
+
+/**
+ * The card unmounts when its post is deleted or removed, taking focus with it;
+ * park focus on the page landmark so keyboard users keep their place.
+ */
+function focusMainLandmark(): void {
+  (document.querySelector("main") as HTMLElement | null)?.focus();
+}
 
 interface PostCardProps {
   post: FeedPostRow;
@@ -134,7 +143,9 @@ export function PostCard({
       format: team.format,
       members: team.members,
     });
-    toast.success(t("postCard.copiedTeam", { name: created.name }));
+    toast.success(
+      t("postCard.copiedTeam", { name: displayTeamName(created.name) }),
+    );
   }
 
   function handleOpenInCalc() {
@@ -161,6 +172,7 @@ export function PostCard({
     const result = await deletePost.mutateAsync(post.id);
     if (result.ok) {
       setConfirmDelete(false);
+      focusMainLandmark();
       toast.success(t("postCard.deletedToast"));
     } else {
       toast.error(result.error.message);
@@ -191,6 +203,7 @@ export function PostCard({
     if (result.ok) {
       setRemoving(false);
       setRemoveReason("");
+      focusMainLandmark();
       toast.success(t("postCard.removedToast"));
     } else {
       toast.error(result.error.message);
@@ -261,8 +274,10 @@ export function PostCard({
           {team && (
             <div className="mt-3 rounded-md border bg-surface-sunken p-3">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">{team.name}</p>
-                <span className="text-xs text-muted-foreground capitalize">
+                <p className="min-w-0 truncate text-sm font-medium">
+                  {displayTeamName(team.name)}
+                </p>
+                <span className="shrink-0 text-xs text-muted-foreground capitalize">
                   {team.format}
                 </span>
               </div>

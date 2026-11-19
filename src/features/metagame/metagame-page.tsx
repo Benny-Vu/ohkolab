@@ -489,10 +489,12 @@ export function MetagamePage() {
                           className="h-8 max-w-full justify-start"
                           onClick={() => setSelected(pokemon)}
                         >
-                          <PokemonIcon
-                            species={pokemon.species}
-                            className="size-6 shrink-0"
-                          />
+                          <span aria-hidden className="shrink-0">
+                            <PokemonIcon
+                              species={pokemon.species}
+                              className="size-6"
+                            />
+                          </span>
                           <span className="min-w-0 truncate font-medium">
                             {displayName("species", pokemon.species)}
                           </span>
@@ -569,7 +571,12 @@ export function MetagamePage() {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <PokemonIcon species={selected.species} className="size-8" />
+                  <span aria-hidden className="shrink-0">
+                    <PokemonIcon
+                      species={selected.species}
+                      className="size-8"
+                    />
+                  </span>
                   <span>{displayName("species", selected.species)}</span>
                 </DialogTitle>
                 <DialogDescription>

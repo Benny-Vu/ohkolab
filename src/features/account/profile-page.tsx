@@ -223,6 +223,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   </Label>
                   <Suspense fallback={<Skeleton className="h-8 w-full" />}>
                     <SpeciesPicker
+                      id="avatar-species"
                       value={avatarSpecies}
                       onChange={(species) => setAvatarSpecies(species)}
                       placeholder={t("pokemonEditor.chooseSpecies")}
@@ -237,9 +238,16 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
                   aria-invalid={fieldErrors.username ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.username ? "username-error" : undefined
+                  }
                 />
                 {fieldErrors.username ? (
-                  <p className="text-sm text-destructive" role="alert">
+                  <p
+                    id="username-error"
+                    className="text-sm text-destructive"
+                    role="alert"
+                  >
                     {fieldErrors.username}
                   </p>
                 ) : null}
@@ -256,9 +264,16 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   value={displayName}
                   onChange={(event) => setDisplayName(event.target.value)}
                   aria-invalid={fieldErrors.displayName ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.displayName ? "display-name-error" : undefined
+                  }
                 />
                 {fieldErrors.displayName ? (
-                  <p className="text-sm text-destructive" role="alert">
+                  <p
+                    id="display-name-error"
+                    className="text-sm text-destructive"
+                    role="alert"
+                  >
                     {fieldErrors.displayName}
                   </p>
                 ) : null}
@@ -275,9 +290,14 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   value={bio}
                   onChange={(event) => setBio(event.target.value)}
                   aria-invalid={fieldErrors.bio ? true : undefined}
+                  aria-describedby={fieldErrors.bio ? "bio-error" : undefined}
                 />
                 {fieldErrors.bio ? (
-                  <p className="text-sm text-destructive" role="alert">
+                  <p
+                    id="bio-error"
+                    className="text-sm text-destructive"
+                    role="alert"
+                  >
                     {fieldErrors.bio}
                   </p>
                 ) : null}
@@ -286,16 +306,26 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                 </p>
               </div>
               {formError ? (
-                <p className="text-sm text-destructive" role="alert">
+                <p
+                  id="profile-form-error"
+                  className="text-sm text-destructive"
+                  role="alert"
+                >
                   {formError.message}
                 </p>
               ) : null}
               <div className="flex flex-wrap items-center gap-2">
-                <Button type="submit" disabled={busy}>
+                <Button
+                  type="submit"
+                  disabled={busy}
+                  aria-describedby={
+                    formError ? "profile-form-error" : undefined
+                  }
+                >
                   {pending === "save" ? (
-                    <LoaderCircleIcon className="animate-spin" />
+                    <LoaderCircleIcon className="animate-spin" aria-hidden />
                   ) : (
-                    <SaveIcon />
+                    <SaveIcon aria-hidden />
                   )}
                   {t("profile.saveChanges")}
                 </Button>
@@ -329,9 +359,9 @@ function ProfileEditor({ profile }: { profile: Profile }) {
           <CardContent className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleSignOut} disabled={busy}>
               {pending === "signOut" ? (
-                <LoaderCircleIcon className="animate-spin" />
+                <LoaderCircleIcon className="animate-spin" aria-hidden />
               ) : (
-                <LogOutIcon />
+                <LogOutIcon aria-hidden />
               )}
               {t("common.signOut")}
             </Button>
@@ -376,7 +406,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <DialogTrigger asChild>
                 <Button variant="destructive" disabled={busy}>
-                  <Trash2Icon />
+                  <Trash2Icon aria-hidden />
                   {t("profile.deleteAccountTitle")}
                 </Button>
               </DialogTrigger>
@@ -417,9 +447,9 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                     }
                   >
                     {pending === "delete" ? (
-                      <LoaderCircleIcon className="animate-spin" />
+                      <LoaderCircleIcon className="animate-spin" aria-hidden />
                     ) : (
-                      <Trash2Icon />
+                      <Trash2Icon aria-hidden />
                     )}
                     {t("profile.deleteForever")}
                   </Button>
@@ -451,7 +481,7 @@ function BlockedUserRow({ profile }: { profile: Profile }) {
     const result = await toggleBlock.mutateAsync();
     setBusy(false);
     if (result.ok) {
-      toast.success(`Unblocked @${profile.username}.`);
+      toast.success(t("profile.unblockedToast", { name: profile.username }));
     } else {
       toast.error(result.error.message);
     }
@@ -487,7 +517,9 @@ function BlockedUserRow({ profile }: { profile: Profile }) {
         }}
         disabled={busy}
       >
-        {busy ? <LoaderCircleIcon className="animate-spin" /> : null}
+        {busy ? (
+          <LoaderCircleIcon className="animate-spin" aria-hidden />
+        ) : null}
         {t("profile.unblock")}
       </Button>
     </li>
@@ -518,6 +550,20 @@ function BlockedUsersCard() {
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
+        ) : blocksQuery.isError ? (
+          <div className="grid gap-2">
+            <p className="text-sm text-muted-foreground">
+              {t("profile.blocksLoadFailed")}
+            </p>
+            <Button
+              className="justify-self-start"
+              variant="outline"
+              size="sm"
+              onClick={() => void blocksQuery.refetch()}
+            >
+              {t("common.retry")}
+            </Button>
+          </div>
         ) : ids.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("profile.noBlocks")}
@@ -527,9 +573,19 @@ function BlockedUsersCard() {
             <Skeleton className="h-10 w-full" />
           </div>
         ) : profilesQuery.isError ? (
-          <p className="text-sm text-muted-foreground">
-            {t("profile.blocksLoadFailed")}
-          </p>
+          <div className="grid gap-2">
+            <p className="text-sm text-muted-foreground">
+              {t("profile.blocksLoadFailed")}
+            </p>
+            <Button
+              className="justify-self-start"
+              variant="outline"
+              size="sm"
+              onClick={() => void profilesQuery.refetch()}
+            >
+              {t("common.retry")}
+            </Button>
+          </div>
         ) : (
           <ul className="grid gap-2">
             {profilesQuery.data.map((profile) => (
@@ -579,7 +635,7 @@ export function ProfilePage() {
         auth.profile ? (
           <Button variant="ghost" size="sm" asChild>
             <Link to={`/u/${auth.profile.username}`}>
-              <ExternalLinkIcon />
+              <ExternalLinkIcon aria-hidden />
               {t("profile.publicPage")}
             </Link>
           </Button>
@@ -591,7 +647,7 @@ export function ProfilePage() {
       ) : (
         <div className="grid gap-4">
           <Alert>
-            <TriangleAlertIcon />
+            <TriangleAlertIcon aria-hidden />
             <AlertTitle>{t("profile.loadFailedTitle")}</AlertTitle>
             <AlertDescription>{t("profile.loadFailedBody")}</AlertDescription>
           </Alert>
@@ -601,7 +657,7 @@ export function ProfilePage() {
               void auth.refreshProfile();
             }}
           >
-            <RefreshCwIcon />
+            <RefreshCwIcon aria-hidden />
             {t("common.retry")}
           </Button>
         </div>

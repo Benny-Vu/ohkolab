@@ -1,11 +1,12 @@
 import { getLocale } from "@/lib/i18n/locale";
 import { t } from "@/lib/i18n/t";
+import { formatPercent } from "@/lib/i18n/format";
 import type { MetagameSnapshot } from "@/lib/metagame/types";
 
 /** 0.234 → "23.4%"; null → "—". */
 export function formatShare(share: number | null): string {
   if (share === null) return "—";
-  return `${(share * 100).toFixed(1)}%`;
+  return formatPercent(share);
 }
 
 /** "2026-10" → "October 2026" in English, "2026年10月" in Japanese; invalid periods pass through unchanged. */

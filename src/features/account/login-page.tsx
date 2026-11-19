@@ -244,7 +244,7 @@ export function LoginPage() {
   return (
     <Page title={t("common.signIn")} width="narrow">
       <div className="mx-auto grid w-full max-w-sm justify-items-center gap-6">
-        <Link to="/" className="rounded-md" aria-label="OHKOLab home">
+        <Link to="/" className="rounded-md" aria-label={t("nav.homeAria")}>
           <Wordmark className="text-3xl" />
         </Link>
 
@@ -307,7 +307,7 @@ export function LoginPage() {
                     }
                   >
                     {pending === "signIn" ? (
-                      <LoaderCircleIcon className="animate-spin" />
+                      <LoaderCircleIcon className="animate-spin" aria-hidden />
                     ) : null}
                     {t("common.signIn")}
                   </Button>
@@ -417,7 +417,7 @@ export function LoginPage() {
                     }
                   >
                     {pending === "signUp" ? (
-                      <LoaderCircleIcon className="animate-spin" />
+                      <LoaderCircleIcon className="animate-spin" aria-hidden />
                     ) : null}
                     {t("login.signUpTab")}
                   </Button>
@@ -434,7 +434,7 @@ export function LoginPage() {
             disabled={busy}
           >
             {pending === "google" ? (
-              <LoaderCircleIcon className="animate-spin" />
+              <LoaderCircleIcon className="animate-spin" aria-hidden />
             ) : null}
             {t("login.continueGoogle")}
           </Button>
@@ -444,7 +444,7 @@ export function LoginPage() {
             disabled={busy}
           >
             {pending === "discord" ? (
-              <LoaderCircleIcon className="animate-spin" />
+              <LoaderCircleIcon className="animate-spin" aria-hidden />
             ) : null}
             {t("login.continueDiscord")}
           </Button>

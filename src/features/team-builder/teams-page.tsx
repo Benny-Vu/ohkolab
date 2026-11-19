@@ -5,6 +5,7 @@ import { CopyIcon, DownloadIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { displayTeamName } from "@/lib/team/display";
 import { Page } from "@/components/page";
 import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,14 @@ import { importTeam, sortByUpdated, useTeams } from "@/lib/team";
 import { track } from "@/lib/telemetry/analytics";
 import type { Team } from "@/types/team";
 import { MAX_TEAM_SIZE } from "@/types/team";
+
+/**
+ * The card unmounts when its team is deleted, taking focus with it; park focus
+ * on the page landmark so keyboard users keep their place.
+ */
+function focusMainLandmark(): void {
+  (document.querySelector("main") as HTMLElement | null)?.focus();
+}
 
 function TeamCard({
   team,
@@ -93,18 +102,22 @@ function TeamCard({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={t("teams.duplicateNamed", { name: team.name })}
+          aria-label={t("teams.duplicateNamed", {
+            name: displayTeamName(team.name),
+          })}
           onClick={() => onDuplicate(team)}
         >
-          <CopyIcon />
+          <CopyIcon aria-hidden />
         </Button>
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={t("teams.deleteNamed", { name: team.name })}
+          aria-label={t("teams.deleteNamed", {
+            name: displayTeamName(team.name),
+          })}
           onClick={() => onDelete(team)}
         >
-          <Trash2Icon />
+          <Trash2Icon aria-hidden />
         </Button>
         <span className="flex-1" />
         <Button variant="outline" size="sm" asChild>
@@ -154,12 +167,17 @@ export function TeamsPage() {
 
   function handleDuplicate(team: Team): void {
     const copy = duplicate(team.id);
-    if (copy) toast.success(t("teams.duplicated", { name: team.name }));
+    if (copy) {
+      toast.success(
+        t("teams.duplicated", { name: displayTeamName(team.name) }),
+      );
+    }
   }
 
   function handleDelete(team: Team): void {
     remove(team.id);
-    toast(t("teams.deleted", { name: team.name }), {
+    focusMainLandmark();
+    toast(t("teams.deleted", { name: displayTeamName(team.name) }), {
       action: {
         label: t("teams.undo"),
         onClick: () => restore(team),
@@ -178,7 +196,7 @@ export function TeamsPage() {
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
-                <DownloadIcon />
+                <DownloadIcon aria-hidden />
                 {t("teams.import")}
               </Button>
             </DialogTrigger>
@@ -212,7 +230,7 @@ export function TeamsPage() {
               navigate(`/teams/${create({ format: preferredFormat }).id}`);
             }}
           >
-            <PlusIcon />
+            <PlusIcon aria-hidden />
             {t("teams.newTeam")}
           </Button>
         </>

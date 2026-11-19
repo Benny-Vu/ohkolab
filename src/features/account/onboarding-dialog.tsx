@@ -190,17 +190,32 @@ function OnboardingForm({
   };
 
   const usernameStatus = fieldErrors.username ? (
-    <p className="text-sm text-destructive" role="alert">
+    <p
+      id="onboarding-username-status"
+      className="text-sm text-destructive"
+      role="alert"
+    >
       {fieldErrors.username}
     </p>
   ) : status === "taken" ? (
-    <p className="text-sm text-destructive" role="alert">
+    <p
+      id="onboarding-username-status"
+      className="text-sm text-destructive"
+      role="alert"
+    >
       {t(TAKEN_MESSAGE_KEY)}
     </p>
   ) : status === "checking" ? (
-    <p className="text-sm text-muted-foreground">{t("onboarding.checking")}</p>
+    <p
+      id="onboarding-username-status"
+      className="text-sm text-muted-foreground"
+    >
+      {t("onboarding.checking")}
+    </p>
   ) : status === "available" ? (
-    <p className="text-sm text-success">{t("onboarding.available")}</p>
+    <p id="onboarding-username-status" className="text-sm text-success">
+      {t("onboarding.available")}
+    </p>
   ) : null;
 
   return (
@@ -228,6 +243,7 @@ function OnboardingForm({
               aria-invalid={
                 fieldErrors.username || status === "taken" ? true : undefined
               }
+              aria-describedby="onboarding-username-status"
             />
             {usernameStatus}
             <p className="text-xs text-muted-foreground">{usernameRules()}</p>
@@ -241,13 +257,21 @@ function OnboardingForm({
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
               aria-invalid={fieldErrors.displayName ? true : undefined}
+              aria-describedby="onboarding-display-name-status"
             />
             {fieldErrors.displayName ? (
-              <p className="text-sm text-destructive" role="alert">
+              <p
+                id="onboarding-display-name-status"
+                className="text-sm text-destructive"
+                role="alert"
+              >
                 {fieldErrors.displayName}
               </p>
             ) : (
-              <p className="text-xs text-muted-foreground">
+              <p
+                id="onboarding-display-name-status"
+                className="text-xs text-muted-foreground"
+              >
                 {t("profile.displayNameHint", { max: DISPLAY_NAME_MAX_LENGTH })}
               </p>
             )}
@@ -291,7 +315,9 @@ function OnboardingForm({
               type="submit"
               disabled={pending || status === "checking" || status === "taken"}
             >
-              {pending ? <LoaderCircleIcon className="animate-spin" /> : null}
+              {pending ? (
+                <LoaderCircleIcon className="animate-spin" aria-hidden />
+              ) : null}
               {t("common.save")}
             </Button>
           </DialogFooter>

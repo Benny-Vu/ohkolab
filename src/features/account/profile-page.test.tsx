@@ -180,6 +180,24 @@ describe("ProfilePage", () => {
     expect(auth.calls.map((c) => c.name)).not.toContain("updateProfile");
   });
 
+  it("links the username error to the field via aria-describedby", async () => {
+    const user = userEvent.setup();
+    const auth = createFakeAuth();
+    renderPage(<ProfilePage />, auth, { path: "/profile" });
+
+    await user.clear(screen.getByLabelText("Username"));
+    await user.type(screen.getByLabelText("Username"), "A");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    const username = screen.getByLabelText("Username");
+    const errorId = username.getAttribute("aria-describedby");
+    expect(errorId).toBe("username-error");
+    expect(username).toHaveAttribute("aria-invalid", "true");
+    expect(document.getElementById(errorId ?? "")).toHaveTextContent(
+      "Username must be at least 3 characters.",
+    );
+  });
+
   it("shows the failure message when saving fails", async () => {
     const user = userEvent.setup();
     const auth = createFakeAuth(
@@ -324,6 +342,30 @@ describe("ProfilePage blocked users", () => {
 
     expect(screen.getByText("Blocked users")).toBeInTheDocument();
     expect(screen.getByText("You haven't blocked anyone.")).toBeInTheDocument();
+  });
+
+  it("shows a retry when the blocked list fails to load", async () => {
+    const refetch = vi.fn();
+    socialMocks.useBlocks.mockReturnValue(
+      queryResult([], {
+        isError: true,
+        error: { code: "unknown", message: "Something went wrong" },
+        refetch,
+      }),
+    );
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    expect(
+      screen.getByText(/blocked users could not be loaded/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/you haven't blocked anyone/i),
+    ).not.toBeInTheDocument();
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /try again/i }));
+    expect(refetch).toHaveBeenCalled();
   });
 
   it("lists blocked users with links and unblock buttons", () => {
