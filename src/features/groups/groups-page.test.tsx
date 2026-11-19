@@ -190,13 +190,14 @@ describe("GroupsPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows skeletons while groups load", () => {
+  it("shows skeletons while groups load", async () => {
     queriesMocks.useMyGroups.mockReturnValue(
       listResult([], { isPending: true }),
     );
     renderGroupsPage();
 
-    expect(screen.getByLabelText("Loading groups")).toBeInTheDocument();
+    // The skeleton waits out the anti-flash delay before it appears.
+    expect(await screen.findByLabelText("Loading groups")).toBeInTheDocument();
   });
 
   it("shows an error state with a retry when the query fails", async () => {

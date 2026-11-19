@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { displayTeamName } from "@/lib/team/display";
 import { PokemonEditor } from "@/components/pokemon-editor";
+import { LoadingArea, TeamDetailSkeleton } from "@/components/skeletons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -121,7 +122,11 @@ export function TeamDetailPage() {
     if (sync.loading) {
       return (
         <Page title={t("teams.title")} description={t("teams.loading")}>
-          <p className="text-muted-foreground">{t("teams.loading")}</p>
+          <LoadingArea
+            pending={true}
+            label={t("teams.loading")}
+            skeleton={<TeamDetailSkeleton />}
+          />
         </Page>
       );
     }
@@ -560,7 +565,11 @@ export function TeamDetailPage() {
               <Suspense
                 fallback={
                   <CardContent>
-                    <Skeleton className="h-40 w-full" />
+                    <LoadingArea
+                      pending={true}
+                      label={t("teams.loading")}
+                      skeleton={<Skeleton className="h-40 w-full" />}
+                    />
                   </CardContent>
                 }
               >

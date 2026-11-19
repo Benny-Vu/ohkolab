@@ -5,6 +5,11 @@ import { CopyIcon, DownloadIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import {
+  CONTENT_FADE_IN,
+  LoadingArea,
+  TeamGridSkeleton,
+} from "@/components/skeletons";
 import { displayTeamName } from "@/lib/team/display";
 import { Page } from "@/components/page";
 import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
@@ -24,13 +29,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { TeamName } from "@/features/team-builder/team-name";
 import { formatDate } from "@/lib/format-date";
 import { useT } from "@/lib/i18n/t";
 import { useBattleFormat } from "@/lib/preferences";
 import { importTeam, sortByUpdated, useTeams } from "@/lib/team";
+import { cn } from "@/lib/utils";
 import { track } from "@/lib/telemetry/analytics";
 import type { Team } from "@/types/team";
 import { MAX_TEAM_SIZE } from "@/types/team";
@@ -237,21 +242,11 @@ export function TeamsPage() {
       }
     >
       {sync.loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }, (_, index) => (
-            <Card key={index} size="sm">
-              <CardContent className="flex flex-col gap-3">
-                <Skeleton className="h-5 w-2/3" />
-                <Skeleton className="h-3 w-1/2" />
-                <div className="grid grid-cols-6 gap-1">
-                  {Array.from({ length: MAX_TEAM_SIZE }, (_, slot) => (
-                    <Skeleton key={slot} className="size-10" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <LoadingArea
+          pending={true}
+          label={t("teams.loading")}
+          skeleton={<TeamGridSkeleton />}
+        />
       ) : sync.error ? (
         <ErrorState
           title={t("teams.loadError")}
@@ -268,7 +263,12 @@ export function TeamsPage() {
           description={t("teams.emptyDescription")}
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={cn(
+            "grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+            CONTENT_FADE_IN,
+          )}
+        >
           {sorted.map((team) => (
             <TeamCard
               key={team.id}

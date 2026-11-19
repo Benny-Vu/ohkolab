@@ -39,7 +39,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AvatarListSkeleton,
+  GroupListSkeleton,
+  LoadingArea,
+  PostListSkeleton,
+  ProfilePageSkeleton,
+  TeamGridSkeleton,
+  TeamMemberRowSkeleton,
+} from "@/components/skeletons";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { normalizeUsername } from "@/lib/auth/validation";
 import { displayTeamName } from "@/lib/team/display";
@@ -115,12 +123,14 @@ function UnconfiguredNotice() {
   );
 }
 
-function ProfileSkeleton() {
+function ProfileSkeleton({ label }: { label: string }) {
   return (
-    <div className="grid gap-4">
-      <Skeleton className="h-8 w-40" />
-      <Skeleton className="h-40 w-full" />
-    </div>
+    <LoadingArea
+      pending={true}
+      label={label}
+      skeleton={<ProfilePageSkeleton />}
+      className="grid gap-6"
+    />
   );
 }
 
@@ -167,7 +177,11 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
               key={index}
               fallback={
                 <li>
-                  <Skeleton className="h-16 w-full" />
+                  <LoadingArea
+                    pending={true}
+                    label={t("teams.loading")}
+                    skeleton={<TeamMemberRowSkeleton />}
+                  />
                 </li>
               }
             >
@@ -239,15 +253,6 @@ function TeamsSection({
   const t = useT();
   const teamsQuery = usePublicTeams(userId, client);
 
-  if (teamsQuery.isPending) {
-    return (
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Skeleton className="h-44 w-full" />
-        <Skeleton className="h-44 w-full" />
-      </div>
-    );
-  }
-
   if (teamsQuery.isError) {
     return (
       <ErrorState
@@ -266,18 +271,24 @@ function TeamsSection({
     );
   }
 
-  const teams = teamsQuery.data;
-
-  if (teams.length === 0) {
-    return <EmptyState title={t("publicProfile.noTeams")} />;
-  }
+  const teams = teamsQuery.data ?? [];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {teams.map((team) => (
-        <TeamCard key={team.id} team={team} username={username} />
-      ))}
-    </div>
+    <LoadingArea
+      pending={teamsQuery.isPending}
+      label={t("teams.loading")}
+      skeleton={<TeamGridSkeleton count={2} />}
+    >
+      {teams.length === 0 ? (
+        <EmptyState title={t("publicProfile.noTeams")} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {teams.map((team) => (
+            <TeamCard key={team.id} team={team} username={username} />
+          ))}
+        </div>
+      )}
+    </LoadingArea>
   );
 }
 
@@ -317,19 +328,6 @@ function GroupsSection({
   const t = useT();
   const groupsQuery = useUserGroups(userId, client);
 
-  if (groupsQuery.isPending) {
-    return (
-      <div
-        className="grid gap-3"
-        role="status"
-        aria-label={t("groups.loadingGroups")}
-      >
-        <Skeleton className="h-20 w-full rounded-md" />
-        <Skeleton className="h-20 w-full rounded-md" />
-      </div>
-    );
-  }
-
   if (groupsQuery.isError) {
     return (
       <ErrorState
@@ -350,18 +348,24 @@ function GroupsSection({
 
   const groups = groupsQuery.data ?? [];
 
-  if (groups.length === 0) {
-    return <EmptyState title={t("publicProfile.noGroups")} />;
-  }
-
   return (
-    <ul className="grid gap-3">
-      {groups.map((group) => (
-        <li key={group.id}>
-          <ProfileGroupCard group={group} />
-        </li>
-      ))}
-    </ul>
+    <LoadingArea
+      pending={groupsQuery.isPending}
+      label={t("groups.loadingGroups")}
+      skeleton={<GroupListSkeleton />}
+    >
+      {groups.length === 0 ? (
+        <EmptyState title={t("publicProfile.noGroups")} />
+      ) : (
+        <ul className="grid gap-3">
+          {groups.map((group) => (
+            <li key={group.id}>
+              <ProfileGroupCard group={group} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </LoadingArea>
   );
 }
 
@@ -417,10 +421,11 @@ function FollowListDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         {query.isPending ? (
-          <div className="grid gap-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
+          <LoadingArea
+            pending={true}
+            label={t("common.loading")}
+            skeleton={<AvatarListSkeleton count={2} />}
+          />
         ) : query.isError ? (
           <ErrorState
             title={t("publicProfile.followListError")}
@@ -799,20 +804,6 @@ function PostsSection({
   const t = useT();
   const postsQuery = useAuthorPosts(userId, client);
 
-  if (postsQuery.isPending) {
-    return (
-      <div
-        className="grid gap-3"
-        role="status"
-        aria-label={t("publicProfile.loadingPostsAria")}
-      >
-        <Skeleton className="h-28 w-full rounded-md" />
-        <Skeleton className="h-28 w-full rounded-md" />
-        <Skeleton className="h-28 w-full rounded-md" />
-      </div>
-    );
-  }
-
   if (postsQuery.isError) {
     return (
       <ErrorState
@@ -834,23 +825,29 @@ function PostsSection({
   const posts = postsQuery.data?.pages.flat() ?? [];
 
   return (
-    <div className="grid gap-3">
-      <PostList posts={posts} emptyMessage={t("publicProfile.noPosts")} />
-      {postsQuery.hasNextPage ? (
-        <div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void postsQuery.fetchNextPage()}
-            disabled={postsQuery.isFetchingNextPage}
-          >
-            {postsQuery.isFetchingNextPage
-              ? t("common.loading")
-              : t("notifications.loadMore")}
-          </Button>
-        </div>
-      ) : null}
-    </div>
+    <LoadingArea
+      pending={postsQuery.isPending}
+      label={t("publicProfile.loadingPostsAria")}
+      skeleton={<PostListSkeleton />}
+    >
+      <div className="grid gap-3">
+        <PostList posts={posts} emptyMessage={t("publicProfile.noPosts")} />
+        {postsQuery.hasNextPage ? (
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void postsQuery.fetchNextPage()}
+              disabled={postsQuery.isFetchingNextPage}
+            >
+              {postsQuery.isFetchingNextPage
+                ? t("common.loading")
+                : t("notifications.loadMore")}
+            </Button>
+          </div>
+        ) : null}
+      </div>
+    </LoadingArea>
   );
 }
 
@@ -882,7 +879,7 @@ export function PublicProfilePage({
       {!client ? (
         <UnconfiguredNotice />
       ) : profileQuery.isPending ? (
-        <ProfileSkeleton />
+        <ProfileSkeleton label={t("publicProfile.loadingProfileAria")} />
       ) : profileQuery.isError ? (
         <ErrorState
           title={t("publicProfile.profileLoadError")}

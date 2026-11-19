@@ -344,13 +344,19 @@ describe("PublicProfilePage", () => {
     socialMocks.socialAvailability.mockReturnValue("not-configured");
   });
 
-  it("shows a skeleton while the profile loads", () => {
+  it("shows a skeleton while the profile loads", async () => {
     renderProfilePage(createFakeClient({ hangProfile: true }), "pending");
 
     expect(
       screen.getByRole("heading", { name: "Profile" }),
     ).toBeInTheDocument();
-    expect(document.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(2);
+    // The skeleton waits out the anti-flash delay, then announces itself.
+    expect(
+      await screen.findByRole("status", { name: "Loading profile" }),
+    ).toBeVisible();
+    expect(
+      document.querySelectorAll('[data-slot="skeleton"]').length,
+    ).toBeGreaterThan(0);
   });
 
   it("says profiles are unavailable when Supabase is not configured", () => {

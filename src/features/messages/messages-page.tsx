@@ -6,7 +6,7 @@ import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ConversationListSkeleton, LoadingArea } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { formatDate } from "@/lib/format-date";
@@ -36,12 +36,6 @@ export function MessagesPage({
     >
       {!user ? (
         <EmptyState title={t("messages.signIn")} />
-      ) : conversationsQuery.isPending ? (
-        <div className="grid gap-3" role="status">
-          <Skeleton className="h-16 w-full rounded-md" />
-          <Skeleton className="h-16 w-full rounded-md" />
-          <Skeleton className="h-16 w-full rounded-md" />
-        </div>
       ) : conversationsQuery.isError ? (
         <ErrorState
           title={t("messages.loadError")}
@@ -56,17 +50,25 @@ export function MessagesPage({
             </Button>
           }
         />
-      ) : (conversationsQuery.data ?? []).length === 0 ? (
-        <EmptyState title={t("messages.empty")} />
       ) : (
-        <ul className="grid gap-2">
-          {(conversationsQuery.data ?? []).map((conversation) => (
-            <ConversationRow
-              key={conversation.id}
-              conversation={conversation}
-            />
-          ))}
-        </ul>
+        <LoadingArea
+          pending={conversationsQuery.isPending}
+          label={t("messages.loadingConversationsAria")}
+          skeleton={<ConversationListSkeleton />}
+        >
+          {(conversationsQuery.data ?? []).length === 0 ? (
+            <EmptyState title={t("messages.empty")} />
+          ) : (
+            <ul className="grid gap-2">
+              {(conversationsQuery.data ?? []).map((conversation) => (
+                <ConversationRow
+                  key={conversation.id}
+                  conversation={conversation}
+                />
+              ))}
+            </ul>
+          )}
+        </LoadingArea>
       )}
     </Page>
   );

@@ -129,6 +129,7 @@ export const accountJa: { [K in AccountKey]: string } = {
     "ブロックは双方向に作用します。相手の投稿やプロフィールはあなたに表示されず、あなたの投稿も相手には表示されません。互いにフォローできなくなります。後からアカウントページでブロック解除できます。",
   "publicProfile.block": "ブロック",
   "publicProfile.loadingPostsAria": "投稿を読み込み中",
+  "publicProfile.loadingProfileAria": "プロフィールを読み込み中",
   "publicProfile.postsLoadError": "投稿を読み込めませんでした",
   "publicProfile.postsLoadErrorDescription":
     "このトレーナーの投稿の読み込み中に問題が発生しました。通信状況を確認してもう一度お試しください。",

@@ -79,12 +79,16 @@ afterEach(() => {
 });
 
 describe("MetagamePage", () => {
-  it("shows skeletons while loading", () => {
+  it("shows skeletons while loading", async () => {
     mockFetch();
     vi.spyOn(globalThis, "fetch").mockImplementation(
       () => new Promise(() => undefined),
     );
     renderMetagame();
+    // The skeleton waits out the anti-flash delay before it appears.
+    expect(
+      await screen.findByRole("status", { name: "Loading metagame data" }),
+    ).toBeVisible();
     expect(document.querySelector(".animate-pulse")).not.toBeNull();
   });
 
