@@ -99,6 +99,9 @@ export const shellEn = {
   "search.pokemon": "Pokémon",
   "search.moves": "Moves",
   "search.items": "Items",
+
+  // The offline notice in the native apps (web never shows it).
+  "shell.offlineNotice": "You're offline. Some content may not load.",
 } as const;
 
 export type ShellKey = keyof typeof shellEn;
@@ -195,4 +198,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "search.pokemon": "ポケモン",
   "search.moves": "技",
   "search.items": "もちもの",
+
+  // ネイティブアプリのオフライン表示（ウェブでは出ない）。
+  "shell.offlineNotice": "オフラインのため、一部のコンテンツを読み込めません。",
 };
