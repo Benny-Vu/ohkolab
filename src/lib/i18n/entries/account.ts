@@ -1,64 +1,13 @@
 /**
- * The account dictionary: sign-in/sign-up, password reset, onboarding, the
- * profile editor, and the auth validation and error messages. Owned by the
- * lead; the Japanese side must keep exactly the same keys (the parity test
- * enforces it). The `auth.*` message values must match what `t()` returns
- * for English exactly, because lib tests assert the English strings.
+ * The account dictionary: sign-in/sign-up, password reset, the profile
+ * editor and the public profile page. Owned by the lead; the Japanese side
+ * must keep exactly the same keys (the parity test enforces it). The
+ * `auth.*` validation and error messages live in the shell dictionary (the
+ * auth modules sit in the entry graph), and their values must match what
+ * `t()` returns for English exactly, because lib tests assert them.
  */
 
 export const accountEn = {
-  // Validation messages (src/lib/auth/validation.ts).
-  "auth.usernameRules":
-    "3 to 20 characters: lowercase letters, digits and underscores.",
-  "auth.errUsernameChoose": "Choose a username.",
-  "auth.errUsernameNew": "Choose a new username.",
-  "auth.errUsernameMin": "Username must be at least {min} characters.",
-  "auth.errUsernameMax": "Username must be at most {max} characters.",
-  "auth.errUsernamePattern":
-    "Username can only contain lowercase letters, digits and underscores.",
-  "auth.errDisplayNameMax": "Display name must be at most {max} characters.",
-  "auth.errBioMax": "Bio must be at most {max} characters.",
-  "auth.errAvatarSpecies": "That Pokémon cannot be used as an avatar.",
-  "auth.errEmailEmpty": "Enter your email address.",
-  "auth.errEmailInvalid": "Enter a valid email address.",
-  "auth.errPasswordEmpty": "Enter your password.",
-  "auth.errPasswordChoose": "Choose a password.",
-  "auth.errPasswordMin": "Password must be at least {min} characters.",
-  "auth.errPasswordMax": "Password must be at most {max} characters.",
-
-  // Auth error messages (src/lib/auth/errors.ts), keyed by error code.
-  "auth.errNotConfigured":
-    "Accounts are not available in this build. The tools still work without one.",
-  "auth.errUnavailable": "Accounts are not fully set up yet. Try again later.",
-  "auth.errInvalidInput":
-    "Some of those details were not accepted. Check them and try again.",
-  "auth.errInvalidCredentials": "Wrong email or password.",
-  "auth.errEmailNotConfirmed":
-    "Confirm your email address first: open the link we sent you, then sign in.",
-  "auth.errEmailTaken":
-    "An account with this email may already exist. Try signing in, or reset your password.",
-  "auth.errWeakPassword":
-    "That password is too easy to guess. Choose a stronger one.",
-  "auth.errRateLimited": "Too many attempts. Wait a minute and try again.",
-  "auth.errProviderUnavailable": "This sign-in method is not available yet.",
-  "auth.errUsernameTaken": "That username is already taken. Try another one.",
-  "auth.errSessionExpired": "Your session has expired. Sign in again.",
-  "auth.errLinkInvalid":
-    "This link is no longer valid. It may have expired, been used already, or been opened in a different browser from the one you started in. Request a new one.",
-  "auth.errForbidden": "You are not allowed to do that.",
-  "auth.errNetwork":
-    "Could not reach the server. Check your connection and try again.",
-  "auth.errUnknown": "Something went wrong. Try again.",
-  "auth.errSamePassword":
-    "The new password must be different from the current one.",
-  "auth.errSignupDisabled": "New sign-ups are closed right now.",
-  "auth.errReauth":
-    "For your security, sign out and sign in again before changing your password.",
-  "auth.errEmailAddressInvalid":
-    "That email address was not accepted. Check it for typos.",
-  "auth.errProfileRejected":
-    "Those profile details were not accepted. Username: {rules}",
-
   // Sign-in / sign-up.
   "login.signUpTab": "Sign up",
   "login.email": "Email",
@@ -106,33 +55,18 @@ export const accountEn = {
   // The not-configured notice.
   "unconfigured.title": "Accounts are unavailable",
 
-  // First-run onboarding.
-  "onboarding.title": "Set up your profile",
-  "onboarding.description":
-    "Choose a username. The rest is optional and can change later.",
-  "onboarding.checking": "Checking…",
-  "onboarding.available": "Available",
-  "onboarding.skip": "Skip for now",
-  "onboarding.avatarLabel": "Avatar Pokémon",
-
   // The profile editor.
   "profile.guestTitle": "You are browsing as a guest",
   "profile.guestDescription":
     "Sign in to save teams, keep your profile and more.",
   "profile.howYouAppear": "How you appear to other players.",
   "profile.avatarSpecies": "Avatar species",
-  "profile.usernameLabel": "Username",
-  "profile.displayNameLabel": "Display name",
-  "profile.displayNameHint": "Optional. At most {max} characters.",
   "profile.bioLabel": "Bio",
   "profile.bioHint": "Optional. At most {max} characters.",
   "profile.saveChanges": "Save changes",
-  "profile.savedToast": "Profile saved.",
   "profile.reset": "Reset",
-  "profile.accountSection": "Account",
   "profile.sessionTitle": "Session",
   "profile.signOutDescription": "Sign out on this device.",
-  "profile.signedOutToast": "Signed out.",
   "profile.privacyTitle": "Privacy",
   "profile.telemetryTitle": "Crash reports and usage statistics",
   "profile.telemetryDescription":
@@ -148,7 +82,6 @@ export const accountEn = {
   "profile.confirmUsername": "Confirm username",
   "profile.deleteForever": "Delete forever",
   "profile.deletedToast": "Account deleted.",
-  "profile.publicPage": "Public page",
   "profile.loadFailedTitle": "Profile could not be loaded",
   "profile.loadFailedBody": "Your profile could not be loaded. Try refreshing.",
   "profile.blockedUsersTitle": "Blocked users",

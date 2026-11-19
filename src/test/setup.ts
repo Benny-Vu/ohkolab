@@ -3,11 +3,19 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
+import { registerEnglishDomain } from "@/lib/i18n/en-loader";
+import { accountEn } from "@/lib/i18n/entries/account";
+import { communityEn } from "@/lib/i18n/entries/community";
+import { toolsEn } from "@/lib/i18n/entries/tools";
 import { loadJapaneseDictionary } from "@/lib/i18n/ja-loader";
 
-// The Japanese dictionary loads lazily in production (its own chunk, with
-// the English strings as the fallback). Tests assert Japanese text right
-// away, so the setup loads it once before any test runs.
+// Both dictionaries load lazily in production (their own chunks, with the
+// raw key as the last-resort fallback). Tests assert translated text right
+// away, so the setup registers the English feature domains synchronously
+// and loads the Japanese dictionary once before any test runs.
+registerEnglishDomain("community", communityEn);
+registerEnglishDomain("account", accountEn);
+registerEnglishDomain("tools", toolsEn);
 await loadJapaneseDictionary();
 
 afterEach(() => {

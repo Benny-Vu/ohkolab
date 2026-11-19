@@ -30,23 +30,6 @@ export const communityEn = {
   // Privacy page: the browser-storage list gains the language choice.
   "privacy.languageChoice": "your language choice",
 
-  // Social data-layer errors (mapped Postgres/API failures).
-  "social.errors.not_configured":
-    "The community feed is not available right now.",
-  "social.errors.not_installed":
-    "The community feed is not set up yet. Try again later.",
-  "social.errors.not_signed_in": "Sign in to use the community feed.",
-  "social.errors.rate_limited":
-    "You are posting too quickly. Wait a few minutes and try again.",
-  "social.errors.suspended": "This account cannot post right now.",
-  "social.errors.too_long": "That is too long. Shorten it and try again.",
-  "social.errors.not_found": "That is no longer available.",
-  "social.errors.forbidden": "You cannot do that.",
-  "social.errors.invalid_input": "That input is not valid.",
-  "social.errors.network":
-    "Could not reach the server. Check your connection and try again.",
-  "social.errors.unknown": "Something went wrong. Try again.",
-
   // Notifications: sentences and row actions. The sentence follows the
   // actor's name, so the Japanese phrases begin with the subject particle.
   "notifications.someone": "Someone",
@@ -65,7 +48,6 @@ export const communityEn = {
   "notifications.delete": "Delete notification from {name}",
 
   // Notifications page.
-  "notifications.title": "Notifications",
   "notifications.description":
     "Likes, comments, follows and moderation updates.",
   "notifications.markAllAsRead": "Mark all as read",
@@ -81,7 +63,6 @@ export const communityEn = {
   "notifications.emptyDescription":
     "When someone likes your post or follows you, it shows up here.",
   "notifications.loadMore": "Load more",
-  "notifications.bellAriaUnread": "Notifications, {badge} unread",
 
   // The post composer.
   "composer.aria": "Write a post",
@@ -314,7 +295,6 @@ export const communityEn = {
   "groups.deleteGroup": "Delete group",
 
   // Groups home (directory) and the new-group page.
-  "groups.homeTitle": "Groups",
   "groups.homeDescription":
     "Communities for teams, formats and everything Champions.",
   "groups.createGroup": "Create group",
@@ -332,7 +312,6 @@ export const communityEn = {
   "groups.noMatchesDescription": 'No groups match "{query}".',
   "groups.loadingGroups": "Loading groups",
   "groups.noDescription": "No description yet.",
-  "groups.newTitle": "Create a group",
   "groups.signInToCreate": "Sign in to create a group",
   "groups.newCreatedToast": "Group created",
   "groups.newPageDescription":
@@ -459,42 +438,13 @@ export const communityEn = {
   "admin.noStatusFeedback": "No {status} feedback.",
   "admin.feedbackDescription": "Review feedback from the community.",
 
-  // Feedback dialog, crash screen and telemetry switch.
-  "feedback.kindBug": "Bug",
-  "feedback.kindIdea": "Idea",
-  "feedback.kindOther": "Other",
-  "feedback.tooShort": "Tell us a bit more (at least {min} characters).",
-  "feedback.tooLong": "Feedback is limited to {max} characters.",
-  "feedback.sentToast": "Thanks! Your feedback was sent.",
-  "feedback.rateLimited":
-    "You have sent a lot of feedback recently. Please try again in an hour.",
-  "feedback.description":
-    "Tell us what is broken, what is missing, or what you would like to see. We read everything.",
-  "feedback.signedOutBody":
-    "You need an account to send feedback through the site. You can also email us and we will get back to you.",
-  "feedback.emailUs": "Email {email}",
-  "feedback.kindAria": "Feedback kind",
-  "feedback.placeholder": "What happened? What should we change?",
-  "feedback.messageAria": "Your feedback",
-  "feedback.includeDetails":
-    "Include technical details (page, app version, browser, screen size",
-  "feedback.crashIdSuffix": ", crash id",
-  "feedback.send": "Send",
-  "feedback.sending": "Sending...",
+  // Telemetry switch (the profile settings).
   "feedback.telemetryAria":
     "Share anonymous usage statistics and crash reports",
   "feedback.telemetryBody":
     "Share anonymous usage statistics and crash reports. Usage statistics are cookieless and never include what you write or your teams; crash reports contain only the error and the page it happened on. You can turn this off at any time.",
-  "crash.title": "Something went wrong",
-  "crash.body":
-    "Something broke on our side. Your data is safe. You can reload the page, go back to the feed, or tell us what happened so we can fix it faster.",
-  "crash.referencePrefix": "Crash reference:",
-  "crash.reload": "Reload",
-  "crash.goHome": "Go home",
-  "crash.tellUs": "Tell us what happened",
 
   // Moderation notice page and suspend dialog.
-  "moderation.noticeTitle": "Moderation notice",
   "moderation.suspendedTitle": "Your account was suspended",
   "moderation.postRemovedTitle": "Your post was removed",
   "moderation.commentRemovedTitle": "Your comment was removed",
@@ -530,22 +480,11 @@ export const communityEn = {
   "moderation.noticeLoadError": "Could not load this notice",
 
   // System pages.
-  "system.notFoundTitle": "Page not found",
   "system.notFoundBody":
     "There is nothing at this address. It may have moved or never existed.",
 
-  // Browser tab titles (page-title.ts).
-  "pageTitle.appeals": "Appeals",
-  "pageTitle.feedback": "Feedback",
-  "pageTitle.reports": "Reports",
-  "pageTitle.styleguide": "Styleguide",
-  "pageTitle.signingIn": "Signing in",
-  "pageTitle.resetPassword": "Reset password",
-  "pageTitle.team": "Team",
-  "pageTitle.post": "Post",
-  "pageTitle.group": "Group",
+  // Browser tab titles the shell does not already own (page-title.ts).
   "pageTitle.notFound": "Page not found",
-  "pageTitle.deleteAccount": "Delete your account",
 
   // Accessibility pass (quality wave): unread state on notification rows.
   "notifications.unreadSr": "Unread",
@@ -557,23 +496,6 @@ export const communityEn = {
   "share.share": "Share",
   "share.copiedLink": "Link copied to clipboard.",
   "share.copyFailed": "The link could not be copied.",
-
-  // SEO: the meta description of a route (page-title.ts).
-  "seo.homeDescription":
-    "Damage calculator, team builder and community for Pokémon Champions. Unofficial fan project.",
-  "seo.calcDescription":
-    "Calculate damage between Pokémon Champions sets, with items, weather, terrains and Doubles and Singles support.",
-  "seo.metaDescription":
-    "Pokémon Champions usage statistics: the most used Pokémon, moves, items and spreads.",
-  "seo.teamsDescription": "A Pokémon Champions team shared on OHKOLab.",
-  "seo.postDescription": "A post from the OHKOLab Pokémon Champions community.",
-  "seo.profileDescription":
-    "A player's posts, shared teams and groups on OHKOLab.",
-  "seo.groupDescription": "A Pokémon Champions group on OHKOLab.",
-  "seo.groupsDescription":
-    "Browse and join Pokémon Champions groups on OHKOLab.",
-  "seo.termsDescription": "The terms of use for OHKOLab.",
-  "seo.privacyDescription": "How OHKOLab handles your data and privacy.",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;

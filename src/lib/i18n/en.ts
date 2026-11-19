@@ -1,20 +1,15 @@
 /**
- * The English dictionary, assembled from the per-owner domain files: it is
- * the source of truth for every translation key. Domain files: `shell.ts`,
- * `community.ts` and `account.ts` belong to the lead, `tools.ts` to the
- * tools stream.
+ * The translation key union, assembled from the per-owner domain files:
+ * `shell.ts`, `community.ts` and `account.ts` belong to the lead, `tools.ts`
+ * to the tools stream. This module is type-only — the English strings
+ * themselves live behind `@/lib/i18n/en-loader` (the shell statically, the
+ * feature domains lazily with their routes), so nothing here pulls string
+ * data into the importing chunk.
  */
-import { accountEn } from "@/lib/i18n/entries/account";
-import { communityEn } from "@/lib/i18n/entries/community";
-import { shellEn } from "@/lib/i18n/entries/shell";
-import { toolsEn } from "@/lib/i18n/entries/tools";
-
-export const en = {
-  ...shellEn,
-  ...communityEn,
-  ...accountEn,
-  ...toolsEn,
-};
+import type { AccountKey } from "@/lib/i18n/entries/account";
+import type { CommunityKey } from "@/lib/i18n/entries/community";
+import type { ShellKey } from "@/lib/i18n/entries/shell";
+import type { ToolsKey } from "@/lib/i18n/entries/tools";
 
 /** Every translation key the app knows. */
-export type TranslationKey = keyof typeof en;
+export type TranslationKey = ShellKey | CommunityKey | AccountKey | ToolsKey;
