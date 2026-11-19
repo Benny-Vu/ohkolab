@@ -137,6 +137,8 @@ type ResultBlockProps = {
   format: BattleFormat;
   /** True when a second defender's block sits next to this one. */
   hasPartner: boolean;
+  /** The shareable calculator URL for the current state. */
+  shareUrl: string;
 };
 
 /**
@@ -150,6 +152,7 @@ function ResultBlock({
   outcome,
   format,
   hasPartner,
+  shareUrl,
 }: ResultBlockProps) {
   const t = useT();
   const displayName = useDisplayName();
@@ -263,7 +266,7 @@ function ResultBlock({
         <div className="flex shrink-0 items-center gap-1">
           <ShareButton
             title={`${t("calc.title")} · ${displayName("move", outcome.move)}`}
-            url={calcShareUrl(state, format)}
+            url={shareUrl}
             size="xs"
             variant="ghost"
           />
@@ -303,6 +306,7 @@ function DirectionContent({
         ) ?? null)
       : null;
   const showSecond = secondOutcome !== null;
+  const shareUrl = calcShareUrl(state, format);
 
   return (
     <div className="grid gap-2">
@@ -317,6 +321,7 @@ function DirectionContent({
             format={format}
             hasPartner={showSecond}
             outcome={selectedOutcome}
+            shareUrl={shareUrl}
           />
           {showSecond && second && secondOutcome ? (
             <ResultBlock
@@ -328,6 +333,7 @@ function DirectionContent({
               format={format}
               hasPartner
               outcome={secondOutcome}
+              shareUrl={shareUrl}
             />
           ) : null}
         </div>
