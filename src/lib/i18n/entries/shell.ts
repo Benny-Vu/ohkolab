@@ -296,7 +296,7 @@ export const shellEn = {
   "feedback.kindOther": "Other",
   "feedback.tooShort": "Tell us a bit more (at least {min} characters).",
   "feedback.tooLong": "Feedback is limited to {max} characters.",
-  "feedback.sentToast": "Thanks! Your feedback was sent.",
+  "feedback.sentToast": "Thanks. Your feedback was sent.",
   "feedback.rateLimited":
     "You have sent a lot of feedback recently. Please try again in an hour.",
   "feedback.description":

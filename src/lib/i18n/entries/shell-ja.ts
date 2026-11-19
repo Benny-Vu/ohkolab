@@ -297,7 +297,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "feedback.kindOther": "その他",
   "feedback.tooShort": "もう少し詳しく教えてください（{min}文字以上）。",
   "feedback.tooLong": "フィードバックは{max}文字以内です。",
-  "feedback.sentToast": "ありがとうございます！フィードバックを送信しました。",
+  "feedback.sentToast": "ありがとうございます。フィードバックを送信しました。",
   "feedback.rateLimited":
     "最近フィードバックを多数送信しています。1時間ほど経ってからもう一度お送りください。",
   "feedback.description":
