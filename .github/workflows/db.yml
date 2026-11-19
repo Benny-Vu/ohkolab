@@ -789,8 +789,10 @@ jobs:
             ('7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-format@example.com', 'x', now(), now()),
             ('8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-followed@example.com', 'x', now(), now()),
             ('91919191-9191-4919-8919-919191919191', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-blocked@example.com', 'x', now(), now()),
-            ('92929292-9292-4929-8929-929292929292', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-suspended@example.com', 'x', now(), now());
+            ('92929292-9292-4929-8929-929292929292', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-suspended@example.com', 'x', now(), now()),
+            ('93939393-9393-4939-8939-939393939393', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'fs-minor@example.com', 'x', now(), now());
           insert into public.profiles (id, username) values
+            ('93939393-9393-4939-8939-939393939393', 'fs_minor'),
             ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', 'fs_a'),
             ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', 'fs_bridge'),
             ('5d5d5d5d-5d5d-45d5-85d5-5d5d5d5d5d5d', 'fs_shared'),
@@ -800,8 +802,17 @@ jobs:
             ('91919191-9191-4919-8919-919191919191', 'fs_blocked'),
             ('92929292-9292-4929-8929-929292929292', 'fs_suspended')
           on conflict (id) do update set username = excluded.username;
+          -- Everyone is an adult except fs_minor (17): suggestions only
+          -- ever show adults.
+          insert into public.profile_birth_dates (user_id, birth_date)
+          select id, '1990-01-01' from public.profiles
+          where username like 'fs\_%' and username <> 'fs_minor'
+          on conflict (user_id) do nothing;
+          insert into public.profile_birth_dates (user_id, birth_date)
+          values ('93939393-9393-4939-8939-939393939393', current_date - interval '17 years')
+          on conflict (user_id) do nothing;
           update public.profiles set main_format = 'doubles'
-          where id in ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b');
+          where id in ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b', '93939393-9393-4939-8939-939393939393');
           update public.profiles set display_name = 'Format Fan', avatar_species = 'Garchomp'
           where id = '7b7b7b7b-7b7b-47b7-87b7-7b7b7b7b7b7b';
 
@@ -813,7 +824,10 @@ jobs:
             ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a'),
             ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '5d5d5d5d-5d5d-45d5-85d5-5d5d5d5d5d5d'),
             ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '6c6c6c6c-6c6c-46c6-86c6-6c6c6c6c6c6c'),
-            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '92929292-9292-4929-8929-929292929292');
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '92929292-9292-4929-8929-929292929292'),
+            -- The bridge also follows the minor: a strong signal that must
+            -- still never surface them.
+            ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '93939393-9393-4939-8939-939393939393');
           insert into public.groups (slug, name, owner_id) values
             ('fs-shared-group', 'Follow Check Group', '3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f');
           -- fs_a owns the group, so the groups_add_owner trigger already
@@ -849,7 +863,8 @@ jobs:
               '4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e',
               '8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a',
               '91919191-9191-4919-8919-919191919191',
-              '92929292-9292-4929-8929-929292929292'
+              '92929292-9292-4929-8929-929292929292',
+              '93939393-9393-4939-8939-939393939393'
             );
             if excluded_seen <> 0 then
               raise exception 'FS-CHECK: % excluded users were suggested', excluded_seen;

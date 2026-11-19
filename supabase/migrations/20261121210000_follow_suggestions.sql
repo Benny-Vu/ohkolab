@@ -7,6 +7,10 @@
 --   - a candidate needs at least one signal to appear at all;
 --   - the caller themself, everyone the caller already follows, blocked
 --     users (either direction) and suspended users are never suggested;
+--   - only adults are suggested (is_adult: a birth date 18+ years ago).
+--     Under-18s, and users with no birth date (treated as minors, as in
+--     the messaging rules), never appear in "People to follow", so the
+--     site never recommends a young player's profile to strangers;
 --   - only public profile fields are returned (id, username, display_name,
 --     avatar_species, main_format) plus the score.
 --
@@ -112,6 +116,8 @@ as $$
       )
       -- Never suggest a suspended user.
       and not public.is_suspended(profiles.id)
+      -- Never suggest a minor, or a user without a birth date.
+      and public.is_adult(profiles.id)
       -- At least one signal: a connection, a shared public group, or the
       -- same main format (with 'both' matching either side — the same
       -- condition the score uses, so no score-0 candidates slip through).
