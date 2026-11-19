@@ -652,10 +652,38 @@ export function useToggleFollow(
       const current = queryClient.getQueryData<boolean>(stateKey);
       if (current !== undefined) {
         queryClient.setQueryData(stateKey, !current);
+      }
+      // Without a per-row cache, the batched follow-states maps (the
+      // notifications rows) decide whether the viewer follows this user.
+      const batched = queryClient.getQueriesData({
+        queryKey: ["social", "follow-states", me],
+      });
+      let wasFollowing = current;
+      if (wasFollowing === undefined) {
+        for (const [, data] of batched) {
+          if (data instanceof Map && data.has(userId)) {
+            wasFollowing = true;
+            break;
+          }
+        }
+      }
+      if (wasFollowing !== undefined) {
         // Following → unfollow takes one away; the other way adds one.
-        const delta = current ? -1 : 1;
+        const delta = wasFollowing ? -1 : 1;
         adjustCachedFollowCounts(queryClient, userId, "followers", delta);
         adjustCachedFollowCounts(queryClient, me, "following", delta);
+        // Flip the id in every batched map — a new Map each time, so
+        // consumers re-render on the change.
+        for (const [key, data] of batched) {
+          if (!(data instanceof Map)) continue;
+          const next = new Map(data);
+          if (wasFollowing) {
+            next.delete(userId);
+          } else {
+            next.set(userId, true);
+          }
+          queryClient.setQueryData(key, next);
+        }
       }
       return { snapshots };
     },
@@ -670,6 +698,9 @@ export function useToggleFollow(
       const me = user?.id ?? null;
       void queryClient.invalidateQueries({
         queryKey: ["social", "follow-state"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["social", "follow-states"],
       });
       void queryClient.invalidateQueries({
         queryKey: ["social", "follow-counts"],

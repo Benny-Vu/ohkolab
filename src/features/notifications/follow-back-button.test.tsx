@@ -7,13 +7,12 @@ import { createFakeAuth } from "@/features/account/test-utils";
 import { FollowBackButton } from "@/features/notifications/follow-back-button";
 
 const mocks = vi.hoisted(() => ({
-  useFollowState: vi.fn(),
   useToggleFollow: vi.fn(),
 }));
 
-// Only the two social hooks the button touches are faked; no network.
+// The button only touches the toggle; the following state arrives from
+// the page's one batched useFollowStates query, passed in as a prop.
 vi.mock("@/lib/social", () => ({
-  useFollowState: mocks.useFollowState,
   useToggleFollow: mocks.useToggleFollow,
 }));
 
@@ -24,10 +23,6 @@ const ACTOR = {
   avatarSpecies: "Onix",
 };
 
-function followStateResult(data: boolean | undefined) {
-  return { data, isPending: false, isError: false, error: null };
-}
-
 function toggleResult(overrides: Record<string, unknown> = {}) {
   return {
     mutateAsync: vi.fn(async () => ({ ok: true, data: undefined })),
@@ -36,10 +31,10 @@ function toggleResult(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderFollowBackButton(auth = createFakeAuth()) {
+function renderFollowBackButton(following: boolean, auth = createFakeAuth()) {
   return render(
     <AuthContext.Provider value={auth}>
-      <FollowBackButton actor={ACTOR} />
+      <FollowBackButton actor={ACTOR} following={following} />
     </AuthContext.Provider>,
   );
 }
@@ -47,7 +42,6 @@ function renderFollowBackButton(auth = createFakeAuth()) {
 describe("FollowBackButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.useFollowState.mockReturnValue(followStateResult(false));
     mocks.useToggleFollow.mockReturnValue(toggleResult());
   });
 
@@ -56,14 +50,13 @@ describe("FollowBackButton", () => {
   });
 
   it("offers Follow when the reader does not follow the actor back", () => {
-    renderFollowBackButton();
+    renderFollowBackButton(false);
 
     expect(screen.getByRole("button", { name: "Follow" })).toBeVisible();
   });
 
   it("shows Following when the reader already follows the actor", () => {
-    mocks.useFollowState.mockReturnValue(followStateResult(true));
-    renderFollowBackButton();
+    renderFollowBackButton(true);
 
     expect(screen.getByRole("button", { name: "Following" })).toBeVisible();
   });
@@ -71,7 +64,7 @@ describe("FollowBackButton", () => {
   it("follows the actor on click", async () => {
     const toggle = toggleResult();
     mocks.useToggleFollow.mockReturnValue(toggle);
-    renderFollowBackButton();
+    renderFollowBackButton(false);
 
     await userEvent
       .setup()
@@ -82,24 +75,17 @@ describe("FollowBackButton", () => {
 
   it("waits while the toggle is in flight", () => {
     mocks.useToggleFollow.mockReturnValue(toggleResult({ isPending: true }));
-    renderFollowBackButton();
+    renderFollowBackButton(false);
 
     expect(screen.getByRole("button", { name: "Follow" })).toBeDisabled();
   });
 
   it("renders nothing while signed out", () => {
     renderFollowBackButton(
+      false,
       createFakeAuth({ user: null, session: null, profile: null }),
     );
 
     expect(screen.queryByRole("button")).toBeNull();
-  });
-
-  it("still renders a button while the follow state is loading", () => {
-    mocks.useFollowState.mockReturnValue(followStateResult(undefined));
-    renderFollowBackButton();
-
-    // Unknown state reads as "not following yet": offer the follow.
-    expect(screen.getByRole("button", { name: "Follow" })).toBeVisible();
   });
 });

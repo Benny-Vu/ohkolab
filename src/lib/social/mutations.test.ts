@@ -21,6 +21,7 @@ import type { SocialComment } from "@/lib/social/queries";
 
 const ME = "user-1";
 const OTHER = "user-2";
+const THIRD = "user-3";
 
 /**
  * A resolver whose every awaited chain resolves only when the test says so,
@@ -102,6 +103,34 @@ describe("useToggleFollow (optimistic)", () => {
       following: 2,
     });
   }
+
+  it("flips the batched follow-states map when there is no per-row cache", async () => {
+    const { config, settle } = deferredChains();
+    const fake = createFakeClient(config);
+    const queryClient = createQueryClient();
+    // The notifications page's batched map: OTHER is followed, THIRD is not.
+    const mapKey = ["social", "follow-states", ME, [OTHER, THIRD].sort()];
+    queryClient.setQueryData(mapKey, new Map([[THIRD, true]]));
+
+    const run = runOptimistic(
+      () => useToggleFollow(THIRD, fake.client),
+      undefined,
+      queryClient,
+    );
+
+    // THIRD was followed via the map (no per-row key), so the optimistic
+    // toggle unfollows: a NEW map object without THIRD.
+    const after = queryClient.getQueryData(mapKey) as Map<string, boolean>;
+    expect(after).toEqual(new Map());
+
+    // An existing follow row → the delete path.
+    await settle(0, {
+      data: { follower_id: ME, followee_id: THIRD },
+      error: null,
+    });
+    await settle(1, { data: [], error: null });
+    await run.done();
+  });
 
   it("flips the cached follow state and counts before the server answers", async () => {
     const { config, settle } = deferredChains();
