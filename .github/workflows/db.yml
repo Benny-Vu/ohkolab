@@ -343,6 +343,163 @@ jobs:
           $keep$;
           SQL
 
+      # Exercises the push notifications migration (20261120210000):
+      # token and settings policies are per-user, the claim functions batch
+      # and cooldown, and account deletion cascades tokens and settings.
+      # push_config stays empty here, so the webhook triggers are silent.
+      - name: Push notification policies and claims
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+          values
+            ('ffffffff-ffff-4fff-8fff-ffffffffffff', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'push-a@example.com', 'x', now(), now()),
+            ('90909090-9090-4909-8909-909090909090', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'push-b@example.com', 'x', now(), now()),
+            ('a0a0a0a0-a0a0-4a0a-8a0a-a0a0a0a0a0a0', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'push-c@example.com', 'x', now(), now());
+          insert into public.profiles (id, username) values
+            ('ffffffff-ffff-4fff-8fff-ffffffffffff', 'push_a'),
+            ('90909090-9090-4909-8909-909090909090', 'push_b'),
+            ('a0a0a0a0-a0a0-4a0a-8a0a-a0a0a0a0a0a0', 'push_c')
+          on conflict (id) do update set username = excluded.username;
+
+          do $push$
+          declare
+            push_a constant uuid := 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+            push_b constant uuid := '90909090-9090-4909-8909-909090909090';
+            push_c constant uuid := 'a0a0a0a0-a0a0-4a0a-8a0a-a0a0a0a0a0a0';
+            claimed int;
+          begin
+            set local role authenticated;
+
+            -- Tokens: the owner registers and re-registers (upsert).
+            perform set_config('request.jwt.claims', json_build_object('sub', push_a, 'role', 'authenticated')::text, true);
+            insert into public.push_tokens (user_id, token, platform)
+            values (push_a, 'fcm-token-push-a-1234567890', 'android');
+            insert into public.push_tokens (user_id, token, platform)
+            values (push_a, 'fcm-token-push-a-1234567890', 'android')
+            on conflict (token) do update set last_seen_at = now();
+            if (select count(*) from public.push_tokens where user_id = push_a) <> 1 then
+              raise exception 'PUSH-CHECK: token upsert duplicated the row';
+            end if;
+
+            -- A malformed platform is rejected.
+            begin
+              insert into public.push_tokens (user_id, token, platform)
+              values (push_a, 'fcm-token-push-a-bad', 'windows');
+              raise exception 'PUSH-CHECK: a bad platform was accepted';
+            exception when check_violation then
+              null;
+            end;
+
+            -- Another user sees none of the owner's tokens and can
+            -- neither change nor remove them.
+            perform set_config('request.jwt.claims', json_build_object('sub', push_b, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.push_tokens where user_id = push_a) then
+              raise exception 'PUSH-CHECK: another user read a foreign token';
+            end if;
+            update public.push_tokens set platform = 'ios' where user_id = push_a;
+            if exists (select 1 from public.push_tokens where user_id = push_a and platform = 'ios') then
+              raise exception 'PUSH-CHECK: another user changed a foreign token';
+            end if;
+            delete from public.push_tokens where user_id = push_a;
+            if not exists (select 1 from public.push_tokens where user_id = push_a) then
+              raise exception 'PUSH-CHECK: another user deleted a foreign token';
+            end if;
+
+            -- Settings: the owner writes theirs, nobody else sees them.
+            perform set_config('request.jwt.claims', json_build_object('sub', push_a, 'role', 'authenticated')::text, true);
+            insert into public.push_settings (user_id, enabled) values (push_a, false);
+            if not exists (select 1 from public.push_settings where user_id = push_a and enabled = false) then
+              raise exception 'PUSH-CHECK: owner cannot write their push settings';
+            end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', push_b, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.push_settings where user_id = push_a) then
+              raise exception 'PUSH-CHECK: another user read foreign push settings';
+            end if;
+            update public.push_settings set enabled = true where user_id = push_a;
+            if exists (select 1 from public.push_settings where user_id = push_a and enabled = true) then
+              raise exception 'PUSH-CHECK: another user changed foreign push settings';
+            end if;
+
+            -- A like and a follow both notify push_a (the webhook trigger
+            -- is silent: push_config is empty here).
+            perform set_config('request.jwt.claims', json_build_object('sub', push_a, 'role', 'authenticated')::text, true);
+            insert into public.posts (id, author_id, body) values
+              ('b1b1b1b1-b1b1-4b1b-8b1b-b1b1b1b1b1b1', push_a, 'push check');
+            perform set_config('request.jwt.claims', json_build_object('sub', push_b, 'role', 'authenticated')::text, true);
+            insert into public.post_likes (post_id, user_id) values
+              ('b1b1b1b1-b1b1-4b1b-8b1b-b1b1b1b1b1b1', push_b);
+            insert into public.follows (follower_id, followee_id) values (push_b, push_a);
+
+            reset role;
+            -- The claim batches both notifications into one push...
+            select count(*) into claimed from public.claim_push_batch(push_a);
+            if claimed <> 2 then
+              raise exception 'PUSH-CHECK: claim_push_batch returned % rows, expected 2', claimed;
+            end if;
+            -- ...and the one-minute cooldown makes the next claim empty.
+            select count(*) into claimed from public.claim_push_batch(push_a);
+            if claimed <> 0 then
+              raise exception 'PUSH-CHECK: claim_push_batch ignored the cooldown';
+            end if;
+
+            -- A notification arriving inside the cooldown rides with the
+            -- next claim instead of pushing on its own.
+            set local role authenticated;
+            perform set_config('request.jwt.claims', json_build_object('sub', push_c, 'role', 'authenticated')::text, true);
+            insert into public.follows (follower_id, followee_id) values (push_c, push_a);
+            reset role;
+            select count(*) into claimed from public.claim_push_batch(push_a);
+            if claimed <> 0 then
+              raise exception 'PUSH-CHECK: claim_push_batch pushed inside the cooldown';
+            end if;
+            if not exists (
+              select 1 from public.notifications
+              where recipient_id = push_a and pushed_at is null
+            ) then
+              raise exception 'PUSH-CHECK: a cooldown notification was claimed anyway';
+            end if;
+
+            -- Direct messages: the sender's own claim stays empty, the
+            -- recipient's claims the row. The conversation is created as
+            -- postgres (start_conversation has friend rules); the message
+            -- goes in as its real sender.
+            insert into public.conversations (id, user_a, user_b, created_by) values
+              ('c2c2c2c2-c2c2-4c2c-8c2c-c2c2c2c2c2c2', push_b, push_a, push_b);
+            insert into public.conversation_participants (conversation_id, user_id) values
+              ('c2c2c2c2-c2c2-4c2c-8c2c-c2c2c2c2c2c2', push_b),
+              ('c2c2c2c2-c2c2-4c2c-8c2c-c2c2c2c2c2c2', push_a);
+            set local role authenticated;
+            perform set_config('request.jwt.claims', json_build_object('sub', push_b, 'role', 'authenticated')::text, true);
+            insert into public.messages (conversation_id, sender_id, body)
+            values ('c2c2c2c2-c2c2-4c2c-8c2c-c2c2c2c2c2c2', push_b, 'secret message body');
+            reset role;
+            select count(*) into claimed from public.claim_push_messages(push_b);
+            if claimed <> 0 then
+              raise exception 'PUSH-CHECK: the sender claimed their own message';
+            end if;
+            select count(*) into claimed from public.claim_push_messages(push_a);
+            if claimed <> 1 then
+              raise exception 'PUSH-CHECK: claim_push_messages returned % rows, expected 1', claimed;
+            end if;
+          end;
+          $push$;
+
+          -- Account deletion cascades the tokens and settings away.
+          do $gone$
+          begin
+            delete from auth.users where id = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+            if exists (select 1 from public.push_tokens where user_id = 'ffffffff-ffff-4fff-8fff-ffffffffffff') then
+              raise exception 'PUSH-CHECK: tokens survived account deletion';
+            end if;
+            if exists (select 1 from public.push_settings where user_id = 'ffffffff-ffff-4fff-8fff-ffffffffffff') then
+              raise exception 'PUSH-CHECK: push settings survived account deletion';
+            end if;
+          end;
+          $gone$;
+          SQL
+
       # Exercises the Champions team ID column
       # (20261120200000_team_game_id.sql): the owner reads and writes their
       # own ID, another user sees it only on a public team, and the check

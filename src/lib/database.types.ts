@@ -447,6 +447,11 @@ export type Database = {
           /** Null until the recipient marks the notification read. */
           read_at: string | null;
           created_at: string;
+          /**
+           * Set by the send-push Edge Function when it claims the
+           * notification for a push. Never written by clients.
+           */
+          pushed_at: string | null;
         };
         Insert: {
           id?: string;
@@ -632,6 +637,11 @@ export type Database = {
           created_at: string;
           /** Set when the sender deletes the message; the row stays. */
           deleted_at: string | null;
+          /**
+           * Set by the send-push Edge Function when it claims the message
+           * for a push. Never written by clients.
+           */
+          pushed_at: string | null;
         };
         Insert: {
           id?: string;
@@ -664,6 +674,83 @@ export type Database = {
           created_at: string;
         };
         /** Rows are created by `report_message()` only. */
+        Insert: { [_ in never]: never };
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
+      push_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          /** The FCM registration token; unique across the table. */
+          token: string;
+          /** One of "android", "ios", "web". */
+          platform: string;
+          created_at: string;
+          /** Refreshed on every registration event (FCM rotates tokens). */
+          last_seen_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          token: string;
+          platform?: string;
+          created_at?: string;
+          last_seen_at?: string;
+        };
+        Update: {
+          token?: string;
+          platform?: string;
+          last_seen_at?: string;
+        };
+        Relationships: [];
+      };
+      push_settings: {
+        Row: {
+          user_id: string;
+          /** The master switch; off stops every push. */
+          enabled: boolean;
+          /** Per-kind switches; a missing row means everything on. */
+          likes: boolean;
+          comments: boolean;
+          follows: boolean;
+          groups: boolean;
+          messages: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          enabled?: boolean;
+          likes?: boolean;
+          comments?: boolean;
+          follows?: boolean;
+          groups?: boolean;
+          messages?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        /** No delete: rows go away only with the account. */
+        Update: {
+          enabled?: boolean;
+          likes?: boolean;
+          comments?: boolean;
+          follows?: boolean;
+          groups?: boolean;
+          messages?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      push_config: {
+        Row: {
+          id: boolean;
+          /** Where the send-push Edge Function lives; null = delivery off. */
+          function_url: string | null;
+          /** Sent as x-webhook-key; null = delivery off. */
+          webhook_secret: string | null;
+        };
+        /** RLS has no policies: no client can read or write this table. */
         Insert: { [_ in never]: never };
         Update: { [_ in never]: never };
         Relationships: [];
@@ -844,6 +931,36 @@ export type Database = {
         Args: { message_id: string; reason: string };
         Returns: string;
       };
+      /**
+       * Service role only: claims every unpushed pushable notification for
+       * one recipient (setting pushed_at), newest first. Returns nothing
+       * when a push went out in the last minute.
+       */
+      claim_push_batch: {
+        Args: { p_recipient: string };
+        Returns: {
+          id: string;
+          type: string;
+          actor_id: string | null;
+          post_id: string | null;
+          group_id: string | null;
+          created_at: string;
+        }[];
+      };
+      /**
+       * Service role only: claims every unpushed message for one recipient
+       * (setting pushed_at), newest first. Returns nothing when a push went
+       * out in the last minute. Never returns the message body.
+       */
+      claim_push_messages: {
+        Args: { p_recipient: string };
+        Returns: {
+          id: string;
+          conversation_id: string;
+          sender_id: string;
+          created_at: string;
+        }[];
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
@@ -893,3 +1010,14 @@ export type PostImageRow = Database["public"]["Tables"]["post_images"]["Row"];
 export type PostImageInsert =
   Database["public"]["Tables"]["post_images"]["Insert"];
 export type FeedPostRow = Database["public"]["Views"]["feed_posts"]["Row"];
+export type PushTokenRow = Database["public"]["Tables"]["push_tokens"]["Row"];
+export type PushTokenInsert =
+  Database["public"]["Tables"]["push_tokens"]["Insert"];
+export type PushTokenUpdate =
+  Database["public"]["Tables"]["push_tokens"]["Update"];
+export type PushSettingsRow =
+  Database["public"]["Tables"]["push_settings"]["Row"];
+export type PushSettingsInsert =
+  Database["public"]["Tables"]["push_settings"]["Insert"];
+export type PushSettingsUpdate =
+  Database["public"]["Tables"]["push_settings"]["Update"];

@@ -475,6 +475,7 @@ export function notificationRow(
     moderation_action_id: null,
     read_at: null,
     created_at: "2026-11-18T10:00:00.000Z",
+    pushed_at: null,
     ...partial,
   };
 }
