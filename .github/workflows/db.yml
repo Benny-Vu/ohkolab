@@ -806,7 +806,7 @@ jobs:
           -- bridge follows the shared-group user, the connection-only user
           -- and the suspended user. fs_a blocks fs_blocked.
           insert into public.follows (follower_id, followee_id) values
-            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e'),
+            ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e'),
             ('3f3f3f3f-3f3f-43f3-83f3-3f3f3f3f3f3f', '8a8a8a8a-8a8a-48a8-8a8a-8a8a8a8a8a8a'),
             ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '5d5d5d5d-5d5d-45d5-85d5-5d5d5d5d5d5d'),
             ('4e4e4e4e-4e4e-44e4-84e4-4e4e4e4e4e4e', '6c6c6c6c-6c6c-46c6-86c6-6c6c6c6c6c6c'),
