@@ -1,8 +1,15 @@
+import {
+  abilityMatchupNotes,
+  attackingTypes,
+  coverageGaps,
+  defensiveOverview,
+  memberLabel,
+  type AbilityMatchupNote,
+} from "@/lib/team";
 import { typeEffectiveness } from "@/data";
 import { useDisplayName } from "@/data/display-names";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
-import { attackingTypes, defensiveOverview, memberLabel } from "@/lib/team";
 import { TYPE_COLORS } from "@/lib/type-colors";
 import { TYPE_NAMES, type PokemonSet, type TypeName } from "@/types/pokemon";
 
@@ -26,6 +33,9 @@ const TYPE_ABBREVIATIONS: Record<TypeName, string> = {
   Steel: "Ste",
   Fairy: "Fai",
 };
+
+/** An attacking type three or more members are weak to. */
+const SHARED_WEAKNESS_THRESHOLD = 3;
 
 type HeatMapMode = "defense" | "offense";
 
@@ -80,6 +90,12 @@ function cellTone(multiplier: number | null, mode: HeatMapMode): string {
   return "text-destructive";
 }
 
+const ABILITY_NOTE_KEYS = {
+  immune: "teams.abilityImmune",
+  resist: "teams.abilityResist",
+  weak: "teams.abilityVulnerable",
+} as const;
+
 export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
   const t = useT();
   const displayName = useDisplayName();
@@ -98,6 +114,31 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
         : displayName("type", row.label),
   }));
 
+  // Column highlights: defending against a shared weakness, or attacking
+  // into an uncovered type.
+  const highlighted = new Set<TypeName>();
+  if (mode === "defense") {
+    for (const entry of defensiveOverview(members)) {
+      if (entry.weak >= SHARED_WEAKNESS_THRESHOLD) highlighted.add(entry.type);
+    }
+  } else {
+    for (const gap of coverageGaps(members)) highlighted.add(gap.type);
+  }
+
+  // The matchups an ability changed, for cell tooltips and the footnote.
+  const noteByKey = new Map<string, AbilityMatchupNote>();
+  if (mode === "defense") {
+    for (const note of abilityMatchupNotes(members)) {
+      noteByKey.set(`${note.member}-${note.type}`, note);
+    }
+  }
+  const noteSentence = (note: AbilityMatchupNote): string =>
+    t(ABILITY_NOTE_KEYS[note.effect], {
+      pokemon: displayName("species", memberLabel(members[note.member]!)),
+      ability: displayName("ability", note.ability),
+      type: displayName("type", note.type),
+    });
+
   if (rows.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -107,57 +148,83 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-max border-separate border-spacing-0 text-xs">
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              className="sticky left-0 z-10 border-b border-border bg-card pr-2 text-left text-[10px] font-medium text-muted-foreground"
-            >
-              {mode === "defense"
-                ? t("teams.heatMapPokemon")
-                : t("teams.heatMapMoveType")}
-            </th>
-            {TYPE_NAMES.map((type) => (
+    <div className="flex flex-col gap-1.5">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-max border-separate border-spacing-0 text-xs">
+          <thead>
+            <tr>
               <th
-                key={type}
                 scope="col"
-                className="border-b border-border px-0.5 pb-1.5 text-center"
+                className="sticky left-0 z-10 border-b border-border bg-card pr-2 text-left text-[10px] font-medium text-muted-foreground"
               >
-                <span
-                  className="inline-flex h-4 min-w-7 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold tracking-wide text-white uppercase"
-                  style={{ backgroundColor: TYPE_COLORS[type] }}
-                >
-                  {columnLabel(type)}
-                </span>
+                {mode === "defense"
+                  ? t("teams.heatMapPokemon")
+                  : t("teams.heatMapMoveType")}
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.key}>
-              <th
-                scope="row"
-                className="sticky left-0 z-10 bg-card pr-2 text-left font-normal"
-              >
-                <span className="block max-w-24 truncate text-muted-foreground">
-                  {row.label}
-                </span>
-              </th>
-              {row.cells.map((cell, index) => (
-                <td
-                  key={index}
-                  className={`px-0.5 py-1 text-center font-mono text-[10px] tabular-nums ${cellTone(cell, mode)}`}
+              {TYPE_NAMES.map((type) => (
+                <th
+                  key={type}
+                  scope="col"
+                  className="border-b border-border px-0.5 pb-1.5 text-center"
                 >
-                  {formatMultiplier(cell)}
-                </td>
+                  <span
+                    className={`inline-flex h-4 min-w-7 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold tracking-wide text-white uppercase ${
+                      highlighted.has(type) ? "ring-2 ring-destructive" : ""
+                    }`}
+                    style={{ backgroundColor: TYPE_COLORS[type] }}
+                  >
+                    {columnLabel(type)}
+                  </span>
+                </th>
               ))}
             </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, rowIndex) => (
+              <tr key={row.key}>
+                <th
+                  scope="row"
+                  className="sticky left-0 z-10 bg-card pr-2 text-left font-normal"
+                >
+                  <span className="block max-w-24 truncate text-muted-foreground">
+                    {row.label}
+                  </span>
+                </th>
+                {row.cells.map((cell, index) => {
+                  const type = TYPE_NAMES[index]!;
+                  // In defense mode the rows follow team order, so the row
+                  // index is the member index the note is keyed by.
+                  const note =
+                    mode === "defense"
+                      ? noteByKey.get(`${rowIndex}-${type}`)
+                      : undefined;
+                  return (
+                    <td
+                      key={index}
+                      title={note ? noteSentence(note) : undefined}
+                      className={`px-0.5 py-1 text-center font-mono text-[10px] tabular-nums ${cellTone(cell, mode)}`}
+                    >
+                      {formatMultiplier(cell)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {mode === "defense" && noteByKey.size > 0 && (
+        <ul className="flex flex-col gap-0.5">
+          {[...noteByKey.values()].map((note) => (
+            <li
+              key={`${note.member}-${note.type}`}
+              className="text-[11px] text-muted-foreground"
+            >
+              {noteSentence(note)}
+            </li>
           ))}
-        </tbody>
-      </table>
+        </ul>
+      )}
     </div>
   );
 }

@@ -3,15 +3,20 @@ export {
   defensiveWeakSpots,
   speedTiers,
   type SpeedTier,
+  type SpeedTierMode,
 } from "@/lib/team/heat-map";
 export {
+  abilityMatchupNotes,
   attackingTypes,
   battleTypes,
+  coverageGaps,
   defensiveOverview,
   memberLabel,
   offensiveCoverage,
   teamWarnings,
+  type AbilityMatchupNote,
   type CoverageEntry,
+  type CoverageGap,
   type DefensiveEntry,
   type TeamWarning,
 } from "@/lib/team/analysis";
