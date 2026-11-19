@@ -25,12 +25,15 @@ export type TelemetryEvent =
   | "group_created"
   | "group_joined"
   | "feedback_sent"
+  | "link_shared"
   | "theme_changed";
 
 export type SearchKind = "pokemon" | "move" | "item" | "page";
 export type SignUpMethod = "email" | "google" | "discord";
 export type PostAttachment = "none" | "team" | "calc";
 export type FeedbackEventKind = "bug" | "idea" | "other";
+/** What was shared, by the link's route — never the link itself. */
+export type SharedLinkKind = "calc" | "team" | "profile" | "post" | "group";
 
 /** The properties each catalogue event carries, beyond the shared ones. */
 export interface EventProperties {
@@ -61,6 +64,7 @@ export interface EventProperties {
   group_created: { visibility: string };
   group_joined: { visibility: string };
   feedback_sent: { kind: FeedbackEventKind };
+  link_shared: { kind: SharedLinkKind };
   theme_changed: { theme: "dark" | "light" };
 }
 

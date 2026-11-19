@@ -486,4 +486,33 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "share.share": "共有",
   "share.copiedLink": "リンクをクリップボードにコピーしました。",
   "share.copyFailed": "リンクをコピーできませんでした。",
+
+  // ダイレクトメッセージ（未リリース、VITE_DIRECT_MESSAGES）。
+  "pageTitle.messages": "メッセージ",
+  "messages.title": "メッセージ",
+  "messages.description":
+    "他のプレイヤーとのプライベートなメッセージ。プロフィールから会話を始められます。",
+  "messages.empty": "まだ会話がありません。",
+  "messages.signIn": "メッセージを見るにはサインインしてください。",
+  "messages.loadError": "メッセージを読み込めませんでした。",
+  "messages.previewDeleted": "削除されたメッセージ",
+  "messages.threadUnavailable": "この会話は利用できません。",
+  "messages.composerAria": "メッセージを入力",
+  "messages.composerPlaceholder": "メッセージを入力…",
+  "messages.send": "送信",
+  "messages.tooLong": "メッセージは{max}文字以内です。",
+  "messages.you": "自分",
+  "messages.reportButtonAria": "このメッセージを通報する",
+  "messages.targetLabel": "メッセージ",
+  "messages.messageButton": "メッセージ",
+  "messages.settingsTitle": "誰からメッセージを受け取るか",
+  "messages.settingsDescription":
+    "誰があなたとの会話を始められるかを選択します。フレンドは相互フォローのプレイヤーです。",
+  "messages.settingsFriends": "フレンド（相互フォロー）",
+  "messages.settingsFollowing": "自分がフォローしている人のみ",
+  "messages.settingsNobody": "誰も許可しない",
+  "messages.settingsSaved": "メッセージ設定を保存しました。",
+  "messages.settingsAria": "誰からメッセージを受け取るか",
+  "messages.reportedBadge": "通報対象",
+  "messages.messageBy": "送信者: {name}",
 };

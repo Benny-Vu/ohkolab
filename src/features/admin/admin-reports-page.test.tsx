@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AdminReportsPage } from "@/features/admin/admin-reports-page";
 import { createFakeAuth, renderPage } from "@/features/account/test-utils";
@@ -92,12 +92,15 @@ function profileRow(overrides: Partial<ProfileRow> = {}): ProfileRow {
 
 /**
  * Fake Supabase client for the admin feature's feature-local queries:
- * `comments` and `profiles` answer through select/eq/maybeSingle.
+ * `comments`, `profiles` and (for message reports) `message_reports`
+ * answer through their query chains.
  */
 function createFakeClient(
   options: {
     comment?: CommentRow | null;
     profile?: ProfileRow | null;
+    messageReport?: { snapshot: unknown } | null;
+    profileList?: ProfileRow[];
   } = {},
 ) {
   const from = (table: string) => {
@@ -117,6 +120,24 @@ function createFakeClient(
           eq: () => ({
             maybeSingle: () =>
               Promise.resolve({ data: options.profile ?? null, error: null }),
+          }),
+          in: () =>
+            Promise.resolve({
+              data: options.profileList ?? [],
+              error: null,
+            }),
+        }),
+      };
+    }
+    if (table === "message_reports") {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: () =>
+              Promise.resolve({
+                data: options.messageReport ?? null,
+                error: null,
+              }),
           }),
         }),
       };
@@ -586,5 +607,93 @@ describe("AdminReportsPage", () => {
 
     const link = await screen.findByRole("link", { name: /view comment/i });
     expect(link).toHaveAttribute("href", "/post/post-1");
+  });
+
+  describe("message reports (direct messages flag on)", () => {
+    beforeEach(() => {
+      vi.stubEnv("VITE_DIRECT_MESSAGES", "true");
+    });
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    const SNAPSHOT = [
+      {
+        id: "m1",
+        sender_id: "user-sender",
+        body: "message before the reported one",
+        created_at: "2026-11-19T10:00:00Z",
+      },
+      {
+        id: "m2",
+        sender_id: "user-sender",
+        body: "the reported message",
+        created_at: "2026-11-19T10:01:00Z",
+      },
+    ];
+
+    function messageReportRow(): ReportRow {
+      return reportRow({
+        id: "report-message",
+        target_type: "message",
+        target_id: "m2",
+      });
+    }
+
+    it("renders the snapshot oldest first with the reported message marked", async () => {
+      socialMocks.useReports.mockReturnValue(queryResult([messageReportRow()]));
+      renderReportsPage(
+        createFakeClient({
+          messageReport: { snapshot: SNAPSHOT },
+          profileList: [profileRow({ id: "user-sender", username: "sender" })],
+        }),
+      );
+
+      expect(
+        await screen.findByText("message before the reported one"),
+      ).toBeInTheDocument();
+      expect(screen.getByText("the reported message")).toBeInTheDocument();
+      // The sender is resolved to a username where readable.
+      await waitFor(() => {
+        expect(screen.getAllByText(/@sender/).length).toBeGreaterThan(0);
+      });
+      // The newest entry (the one the report is about) carries the badge;
+      // the table header also says "Reported", so both must be there.
+      expect(screen.getAllByText("Reported").length).toBeGreaterThan(1);
+      // The target column says "message".
+      expect(screen.getByText("message")).toBeInTheDocument();
+    });
+
+    it("suspends the reported message's sender from the snapshot", async () => {
+      const user = userEvent.setup();
+      const suspend = vi.fn(
+        async (input: { userId: string; until: string; reason: string }) => ({
+          ok: true,
+          data: undefined,
+          input,
+        }),
+      );
+      socialMocks.useReports.mockReturnValue(queryResult([messageReportRow()]));
+      moderationMocks.useSuspendUser.mockReturnValue(
+        mutationResult(
+          suspend as unknown as (args?: unknown) => Promise<unknown>,
+        ),
+      );
+      renderReportsPage(
+        createFakeClient({
+          messageReport: { snapshot: SNAPSHOT },
+          profileList: [profileRow({ id: "user-sender", username: "sender" })],
+        }),
+      );
+
+      await screen.findByText("the reported message");
+      await user.click(screen.getByRole("button", { name: /suspend user/i }));
+      const reason = screen.getByPlaceholderText(/reason for the suspension/i);
+      await user.type(reason, "Harassment in DMs");
+      await user.click(screen.getByRole("button", { name: /1 day/i }));
+
+      await waitFor(() => expect(suspend).toHaveBeenCalled());
+      expect(suspend.mock.calls[0]![0].userId).toBe("user-sender");
+    });
   });
 });

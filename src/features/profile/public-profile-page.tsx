@@ -52,6 +52,7 @@ import {
 } from "@/features/profile/profile-queries";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
+import { directMessagesEnabled } from "@/lib/messages/flag";
 import type { Profile } from "@/lib/auth/types";
 import {
   socialAvailability,
@@ -90,6 +91,14 @@ const TeamMemberRow = lazy(() =>
 const ProfileBannerTint = lazy(() =>
   import("@/features/profile/profile-banner-tint").then((m) => ({
     default: m.ProfileBannerTint,
+  })),
+);
+
+// The "Message" button only exists while VITE_DIRECT_MESSAGES is on; it
+// loads lazily so flag-off builds never download it.
+const ProfileMessageButton = lazy(() =>
+  import("@/features/messages/profile-message-button").then((m) => ({
+    default: m.ProfileMessageButton,
   })),
 );
 
@@ -569,6 +578,11 @@ function ProfileSocialActions({
           </>
         ) : !isSelf ? (
           <>
+            {directMessagesEnabled() ? (
+              <Suspense fallback={null}>
+                <ProfileMessageButton profile={profile} client={client} />
+              </Suspense>
+            ) : null}
             <Button
               variant={following ? "outline" : "default"}
               size="sm"

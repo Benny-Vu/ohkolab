@@ -123,6 +123,226 @@ jobs:
           fi
           echo "Author cannot delete another author's image."
 
+      # Exercises the direct messages migration (20261120110000) as two
+      # normal users and a moderator. The accounts are created 4 days old
+      # with confirmed emails so start_conversation's account-age rule passes.
+      - name: Direct message policies
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          -- Setup, as postgres: six accounts. dm_a and dm_b are adult
+          -- friends; dm_teen is 14 (friends-only by the minor rule); dm_c is
+          -- an unconnected adult; dm_mod is a moderator. dm_f1..dm_f10 are
+          -- adult friends of dm_a for the conversation rate limit.
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+          values
+            ('77777777-7777-4777-8777-777777777777', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-a@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('88888888-8888-4888-8888-888888888888', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-b@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('99999999-9999-4999-8999-999999999999', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-c@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-teen@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-mod@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f1@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f2@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f3@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f4@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000005', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f5@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000006', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f6@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000007', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f7@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000008', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f8@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000009', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f9@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('cccccccc-0000-4000-8000-000000000010', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dm-f10@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now());
+
+          -- Birth dates: adults 1990, the teen 2012 (14, above the 13 floor).
+          insert into public.profile_birth_dates (user_id, birth_date) values
+            ('77777777-7777-4777-8777-777777777777', '1990-01-01'),
+            ('88888888-8888-4888-8888-888888888888', '1990-01-01'),
+            ('99999999-9999-4999-8999-999999999999', '1990-01-01'),
+            ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '2012-06-01'),
+            ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '1990-01-01');
+          insert into public.profile_birth_dates (user_id, birth_date)
+          select id, '1990-01-01' from public.profiles
+          where id::text like 'cccccccc-%';
+
+          insert into public.user_roles (user_id, role)
+          values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'moderator');
+
+          -- dm_a and dm_b are friends (mutual follows); dm_a also follows
+          -- all ten dm_f users both ways.
+          insert into public.follows (follower_id, followee_id) values
+            ('77777777-7777-4777-8777-777777777777', '88888888-8888-4888-8888-888888888888'),
+            ('88888888-8888-4888-8888-888888888888', '77777777-7777-4777-8777-777777777777');
+          insert into public.follows (follower_id, followee_id)
+          select '77777777-7777-4777-8777-777777777777', id from public.profiles
+          where id::text like 'cccccccc-%';
+          insert into public.follows (follower_id, followee_id)
+          select id, '77777777-7777-4777-8777-777777777777' from public.profiles
+          where id::text like 'cccccccc-%';
+
+          -- The behaviour checks, running as the authenticated role with
+          -- each user's claims. Every failure raises with DM-CHECK.
+          do $dm$
+          declare
+            dm_a constant uuid := '77777777-7777-4777-8777-777777777777';
+            dm_b constant uuid := '88888888-8888-4888-8888-888888888888';
+            dm_c constant uuid := '99999999-9999-4999-8999-999999999999';
+            dm_teen constant uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+            dm_mod constant uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+            conv uuid;
+            reported uuid;
+            friend uuid;
+          begin
+            set local role authenticated;
+
+            -- dm_a starts a conversation with dm_b and sends a message.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_a, 'role', 'authenticated')::text, true);
+            select public.start_conversation(dm_b) into conv;
+            if conv is null then
+              raise exception 'DM-CHECK: start_conversation returned null';
+            end if;
+            insert into public.messages (conversation_id, sender_id, body)
+            values (conv, dm_a, 'policy check');
+            if not exists (select 1 from public.messages where conversation_id = conv) then
+              raise exception 'DM-CHECK: message insert failed';
+            end if;
+
+            -- The outsider dm_c cannot read the conversation or its messages.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_c, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.conversations where id = conv)
+               or exists (select 1 from public.messages where conversation_id = conv) then
+              raise exception 'DM-CHECK: outsider read the conversation';
+            end if;
+
+            -- The moderator cannot read unreported messages either.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_mod, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.messages where conversation_id = conv) then
+              raise exception 'DM-CHECK: moderator read unreported messages';
+            end if;
+
+            -- A minor cannot be messaged by a non-friend adult, and the
+            -- minor cannot start one either.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_a, 'role', 'authenticated')::text, true);
+            begin
+              perform public.start_conversation(dm_teen);
+              raise exception 'DM-CHECK: adult messaged a non-friend minor';
+            exception when others then
+              if sqlerrm not like 'You can only message friends%' then
+                raise exception 'DM-CHECK: minor rule raised %', sqlerrm;
+              end if;
+            end;
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_teen, 'role', 'authenticated')::text, true);
+            begin
+              perform public.start_conversation(dm_c);
+              raise exception 'DM-CHECK: minor started a conversation with a stranger';
+            exception when others then
+              if sqlerrm not like 'You can only message friends%' then
+                raise exception 'DM-CHECK: minor rule raised %', sqlerrm;
+              end if;
+            end;
+
+            -- The message rate limit: 20 per minute. dm_a already sent 1,
+            -- so 19 more pass and the 21st raises P0A09.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_a, 'role', 'authenticated')::text, true);
+            for i in 1..19 loop
+              insert into public.messages (conversation_id, sender_id, body)
+              values (conv, dm_a, 'rate ' || i);
+            end loop;
+            begin
+              insert into public.messages (conversation_id, sender_id, body)
+              values (conv, dm_a, 'one too many');
+              raise exception 'DM-CHECK: message rate limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Sending messages too quickly%' then
+                raise exception 'DM-CHECK: message rate limit raised %', sqlerrm;
+              end if;
+            end;
+
+            -- The conversation rate limit: 10 per 24 hours. dm_a has 1;
+            -- nine more pass and the 11th raises P0A08.
+            for f in 1..9 loop
+              select id into friend from public.profiles
+              where id::text = 'cccccccc-0000-4000-8000-0000000000'
+                || lpad(f::text, 2, '0');
+              perform public.start_conversation(friend);
+            end loop;
+            select id into friend from public.profiles
+            where id::text = 'cccccccc-0000-4000-8000-000000000010';
+            begin
+              perform public.start_conversation(friend);
+              raise exception 'DM-CHECK: conversation rate limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many new conversations today%' then
+                raise exception 'DM-CHECK: conversation rate limit raised %', sqlerrm;
+              end if;
+            end;
+
+            -- Reopening an existing conversation still works at the limit.
+            if public.start_conversation(dm_b) is distinct from conv then
+              raise exception 'DM-CHECK: reopening a conversation hit the daily limit';
+            end if;
+
+            -- Clients can't ask whether another user is an adult.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_c, 'role', 'authenticated')::text, true);
+            begin
+              perform public.is_adult(dm_teen);
+              raise exception 'DM-CHECK: a client could call is_adult';
+            exception when insufficient_privilege then
+              null;
+            end;
+
+            -- Reporting: dm_b reports dm_a's last message; the moderator
+            -- can then read the snapshot (all 20 messages: the reported
+            -- one plus the 19 before it) but still not the messages table.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_b, 'role', 'authenticated')::text, true);
+            select id into reported from public.messages
+            where conversation_id = conv and body = 'rate 19';
+            perform public.report_message(reported, 'harassment');
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_mod, 'role', 'authenticated')::text, true);
+            if not exists (
+              select 1 from public.message_reports
+              where message_id = reported
+                and jsonb_array_length(snapshot) = 20
+            ) then
+              raise exception 'DM-CHECK: report snapshot missing or wrong size';
+            end if;
+            if exists (select 1 from public.messages where conversation_id = conv) then
+              raise exception 'DM-CHECK: moderator read unreported messages after a report';
+            end if;
+
+            -- A blocked user cannot send. dm_b blocks dm_a (as dm_b; the
+            -- blocks policy only allows blocking as yourself); dm_a's next
+            -- message is rejected with the block message.
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_b, 'role', 'authenticated')::text, true);
+            insert into public.blocks (blocker_id, blocked_id) values (dm_b, dm_a);
+            perform set_config('request.jwt.claims', json_build_object('sub', dm_a, 'role', 'authenticated')::text, true);
+            begin
+              insert into public.messages (conversation_id, sender_id, body)
+              values (conv, dm_a, 'still trying');
+              raise exception 'DM-CHECK: blocked user sent a message';
+            exception when others then
+              if sqlerrm not like 'You cannot message this user%' then
+                raise exception 'DM-CHECK: block rule raised %', sqlerrm;
+              end if;
+            end;
+          end;
+          $dm$;
+
+          -- Account deletion, as postgres: deleting dm_a removes their
+          -- conversations and messages, but the reported snapshot stays
+          -- for its year.
+          do $keep$
+          begin
+            delete from auth.users where id = '77777777-7777-4777-8777-777777777777';
+            if exists (select 1 from public.messages where sender_id = '77777777-7777-4777-8777-777777777777') then
+              raise exception 'DM-CHECK: messages survived account deletion';
+            end if;
+            if not exists (select 1 from public.message_reports where jsonb_array_length(snapshot) = 20) then
+              raise exception 'DM-CHECK: the report snapshot was deleted with the account';
+            end if;
+          end;
+          $keep$;
+          SQL
+
       - name: Stop
         if: always()
         run: supabase stop --no-backup

@@ -45,6 +45,20 @@ export const shellEn = {
   "common.retry": "Try again",
   "common.back": "Back",
   "common.backToHome": "Back to home",
+
+  // Birth date (asked once; behind VITE_DIRECT_MESSAGES).
+  "birthDate.label": "Birth date",
+  "birthDate.hint":
+    "Used to keep young players safe. Never shown to other players.",
+  "birthDate.invalid": "Enter a valid date.",
+  "birthDate.tooYoung": "You must be at least 13 years old.",
+  "birthDate.saved": "Birth date saved.",
+  "birthDate.saveFailed": "Could not save your birth date. Try again.",
+  "birthDate.none": "Not added yet.",
+  "birthDate.promptTitle": "Add your birth date",
+  "birthDate.promptBody":
+    "It keeps young players safe and is never shown to other players. Until you add it, you can only message friends.",
+  "birthDate.later": "Later",
   "common.close": "Close",
   "common.search": "Search",
   "common.signIn": "Sign in",
@@ -96,6 +110,8 @@ export const shellEn = {
   "search.openAria": "Search Pokémon, moves, players",
   "search.placeholder": "Search Pokémon, moves, players",
   "search.noResults": "No results.",
+  "search.paletteTitle": "Search",
+  "search.paletteDescription": "Search Pokémon, moves, items and pages.",
   "search.pages": "Pages",
   "search.pokemon": "Pokémon",
   "search.moves": "Moves",
@@ -278,6 +294,11 @@ export const shellEn = {
   "crash.reload": "Reload",
   "crash.goHome": "Go home",
   "crash.tellUs": "Tell us what happened",
+
+  // Direct messages (built but not launched; VITE_DIRECT_MESSAGES). Only
+  // the nav label lives here, because nav-items.ts is part of the entry
+  // graph. Everything else sits in the community domain.
+  "nav.messages": "Messages",
 } as const;
 
 export type ShellKey = keyof typeof shellEn;

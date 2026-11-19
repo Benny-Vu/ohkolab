@@ -31,11 +31,19 @@ import { track } from "@/lib/telemetry/analytics";
 
 import { needsOnboarding } from "@/features/account/onboarding";
 import { useT } from "@/lib/i18n/t";
+import { directMessagesEnabled } from "@/lib/messages/flag";
 
 // The species picker pulls the full dex; load it only when the dialog opens.
 const SpeciesPicker = lazy(() =>
   import("@/components/pokemon-editor/species-picker").then((m) => ({
     default: m.SpeciesPicker,
+  })),
+);
+// The birth date field only exists while VITE_DIRECT_MESSAGES is on; it
+// loads lazily so flag-off builds never download it.
+const BirthDateField = lazy(() =>
+  import("@/features/account/birth-date-fields").then((m) => ({
+    default: m.BirthDateField,
   })),
 );
 
@@ -302,6 +310,12 @@ function OnboardingForm({
               ) : null}
             </div>
           </div>
+          {/* Loaded only while VITE_DIRECT_MESSAGES is on. */}
+          {directMessagesEnabled() ? (
+            <Suspense fallback={null}>
+              <BirthDateField />
+            </Suspense>
+          ) : null}
           {formError ? (
             <p className="text-sm text-destructive" role="alert">
               {formError.message}

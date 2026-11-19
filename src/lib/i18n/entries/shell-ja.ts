@@ -44,6 +44,21 @@ export const shellJa: { [K in ShellKey]: string } = {
   "common.retry": "もう一度試す",
   "common.back": "戻る",
   "common.backToHome": "ホームに戻る",
+
+  // 生年月日（一度だけ尋ねる。VITE_DIRECT_MESSAGES のフラグ付き）。
+  "birthDate.label": "生年月日",
+  "birthDate.hint":
+    "若いプレイヤーの安全のために使います。他のプレイヤーには表示されません。",
+  "birthDate.invalid": "正しい日付を入力してください。",
+  "birthDate.tooYoung": "13歳以上である必要があります。",
+  "birthDate.saved": "生年月日を保存しました。",
+  "birthDate.saveFailed":
+    "生年月日を保存できませんでした。もう一度お試しください。",
+  "birthDate.none": "未設定",
+  "birthDate.promptTitle": "生年月日を追加",
+  "birthDate.promptBody":
+    "若いプレイヤーの安全のためのもので、他のプレイヤーには表示されません。追加するまで、友達とだけメッセージできます。",
+  "birthDate.later": "後で",
   "common.close": "閉じる",
   "common.search": "検索",
   "common.signIn": "サインイン",
@@ -95,6 +110,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "search.openAria": "ポケモン・技・プレイヤーを検索",
   "search.placeholder": "ポケモン・技・プレイヤーを検索",
   "search.noResults": "見つかりません。",
+  "search.paletteTitle": "検索",
+  "search.paletteDescription": "ポケモン、技、道具、ページを検索します。",
   "search.pages": "ページ",
   "search.pokemon": "ポケモン",
   "search.moves": "技",
@@ -278,4 +295,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "crash.reload": "再読み込み",
   "crash.goHome": "ホームへ",
   "crash.tellUs": "発生したことを報告する",
+
+  // ダイレクトメッセージ（未リリース、VITE_DIRECT_MESSAGES）。ここにある
+  // のはナビラベルのみ。ほかはcommunityドメイン。
+  "nav.messages": "メッセージ",
 };

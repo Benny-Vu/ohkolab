@@ -43,6 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
+import { directMessagesEnabled } from "@/lib/messages/flag";
 import {
   BIO_MAX_LENGTH,
   DISPLAY_NAME_MAX_LENGTH,
@@ -55,6 +56,7 @@ import {
 } from "@/lib/auth/validation";
 import type { AuthFailure, Profile } from "@/lib/auth/types";
 import { LanguageSwitch } from "@/components/language-switch";
+import { BirthDateSettingsCard } from "@/features/account/birth-date-fields";
 import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 import { TelemetrySwitch } from "@/features/feedback/telemetry-switch";
 import { useProfilesByIds } from "@/features/profile/profile-queries";
@@ -69,6 +71,15 @@ type ProfileFieldErrors = Partial<
 const SpeciesPicker = lazy(() =>
   import("@/components/pokemon-editor/species-picker").then((m) => ({
     default: m.SpeciesPicker,
+  })),
+);
+
+// The "who can message me" settings card only exists while
+// VITE_DIRECT_MESSAGES is on; it loads lazily so flag-off builds never
+// download it (the birth date block above follows the same pattern).
+const MessageSettingsCard = lazy(() =>
+  import("@/features/messages/message-settings-card").then((m) => ({
+    default: m.MessageSettingsCard,
   })),
 );
 
@@ -351,22 +362,33 @@ function ProfileEditor({ profile }: { profile: Profile }) {
       </SettingsSection>
 
       <SettingsSection title={t("profile.accountSection")}>
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("profile.sessionTitle")}</CardTitle>
-            <CardDescription>{t("profile.signOutDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={handleSignOut} disabled={busy}>
-              {pending === "signOut" ? (
-                <LoaderCircleIcon className="animate-spin" aria-hidden />
-              ) : (
-                <LogOutIcon aria-hidden />
-              )}
-              {t("common.signOut")}
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="grid gap-4">
+          {/* Renders nothing while VITE_DIRECT_MESSAGES is off. */}
+          <BirthDateSettingsCard />
+          {directMessagesEnabled() ? (
+            <Suspense fallback={null}>
+              <MessageSettingsCard />
+            </Suspense>
+          ) : null}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("profile.sessionTitle")}</CardTitle>
+              <CardDescription>
+                {t("profile.signOutDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={handleSignOut} disabled={busy}>
+                {pending === "signOut" ? (
+                  <LoaderCircleIcon className="animate-spin" aria-hidden />
+                ) : (
+                  <LogOutIcon aria-hidden />
+                )}
+                {t("common.signOut")}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </SettingsSection>
 
       <SettingsSection title={t("profile.privacyTitle")}>

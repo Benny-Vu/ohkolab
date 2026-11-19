@@ -181,6 +181,8 @@ export function SearchPalette() {
         open={open}
         onOpenChange={setOpen}
         aria-label={t("search.openAria")}
+        title={t("search.paletteTitle")}
+        description={t("search.paletteDescription")}
       >
         <CommandInput placeholder={t("search.placeholder")} />
         <CommandList>
