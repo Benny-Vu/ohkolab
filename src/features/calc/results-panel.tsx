@@ -216,7 +216,16 @@ function ResultBlock({
         </p>
       ) : null}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <BigNumber size="2xl">{outcomeRangeText(outcome)}</BigNumber>
+        {/* Keyed by the range so each new result rises the number in:
+            opacity stays 1, only a small translate plays, so fast
+            recalculations never blink. */}
+        <BigNumber
+          key={outcomeRangeText(outcome)}
+          className="animate-in slide-in-from-bottom-1 duration-(--motion-fast) ease-(--motion-ease-out)"
+          size="2xl"
+        >
+          {outcomeRangeText(outcome)}
+        </BigNumber>
         {hasDamage && result ? (
           <DamageMeter
             className="min-w-24 flex-1"

@@ -206,6 +206,14 @@ interface MembershipActionsProps {
   isOwner: boolean;
 }
 
+/**
+ * The membership buttons mount fresh whenever the viewer's state changes
+ * (join → leave, invite → member), so a short fade-and-zoom entrance on
+ * mount doubles as the state-change animation.
+ */
+const STATE_CHANGE_ENTRANCE =
+  "animate-in fade-in zoom-in-95 duration-(--motion-fast) ease-(--motion-ease-out)";
+
 function MembershipActions({
   slug,
   groupId,
@@ -249,6 +257,7 @@ function MembershipActions({
         </span>
         <Button
           size="sm"
+          className={STATE_CHANGE_ENTRANCE}
           onClick={async () => {
             const result = await acceptInvite.mutateAsync({ groupId });
             if (result.ok) toast.success(t("groups.joinedToast"));
@@ -262,6 +271,7 @@ function MembershipActions({
         <Button
           size="sm"
           variant="outline"
+          className={STATE_CHANGE_ENTRANCE}
           onClick={async () => {
             const result = await declineInvite.mutateAsync({ groupId });
             if (result.ok) toast(t("groups.declinedToast"));
@@ -281,6 +291,7 @@ function MembershipActions({
       <Button
         size="sm"
         variant="outline"
+        className={STATE_CHANGE_ENTRANCE}
         onClick={async () => {
           const result = await leaveGroup.mutateAsync({ groupId });
           if (result.ok) toast(t("groups.leftToast"));
@@ -301,6 +312,7 @@ function MembershipActions({
   return (
     <Button
       size="sm"
+      className={STATE_CHANGE_ENTRANCE}
       onClick={async () => {
         const result = await joinGroup.mutateAsync({ groupId });
         if (result.ok) {

@@ -22,7 +22,8 @@ interface DamageMeterProps {
 /**
  * HP bar for a damage result: the HP left after the maximum roll in the
  * foreground colour, the damage range in orange diagonal stripes, the rest
- * of the track muted.
+ * of the track muted. The segments glide from result to result (width-only
+ * transitions); the first paint shows the final state.
  */
 export function DamageMeter({
   minPercent,
@@ -50,18 +51,21 @@ export function DamageMeter({
       )}
     >
       <div
-        className="h-full bg-foreground"
+        className="h-full bg-foreground transition-[width] duration-(--motion-base) ease-(--motion-ease-out)"
         style={{ width: `${remaining}%` }}
       />
       <div
-        className="h-full flex-1"
+        className="h-full flex-1 transition-[width] duration-(--motion-base) ease-(--motion-ease-out)"
         style={{
           width: `${damage}%`,
           backgroundImage:
             "repeating-linear-gradient(135deg, var(--damage-2hko) 0 4px, transparent 4px 8px)",
         }}
       />
-      <div className="h-full flex-1" style={{ width: `${track}%` }} />
+      <div
+        className="h-full flex-1 transition-[width] duration-(--motion-base) ease-(--motion-ease-out)"
+        style={{ width: `${track}%` }}
+      />
     </div>
   );
 }

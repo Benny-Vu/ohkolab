@@ -597,9 +597,15 @@ function ProfileSocialActions({
               {toggleFollow.isPending ? (
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               ) : null}
-              {following
-                ? t("publicProfile.unfollow")
-                : t("publicProfile.follow")}
+              {/* Keyed by state so the label rises in on follow/unfollow. */}
+              <span
+                key={following ? "unfollow" : "follow"}
+                className="animate-in fade-in slide-in-from-bottom-1 duration-(--motion-fast) ease-(--motion-ease-out)"
+              >
+                {following
+                  ? t("publicProfile.unfollow")
+                  : t("publicProfile.follow")}
+              </span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

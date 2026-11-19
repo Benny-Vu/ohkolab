@@ -62,6 +62,7 @@ import { PublicTeamView } from "@/features/team-builder/public-team-view";
 import { ShareButton } from "@/features/share/share-button";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
+import { cn } from "@/lib/utils";
 import { track } from "@/lib/telemetry/analytics";
 import { exportTeam, memberLabel, useTeams } from "@/lib/team";
 import type { BattleFormat } from "@/types/battle";
@@ -117,6 +118,9 @@ export function TeamDetailPage() {
   const [exportOpen, setExportOpen] = useState(false);
   // The analysis card starts collapsed on every visit; no persistence.
   const [analysisOpen, setAnalysisOpen] = useState(false);
+  // Once opened, the (lazily loaded) section stays mounted so closing can
+  // animate the height down instead of snapping out of existence.
+  const [analysisLoaded, setAnalysisLoaded] = useState(false);
 
   if (!team) {
     if (sync.loading) {
@@ -544,38 +548,58 @@ export function TeamDetailPage() {
               <button
                 type="button"
                 aria-expanded={analysisOpen}
+                aria-controls="team-analysis"
                 aria-label={
                   analysisOpen
                     ? t("teams.analysisCollapse")
                     : t("teams.analysisExpand")
                 }
-                onClick={() => setAnalysisOpen((open) => !open)}
+                onClick={() => {
+                  const next = !analysisOpen;
+                  setAnalysisOpen(next);
+                  if (next) setAnalysisLoaded(true);
+                }}
                 className="flex w-full items-center justify-between gap-2 text-left font-heading text-base leading-snug font-medium"
               >
                 {t("teams.analysis")}
                 <ChevronDownIcon
                   aria-hidden
-                  className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                  className={`size-4 shrink-0 text-muted-foreground transition-transform duration-(--motion-base) ease-(--motion-ease-out) ${
                     analysisOpen ? "rotate-180" : ""
                   }`}
                 />
               </button>
             </CardHeader>
-            {analysisOpen && (
-              <Suspense
-                fallback={
-                  <CardContent>
-                    <LoadingArea
-                      pending={true}
-                      label={t("teams.loading")}
-                      skeleton={<Skeleton className="h-40 w-full" />}
-                    />
-                  </CardContent>
-                }
-              >
-                <AnalysisSection members={team.members} />
-              </Suspense>
-            )}
+            {/* The height animates on a grid-rows 0fr→1fr transition; the
+                content stays mounted after the first open so closing glides
+                too. `invisible` only applies once the collapse has run
+                (visibility flips at the end of a transition), and it takes
+                the closed content out of the accessibility tree. */}
+            <div
+              id="team-analysis"
+              className={cn(
+                "grid transition-[grid-template-rows,visibility] duration-(--motion-slow) ease-(--motion-ease-out)",
+                analysisOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr] invisible",
+              )}
+            >
+              <div className="min-h-0 overflow-hidden">
+                {analysisLoaded && (
+                  <Suspense
+                    fallback={
+                      <CardContent>
+                        <LoadingArea
+                          pending={true}
+                          label={t("teams.loading")}
+                          skeleton={<Skeleton className="h-40 w-full" />}
+                        />
+                      </CardContent>
+                    }
+                  >
+                    <AnalysisSection members={team.members} />
+                  </Suspense>
+                )}
+              </div>
+            </div>
           </Card>
         )}
       </div>

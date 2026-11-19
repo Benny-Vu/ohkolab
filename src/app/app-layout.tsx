@@ -59,8 +59,11 @@ export function AppLayout() {
                 className={({ isActive }) =>
                   cn(
                     "relative px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+                    // The underline is always in the DOM; it scales and
+                    // fades between destinations instead of popping in.
+                    "after:absolute after:inset-x-3 after:-bottom-[13px] after:h-0.5 after:origin-center after:bg-accent-brand-text after:scale-x-0 after:opacity-0 after:transition-[opacity,transform] after:duration-(--motion-base) after:ease-(--motion-ease-out)",
                     isActive &&
-                      "text-foreground after:absolute after:inset-x-3 after:-bottom-[13px] after:h-0.5 after:bg-accent-brand-text",
+                      "text-foreground after:scale-x-100 after:opacity-100",
                   )
                 }
               >
@@ -162,8 +165,11 @@ export function AppLayout() {
                 className={({ isActive }) =>
                   cn(
                     "relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground",
+                    // The top bar is always in the DOM; it scales and fades
+                    // between tabs instead of popping in.
+                    "before:absolute before:top-0 before:h-0.5 before:w-8 before:origin-center before:bg-accent-brand-text before:scale-x-0 before:opacity-0 before:transition-[opacity,transform] before:duration-(--motion-base) before:ease-(--motion-ease-out)",
                     isActive &&
-                      "text-foreground before:absolute before:top-0 before:h-0.5 before:w-8 before:bg-accent-brand-text",
+                      "text-foreground before:scale-x-100 before:opacity-100",
                   )
                 }
               >

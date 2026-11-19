@@ -15,6 +15,7 @@ import { ErrorState } from "@/components/error-state";
 import { LoadingArea, NotificationListSkeleton } from "@/components/skeletons";
 import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
+import { ROW_ENTRANCE, staggerDelay } from "@/lib/motion/entrance";
 import { useAuth } from "@/lib/auth/use-auth";
 import { formatRelativeTime } from "@/features/feed/relative-time";
 import { useT } from "@/lib/i18n/t";
@@ -183,15 +184,23 @@ function NotificationsList({
 
   return (
     <div className="grid gap-3">
-      {items.map((item) => (
-        <NotificationRowCard
+      {items.map((item, index) => (
+        // Rows stagger in when their notification arrives (first load or
+        // "Load more"); a re-render (marking one read) never replays the
+        // entrance — see src/lib/motion/entrance.ts.
+        <div
           key={item.id}
-          item={item}
-          onMarkRead={onMarkRead}
-          onDelete={onDelete}
-          markPending={markPending}
-          deletePending={deletePending}
-        />
+          className={ROW_ENTRANCE}
+          style={{ animationDelay: `${staggerDelay(index)}ms` }}
+        >
+          <NotificationRowCard
+            item={item}
+            onMarkRead={onMarkRead}
+            onDelete={onDelete}
+            markPending={markPending}
+            deletePending={deletePending}
+          />
+        </div>
       ))}
       {hasNextPage && (
         <Button
