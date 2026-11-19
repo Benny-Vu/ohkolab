@@ -495,27 +495,9 @@ export function useBlocks(
   });
 }
 
-/** Whether the signed-in user has moderator privileges. */
-export function useIsModerator(
-  client: AppSupabaseClient | null = supabase,
-): UseQueryResult<boolean, SocialFailure> {
-  const { user } = useAuth();
-  return useQuery<boolean, SocialFailure>({
-    queryKey: ["social", "is-moderator", user?.id ?? null],
-    queryFn: async () => {
-      if (!client || isSocialNotInstalled()) {
-        return false;
-      }
-      const { data, error } = await client.rpc("is_moderator");
-      if (error) {
-        return softReadError(error, false);
-      }
-      return data === true;
-    },
-    enabled: client !== null,
-    retry: false,
-  });
-}
+// Re-exported for existing importers: the hook itself now lives in its own
+// module so the entry chunk does not pull all of `queries.ts` in.
+export { useIsModerator } from "@/lib/social/moderator-status";
 
 /** Moderation queue: reports with the given status, newest first. */
 export function useReports(

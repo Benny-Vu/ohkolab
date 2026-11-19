@@ -198,4 +198,21 @@ describe("GroupsPage", () => {
 
     expect(screen.getByLabelText("Loading groups")).toBeInTheDocument();
   });
+
+  it("shows an error state with a retry when the query fails", async () => {
+    const refetch = vi.fn().mockResolvedValue({ undefined });
+    queriesMocks.useMyGroups.mockReturnValue(
+      listResult([], { isError: true, refetch }),
+    );
+    const user = userEvent.setup();
+    renderGroupsPage();
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /could not load groups/i,
+    );
+
+    await user.click(screen.getByRole("button", { name: /try again/i }));
+
+    expect(refetch).toHaveBeenCalled();
+  });
 });

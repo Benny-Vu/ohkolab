@@ -8,8 +8,9 @@ const moderatorMocks = vi.hoisted(() => ({
   useIsModerator: vi.fn(),
 }));
 
-vi.mock("@/lib/social/queries", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/social/queries")>();
+vi.mock("@/lib/social/moderator-status", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/social/moderator-status")>();
   return {
     ...actual,
     useIsModerator: moderatorMocks.useIsModerator,

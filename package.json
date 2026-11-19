@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "check": "npm run lint && npm run format:check && npm run test && npm run build",
     "cap:sync": "npm run build && cap sync android",
-    "android:debug": "android\\gradlew.bat -p android assembleDebug"
+    "android:debug": "android\\gradlew.bat -p android assembleDebug",
+    "android:release": "npm run cap:sync && android\\gradlew.bat -p android bundleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",

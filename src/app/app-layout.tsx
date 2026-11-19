@@ -7,6 +7,7 @@ import { usePageTitle, usePageView } from "@/app/page-title";
 import { SearchPalette } from "@/app/search-palette";
 import { useNativeApp } from "@/app/use-native-app";
 import { LanguageSwitch } from "@/components/language-switch";
+import { OfflineNotice } from "@/components/offline-notice";
 import { Wordmark } from "@/components/wordmark";
 import { OnboardingDialog } from "@/features/account/onboarding-dialog";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
@@ -57,6 +58,9 @@ export function AppLayout() {
             <AccountMenu variant="header" />
           </div>
         </div>
+        {/* Native apps only: a thin "You're offline" overlay under the
+            header. Renders nothing on the web or while online. */}
+        <OfflineNotice />
       </header>
 
       {/* The phone tab bar is 56px plus the gesture-navigation inset. */}

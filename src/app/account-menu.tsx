@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { useAuth } from "@/lib/auth";
-import { useIsModerator } from "@/lib/social";
+import { useIsModerator } from "@/lib/social/moderator-status";
 import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 

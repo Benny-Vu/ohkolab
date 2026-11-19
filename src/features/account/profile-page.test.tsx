@@ -289,6 +289,14 @@ describe("ProfilePage", () => {
       "/u/ashketchum",
     );
   });
+
+  it("links to the account deletion page from the danger zone", () => {
+    renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
+
+    expect(
+      screen.getByRole("link", { name: /deleted with your account/i }),
+    ).toHaveAttribute("href", "/delete-account");
+  });
 });
 
 describe("ProfilePage blocked users", () => {
