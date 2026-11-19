@@ -55,6 +55,7 @@ import {
 } from "@/lib/auth/validation";
 import type { AuthFailure, Profile } from "@/lib/auth/types";
 import { LanguageSwitch } from "@/components/language-switch";
+import { BirthDateSettingsCard } from "@/features/account/birth-date-fields";
 import { UnconfiguredNotice } from "@/features/account/unconfigured-notice";
 import { TelemetrySwitch } from "@/features/feedback/telemetry-switch";
 import { useProfilesByIds } from "@/features/profile/profile-queries";
@@ -351,22 +352,28 @@ function ProfileEditor({ profile }: { profile: Profile }) {
       </SettingsSection>
 
       <SettingsSection title={t("profile.accountSection")}>
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("profile.sessionTitle")}</CardTitle>
-            <CardDescription>{t("profile.signOutDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={handleSignOut} disabled={busy}>
-              {pending === "signOut" ? (
-                <LoaderCircleIcon className="animate-spin" aria-hidden />
-              ) : (
-                <LogOutIcon aria-hidden />
-              )}
-              {t("common.signOut")}
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="grid gap-4">
+          {/* Renders nothing while VITE_DIRECT_MESSAGES is off. */}
+          <BirthDateSettingsCard />
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("profile.sessionTitle")}</CardTitle>
+              <CardDescription>
+                {t("profile.signOutDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={handleSignOut} disabled={busy}>
+                {pending === "signOut" ? (
+                  <LoaderCircleIcon className="animate-spin" aria-hidden />
+                ) : (
+                  <LogOutIcon aria-hidden />
+                )}
+                {t("common.signOut")}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </SettingsSection>
 
       <SettingsSection title={t("profile.privacyTitle")}>

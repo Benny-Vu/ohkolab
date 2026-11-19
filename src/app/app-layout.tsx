@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration } from "react-router";
 
 import { AccountMenu } from "@/app/account-menu";
@@ -9,10 +9,18 @@ import { useNativeApp } from "@/app/use-native-app";
 import { LanguageSwitch } from "@/components/language-switch";
 import { OfflineNotice } from "@/components/offline-notice";
 import { Wordmark } from "@/components/wordmark";
+// The birth date prompt only exists while VITE_DIRECT_MESSAGES is on; it
+// loads lazily so flag-off builds never download it.
+const BirthDatePrompt = lazy(() =>
+  import("@/features/account/birth-date-fields").then((m) => ({
+    default: m.BirthDatePrompt,
+  })),
+);
 import { OnboardingDialog } from "@/features/account/onboarding-dialog";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useT } from "@/lib/i18n/t";
+import { directMessagesEnabled } from "@/lib/messages/flag";
 import { cn } from "@/lib/utils";
 
 /** App frame: desktop header, page content, phone top bar and tab bar. */
@@ -137,6 +145,11 @@ export function AppLayout() {
 
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <OnboardingDialog />
+      {directMessagesEnabled() ? (
+        <Suspense fallback={null}>
+          <BirthDatePrompt />
+        </Suspense>
+      ) : null}
       <ScrollRestoration />
     </div>
   );
