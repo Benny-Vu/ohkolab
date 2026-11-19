@@ -38,7 +38,7 @@ describe("TermsPage", () => {
         /Nintendo, Game Freak, Creatures or The Pokémon Company/,
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/at least 13 years old/)).toBeInTheDocument();
+    expect(screen.getByText(/at least 16 years old/)).toBeInTheDocument();
     expect(
       screen.getByText(/harasses, threatens or bullies other people/),
     ).toBeInTheDocument();

@@ -51,7 +51,7 @@ end;
 $$;
 
 -- Sets the caller's own birth date. Rejects future dates and dates that
--- make the user under 13 (the minimum age for an account); being under 18
+-- make the user under 16 (the minimum age for an account); being under 18
 -- only restricts messaging, which is_adult() decides.
 create or replace function public.set_birth_date(new_birth_date date)
 returns void
@@ -68,8 +68,8 @@ begin
   if new_birth_date > current_date then
     raise exception 'Birth date is in the future' using errcode = '23514';
   end if;
-  if new_birth_date > current_date - interval '13 years' then
-    raise exception 'You must be at least 13 years old' using errcode = '23514';
+  if new_birth_date > current_date - interval '16 years' then
+    raise exception 'You must be at least 16 years old' using errcode = '23514';
   end if;
   insert into public.profile_birth_dates (user_id, birth_date)
     values (caller, new_birth_date)

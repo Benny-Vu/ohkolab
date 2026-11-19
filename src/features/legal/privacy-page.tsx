@@ -11,12 +11,15 @@ import { JaPrivacySections } from "@/features/legal/ja-privacy";
 import { CONTACT_EMAIL, LAST_UPDATED } from "@/features/legal/legal-info";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
+import { directMessagesEnabled } from "@/lib/messages/flag";
 import { imagePostsEnabled } from "@/lib/social";
 
 // The image-post text (approved by the owner on 2026-11-18) is shown only when
 // the VITE_IMAGE_POSTS flag is on, so the policy never describes processing
-// that isn't happening yet.
+// that isn't happening yet. The direct message text (approved 2026-11-19)
+// follows VITE_DIRECT_MESSAGES the same way.
 const IMAGES = imagePostsEnabled();
+const MESSAGES = directMessagesEnabled();
 
 const SECTIONS: Array<{ id: string; heading: string; headingJa: string }> = [
   {
@@ -59,6 +62,15 @@ const SECTIONS: Array<{ id: string; heading: string; headingJa: string }> = [
       ]
     : []),
   { id: "groups", heading: "Groups", headingJa: "グループ" },
+  ...(MESSAGES
+    ? [
+        {
+          id: "direct-messages",
+          heading: "Direct messages",
+          headingJa: "ダイレクトメッセージ",
+        },
+      ]
+    : []),
   {
     id: "notifications",
     heading: "Notifications",
@@ -118,7 +130,7 @@ export function PrivacyPage() {
         description={`最終更新: ${new Intl.DateTimeFormat("ja", { year: "numeric", month: "long", day: "numeric" }).format(new Date(LAST_UPDATED))}`}
         sections={sections}
       >
-        <JaPrivacySections images={IMAGES} />
+        <JaPrivacySections images={IMAGES} messages={MESSAGES} />
       </LegalPage>
     );
   }
@@ -158,7 +170,7 @@ export function PrivacyPage() {
             When you create an account, our sign-in provider, Supabase, stores
             your email address, a hashed password if you sign up with email, or
             the provider you used if you sign in with Google or Discord. It also
-            stores that you confirmed being 13 or older and accepted the terms,
+            stores that you confirmed being 16 or older and accepted the terms,
             with the date of that confirmation.
           </LegalText>
         </LegalSection>
@@ -235,6 +247,34 @@ export function PrivacyPage() {
           </LegalText>
         </LegalSection>
 
+        {MESSAGES && (
+          <LegalSection id="direct-messages" heading="Direct messages">
+            <LegalText>
+              Direct messages are visible only to the two participants. We do
+              not read your messages. A moderator can see a message only after a
+              participant reports it: the report stores a copy of the reported
+              message and up to 20 messages before it, so the report can be
+              reviewed. Reported copies are kept for one year, then deleted.
+              Each message is deleted automatically one year after it was sent.
+              Deleting either account deletes the conversation and its messages.
+            </LegalText>
+            <LegalText>
+              To protect younger players, we ask for your birth date. It is
+              never shown to other players. Players under 18, and players who
+              have not added a birth date, can exchange messages only with their
+              friends, whoever starts the conversation. Your birth date is kept
+              while your account exists and is deleted with it.
+            </LegalText>
+            <LegalText>
+              We store and deliver your messages to provide the messaging
+              service you use (performing our agreement with you). We process
+              your birth date, reported copies and the protections for younger
+              players for our legitimate interest in keeping the service safe,
+              and to meet duties the law places on us.
+            </LegalText>
+          </LegalSection>
+        )}
+
         <LegalSection id="notifications" heading="Notifications">
           <LegalText>
             Notifications store what happened, such as a like, comment, follow
@@ -308,6 +348,8 @@ export function PrivacyPage() {
             appeals. You can see actions that affect you and your own appeals.
             {IMAGES &&
               " For posts with images, the record also lists the image files that were blocked with the removal."}
+            {MESSAGES &&
+              " When you report a message, the copy described under Direct messages is stored with the report."}
           </LegalText>
         </LegalSection>
 

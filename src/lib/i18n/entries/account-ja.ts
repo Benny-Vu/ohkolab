@@ -18,7 +18,7 @@ export const accountJa: { [K in AccountKey]: string } = {
   "login.accountCreatedToast": "アカウントを作成しました。",
   "login.resetSentToast": "リセット用のリンクをメールで確認してください。",
   "login.acceptTermsError":
-    "13歳以上であることと利用規約への同意を確認してアカウントを作成してください。",
+    "16歳以上であることと利用規約への同意を確認してアカウントを作成してください。",
   "login.checkEmailTitle": "メールを確認してください",
   "login.confirmAccountTitle": "アカウントの確認",
   "login.confirmAccountPrefix": "確認のリンクを",
@@ -29,7 +29,7 @@ export const accountJa: { [K in AccountKey]: string } = {
   "login.resetSentSuffix":
     "宛にパスワードリセット用のリンクを送信しました。リンクを開くとリセットページが表示されます。",
   "login.backToSignIn": "サインインに戻る",
-  "login.termsPrefix": "私は13歳以上で、",
+  "login.termsPrefix": "私は16歳以上で、",
   "login.termsLink": "利用規約",
   "login.termsJoin": "と",
   "login.privacyLink": "プライバシーポリシー",

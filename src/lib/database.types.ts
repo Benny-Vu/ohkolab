@@ -556,7 +556,7 @@ export type Database = {
       profile_birth_dates: {
         Row: {
           user_id: string;
-          /** Not in the future, at least 13 years ago. */
+          /** Not in the future, at least 16 years ago. */
           birth_date: string;
           updated_at: string;
         };
@@ -800,7 +800,7 @@ export type Database = {
         Returns: undefined;
       };
       /** Direct messages (behind VITE_DIRECT_MESSAGES). */
-      /** Sets the caller's own birth date; rejects future and under-13. */
+      /** Sets the caller's own birth date; rejects future and under-16. */
       set_birth_date: {
         Args: { new_birth_date: string };
         Returns: undefined;
