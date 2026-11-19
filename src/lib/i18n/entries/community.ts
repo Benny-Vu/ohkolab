@@ -64,6 +64,18 @@ export const communityEn = {
     "When someone likes your post or follows you, it shows up here.",
   "notifications.loadMore": "Load more",
 
+  // The push opt-in card (native app only, behind VITE_PUSH).
+  "notifications.pushTitle": "Turn on notifications",
+  "notifications.pushDescription":
+    "Get a push on this device when someone likes or comments on your posts, follows you, invites you to a group or sends you a message.",
+  "notifications.pushTurnOn": "Turn on",
+  "notifications.pushOnToast": "Notifications are on.",
+  "notifications.pushDeniedTitle": "Notifications are off",
+  "notifications.pushDeniedDescription":
+    "OHKOLab notifications are turned off in your device settings. Turn them on there to get pushes.",
+  "notifications.pushFailedToast":
+    "Notifications could not be turned on. Try again later.",
+
   // The post composer.
   "composer.aria": "Write a post",
   "composer.placeholder": "Share a team, a result or a question…",
