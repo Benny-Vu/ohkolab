@@ -219,6 +219,7 @@ export const communityEn = {
   "home.loadingPosts": "Loading posts",
   "home.feedErrorTitle": "Could not load the feed",
   "home.trending": "Trending in doubles",
+  "home.groupsLoadError": "Could not load your groups",
 
   // The post page and its comments.
   "postDetail.title": "Post",
@@ -235,6 +236,7 @@ export const communityEn = {
   "postDetail.noComments": "No comments yet",
   "postDetail.deletedUser": "Deleted user",
   "postDetail.report": "Report",
+  "postDetail.commentsError": "Could not load comments",
 
   // Groups: the group page, members and settings.
   "groups.loadingAria": "Loading group",
@@ -521,6 +523,7 @@ export const communityEn = {
   "moderation.duration7": "7 days",
   "moderation.duration30": "30 days",
   "moderation.durationPermanent": "Permanent",
+  "moderation.noticeLoadError": "Could not load this notice",
 
   // System pages.
   "system.notFoundTitle": "Page not found",
@@ -753,6 +756,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "home.loadingPosts": "投稿を読み込み中",
   "home.feedErrorTitle": "フィードを読み込めませんでした",
   "home.trending": "ダブルで人気のポケモン",
+  "home.groupsLoadError": "グループを読み込めませんでした",
 
   // 投稿ページとコメント。
   "postDetail.title": "投稿",
@@ -769,6 +773,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "postDetail.noComments": "まだコメントはありません",
   "postDetail.deletedUser": "削除されたユーザー",
   "postDetail.report": "報告",
+  "postDetail.commentsError": "コメントを読み込めませんでした",
 
   // グループ：グループページ、メンバー、設定。
   "groups.loadingAria": "グループを読み込み中",
@@ -1049,6 +1054,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "moderation.duration7": "7日",
   "moderation.duration30": "30日",
   "moderation.durationPermanent": "無期限",
+  "moderation.noticeLoadError": "お知らせを読み込めませんでした",
 
   "system.notFoundTitle": "ページが見つかりません",
   "system.notFoundBody":

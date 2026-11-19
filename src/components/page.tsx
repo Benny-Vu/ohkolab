@@ -32,11 +32,13 @@ export function Page({
     >
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+          <h1 className="break-words text-xl font-semibold tracking-tight sm:text-2xl">
             {title}
           </h1>
           {description ? (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className="break-words text-sm text-muted-foreground">
+              {description}
+            </p>
           ) : null}
         </div>
         {actions ? (

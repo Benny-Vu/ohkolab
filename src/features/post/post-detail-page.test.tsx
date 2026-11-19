@@ -180,6 +180,29 @@ describe("PostDetailPage", () => {
     );
   });
 
+  it("shows a comments error with a retry button instead of an empty thread", async () => {
+    const refetch = vi.fn();
+    queriesMocks.useComments.mockReturnValue(
+      queryResult([], {
+        isError: true,
+        error: { code: "unknown", message: "Something went wrong" },
+        refetch,
+      }),
+    );
+    renderPostPage();
+
+    expect(
+      await screen.findByText("Could not load comments"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+    expect(screen.queryByText("No comments yet")).not.toBeInTheDocument();
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Try again" }));
+    expect(refetch).toHaveBeenCalled();
+  });
+
   it("posts a comment", async () => {
     const user = userEvent.setup();
     const mutateAsync = vi.fn(async () => ({ ok: true, data: undefined }));

@@ -442,6 +442,7 @@ function MembersTab({
   const members = membersQuery.data ?? [];
 
   async function submitInvite() {
+    if (inviteMember.isPending) return;
     const trimmed = inviteUsername.trim();
     if (trimmed === "") {
       setInviteError(t("groups.enterUsername"));

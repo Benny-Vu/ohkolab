@@ -250,7 +250,9 @@ function FeedbackCard({
       </CardHeader>
       <CardContent className="grid gap-4">
         <SenderDetails userId={feedback.user_id} client={client} />
-        <p className="text-sm whitespace-pre-wrap">{feedback.message}</p>
+        <p className="text-sm break-words whitespace-pre-wrap">
+          {feedback.message}
+        </p>
         <ContextList context={feedback.context} />
         {crashId ? <SentryLink crashId={crashId} /> : null}
         {feedback.status !== "done" ? (

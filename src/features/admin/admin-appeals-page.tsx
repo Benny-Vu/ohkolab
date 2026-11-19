@@ -157,14 +157,14 @@ function AppealRowView({
           <div className="grid gap-2">
             {action ? (
               <div className="grid gap-2 rounded-md border p-3">
-                <p className="text-sm">
+                <p className="break-words text-sm">
                   <span className="font-medium">
                     {t("moderation.reasonLabel")}{" "}
                   </span>
                   {action.reason}
                 </p>
                 {action.content_snapshot !== null ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="break-words text-sm text-muted-foreground">
                     <span className="font-medium text-foreground">
                       {t("admin.originalContent")}{" "}
                     </span>
@@ -188,7 +188,7 @@ function AppealRowView({
             )}
             <div className="grid gap-2 rounded-md border p-3">
               <p className="text-sm font-medium">{t("admin.appealMessage")}</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="break-words text-sm text-muted-foreground">
                 {entry.appeal.message}
               </p>
             </div>

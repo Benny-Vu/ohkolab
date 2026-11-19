@@ -235,6 +235,28 @@ describe("NotificationsPage", () => {
     await waitFor(() => expect(remove.mutateAsync).toHaveBeenCalledWith("n-1"));
   });
 
+  it("disables the row actions while a mutation is pending", () => {
+    mocks.useNotifications.mockReturnValue(infiniteResult([item()]));
+    mocks.useMarkNotificationRead.mockReturnValue(
+      mutationResult({ isPending: true }),
+    );
+    mocks.useDeleteNotification.mockReturnValue(
+      mutationResult({ isPending: true }),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    expect(
+      screen.getByRole("button", {
+        name: /mark brock's notification as read/i,
+      }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", {
+        name: /delete notification from brock/i,
+      }),
+    ).toBeDisabled();
+  });
+
   it("shows Mark all as read when there are unread notifications", () => {
     mocks.useUnreadNotificationCount.mockReturnValue(countResult(2));
     renderNotificationsPage(createFakeAuth());

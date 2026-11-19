@@ -293,6 +293,46 @@ describe("HomePage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("shows a skeleton in the groups rail while loading", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    groupsMocks.useMyGroups.mockReturnValue({
+      data: [],
+      isPending: true,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    renderHome();
+
+    expect(await screen.findByLabelText("Loading groups")).toBeInTheDocument();
+    expect(screen.queryByText(/no groups yet/i)).not.toBeInTheDocument();
+  });
+
+  it("shows an error with retry in the groups rail when loading fails", async () => {
+    availabilityMocks.socialAvailability.mockReturnValue("ready");
+    queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));
+    const refetch = vi.fn();
+    groupsMocks.useMyGroups.mockReturnValue({
+      data: [],
+      isPending: false,
+      isError: true,
+      error: { code: "unknown", message: "Something went wrong" },
+      refetch,
+    });
+    renderHome();
+
+    expect(
+      await screen.findByText(/could not load your groups/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/no groups yet/i)).not.toBeInTheDocument();
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /try again/i }));
+    expect(refetch).toHaveBeenCalled();
+  });
+
   it("shows the empty state when the feed has no posts", async () => {
     availabilityMocks.socialAvailability.mockReturnValue("ready");
     queriesMocks.useFeed.mockReturnValue(infiniteResult([[]]));

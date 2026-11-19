@@ -212,6 +212,7 @@ export const accountEn = {
   "publicProfile.unknownTypes": "Unknown types",
   "publicProfile.noItem": "No item",
   "publicProfile.noMoves": "No moves",
+  "publicProfile.followListError": "Could not load this list",
 } as const;
 export type AccountKey = keyof typeof accountEn;
 
@@ -428,4 +429,5 @@ export const accountJa: { [K in AccountKey]: string } = {
   "publicProfile.unknownTypes": "タイプ不明",
   "publicProfile.noItem": "もちものなし",
   "publicProfile.noMoves": "技なし",
+  "publicProfile.followListError": "リストを読み込めませんでした",
 };
