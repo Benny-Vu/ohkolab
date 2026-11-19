@@ -326,6 +326,13 @@ main {
   }
 }
 
+/* Toasts (sonner) run on the motion tokens, not sonner's own defaults. */
+.cn-toast {
+  animation-duration: var(--motion-base) !important;
+  transition-duration: var(--motion-fast) !important;
+  transition-timing-function: var(--motion-ease-out) !important;
+}
+
 @layer utilities {
   /* Padding that clears the notch and home indicator inside the mobile apps. */
   .pt-safe {
