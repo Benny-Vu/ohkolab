@@ -6,7 +6,8 @@ import "@/index.css";
 import { Providers } from "@/app/providers";
 import { router } from "@/app/router";
 import { createAuthActions } from "@/lib/auth/auth-actions";
-import { initLocale } from "@/lib/i18n/locale";
+import { loadJapaneseDictionary } from "@/lib/i18n/ja-loader";
+import { getLocale, initLocale } from "@/lib/i18n/locale";
 import { initSentry } from "@/lib/telemetry/sentry";
 import { supabase } from "@/lib/supabase";
 
@@ -32,10 +33,27 @@ if (bridge?.isNativePlatform?.() === true && supabase) {
   );
 }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <Providers>
-      <RouterProvider router={router} />
-    </Providers>
-  </StrictMode>,
-);
+function render() {
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <Providers>
+        <RouterProvider router={router} />
+      </Providers>
+    </StrictMode>,
+  );
+}
+
+// Japanese visitors wait for their dictionary chunk before the first render,
+// so they never see the English fallback flash in. The wait is capped: on a
+// slow or failed load the app renders anyway and switches when it arrives.
+const JA_FIRST_PAINT_WAIT_MS = 2500;
+if (getLocale() === "ja") {
+  void Promise.race([
+    loadJapaneseDictionary(),
+    new Promise((resolve) => setTimeout(resolve, JA_FIRST_PAINT_WAIT_MS)),
+  ])
+    .catch(() => {})
+    .finally(render);
+} else {
+  render();
+}
