@@ -123,7 +123,7 @@ jobs:
           fi
           echo "Author cannot delete another author's image."
 
-      # Exercises the direct messages migration (20261120100000) as two
+      # Exercises the direct messages migration (20261120110000) as two
       # normal users and a moderator. The accounts are created 4 days old
       # with confirmed emails so start_conversation's account-age rule passes.
       - name: Direct message policies

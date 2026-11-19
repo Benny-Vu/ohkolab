@@ -174,8 +174,8 @@ do $$
 begin
   if not exists (
     select 1 from pg_trigger
-    where event_object_table = 'profiles'
-      and trigger_name = 'profiles_ensure_message_settings'
+    where tgrelid = 'public.profiles'::regclass
+      and tgname = 'profiles_ensure_message_settings'
   ) then
     create trigger profiles_ensure_message_settings
       after insert on public.profiles
@@ -213,48 +213,6 @@ alter table public.conversations enable row level security;
 revoke all on public.conversations from anon, authenticated;
 -- Participants pass the select policy; nothing else is client-writable.
 grant select on public.conversations to authenticated;
-
-do $$
-begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'conversations'
-      and policyname = 'participants read their conversations'
-  ) then
-    create policy "participants read their conversations" on public.conversations
-      for select
-      to authenticated
-      using (
-        user_id_participates((select auth.uid()), id)
-      );
-  end if;
-end;
-$$;
-
--- True when the given user is a participant of the given conversation.
--- Security definer so the conversations and messages policies can read
--- conversation_participants, which clients can only see through these
--- policies anyway.
-create or replace function public.user_id_participates(
-  participant uuid,
-  conversation uuid
-)
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select exists (
-    select 1
-    from public.conversation_participants
-    where conversation_id = user_id_participates.conversation
-      and user_id = user_id_participates.participant
-  );
-$$;
-
-revoke execute on function public.user_id_participates(uuid, uuid)
-  from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Conversation participants: one row per user per conversation. last_read_at
@@ -309,6 +267,49 @@ begin
 end;
 $$;
 
+-- True when the given user is a participant of the given conversation.
+-- Security definer so the conversations and messages policies can read
+-- conversation_participants, which clients can only see through these
+-- policies anyway. Defined after the table it reads and before the policies
+-- that call it.
+create or replace function public.user_id_participates(
+  participant uuid,
+  conversation uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.conversation_participants
+    where conversation_id = user_id_participates.conversation
+      and user_id = user_id_participates.participant
+  );
+$$;
+
+revoke execute on function public.user_id_participates(uuid, uuid)
+  from public, anon, authenticated;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'conversations'
+      and policyname = 'participants read their conversations'
+  ) then
+    create policy "participants read their conversations" on public.conversations
+      for select
+      to authenticated
+      using (
+        public.user_id_participates((select auth.uid()), id)
+      );
+  end if;
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Messages: text only, 1 to 2000 characters. Deleted messages keep their row
 -- with deleted_at set (soft delete by the sender); the body stays in the row
@@ -347,7 +348,7 @@ begin
     create policy "participants read messages" on public.messages
       for select
       to authenticated
-      using (user_id_participates((select auth.uid()), conversation_id));
+      using (public.user_id_participates((select auth.uid()), conversation_id));
   end if;
 
   if not exists (
@@ -360,7 +361,7 @@ begin
       to authenticated
       with check (
         sender_id = (select auth.uid())
-          and user_id_participates((select auth.uid()), conversation_id)
+          and public.user_id_participates((select auth.uid()), conversation_id)
       );
   end if;
 
@@ -452,8 +453,8 @@ do $$
 begin
   if not exists (
     select 1 from pg_trigger
-    where event_object_table = 'messages'
-      and trigger_name = 'messages_enforce_rules'
+    where tgrelid = 'public.messages'::regclass
+      and tgname = 'messages_enforce_rules'
   ) then
     create trigger messages_enforce_rules
       before insert on public.messages
