@@ -656,9 +656,12 @@ jobs:
 
             -- The owner fills in every new field.
             perform set_config('request.jwt.claims', json_build_object('sub', comm_a, 'role', 'authenticated')::text, true);
+            -- 'singles', not 'doubles': the follow-suggestions step below
+            -- gives its viewer 'doubles', and a shared main_format would
+            -- leak this user into that step's exact-ranking assertion.
             update public.profiles set
               favourite_species = 'Garchomp',
-              main_format = 'doubles',
+              main_format = 'singles',
               looking_for = 'practice partners',
               youtube_url = 'https://youtube.com/@example',
               twitch_url = 'https://twitch.tv/example',
@@ -668,7 +671,7 @@ jobs:
               select 1 from public.profiles
               where id = comm_a
                 and favourite_species = 'Garchomp'
-                and main_format = 'doubles'
+                and main_format = 'singles'
                 and looking_for = 'practice partners'
                 and youtube_url = 'https://youtube.com/@example'
                 and showdown_name = 'example'
