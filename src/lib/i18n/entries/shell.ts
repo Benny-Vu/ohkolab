@@ -44,6 +44,7 @@ export const shellEn = {
   "common.loading": "Loading…",
   "common.retry": "Try again",
   "common.back": "Back",
+  "common.backToHome": "Back to home",
   "common.close": "Close",
   "common.search": "Search",
   "common.signIn": "Sign in",

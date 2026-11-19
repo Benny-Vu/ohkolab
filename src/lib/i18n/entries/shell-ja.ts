@@ -43,6 +43,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "common.loading": "読み込み中…",
   "common.retry": "もう一度試す",
   "common.back": "戻る",
+  "common.backToHome": "ホームに戻る",
   "common.close": "閉じる",
   "common.search": "検索",
   "common.signIn": "サインイン",

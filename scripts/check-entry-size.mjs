@@ -5,7 +5,7 @@
  * A deliberate entry change records a new baseline with
  * `node scripts/entry-size.mjs --record`.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -42,7 +42,7 @@ if (!entry) {
 }
 
 const entryBytes = entry.file
-  ? readFileSync(join(root, "dist", entry.file)).size
+  ? statSync(join(root, "dist", entry.file)).size
   : 0;
 const limit = baseline + BUDGET_BYTES;
 
