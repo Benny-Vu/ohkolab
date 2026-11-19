@@ -92,6 +92,20 @@ export const accountEn = {
     "Blocked users could not be loaded. Try refreshing.",
   "profile.unblock": "Unblock",
   "profile.unblockedToast": "Unblocked @{name}.",
+
+  // Push notification settings (native app only, behind VITE_PUSH).
+  "profile.pushSection": "Notifications",
+  "profile.pushMasterTitle": "Push notifications",
+  "profile.pushMasterDescription":
+    "The master switch for pushes to this device. The switches below choose what each push is about.",
+  "profile.pushAllLabel": "All push notifications",
+  "profile.pushLikes": "Likes",
+  "profile.pushComments": "Comments",
+  "profile.pushFollows": "Follows",
+  "profile.pushGroups": "Groups",
+  "profile.pushMessages": "Messages",
+  "profile.pushSavedToast": "Push settings saved.",
+  "profile.pushFailedToast": "Push settings could not be saved.",
   "publicProfile.unconfiguredTitle": "Profiles are unavailable",
   "publicProfile.unconfiguredBody": "Profiles are not available in this build.",
   "publicProfile.view": "View",

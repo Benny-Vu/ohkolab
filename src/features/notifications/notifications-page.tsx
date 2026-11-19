@@ -5,6 +5,7 @@
  * and signed-out state.
  */
 
+import { lazy, Suspense } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { CheckIcon, Trash2Icon } from "lucide-react";
@@ -17,6 +18,7 @@ import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { ROW_ENTRANCE, staggerDelay } from "@/lib/motion/entrance";
 import { useAuth } from "@/lib/auth/use-auth";
+import { isPushAvailable } from "@/lib/push/flag";
 import { formatRelativeTime } from "@/features/feed/relative-time";
 import { useT } from "@/lib/i18n/t";
 import {
@@ -35,6 +37,14 @@ import {
 } from "@/lib/notifications/sentences";
 import type { NotificationItem } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
+
+// The "Turn on notifications" card only exists in the native app while
+// VITE_PUSH is on; it loads lazily so flag-off builds never download it.
+const PushPermissionCard = lazy(() =>
+  import("@/features/notifications/push-permission-card").then((m) => ({
+    default: m.PushPermissionCard,
+  })),
+);
 
 /**
  * The row unmounts when its notification is deleted, taking focus with it;
@@ -114,37 +124,50 @@ export function NotificationsPage() {
             </Button>
           }
         />
-      ) : notifications.isError ? (
-        <ErrorState
-          title={t("notifications.errorTitle")}
-          description={notifications.error.message}
-          action={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void notifications.refetch()}
-            >
-              {t("common.retry")}
-            </Button>
-          }
-        />
       ) : (
-        <LoadingArea
-          pending={notifications.isPending}
-          label={t("notifications.loadingAria")}
-          skeleton={<NotificationListSkeleton />}
-        >
-          <NotificationsList
-            items={notifications.data?.pages.flat() ?? []}
-            onMarkRead={handleMarkRead}
-            onDelete={handleDelete}
-            markPending={markRead.isPending}
-            deletePending={deleteNotification.isPending}
-            hasNextPage={notifications.hasNextPage}
-            isFetchingNextPage={notifications.isFetchingNextPage}
-            onLoadMore={() => void notifications.fetchNextPage()}
-          />
-        </LoadingArea>
+        <>
+          {/* Push opt-in: native app only, behind VITE_PUSH. This is the
+              one place that asks for the OS permission — never on its own. */}
+          {isPushAvailable() ? (
+            <div className="mb-3">
+              <Suspense fallback={null}>
+                <PushPermissionCard />
+              </Suspense>
+            </div>
+          ) : null}
+          {notifications.isError ? (
+            <ErrorState
+              title={t("notifications.errorTitle")}
+              description={notifications.error.message}
+              action={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void notifications.refetch()}
+                >
+                  {t("common.retry")}
+                </Button>
+              }
+            />
+          ) : (
+            <LoadingArea
+              pending={notifications.isPending}
+              label={t("notifications.loadingAria")}
+              skeleton={<NotificationListSkeleton />}
+            >
+              <NotificationsList
+                items={notifications.data?.pages.flat() ?? []}
+                onMarkRead={handleMarkRead}
+                onDelete={handleDelete}
+                markPending={markRead.isPending}
+                deletePending={deleteNotification.isPending}
+                hasNextPage={notifications.hasNextPage}
+                isFetchingNextPage={notifications.isFetchingNextPage}
+                onLoadMore={() => void notifications.fetchNextPage()}
+              />
+            </LoadingArea>
+          )}
+        </>
       )}
     </Page>
   );

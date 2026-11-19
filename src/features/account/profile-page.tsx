@@ -43,6 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
+import { isPushAvailable } from "@/lib/push/flag";
 import { directMessagesEnabled } from "@/lib/messages/flag";
 import {
   BIO_MAX_LENGTH,
@@ -80,6 +81,14 @@ const SpeciesPicker = lazy(() =>
 const MessageSettingsCard = lazy(() =>
   import("@/features/messages/message-settings-card").then((m) => ({
     default: m.MessageSettingsCard,
+  })),
+);
+
+// The push notification settings follow the same pattern behind VITE_PUSH,
+// and only exist inside the native app (the card also checks itself).
+const PushSettingsCard = lazy(() =>
+  import("@/features/account/push-settings-card").then((m) => ({
+    default: m.PushSettingsCard,
   })),
 );
 
@@ -407,6 +416,13 @@ function ProfileEditor({ profile }: { profile: Profile }) {
           <BlockedUsersCard />
         </div>
       </SettingsSection>
+
+      {/* Push notification settings: native app only, behind VITE_PUSH. */}
+      {isPushAvailable() ? (
+        <Suspense fallback={null}>
+          <PushSettingsCard />
+        </Suspense>
+      ) : null}
 
       <SettingsSection title={t("language.label")}>
         <Card>

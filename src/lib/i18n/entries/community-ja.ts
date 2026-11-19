@@ -64,6 +64,18 @@ export const communityJa: { [K in CommunityKey]: string } = {
     "誰かがあなたの投稿にいいねしたりフォローしたりすると、ここに表示されます。",
   "notifications.loadMore": "さらに表示",
 
+  // プッシュ通知の案内カード（ネイティブアプリのみ、VITE_PUSH のフラグ付き）。
+  "notifications.pushTitle": "通知をオンにする",
+  "notifications.pushDescription":
+    "投稿へのいいねやコメント、フォロー、グループへの招待、メッセージをこの端末にプッシュで受け取れます。",
+  "notifications.pushTurnOn": "オンにする",
+  "notifications.pushOnToast": "通知をオンにしました。",
+  "notifications.pushDeniedTitle": "通知はオフです",
+  "notifications.pushDeniedDescription":
+    "OHKOLabの通知は端末の設定でオフになっています。プッシュを受け取るには、そちらでオンにしてください。",
+  "notifications.pushFailedToast":
+    "通知をオンにできませんでした。後でもう一度お試しください。",
+
   // 投稿フォーム。
   "composer.aria": "投稿を書く",
   "composer.placeholder": "構築や計算結果、質問を共有しよう…",

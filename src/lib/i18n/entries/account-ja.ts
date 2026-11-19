@@ -93,6 +93,20 @@ export const accountJa: { [K in AccountKey]: string } = {
     "ブロックしたユーザーを読み込めませんでした。更新してお試しください。",
   "profile.unblock": "ブロック解除",
   "profile.unblockedToast": "@{name}のブロックを解除しました。",
+
+  // プッシュ通知の設定（ネイティブアプリのみ、VITE_PUSH のフラグ付き）。
+  "profile.pushSection": "通知",
+  "profile.pushMasterTitle": "プッシュ通知",
+  "profile.pushMasterDescription":
+    "この端末へのプッシュのまとめスイッチです。下のスイッチで、それぞれの内容を選べます。",
+  "profile.pushAllLabel": "すべてのプッシュ通知",
+  "profile.pushLikes": "いいね",
+  "profile.pushComments": "コメント",
+  "profile.pushFollows": "フォロー",
+  "profile.pushGroups": "グループ",
+  "profile.pushMessages": "メッセージ",
+  "profile.pushSavedToast": "プッシュ設定を保存しました。",
+  "profile.pushFailedToast": "プッシュ設定を保存できませんでした。",
   "publicProfile.unconfiguredTitle": "プロフィール機能は利用できません",
   "publicProfile.unconfiguredBody":
     "このビルドではプロフィール機能は利用できません。",

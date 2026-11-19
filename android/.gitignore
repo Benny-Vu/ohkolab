@@ -62,7 +62,10 @@ captures/
 .cxx/
 
 # Google Services (e.g. APIs or Firebase)
-# google-services.json
+# The Firebase config never enters the repo: the owner drops it into
+# android/app/ locally (see push-setup.md in the Obsidian vault), and builds
+# work without it (the gradle plugin is applied only when the file exists).
+app/google-services.json
 
 # Freeline
 freeline.py
