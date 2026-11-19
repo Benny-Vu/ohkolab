@@ -65,6 +65,8 @@ grant insert (category, language) on public.groups to authenticated;
 grant update (category, language) on public.groups to authenticated;
 
 -- The feed read model exposes the post language to the feed filter.
+-- `language` must be the LAST column: create or replace can only append
+-- columns to a view, never insert one mid-list (42P16).
 create or replace view public.feed_posts
 with (security_invoker = true)
 as
@@ -75,7 +77,6 @@ select
   posts.attachment,
   posts.created_at,
   posts.updated_at,
-  posts.language,
   profiles.username as author_username,
   profiles.display_name as author_display_name,
   profiles.avatar_species as author_avatar_species,
@@ -92,7 +93,8 @@ select
     where post_likes.post_id = posts.id
       and post_likes.user_id = (select auth.uid())
   ) as liked_by_me,
-  posts.group_id
+  posts.group_id,
+  posts.language
 from public.posts
 join public.profiles on profiles.id = posts.author_id
 where posts.removed_at is null
