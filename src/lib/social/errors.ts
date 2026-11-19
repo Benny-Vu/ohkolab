@@ -51,6 +51,26 @@ export function socialFailure(
   return { code, message: message ?? t(MESSAGE_KEYS[code]) };
 }
 
+/** Every code this module can produce, as strings. */
+const SOCIAL_CODES = new Set(Object.keys(MESSAGE_KEYS));
+
+/**
+ * True when the value is already a mapped SocialFailure. The mapped codes never
+ * collide with Postgres error codes (five characters, like "42501"), so an
+ * original database error is never mistaken for a mapped one.
+ */
+function isSocialFailure(value: unknown): value is SocialFailure {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const candidate = value as { code?: unknown; message?: unknown };
+  return (
+    typeof candidate.code === "string" &&
+    SOCIAL_CODES.has(candidate.code) &&
+    typeof candidate.message === "string"
+  );
+}
+
 export function socialFail<T = never>(
   code: SocialErrorCode,
   message?: string,
@@ -130,6 +150,12 @@ export function isMissingRelationError(error: unknown): boolean {
 
 /** Maps any thrown or returned error to a SocialFailure. */
 export function describeSocialError(error: unknown): SocialFailure {
+  // Already-mapped failures pass through unchanged, so re-mapping (for
+  // instance by the Sentry filter) recognises them instead of collapsing
+  // every code into "unknown".
+  if (isSocialFailure(error)) {
+    return error;
+  }
   if (typeof error === "object" && error !== null) {
     const code = readString((error as { code?: unknown }).code);
     const message = readString((error as { message?: unknown }).message);
