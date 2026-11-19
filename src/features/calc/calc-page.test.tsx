@@ -8,6 +8,7 @@ import { createDefaultSet } from "@/data";
 import { CalcPage } from "@/features/calc/calc-page";
 import { encodeCalcShare } from "@/lib/calc/share-url";
 import { createDefaultCalcState, createSide } from "@/lib/calc/state";
+import { setBattleFormat } from "@/lib/preferences";
 import { setLocale } from "@/lib/i18n/locale";
 
 const DIRECTION_ARROW = "\u2192";
@@ -207,6 +208,93 @@ describe("CalcPage", () => {
 
     expect(document.querySelector("select")).toBeNull();
   });
+
+  it("adds a second defender and shows both results in doubles", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    await user.click(screen.getByRole("radio", { name: "Defender" }));
+    await user.click(
+      screen.getByRole("button", { name: "Add second defender" }),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Defender 2" }),
+    ).toBeInTheDocument();
+
+    const dialog = await openResults(user);
+    // Two result blocks, one per defender, each with the spread note: the
+    // second defender starts as a copy of the defender.
+    expect(dialog.getAllByText(/Damage:/)).toHaveLength(2);
+    expect(dialog.getAllByText("Spread move ×0.75")).toHaveLength(2);
+    expect(dialog.getAllByText(/guaranteed 2HKO/i).length).toBeGreaterThan(0);
+  });
+
+  it("marks single-target moves and removes the second defender", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    await user.click(screen.getByRole("radio", { name: "Defender" }));
+    await user.click(
+      screen.getByRole("button", { name: "Add second defender" }),
+    );
+
+    const dialog = await openResults(user);
+    await user.click(dialog.getByRole("button", { name: /Dragon Claw/ }));
+
+    // A single-target move shows both defenders' results, marked as hitting
+    // only one of them per use.
+    expect(dialog.getAllByText("Targets one Pokémon per use")).toHaveLength(2);
+    expect(dialog.queryByText("Spread move ×0.75")).not.toBeInTheDocument();
+
+    await user.click(dialog.getByRole("button", { name: "Close" }));
+    await user.click(
+      screen.getByRole("button", { name: "Remove second defender" }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Add second defender" }),
+    ).toBeInTheDocument();
+
+    // The selected move is still Dragon Claw, now against one defender.
+    const reopened = await openResults(user, /Dragon Claw/);
+    expect(reopened.getAllByText(/Damage:/)).toHaveLength(1);
+  });
+
+  it("keeps the second defender a doubles-only extra", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    await user.click(screen.getByRole("radio", { name: "Field" }));
+    await user.click(screen.getByRole("radio", { name: "Singles" }));
+    await user.click(screen.getByRole("radio", { name: "Defender" }));
+
+    expect(
+      screen.queryByRole("button", { name: "Add second defender" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: "Field" }));
+    await user.click(screen.getByRole("radio", { name: "Doubles" }));
+    await user.click(screen.getByRole("radio", { name: "Defender" }));
+    await user.click(
+      screen.getByRole("button", { name: "Add second defender" }),
+    );
+
+    // Back in singles the panel hides and only one defender's result shows.
+    await user.click(screen.getByRole("radio", { name: "Field" }));
+    await user.click(screen.getByRole("radio", { name: "Singles" }));
+
+    expect(
+      screen.queryByRole("heading", { name: "Defender 2" }),
+    ).not.toBeInTheDocument();
+
+    const dialog = await openResults(user);
+    expect(dialog.getAllByText(/Damage:/)).toHaveLength(1);
+
+    // The format preference is module state: leave it doubles for the next
+    // test, the way localStorage.clear() cannot.
+    setBattleFormat("doubles");
+  });
 });
 
 describe("CalcPage shared links", () => {
@@ -388,5 +476,37 @@ describe("CalcPage in Japanese", () => {
     ).toBeInTheDocument();
     expect(reopened.getByText("ガオガエンが先に動きます")).toBeInTheDocument();
     expect(reopened.getByText("トリックルーム")).toBeInTheDocument();
+  });
+
+  it("renders the second defender and the spread note in Japanese", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    await user.click(screen.getByRole("radio", { name: "防御側" }));
+    await user.click(
+      screen.getByRole("button", { name: "2体目の防御側を追加" }),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "防御側2" }),
+    ).toBeInTheDocument();
+
+    const dialog = await openResults(user, /じしん/);
+    expect(dialog.getAllByText("全体技 ×0.75")).toHaveLength(2);
+
+    await user.click(dialog.getByRole("button", { name: /ドラゴンクロー/ }));
+    expect(dialog.getAllByText("使用ごとに1体だけが対象")).toHaveLength(2);
+
+    await user.click(dialog.getByRole("button", { name: "Close" }));
+    await user.click(
+      screen.getByRole("button", { name: "2体目の防御側を削除" }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "2体目の防御側を追加" }),
+    ).toBeInTheDocument();
+
+    const reopened = await openResults(user, /ドラゴンクロー/);
+    expect(reopened.getAllByText(/ダメージ：/)).toHaveLength(1);
   });
 });

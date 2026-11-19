@@ -230,6 +230,44 @@ export function stopNativeSentry(): void {
   );
 }
 
+/**
+ * The shape of an unknown value for an exception message: its type and, for
+ * objects, its key names only. Never the values: they can hold user content
+ * (post text, emails), which must not reach Sentry. Never throws.
+ */
+function summarizeValue(value: unknown): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return `array of ${value.length}`;
+  if (typeof value === "object") {
+    let keys: string[] = [];
+    try {
+      keys = Object.keys(value).slice(0, 8);
+    } catch {
+      // A hostile proxy or exotic object; the type alone is enough.
+    }
+    return keys.length > 0
+      ? `object with keys ${keys.join(", ")}`
+      : "empty object";
+  }
+  return typeof value;
+}
+
+/**
+ * Sentry groups events by the exception's message; a plain object arrives as
+ * "Object captured as exception" and lumps unrelated bugs into one issue.
+ * Anything that is not an Error is reported as an Error with the mapped code
+ * first in the message.
+ */
+function toCapturedError(error: unknown): unknown {
+  if (error instanceof Error) {
+    return error;
+  }
+  const described = describeSocialError(error);
+  const detail =
+    described.code === "unknown" ? summarizeValue(error) : described.message;
+  return new Error(`${described.code}: ${detail}`);
+}
+
 /** Reports an error to Sentry and returns the event id, or null when off. */
 export function reportError(
   error: unknown,
@@ -246,7 +284,7 @@ export function reportError(
   if (isExpectedError(error)) {
     return null;
   }
-  return Sentry.captureException(error, (scope) => {
+  return Sentry.captureException(toCapturedError(error), (scope) => {
     if (context) {
       for (const [key, value] of Object.entries(context)) {
         scope.setContext(key, { value });

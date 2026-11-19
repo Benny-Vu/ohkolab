@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type Dispatch } from "react";
-import { ArrowLeftRightIcon, RotateCcwIcon } from "lucide-react";
+import { ArrowLeftRightIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { BigNumber } from "@/components/big-number";
@@ -20,6 +20,11 @@ import {
 import { FieldBar, FieldPanel } from "@/features/calc/field-panel";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { ResultsPanel } from "@/features/calc/results-panel";
+import { SecondDefenderPanel } from "@/features/calc/second-defender-panel";
+import {
+  computeSecondOutcomes,
+  type SecondDefenderData,
+} from "@/features/calc/second-defender";
 import { SidePanel } from "@/features/calc/side-panel";
 import { useCalcState } from "@/features/calc/use-calc-state";
 import { useIsWide } from "@/features/calc/use-is-wide";
@@ -35,8 +40,10 @@ import {
   type MoveOutcome,
 } from "@/lib/calc/results";
 import {
+  createSide,
   otherSide,
   type CalcAction,
+  type CalcSide,
   type CalcState,
   type SideId,
 } from "@/lib/calc/state";
@@ -54,6 +61,7 @@ type StickyResultBarProps = {
   format: BattleFormat;
   dispatch: Dispatch<CalcAction>;
   selection: Selection;
+  second: SecondDefenderData | null;
 };
 
 function MatchupChip({ name, species }: { name: string; species: string }) {
@@ -71,6 +79,7 @@ function StickyResultBar({
   format,
   dispatch,
   selection,
+  second,
 }: StickyResultBarProps) {
   const t = useT();
   const [locale] = useLocale();
@@ -137,6 +146,7 @@ function StickyResultBar({
             dispatch={dispatch}
             format={format}
             outcomes={outcomes}
+            second={second}
             state={state}
             unframed
           />
@@ -152,6 +162,9 @@ export function CalcPage() {
   const t = useT();
   const isWide = useIsWide();
   const [section, setSection] = useState("p1");
+  // The defender's partner in doubles. Page-local: optional, removable and
+  // not part of the shared calculator state.
+  const [secondSide, setSecondSide] = useState<CalcSide | null>(null);
   const sectionOptions = [
     { value: "p1", label: t("calc.attacker") },
     { value: "p2", label: t("calc.defender") },
@@ -160,6 +173,16 @@ export function CalcPage() {
   const outcomes = useMemo(
     () => computeAllOutcomes(state, format),
     [state, format],
+  );
+  const second: SecondDefenderData | null = useMemo(
+    () =>
+      secondSide
+        ? {
+            side: secondSide,
+            outcomes: computeSecondOutcomes(state, format, secondSide),
+          }
+        : null,
+    [state, format, secondSide],
   );
   const selection = resolveSelection(state.selected, outcomes);
   const names = sideNames(state);
@@ -194,6 +217,33 @@ export function CalcPage() {
     });
   };
 
+  // The second defender starts as a copy of the defender: the partner to
+  // edit from, and only in doubles where two Pokémon share the field.
+  const handleAddSecondDefender = () => {
+    if (secondSide) return;
+    setSecondSide(createSide(state.sides.p2.set));
+  };
+
+  const secondDefenderSection =
+    format === "doubles" ? (
+      secondSide ? (
+        <SecondDefenderPanel
+          onChange={setSecondSide}
+          onRemove={() => setSecondSide(null)}
+          value={secondSide}
+        />
+      ) : (
+        <Button
+          className="md:justify-start"
+          onClick={handleAddSecondDefender}
+          variant="outline"
+        >
+          <PlusIcon aria-hidden />
+          {t("calc.addSecondDefender")}
+        </Button>
+      )
+    ) : null;
+
   if (isWide) {
     return (
       <Page
@@ -227,14 +277,18 @@ export function CalcPage() {
                 dispatch={dispatch}
                 format={format}
                 outcomes={outcomes}
+                second={second}
                 state={state}
               />
             </div>
-            <SidePanel
-              calcSide={state.sides.p2}
-              dispatch={dispatch}
-              side="p2"
-            />
+            <div className="grid gap-4">
+              <SidePanel
+                calcSide={state.sides.p2}
+                dispatch={dispatch}
+                side="p2"
+              />
+              {secondDefenderSection}
+            </div>
           </div>
         </div>
       </Page>
@@ -281,7 +335,14 @@ export function CalcPage() {
           <SidePanel calcSide={state.sides.p1} dispatch={dispatch} side="p1" />
         ) : null}
         {section === "p2" ? (
-          <SidePanel calcSide={state.sides.p2} dispatch={dispatch} side="p2" />
+          <div className="grid gap-4">
+            <SidePanel
+              calcSide={state.sides.p2}
+              dispatch={dispatch}
+              side="p2"
+            />
+            {secondDefenderSection}
+          </div>
         ) : null}
         {section === "field" ? (
           <FieldPanel dispatch={dispatch} state={state} />
@@ -291,6 +352,7 @@ export function CalcPage() {
         dispatch={dispatch}
         format={format}
         outcomes={outcomes}
+        second={second}
         selection={selection}
         state={state}
       />
