@@ -8,7 +8,6 @@ import type { ToolsKey } from "@/lib/i18n/entries/tools";
 
 export const toolsJa: { [K in ToolsKey]: string } = {
   // ダメージ計算：ページと共通コントロール。
-  "calc.title": "ダメージ計算",
   "calc.sectionAria": "計算機のセクション",
   "calc.attacker": "攻撃側",
   "calc.defender": "防御側",
@@ -99,8 +98,6 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "calc.koNoDamage": "ダメージなし",
 
   // 構築：一覧。
-  "teams.title": "構築",
-  "teams.description": "Pokémon Championsの構築を作成・保存・分析できます。",
   "teams.retry": "再試行",
   "teams.loadError": "構築を読み込めませんでした",
   "teams.empty": "構築がまだありません",
@@ -183,7 +180,6 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "teams.weakSpotNoResist": "{type}に弱いポケモンが{count}匹（耐性なし）",
 
   // 環境：ページ。
-  "meta.title": "環境",
   "meta.month": "月",
   "meta.retry": "再試行",
   "meta.loadError": "環境データを読み込めませんでした",

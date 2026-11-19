@@ -12,7 +12,6 @@
 
 export const toolsEn = {
   // Damage calculator: page frame and shared controls.
-  "calc.title": "Damage calculator",
   "calc.sectionAria": "Calculator section",
   "calc.attacker": "Attacker",
   "calc.defender": "Defender",
@@ -104,8 +103,6 @@ export const toolsEn = {
   "calc.koNoDamage": "No damage",
 
   // Team builder: the teams list.
-  "teams.title": "Teams",
-  "teams.description": "Build, save and analyse your Pokémon Champions teams.",
   "teams.retry": "Retry",
   "teams.loadError": "Teams could not be loaded",
   "teams.empty": "No teams yet",
@@ -186,7 +183,6 @@ export const toolsEn = {
   "teams.weakSpotNoResist": "{count} Pokémon weak to {type}, no resist",
 
   // Metagame: page frame.
-  "meta.title": "Metagame",
   "meta.month": "Month",
   "meta.retry": "Retry",
   "meta.loadError": "Could not load metagame data",

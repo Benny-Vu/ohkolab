@@ -95,7 +95,7 @@ describe("ProfilePage", () => {
     );
   });
 
-  it("shows the editor with the profile values when signed in", () => {
+  it("shows the editor with the profile values when signed in", async () => {
     renderPage(<ProfilePage />, createFakeAuth(), { path: "/profile" });
     expect(screen.getByLabelText("Username")).toHaveValue(
       TEST_PROFILE.username,
@@ -104,7 +104,8 @@ describe("ProfilePage", () => {
       TEST_PROFILE.displayName,
     );
     expect(screen.getByLabelText("Bio")).toHaveValue(TEST_PROFILE.bio);
-    expect(screen.getByAltText("Pikachu")).toBeInTheDocument();
+    // The avatar sprite is lazy; the image appears once its chunk loads.
+    expect(await screen.findByAltText("Pikachu")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /save changes/i })).toBeEnabled();
     expect(screen.getByRole("button", { name: /sign out/i })).toBeEnabled();
   });

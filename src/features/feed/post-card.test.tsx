@@ -129,12 +129,15 @@ describe("PostCard", () => {
     stubSocial();
   });
 
-  it("renders the post with author, body and counts", () => {
+  it("renders the post with author, body and counts", async () => {
     renderCard(postRow());
 
     expect(screen.getByText("First post!")).toBeInTheDocument();
     expect(screen.getByText("Brock")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Onix" })).toBeInTheDocument();
+    // The author avatar's sprite is lazy; the image appears once loaded.
+    expect(
+      await screen.findByRole("img", { name: "Onix" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /like/i })).toHaveTextContent(
       "2",
     );

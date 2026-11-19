@@ -2,12 +2,16 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { Providers } from "@/app/providers";
+import { preloadEnglishDomains } from "@/lib/i18n/test-preload";
 
 // The image-post sections are decided when the page modules load, from the
 // VITE_IMAGE_POSTS build flag, so each case stubs the flag and re-imports.
 async function renderPage(path: "/privacy" | "/terms", flag: string) {
   vi.resetModules();
   vi.stubEnv("VITE_IMAGE_POSTS", flag);
+  // resetModules also resets the lazy English dictionary loader; preload
+  // the fresh instance so the composed phrases render, as in production.
+  await preloadEnglishDomains();
   const { PrivacyPage } = await import("@/features/legal/privacy-page");
   const { TermsPage } = await import("@/features/legal/terms-page");
   const router = createMemoryRouter(

@@ -162,6 +162,9 @@ export default defineConfig(({ mode }) => {
         : []),
     ],
     build: {
+      // The manifest maps source modules to their built chunks; the entry
+      // size guard and the startup measurement in scripts/ read it.
+      manifest: true,
       // Hidden maps: generated for the Sentry upload but without the
       // sourceMappingURL comment in the shipped bundles.
       sourcemap: "hidden",

@@ -60,5 +60,27 @@ export default defineConfig([
       "react-refresh/only-export-components": "off",
     },
   },
+  {
+    // The app shell is the entry chunk: importing the social barrel would
+    // drag the whole social data layer into it. Shell code imports the
+    // specific modules it needs instead (or, usually, nothing at all).
+    files: ["src/app/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              // Only the barrel itself; specific modules under @/lib/social/*
+              // are fine for the shell (and are what it should import).
+              regex: "@/lib/social$",
+              message:
+                "The app shell must not import the social barrel: it would pull the whole social data layer into the entry chunk. Import the specific module instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   prettier,
 ]);

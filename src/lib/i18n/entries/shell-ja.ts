@@ -43,6 +43,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "common.loading": "読み込み中…",
   "common.retry": "もう一度試す",
   "common.back": "戻る",
+  "common.backToHome": "ホームに戻る",
   "common.close": "閉じる",
   "common.search": "検索",
   "common.signIn": "サインイン",
@@ -106,4 +107,175 @@ export const shellJa: { [K in ShellKey]: string } = {
   "nav.homeAria": "OHKOLab ホーム",
   "theme.toLight": "ライトテーマに切り替える",
   "theme.toDark": "ダークテーマに切り替える",
+
+  // バリデーションメッセージ（src/lib/auth/validation.ts）。エントリー側で
+  // 表示されるためシェルに置く（オンボーディングと認証プロバイダー）。
+  "auth.usernameRules":
+    "3〜20文字。半角小文字・数字・アンダースコアが使えます。",
+  "auth.errUsernameChoose": "ユーザー名を入力してください。",
+  "auth.errUsernameNew": "新しいユーザー名を選んでください。",
+  "auth.errUsernameMin": "ユーザー名は{min}文字以上にしてください。",
+  "auth.errUsernameMax": "ユーザー名は{max}文字以内にしてください。",
+  "auth.errUsernamePattern":
+    "ユーザー名には半角小文字・数字・アンダースコアのみ使えます。",
+  "auth.errDisplayNameMax": "表示名は{max}文字以内にしてください。",
+  "auth.errBioMax": "プロフィールは{max}文字以内にしてください。",
+  "auth.errAvatarSpecies": "そのポケモンはアバターに使えません。",
+  "auth.errEmailEmpty": "メールアドレスを入力してください。",
+  "auth.errEmailInvalid": "有効なメールアドレスを入力してください。",
+  "auth.errPasswordEmpty": "パスワードを入力してください。",
+  "auth.errPasswordChoose": "パスワードを決めてください。",
+  "auth.errPasswordMin": "パスワードは{min}文字以上にしてください。",
+  "auth.errPasswordMax": "パスワードは{max}文字以内にしてください。",
+
+  // 認証エラーメッセージ（src/lib/auth/errors.ts）。
+  "auth.errNotConfigured":
+    "このビルドではアカウント機能は利用できません。ツールはアカウントなしでも使えます。",
+  "auth.errUnavailable":
+    "アカウント機能はまだ完全に設定されていません。後でもう一度お試しください。",
+  "auth.errInvalidInput":
+    "入力内容を受け付けられませんでした。確認してもう一度お試しください。",
+  "auth.errInvalidCredentials": "メールアドレスまたはパスワードが違います。",
+  "auth.errEmailNotConfirmed":
+    "まずメールアドレスを確認してください。送信したリンクを開いてからサインインしてください。",
+  "auth.errEmailTaken":
+    "このメールアドレスのアカウントが既に存在する可能性があります。サインインするか、パスワードをリセットしてください。",
+  "auth.errWeakPassword":
+    "そのパスワードは推測されやすすぎます。より強いものを選んでください。",
+  "auth.errRateLimited":
+    "試行回数が多すぎます。しばらく待ってからもう一度お試しください。",
+  "auth.errProviderUnavailable": "このサインイン方法はまだ利用できません。",
+  "auth.errUsernameTaken":
+    "そのユーザー名は既に使われています。別のものを選んでください。",
+  "auth.errSessionExpired":
+    "セッションの有効期限が切れました。もう一度サインインしてください。",
+  "auth.errLinkInvalid":
+    "このリンクはもう有効ではありません。期限切れ、使用済み、または別のブラウザで開かれた可能性があります。新しいリンクを請求してください。",
+  "auth.errForbidden": "この操作は許可されていません。",
+  "auth.errNetwork":
+    "サーバーに接続できませんでした。通信状況を確認してもう一度お試しください。",
+  "auth.errUnknown": "問題が発生しました。もう一度お試しください。",
+  "auth.errSamePassword":
+    "新しいパスワードは現在のものと違うものにしてください。",
+  "auth.errSignupDisabled": "現在、新規登録は受け付けていません。",
+  "auth.errReauth":
+    "セキュリティのため、パスワードを変更する前に一度サインアウトしてもう一度サインインしてください。",
+  "auth.errEmailAddressInvalid":
+    "そのメールアドレスは受け付けられませんでした。入力ミスがないか確認してください。",
+  "auth.errProfileRejected":
+    "プロフィールの内容を受け付けられませんでした。ユーザー名：{rules}",
+
+  // 初回のオンボーディング（アプリのレイアウトから表示）。
+  "onboarding.title": "プロフィールを設定",
+  "onboarding.description":
+    "ユーザー名を決めてください。ほかの項目は任意で、後から変更できます。",
+  "onboarding.checking": "確認中…",
+  "onboarding.available": "使えます",
+  "onboarding.skip": "あとで設定する",
+  "onboarding.avatarLabel": "アバターのポケモン",
+
+  // アカウントメニューとオンボーディングで表示されるプロフィール項目。
+  "profile.usernameLabel": "ユーザー名",
+  "profile.displayNameLabel": "表示名",
+  "profile.displayNameHint": "任意。{max}文字以内。",
+  "profile.savedToast": "プロフィールを保存しました。",
+  "profile.accountSection": "アカウント",
+  "profile.signedOutToast": "サインアウトしました。",
+  "profile.publicPage": "公開ページ",
+
+  // ソーシャル機能のエラー（データ層で変換された失敗）。
+  // エラーマップはエントリー側に属するため、ここに置く。
+  "social.errors.not_configured": "コミュニティ機能は現在利用できません。",
+  "social.errors.not_installed":
+    "コミュニティ機能はまだ準備中です。しばらくしてからもう一度お試しください。",
+  "social.errors.not_signed_in":
+    "サインインしてコミュニティ機能を利用してください。",
+  "social.errors.rate_limited":
+    "投稿の間隔が短すぎます。少し待ってからもう一度お試しください。",
+  "social.errors.suspended": "このアカウントは現在投稿できません。",
+  "social.errors.too_long": "長すぎます。短くしてからもう一度お試しください。",
+  "social.errors.not_found": "そのコンテンツはすでに存在しません。",
+  "social.errors.forbidden": "この操作は行えません。",
+  "social.errors.invalid_input": "入力が正しくありません。",
+  "social.errors.network":
+    "サーバーに接続できませんでした。通信状況を確認してもう一度お試しください。",
+  "social.errors.unknown": "問題が発生しました。もう一度お試しください。",
+
+  // 通知ベル（ヘッダー）とリンク先のページ。
+  "notifications.title": "通知",
+  "notifications.bellAriaUnread": "通知、未読{badge}件",
+
+  // アカウントメニューのグループリンクとページタイトル。
+  "groups.homeTitle": "グループ",
+  "groups.newTitle": "グループを作成",
+
+  // モデレーションお知らせのタイトル（/moderation/:id のタブ）。
+  "moderation.noticeTitle": "モデレーションのお知らせ",
+
+  // 404のタブタイトル。
+  "system.notFoundTitle": "ページが見つかりません",
+
+  // タブタイトルとメタディスクリプション（page-title.ts）と
+  // 検索パレットのページ名。シェルが所有するためエントリーに入る。
+  "pageTitle.appeals": "申し立て",
+  "pageTitle.feedback": "フィードバック",
+  "pageTitle.reports": "報告",
+  "pageTitle.styleguide": "スタイルガイド",
+  "pageTitle.signingIn": "サインイン中",
+  "pageTitle.resetPassword": "パスワードのリセット",
+  "pageTitle.team": "構築",
+  "pageTitle.post": "投稿",
+  "pageTitle.group": "グループ",
+  "pageTitle.deleteAccount": "アカウントの削除",
+  "calc.title": "ダメージ計算",
+  "teams.title": "構築",
+  "teams.description": "Pokémon Championsの構築を作成・保存・分析できます。",
+  "meta.title": "環境",
+  "seo.homeDescription":
+    "Pokémon Championsのダメージ計算・構築作成・コミュニティ。非公式のファンプロジェクトです。",
+  "seo.calcDescription":
+    "Pokémon Championsのダメージ計算。もちもの・天候・フィールドに対応し、ダブルとシングルの両方で計算できます。",
+  "seo.metaDescription":
+    "Pokémon Championsの使用率データ：よく使われるポケモン・技・もちもの・ステータス配分。",
+  "seo.teamsDescription":
+    "OHKOLabでプレイヤーが公開しているPokémon Championsの構築です。",
+  "seo.postDescription":
+    "OHKOLabのPokémon Championsコミュニティからの投稿です。",
+  "seo.profileDescription": "OHKOLabでのプレイヤーの投稿・公開構築・グループ。",
+  "seo.groupDescription": "OHKOLabのPokémon Championsグループ。",
+  "seo.groupsDescription":
+    "OHKOLabのPokémon Championsグループを探して参加できます。",
+  "seo.termsDescription": "OHKOLabの利用規約。",
+  "seo.privacyDescription": "OHKOLabの個人情報の取り扱いについて。",
+
+  // フィードバックダイアログとクラッシュ画面（どちらもアプリの
+  // フレームから表示。テレメトリー切り替えの文言はcommunity側）。
+  "feedback.kindBug": "バグ",
+  "feedback.kindIdea": "アイデア",
+  "feedback.kindOther": "その他",
+  "feedback.tooShort": "もう少し詳しく教えてください（{min}文字以上）。",
+  "feedback.tooLong": "フィードバックは{max}文字以内です。",
+  "feedback.sentToast": "ありがとうございます！フィードバックを送信しました。",
+  "feedback.rateLimited":
+    "最近フィードバックを多数送信しています。1時間ほど経ってからもう一度お送りください。",
+  "feedback.description":
+    "壊れているもの、足りないもの、見たいものをお聞かせください。すべて目を通しています。",
+  "feedback.signedOutBody":
+    "サイトからフィードバックを送るにはアカウントが必要です。メールでもご連絡いただけます。",
+  "feedback.emailUs": "{email}にメールする",
+  "feedback.kindAria": "フィードバックの種類",
+  "feedback.placeholder": "何が起きましたか？何を変えるべきですか？",
+  "feedback.messageAria": "フィードバック内容",
+  "feedback.includeDetails":
+    "技術情報を含める（ページ、アプリのバージョン、ブラウザー、画面サイズ",
+  "feedback.crashIdSuffix": "、クラッシュID",
+  "feedback.send": "送信",
+  "feedback.sending": "送信中…",
+  "crash.title": "問題が発生しました",
+  "crash.body":
+    "こちら側で問題が発生しました。データは安全です。ページの再読み込み、フィードへの戻る、または発生したことをお知らせいただければ、より早く修正できます。",
+  "crash.referencePrefix": "クラッシュ参照ID:",
+  "crash.reload": "再読み込み",
+  "crash.goHome": "ホームへ",
+  "crash.tellUs": "発生したことを報告する",
 };
