@@ -14,7 +14,7 @@ export function NotFoundPage() {
   const t = useT();
   return (
     <Page title={t("system.notFoundTitle")} width="narrow">
-      <div className="flex flex-col items-center gap-6 py-12 text-center">
+      <div className="flex flex-col items-center gap-6 py-8 text-center">
         <p className="font-heading text-6xl font-semibold tabular-nums tracking-tight text-muted-foreground">
           404
         </p>

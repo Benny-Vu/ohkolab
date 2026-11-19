@@ -192,9 +192,9 @@ export function LoginPage() {
       <Page title={t("login.checkEmailTitle")} width="narrow">
         <Card>
           <CardContent className="grid gap-2 pt-6">
-            <h1 className="font-heading text-xl font-semibold">
+            <h2 className="font-heading text-xl font-semibold">
               {t("login.confirmAccountTitle")}
-            </h1>
+            </h2>
             <p className="text-sm text-muted-foreground">
               {t("login.confirmAccountPrefix")}{" "}
               <span className="font-medium text-foreground">
@@ -220,9 +220,9 @@ export function LoginPage() {
       <Page title={t("login.checkEmailTitle")} width="narrow">
         <Card>
           <CardContent className="grid gap-2 pt-6">
-            <h1 className="font-heading text-xl font-semibold">
+            <h2 className="font-heading text-xl font-semibold">
               {t("login.resetSentTitle")}
-            </h1>
+            </h2>
             <p className="text-sm text-muted-foreground">
               {t("login.resetSentPrefix")}{" "}
               <span className="font-medium text-foreground">

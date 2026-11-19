@@ -254,7 +254,7 @@ function NotificationsList({
   const allRead = items.every((item) => item.readAt !== null);
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       {sections.map((section) => (
         <section key={section.name} className="grid gap-2">
           <h2 className="text-sm font-medium text-muted-foreground">

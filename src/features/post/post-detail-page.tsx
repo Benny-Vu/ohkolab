@@ -148,7 +148,7 @@ export function PostDetailPage() {
           <h2
             ref={commentsHeadingRef}
             tabIndex={-1}
-            className="text-sm font-semibold outline-none"
+            className="font-heading text-sm font-semibold outline-none"
           >
             {t("postDetail.comments")}
           </h2>

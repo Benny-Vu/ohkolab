@@ -98,7 +98,7 @@ function ConversationRow({
               {conversation.otherDisplayName ?? conversation.otherUsername}
             </span>
             {conversation.unread > 0 ? (
-              <Badge>
+              <Badge className="tabular-nums">
                 {conversation.unread > 99 ? "99+" : conversation.unread}
                 <span className="sr-only">{t("notifications.unreadSr")}</span>
               </Badge>

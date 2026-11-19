@@ -269,11 +269,11 @@ function MessageRow({
             aria-hidden
           />
         ) : failed ? (
-          <span className="text-[10px] text-destructive">
+          <span className="text-xs text-destructive">
             {t("messages.notSent")}
           </span>
         ) : (
-          <span className="text-[10px] tabular-nums text-muted-foreground">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {new Date(message.created_at).toLocaleString()}
           </span>
         )}

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import { Page } from "@/components/page";
 import { Picker } from "@/components/picker";
+import { ErrorState } from "@/components/error-state";
 import { UserAvatar } from "@/components/user-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -782,19 +783,19 @@ function BlockedUsersCard() {
             <Skeleton className="h-10 w-full" />
           </div>
         ) : blocksQuery.isError ? (
-          <div className="grid gap-2">
-            <p className="text-sm text-muted-foreground">
-              {t("profile.blocksLoadFailed")}
-            </p>
-            <Button
-              className="justify-self-start"
-              variant="outline"
-              size="sm"
-              onClick={() => void blocksQuery.refetch()}
-            >
-              {t("common.retry")}
-            </Button>
-          </div>
+          <ErrorState
+            title={t("profile.blocksLoadFailed")}
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void blocksQuery.refetch()}
+              >
+                {t("common.retry")}
+              </Button>
+            }
+            className="border-none bg-transparent px-0 py-2"
+          />
         ) : ids.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("profile.noBlocks")}
@@ -804,19 +805,19 @@ function BlockedUsersCard() {
             <Skeleton className="h-10 w-full" />
           </div>
         ) : profilesQuery.isError ? (
-          <div className="grid gap-2">
-            <p className="text-sm text-muted-foreground">
-              {t("profile.blocksLoadFailed")}
-            </p>
-            <Button
-              className="justify-self-start"
-              variant="outline"
-              size="sm"
-              onClick={() => void profilesQuery.refetch()}
-            >
-              {t("common.retry")}
-            </Button>
-          </div>
+          <ErrorState
+            title={t("profile.blocksLoadFailed")}
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void profilesQuery.refetch()}
+              >
+                {t("common.retry")}
+              </Button>
+            }
+            className="border-none bg-transparent px-0 py-2"
+          />
         ) : (
           <ul className="grid gap-2">
             {profilesQuery.data.map((profile) => (
