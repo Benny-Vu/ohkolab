@@ -2,8 +2,6 @@ import {
   CheckIcon,
   ExternalLinkIcon,
   EyeIcon,
-  RefreshCwIcon,
-  ShieldAlertIcon,
   TriangleAlertIcon,
 } from "lucide-react";
 import { useQuery as useReactQuery } from "@tanstack/react-query";
@@ -13,6 +11,7 @@ import { toast } from "sonner";
 
 import { NotFoundPage } from "@/features/system/not-found-page";
 import { getLocale } from "@/lib/i18n/locale";
+import { ErrorState } from "@/components/error-state";
 import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -225,10 +224,10 @@ function FeedbackCard({
           <Badge
             variant={
               feedback.kind === "bug"
-                ? "destructive"
+                ? "default"
                 : feedback.kind === "idea"
-                  ? "default"
-                  : "secondary"
+                  ? "secondary"
+                  : "outline"
             }
           >
             {t(KIND_LABEL_KEYS[feedback.kind] ?? "feedback.kindOther")}
@@ -362,24 +361,22 @@ function FeedbackList({ client }: { client: AppSupabaseClient | null }) {
           <Skeleton className="h-24 w-full" />
         </div>
       ) : feedbackQuery.isError ? (
-        <div className="mt-4 grid gap-4">
-          <Alert variant="destructive">
-            <ShieldAlertIcon />
-            <AlertTitle>{t("admin.feedbackLoadError")}</AlertTitle>
-            <AlertDescription>
-              {t("admin.loadErrorDescription")}
-            </AlertDescription>
-          </Alert>
-          <Button
-            className="justify-self-start"
-            variant="outline"
-            onClick={() => {
-              void feedbackQuery.refetch();
-            }}
-          >
-            <RefreshCwIcon />
-            {t("common.retry")}
-          </Button>
+        <div className="mt-4">
+          <ErrorState
+            title={t("admin.feedbackLoadError")}
+            description={t("admin.loadErrorDescription")}
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void feedbackQuery.refetch();
+                }}
+              >
+                {t("common.retry")}
+              </Button>
+            }
+          />
         </div>
       ) : (feedbackQuery.data ?? []).length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">
