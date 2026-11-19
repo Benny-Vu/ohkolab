@@ -83,7 +83,7 @@ function ToolsIntro() {
               to={tool.to}
               className="block rounded-md focus-visible:outline-2"
             >
-              <div className="flex items-center gap-4 rounded-md border bg-card p-4 transition-colors duration-150 ease-out hover:bg-surface-sunken">
+              <div className="flex items-center gap-4 rounded-md border bg-card p-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-surface-sunken">
                 <tool.icon
                   className="size-6 shrink-0 text-muted-foreground"
                   aria-hidden

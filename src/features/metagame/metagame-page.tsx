@@ -113,7 +113,7 @@ function SortButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-6 items-center gap-1 rounded-md px-1 text-xs font-medium transition-colors duration-150 ease-out ${
+      className={`inline-flex h-6 items-center gap-1 rounded-md px-1 text-xs font-medium transition-colors duration-(--motion-fast) ease-(--motion-ease-out) ${
         active
           ? "text-foreground"
           : "text-muted-foreground hover:text-foreground"

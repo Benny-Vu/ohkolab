@@ -471,7 +471,7 @@ export function FieldPanel({ state, dispatch }: FieldPanelProps) {
         >
           <ChevronDownIcon
             className={cn(
-              "size-4 transition-transform duration-150 ease-out",
+              "size-4 transition-transform duration-(--motion-fast) ease-(--motion-ease-out)",
               showRare && "rotate-180",
             )}
           />

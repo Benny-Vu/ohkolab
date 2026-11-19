@@ -47,7 +47,7 @@ export function LegalPage({
               <li key={section.id}>
                 <a
                   href={`#${section.id}`}
-                  className="block rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
+                  className="block rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground"
                 >
                   {section.heading}
                 </a>

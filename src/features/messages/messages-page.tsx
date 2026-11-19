@@ -84,7 +84,7 @@ function ConversationRow({
     <li>
       <Link
         to={`/messages/${conversation.id}`}
-        className="flex items-center gap-3 rounded-md border bg-card p-3 transition-colors duration-150 ease-out hover:border-primary/60 focus-visible:outline-2"
+        className="flex items-center gap-3 rounded-md border bg-card p-3 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:border-primary/60 focus-visible:outline-2"
       >
         <UserAvatar
           username={conversation.otherUsername}

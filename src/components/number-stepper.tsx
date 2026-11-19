@@ -41,7 +41,7 @@ export function NumberStepper({
           aria-label={`Decrease ${label}`}
           disabled={value <= min}
           onClick={() => step(-1)}
-          className="grid size-11 place-content-center rounded-md text-muted-foreground transition-colors duration-150 ease-out outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 max-md:grid max-md:place-content-center"
+          className="grid size-11 place-content-center rounded-md text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 max-md:grid max-md:place-content-center"
         >
           <MinusIcon className="size-4" />
         </button>
@@ -56,7 +56,7 @@ export function NumberStepper({
           aria-label={`Increase ${label}`}
           disabled={value >= max || (remaining !== undefined && remaining <= 0)}
           onClick={() => step(1)}
-          className="grid size-11 place-content-center rounded-md text-muted-foreground transition-colors duration-150 ease-out outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40"
+          className="grid size-11 place-content-center rounded-md text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40"
         >
           <PlusIcon className="size-4" />
         </button>

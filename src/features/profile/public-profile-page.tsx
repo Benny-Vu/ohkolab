@@ -381,7 +381,7 @@ function FollowListRow({
       <Link
         to={`/u/${profile.username}`}
         onClick={onClose}
-        className="flex items-center gap-3 rounded-md p-2 transition-colors duration-150 ease-out hover:bg-accent"
+        className="flex items-center gap-3 rounded-md p-2 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-accent"
       >
         <UserAvatar
           username={profile.username}
@@ -714,14 +714,14 @@ function ProfileFollowCounts({
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <button
           type="button"
-          className="text-muted-foreground underline-offset-4 transition-colors duration-150 ease-out hover:text-foreground hover:underline"
+          className="text-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline"
           onClick={() => setListOpen("followers")}
         >
           {counts ? counts.followers : "…"} {t("publicProfile.followersLabel")}
         </button>
         <button
           type="button"
-          className="text-muted-foreground underline-offset-4 transition-colors duration-150 ease-out hover:text-foreground hover:underline"
+          className="text-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline"
           onClick={() => setListOpen("following")}
         >
           {counts ? counts.following : "…"} {t("publicProfile.followingLabel")}

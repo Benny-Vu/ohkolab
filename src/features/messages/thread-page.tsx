@@ -251,7 +251,7 @@ function MessageRow({
             type="button"
             onClick={onReport}
             aria-label={t("messages.reportButtonAria")}
-            className="text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
+            className="text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground"
           >
             <FlagIcon className="size-3" aria-hidden />
           </button>
