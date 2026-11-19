@@ -52,6 +52,9 @@ import type { ReportStatus } from "@/lib/social/validation";
 import { useT } from "@/lib/i18n/t";
 import type { TranslationKey } from "@/lib/i18n/en";
 import { SuspendDialog } from "@/features/admin/suspend-dialog";
+import { MessageReportContent } from "@/features/admin/message-report-content";
+import { useMessageReportSnapshot } from "@/lib/messages/queries";
+import { reportedSnapshotEntry } from "@/lib/messages/logic";
 
 const TAB_STATUSES: Array<{ status: ReportStatus; labelKey: TranslationKey }> =
   [
@@ -64,6 +67,7 @@ const TARGET_LABELS: Record<string, TranslationKey> = {
   post: "report.targetPost",
   comment: "report.targetComment",
   profile: "report.targetProfile",
+  message: "messages.targetLabel",
 };
 
 function reasonBadgeVariant(
@@ -149,6 +153,9 @@ function ReportContent({
   }
   if (report.target_type === "profile") {
     return <ProfileContent profileId={report.target_id} client={client} />;
+  }
+  if (report.target_type === "message") {
+    return <MessageReportContent report={report} client={client} />;
   }
   return (
     <p className="text-sm text-muted-foreground">{t("admin.unknownTarget")}</p>
@@ -419,7 +426,9 @@ function ReportRowView({
   const [suspendOpen, setSuspendOpen] = useState(false);
 
   // The author of the reported content: the profile itself for profile
-  // reports, otherwise the author of the reported post or comment.
+  // reports, the post or comment author, or — for message reports — the
+  // sender of the reported message, read from the report's snapshot (never
+  // from the messages table).
   const postQuery = usePost(
     report.target_type === "post" ? report.target_id : "",
     client,
@@ -428,12 +437,19 @@ function ReportRowView({
     report.target_type === "comment" ? report.target_id : "",
     client,
   );
+  const messageSnapshot = useMessageReportSnapshot(
+    report.target_type === "message" ? report.id : "",
+    client,
+  );
   const suspendUserId =
     report.target_type === "profile"
       ? report.target_id
       : report.target_type === "post"
         ? (postQuery.data?.author_id ?? null)
-        : (commentQuery.data?.author_id ?? null);
+        : report.target_type === "message"
+          ? (reportedSnapshotEntry(messageSnapshot.data ?? [])?.sender_id ??
+            null)
+          : (commentQuery.data?.author_id ?? null);
 
   const dismiss = async () => {
     const result = await handleReport.mutateAsync({

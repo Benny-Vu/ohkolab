@@ -496,6 +496,35 @@ export const communityEn = {
   "share.share": "Share",
   "share.copiedLink": "Link copied to clipboard.",
   "share.copyFailed": "The link could not be copied.",
+
+  // Direct messages (built but not launched; VITE_DIRECT_MESSAGES).
+  "pageTitle.messages": "Messages",
+  "messages.title": "Messages",
+  "messages.description":
+    "Your private conversations with other players. Open someone's profile to start one.",
+  "messages.empty": "No conversations yet.",
+  "messages.signIn": "Sign in to see your messages.",
+  "messages.loadError": "Could not load your messages.",
+  "messages.previewDeleted": "Message deleted",
+  "messages.threadUnavailable": "This conversation is no longer available.",
+  "messages.composerAria": "Write a message",
+  "messages.composerPlaceholder": "Write a message…",
+  "messages.send": "Send",
+  "messages.tooLong": "Messages are limited to {max} characters.",
+  "messages.you": "You",
+  "messages.reportButtonAria": "Report this message",
+  "messages.targetLabel": "message",
+  "messages.messageButton": "Message",
+  "messages.settingsTitle": "Who can message me",
+  "messages.settingsDescription":
+    "Choose who can start a conversation with you. Friends are players you follow who follow you back.",
+  "messages.settingsFriends": "Friends (mutual follows)",
+  "messages.settingsFollowing": "Only people I follow",
+  "messages.settingsNobody": "Nobody",
+  "messages.settingsSaved": "Your messaging setting was saved.",
+  "messages.settingsAria": "Who can message me",
+  "messages.reportedBadge": "Reported",
+  "messages.messageBy": "by {name}",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;

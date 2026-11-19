@@ -43,6 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
+import { directMessagesEnabled } from "@/lib/messages/flag";
 import {
   BIO_MAX_LENGTH,
   DISPLAY_NAME_MAX_LENGTH,
@@ -70,6 +71,15 @@ type ProfileFieldErrors = Partial<
 const SpeciesPicker = lazy(() =>
   import("@/components/pokemon-editor/species-picker").then((m) => ({
     default: m.SpeciesPicker,
+  })),
+);
+
+// The "who can message me" settings card only exists while
+// VITE_DIRECT_MESSAGES is on; it loads lazily so flag-off builds never
+// download it (the birth date block above follows the same pattern).
+const MessageSettingsCard = lazy(() =>
+  import("@/features/messages/message-settings-card").then((m) => ({
+    default: m.MessageSettingsCard,
   })),
 );
 
@@ -355,6 +365,11 @@ function ProfileEditor({ profile }: { profile: Profile }) {
         <div className="grid gap-4">
           {/* Renders nothing while VITE_DIRECT_MESSAGES is off. */}
           <BirthDateSettingsCard />
+          {directMessagesEnabled() ? (
+            <Suspense fallback={null}>
+              <MessageSettingsCard />
+            </Suspense>
+          ) : null}
           <Card>
             <CardHeader>
               <CardTitle>{t("profile.sessionTitle")}</CardTitle>
