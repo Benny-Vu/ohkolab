@@ -14,6 +14,7 @@ import {
 
 import { Page } from "@/components/page";
 import { PokemonIcon } from "@/components/pokemon-sprite";
+import { TeamIdChip } from "@/components/team-id-chip";
 import { UserAvatar } from "@/components/user-avatar";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
@@ -144,6 +145,7 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
       name: team.name,
       format: team.format,
       members: team.members,
+      gameTeamId: team.gameTeamId ?? undefined,
     });
     setOpen(false);
     toast.success(
@@ -171,6 +173,7 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
             {t("publicProfile.sharedBy", { name: username })}
           </DialogDescription>
         </DialogHeader>
+        {team.gameTeamId ? <TeamIdChip id={team.gameTeamId} /> : null}
         <ul className="grid gap-3">
           {team.members.map((_, index) => (
             <Suspense
@@ -219,6 +222,11 @@ function TeamCard({ team, username }: { team: Team; username: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {team.gameTeamId ? (
+          <div className="mb-3">
+            <TeamIdChip id={team.gameTeamId} compact />
+          </div>
+        ) : null}
         <div className="flex flex-wrap gap-1">
           {Array.from({ length: MAX_TEAM_SIZE }, (_, index) => {
             const member = team.members[index];

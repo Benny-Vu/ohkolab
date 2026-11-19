@@ -1,3 +1,4 @@
+import { sanitizeGameTeamId } from "@/lib/team/game-id";
 import { DEFAULT_TEAM_NAME } from "@/lib/team/team-ops";
 import type { BattleFormat } from "@/types/battle";
 import {
@@ -119,7 +120,9 @@ export function sanitizeTeam(value: unknown): Team | null {
     value.createdAt,
     isoDateOr(value.updatedAt, EPOCH),
   );
-  return {
+  // Accepts both the client's camelCase field and the database column name.
+  const gameTeamId = sanitizeGameTeamId(value.gameTeamId ?? value.game_team_id);
+  const team: Team = {
     id,
     name: typeof value.name === "string" ? value.name : DEFAULT_TEAM_NAME,
     format:
@@ -130,6 +133,8 @@ export function sanitizeTeam(value: unknown): Team | null {
     createdAt,
     updatedAt: isoDateOr(value.updatedAt, createdAt),
   };
+  if (gameTeamId) team.gameTeamId = gameTeamId;
+  return team;
 }
 
 export interface ParsedTeams {

@@ -8,16 +8,20 @@ export type TeamAttachment = {
   kind: "team";
   name: string;
   format: BattleFormat;
+  /** The team's Champions team ID, when it has one. */
+  gameTeamId?: string;
   members: PokemonSet[];
 };
 
 export function teamAttachment(team: Team): TeamAttachment {
-  return {
+  const attachment: TeamAttachment = {
     kind: "team",
     name: team.name,
     format: team.format,
     members: [...team.members],
   };
+  if (team.gameTeamId) attachment.gameTeamId = team.gameTeamId;
+  return attachment;
 }
 
 /** The JSON shape stored in the posts.attachment column. */
@@ -25,18 +29,21 @@ export type TeamAttachmentJson = {
   kind: "team";
   name: string;
   format: string;
+  gameTeamId?: string;
   members: Json[];
 };
 
 export function teamAttachmentJson(
   attachment: TeamAttachment,
 ): TeamAttachmentJson {
-  return {
+  const json: TeamAttachmentJson = {
     kind: "team",
     name: attachment.name,
     format: attachment.format,
     members: attachment.members.map(setToJson),
   };
+  if (attachment.gameTeamId) json.gameTeamId = attachment.gameTeamId;
+  return json;
 }
 
 export type CalcResultAttachment = {
@@ -181,7 +188,17 @@ export function parseTeamAttachment(value: Json | null): TeamAttachment | null {
     if (!set) return null;
     members.push(set);
   }
-  return { kind: "team", name: record.name, format: record.format, members };
+  const attachment: TeamAttachment = {
+    kind: "team",
+    name: record.name,
+    format: record.format,
+    members,
+  };
+  const gameTeamId = record.gameTeamId;
+  if (typeof gameTeamId === "string" && gameTeamId !== "") {
+    attachment.gameTeamId = gameTeamId;
+  }
+  return attachment;
 }
 
 function parseSet(value: Json): PokemonSet | null {

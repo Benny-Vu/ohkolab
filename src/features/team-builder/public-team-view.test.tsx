@@ -18,6 +18,7 @@ function teamRow(overrides: Partial<TeamRow> = {}): TeamRow {
     data: [createDefaultSet("Garchomp"), createDefaultSet("Incineroar")],
     format: "doubles",
     is_public: true,
+    game_team_id: null,
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-02T00:00:00Z",
     ...overrides,

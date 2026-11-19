@@ -13,6 +13,7 @@ import {
 import { displayTeamName } from "@/lib/team/display";
 import { Page } from "@/components/page";
 import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -63,7 +64,14 @@ function TeamCard({
   return (
     <Card size="sm" className="flex flex-col">
       <CardHeader>
-        <TeamName name={team.name} onRename={onRename} />
+        <div className="flex items-center gap-1.5">
+          <TeamName name={team.name} onRename={onRename} />
+          {team.gameTeamId ? (
+            <Badge variant="outline" className="shrink-0">
+              {t("teams.gameIdBadge")}
+            </Badge>
+          ) : null}
+        </div>
         <p className="text-xs text-muted-foreground">
           {t("teams.cardMeta", {
             format: t(
@@ -152,6 +160,7 @@ export function TeamsPage() {
       name: imported.name ?? undefined,
       format: preferredFormat,
       members: imported.sets,
+      gameTeamId: imported.gameTeamId ?? undefined,
     });
     track("team_imported", {
       format: preferredFormat,

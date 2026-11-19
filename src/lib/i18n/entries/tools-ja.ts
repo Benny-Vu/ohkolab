@@ -130,6 +130,17 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "teams.exportDescription":
     "Showdown形式のテキストをコピーして構築を共有できます。",
 
+  // 構築：ChampionsのチームID。
+  "teams.gameIdLabel": "チームID",
+  "teams.gameIdFieldLabel": "Champions チームID",
+  "teams.gameIdHint":
+    "Championsで構築を共有して、そのIDをここに貼り付けてください。",
+  "teams.gameIdInvalid": "チームIDは半角英数字10桁です。",
+  "teams.gameIdCopied": "チームIDをコピーしました",
+  "teams.gameIdCopyAria": "チームIDをコピー",
+  "teams.gameIdBadge": "ID",
+  "teams.gameIdShareText": "Champions チームID：{id}",
+
   // 構築：詳細ページ。
   "teams.loading": "構築を読み込み中…",
   "teams.loadErrorDescription": "構築を読み込めませんでした。",

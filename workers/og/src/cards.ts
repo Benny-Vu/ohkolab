@@ -94,6 +94,8 @@ export interface TeamData {
   name: string;
   /** Private teams never get here through RLS; re-checked anyway. */
   isPublic: boolean;
+  /** The Champions team ID shown in the description, when the team has one. */
+  gameTeamId: string | null;
   /** The members' species names, in team order. */
   species: string[];
 }
@@ -105,9 +107,12 @@ export function teamCard(url: string, team: TeamData | null): OgCard {
     team.species.length > 0
       ? team.species.join(", ")
       : "A Pokémon Champions team on OHKOLab.";
+  const idSuffix = team.gameTeamId
+    ? ` · Champions team ID: ${team.gameTeamId}`
+    : "";
   return {
     title: team.name,
-    description,
+    description: `${description}${idSuffix}`,
     imageUrl: `${SITE_URL}/og/team/${team.id}.png`,
     url,
   };

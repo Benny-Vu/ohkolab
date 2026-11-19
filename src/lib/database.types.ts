@@ -70,6 +70,11 @@ export type Database = {
           data: PokemonSet[];
           format: BattleFormat;
           is_public: boolean;
+          /**
+           * The Champions "Replica Team" ID: 10 letters and digits,
+           * case-sensitive, or null when the team has none.
+           */
+          game_team_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -81,6 +86,7 @@ export type Database = {
           data: PokemonSet[];
           format?: BattleFormat;
           is_public?: boolean;
+          game_team_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -91,6 +97,7 @@ export type Database = {
           data?: PokemonSet[];
           format?: BattleFormat;
           is_public?: boolean;
+          game_team_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };

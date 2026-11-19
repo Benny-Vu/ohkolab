@@ -134,6 +134,16 @@ export const toolsEn = {
   "teams.exportTitle": "Export team",
   "teams.exportDescription": "Copy this Showdown export to share the team.",
 
+  // Team builder: the Champions team ID.
+  "teams.gameIdLabel": "Team ID",
+  "teams.gameIdFieldLabel": "Champions team ID",
+  "teams.gameIdHint": "Share the team in Champions, then paste its ID here.",
+  "teams.gameIdInvalid": "A team ID is 10 letters and digits.",
+  "teams.gameIdCopied": "Team ID copied",
+  "teams.gameIdCopyAria": "Copy team ID",
+  "teams.gameIdBadge": "ID",
+  "teams.gameIdShareText": "Champions team ID: {id}",
+
   // Team builder: the detail page.
   "teams.loading": "Loading your teams…",
   "teams.loadErrorDescription": "Your teams could not be loaded.",

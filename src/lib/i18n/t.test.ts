@@ -58,6 +58,8 @@ describe("dictionaries", () => {
       "English",
       "日本語",
       "HP",
+      // "ID" is the ordinary Japanese word for an identifier badge, too.
+      "ID",
     ]);
     // Keys whose English value is intentionally not English (or not shown in
     // the en locale at all).
