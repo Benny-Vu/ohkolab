@@ -1,0 +1,22 @@
+# The OG Worker: link previews for ohkolab.com.
+#
+# Deploy with `npx wrangler deploy` from this directory (one-time
+# `npx wrangler login` first — the owner does that). The route requires
+# the ohkolab.com zone to live in the same Cloudflare account, and it
+# must NOT already be proxied through another service that would
+# conflict with a Worker route.
+
+name = "ohkolab-og"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+# Sits in front of every request to the site.
+routes = [{ pattern = "ohkolab.com/*", zone_name = "ohkolab.com" }]
+
+[vars]
+# The public anon key — the same one every browser bundle carries. Never
+# a service_role key. If the project or its keys change, update both
+# here and in the GitHub Actions secrets (VITE_SUPABASE_URL /
+# VITE_SUPABASE_ANON_KEY).
+SUPABASE_URL = "https://jzpyoyjnhuokprsdoiqf.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6cHlveWpuaHVva3Byc2RvaXFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzOTYxNDAsImV4cCI6MjEwOTk3MjE0MH0.r7VyITji6P1R6OdlnMoRx5Vb7muU1CvjI2baTod7kng"
