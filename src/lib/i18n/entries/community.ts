@@ -47,6 +47,18 @@ export const communityEn = {
   "notifications.markRead": "Mark {name}'s notification as read",
   "notifications.delete": "Delete notification from {name}",
 
+  // Grouped rows: consecutive likes and comments on one post merge.
+  // The text follows the lead actor's name, like the single sentences.
+  "notifications.groupLikesOne": "and 1 other liked your post",
+  "notifications.groupLikesMany": "and {n} others liked your post",
+  "notifications.groupCommentsOne": "and 1 other commented on your post",
+  "notifications.groupCommentsMany": "and {n} others commented on your post",
+  "notifications.groupMixedOne": "and 1 other liked and commented on your post",
+  "notifications.groupMixedMany":
+    "and {n} others liked and commented on your post",
+  "notifications.markGroupRead": "Mark {name}'s notifications as read",
+  "notifications.deleteGroup": "Delete {name}'s notifications",
+
   // Notifications page.
   "notifications.description":
     "Likes, comments, follows and moderation updates.",
@@ -63,6 +75,16 @@ export const communityEn = {
   "notifications.emptyDescription":
     "When someone likes your post or follows you, it shows up here.",
   "notifications.loadMore": "Load more",
+
+  // Date sections, the caught-up end state and the follow-back button.
+  "notifications.sectionToday": "Today",
+  "notifications.sectionThisWeek": "This week",
+  "notifications.sectionEarlier": "Earlier",
+  "notifications.allCaughtUp": "You're all caught up",
+  "notifications.followBack": "Follow",
+  "notifications.followingBack": "Following",
+  "notifications.followedToast": "Following @{name}.",
+  "notifications.unfollowedToast": "Unfollowed @{name}.",
 
   // The push opt-in card (native app only, behind VITE_PUSH).
   "notifications.pushTitle": "Turn on notifications",

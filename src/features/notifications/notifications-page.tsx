@@ -1,8 +1,10 @@
 /**
  * The notifications page: the signed-in user's notifications with actor
- * avatars, sentences, relative times and links, unread highlighting, mark
- * read / mark all read and delete actions, and every loading, empty, error
- * and signed-out state.
+ * avatars, sentences, relative times and links, grouped by post
+ * ("Ana and 4 others liked your post"), in Today / This week / Earlier
+ * sections, with follow-back buttons on follow notifications, unread
+ * highlighting, mark read / mark all read and delete actions, and every
+ * loading, empty, error and signed-out state.
  */
 
 import { lazy, Suspense } from "react";
@@ -35,7 +37,18 @@ import {
   actorProfilePath,
   describeNotification,
 } from "@/lib/notifications/sentences";
+import {
+  describeGroupedNotification,
+  groupNotifications,
+  rowCreatedAt,
+  type NotificationRow,
+} from "@/lib/notifications/grouping";
+import {
+  NOTIFICATION_SECTION_LABEL_KEYS,
+  sectionNotifications,
+} from "@/lib/notifications/sections";
 import type { NotificationItem } from "@/lib/notifications/types";
+import { FollowBackButton } from "@/features/notifications/follow-back-button";
 import { cn } from "@/lib/utils";
 
 // The "Turn on notifications" card only exists in the native app while
@@ -54,6 +67,13 @@ function focusMainLandmark(): void {
   (document.querySelector("main") as HTMLElement | null)?.focus();
 }
 
+/** The React key for one row: a single notification or a merged group. */
+function rowKey(row: NotificationRow): string {
+  return row.kind === "single"
+    ? row.item.id
+    : `group:${row.items[0]?.id ?? row.postId}`;
+}
+
 export function NotificationsPage() {
   const { user } = useAuth();
   const t = useT();
@@ -65,16 +85,21 @@ export function NotificationsPage() {
 
   const unreadCount = unread.data ?? 0;
 
-  async function handleMarkRead(id: string) {
-    const result = await markRead.mutateAsync(id);
-    if (result.ok) {
-      toast.success(t("notifications.markedRead"));
+  async function handleMarkRead(ids: string[]): Promise<void> {
+    // A merged row marks every notification behind it, but the reader
+    // only hears about it once.
+    const results = await Promise.all(
+      ids.map((id) => markRead.mutateAsync(id)),
+    );
+    const failure = results.find((result) => !result.ok);
+    if (failure && !failure.ok) {
+      toast.error(failure.error.message);
     } else {
-      toast.error(result.error.message);
+      toast.success(t("notifications.markedRead"));
     }
   }
 
-  async function handleMarkAllRead() {
+  async function handleMarkAllRead(): Promise<void> {
     const result = await markAllRead.mutateAsync();
     if (result.ok) {
       toast.success(t("notifications.allMarkedRead"));
@@ -83,13 +108,16 @@ export function NotificationsPage() {
     }
   }
 
-  async function handleDelete(id: string) {
-    const result = await deleteNotification.mutateAsync(id);
-    if (result.ok) {
+  async function handleDelete(ids: string[]): Promise<void> {
+    const results = await Promise.all(
+      ids.map((id) => deleteNotification.mutateAsync(id)),
+    );
+    const failure = results.find((result) => !result.ok);
+    if (failure && !failure.ok) {
+      toast.error(failure.error.message);
+    } else {
       focusMainLandmark();
       toast.success(t("notifications.deletedToast"));
-    } else {
-      toast.error(result.error.message);
     }
   }
 
@@ -103,6 +131,7 @@ export function NotificationsPage() {
           <Button
             size="sm"
             variant="outline"
+            aria-label={t("notifications.markAllAsRead")}
             onClick={() => void handleMarkAllRead()}
             disabled={markAllRead.isPending}
           >
@@ -157,8 +186,8 @@ export function NotificationsPage() {
             >
               <NotificationsList
                 items={notifications.data?.pages.flat() ?? []}
-                onMarkRead={handleMarkRead}
-                onDelete={handleDelete}
+                onMarkRead={(ids) => void handleMarkRead(ids)}
+                onDelete={(ids) => void handleDelete(ids)}
                 markPending={markRead.isPending}
                 deletePending={deleteNotification.isPending}
                 hasNextPage={notifications.hasNextPage}
@@ -175,8 +204,8 @@ export function NotificationsPage() {
 
 interface NotificationsListProps {
   items: NotificationItem[];
-  onMarkRead: (id: string) => void;
-  onDelete: (id: string) => void;
+  onMarkRead: (ids: string[]) => void;
+  onDelete: (ids: string[]) => void;
   /** A mark-read or delete is in flight: the row buttons wait for it. */
   markPending: boolean;
   deletePending: boolean;
@@ -205,26 +234,44 @@ function NotificationsList({
     );
   }
 
+  const rows = groupNotifications(items);
+  const sections = sectionNotifications(rows, new Date());
+  const allRead = items.every((item) => item.readAt !== null);
+
   return (
-    <div className="grid gap-3">
-      {items.map((item, index) => (
-        // Rows stagger in when their notification arrives (first load or
-        // "Load more"); a re-render (marking one read) never replays the
-        // entrance — see src/lib/motion/entrance.ts.
-        <div
-          key={item.id}
-          className={ROW_ENTRANCE}
-          style={{ animationDelay: `${staggerDelay(index)}ms` }}
-        >
-          <NotificationRowCard
-            item={item}
-            onMarkRead={onMarkRead}
-            onDelete={onDelete}
-            markPending={markPending}
-            deletePending={deletePending}
-          />
-        </div>
+    <div className="grid gap-5">
+      {sections.map((section) => (
+        <section key={section.name} className="grid gap-2">
+          <h2 className="text-sm font-medium text-muted-foreground">
+            {t(NOTIFICATION_SECTION_LABEL_KEYS[section.name])}
+          </h2>
+          <div className="grid gap-3">
+            {section.rows.map((row, index) => (
+              // Rows stagger in when their notification arrives (first load
+              // or "Load more"); a re-render (marking one read) never replays
+              // the entrance — see src/lib/motion/entrance.ts.
+              <div
+                key={rowKey(row)}
+                className={ROW_ENTRANCE}
+                style={{ animationDelay: `${staggerDelay(index)}ms` }}
+              >
+                <NotificationRowCard
+                  row={row}
+                  onMarkRead={onMarkRead}
+                  onDelete={onDelete}
+                  markPending={markPending}
+                  deletePending={deletePending}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
       ))}
+      {allRead && (
+        <p className="py-1 text-center text-sm text-muted-foreground">
+          {t("notifications.allCaughtUp")}
+        </p>
+      )}
       {hasNextPage && (
         <Button
           variant="outline"
@@ -241,25 +288,42 @@ function NotificationsList({
 }
 
 interface NotificationRowCardProps {
-  item: NotificationItem;
-  onMarkRead: (id: string) => void;
-  onDelete: (id: string) => void;
+  row: NotificationRow;
+  onMarkRead: (ids: string[]) => void;
+  onDelete: (ids: string[]) => void;
   markPending: boolean;
   deletePending: boolean;
 }
 
 function NotificationRowCard({
-  item,
+  row,
   onMarkRead,
   onDelete,
   markPending,
   deletePending,
 }: NotificationRowCardProps) {
   const t = useT();
-  const sentence = describeNotification(item);
-  const profilePath = actorProfilePath(item.actor);
-  const isUnread = item.readAt === null;
-  const actor = actorLabel(item.actor);
+  const lead =
+    row.kind === "single"
+      ? row.item
+      : (row.items[0] ?? row.items[row.items.length - 1]);
+  const sentence =
+    row.kind === "group"
+      ? describeGroupedNotification(row)
+      : describeNotification(row.item);
+  const ids =
+    row.kind === "single" ? [row.item.id] : row.items.map((item) => item.id);
+  const isUnread =
+    row.kind === "single"
+      ? row.item.readAt === null
+      : row.items.some((item) => item.readAt === null);
+  const isGroup = row.kind === "group";
+  const actor = actorLabel(lead?.actor ?? null);
+  const profilePath = actorProfilePath(lead?.actor ?? null);
+  const canFollowBack =
+    row.kind === "single" &&
+    row.item.type === "follow" &&
+    row.item.actor !== null;
 
   return (
     <div
@@ -268,11 +332,11 @@ function NotificationRowCard({
         isUnread && "border-accent-brand-text/40 bg-muted",
       )}
     >
-      {item.actor ? (
+      {lead?.actor ? (
         <UserAvatar
-          username={item.actor.username}
-          displayName={item.actor.displayName}
-          avatarSpecies={item.actor.avatarSpecies}
+          username={lead.actor.username}
+          displayName={lead.actor.displayName}
+          avatarSpecies={lead.actor.avatarSpecies}
           size="md"
           className="mt-0.5"
         />
@@ -308,10 +372,13 @@ function NotificationRowCard({
           )}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {formatRelativeTime(item.createdAt)}
+          {formatRelativeTime(rowCreatedAt(row))}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
+        {canFollowBack && row.kind === "single" && row.item.actor ? (
+          <FollowBackButton actor={row.item.actor} />
+        ) : null}
         {isUnread && (
           <span
             aria-hidden
@@ -322,8 +389,13 @@ function NotificationRowCard({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={t("notifications.markRead", { name: actor })}
-            onClick={() => onMarkRead(item.id)}
+            aria-label={t(
+              isGroup
+                ? "notifications.markGroupRead"
+                : "notifications.markRead",
+              { name: actor },
+            )}
+            onClick={() => onMarkRead(ids)}
             disabled={markPending}
           >
             <CheckIcon aria-hidden />
@@ -332,8 +404,11 @@ function NotificationRowCard({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={t("notifications.delete", { name: actor })}
-          onClick={() => onDelete(item.id)}
+          aria-label={t(
+            isGroup ? "notifications.deleteGroup" : "notifications.delete",
+            { name: actor },
+          )}
+          onClick={() => onDelete(ids)}
           disabled={deletePending}
         >
           <Trash2Icon aria-hidden />

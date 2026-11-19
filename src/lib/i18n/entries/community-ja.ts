@@ -47,6 +47,19 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "notifications.markRead": "{name}さんの通知を既読にする",
   "notifications.delete": "{name}さんの通知を削除する",
 
+  // グループ化された行：同じ投稿への連続したいいねとコメントを1行にまとめます。
+  "notifications.groupLikesOne": "と他1人があなたの投稿にいいねしました",
+  "notifications.groupLikesMany": "と他{n}人があなたの投稿にいいねしました",
+  "notifications.groupCommentsOne": "と他1人があなたの投稿にコメントしました",
+  "notifications.groupCommentsMany":
+    "と他{n}人があなたの投稿にコメントしました",
+  "notifications.groupMixedOne":
+    "と他1人があなたの投稿にいいねとコメントしました",
+  "notifications.groupMixedMany":
+    "と他{n}人があなたの投稿にいいねとコメントしました",
+  "notifications.markGroupRead": "{name}さんの通知を既読にする",
+  "notifications.deleteGroup": "{name}さんの通知を削除する",
+
   // 通知ページ。
   "notifications.description":
     "いいね、コメント、フォロー、モデレーションの更新。",
@@ -63,6 +76,16 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "notifications.emptyDescription":
     "誰かがあなたの投稿にいいねしたりフォローしたりすると、ここに表示されます。",
   "notifications.loadMore": "さらに表示",
+
+  // 日付セクション、確認済みの表示、フォローバックボタン。
+  "notifications.sectionToday": "今日",
+  "notifications.sectionThisWeek": "今週",
+  "notifications.sectionEarlier": "それ以前",
+  "notifications.allCaughtUp": "すべて確認済みです",
+  "notifications.followBack": "フォロー",
+  "notifications.followingBack": "フォロー中",
+  "notifications.followedToast": "@{name}をフォローしました。",
+  "notifications.unfollowedToast": "@{name}のフォローを解除しました。",
 
   // プッシュ通知の案内カード（ネイティブアプリのみ、VITE_PUSH のフラグ付き）。
   "notifications.pushTitle": "通知をオンにする",
