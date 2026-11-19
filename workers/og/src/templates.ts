@@ -1,10 +1,10 @@
 /**
- * HTML templates for the generated preview images.
+ * Element trees for the generated preview images.
  *
- * Pure string builders: workers-og parses the HTML with the Workers
- * runtime's HTMLRewriter and renders it with satori (see image.ts for the
- * glue). All user text (team names, bios, post bodies) goes through
- * escapeHtml before it lands in the markup.
+ * workers-og's ImageResponse accepts either an HTML string (parsed by a
+ * fragile, error-prone HTMLRewriter pipeline) or an element object
+ * directly. We build the object: no HTML, no escaping, no parser. Text is
+ * data in the tree, so nothing can inject markup into an image.
  *
  * The design is the app's dark theme: page background #0B0D10, foreground
  * #F2F4F7, muted #98A1AD and the lime brand accent #C8F031 (the
@@ -12,7 +12,6 @@
  * no logo art.
  */
 
-import { escapeHtml } from "./meta";
 import { BRAND } from "./site";
 
 /** What a generated image shows. */
@@ -29,9 +28,40 @@ export interface CardImageContent {
   spriteUrls: string[];
 }
 
+/** A React-like element, as workers-og's ImageResponse expects. */
+export interface CardNode {
+  type: string;
+  props: {
+    style?: Record<string, string | number>;
+    src?: string;
+    width?: number;
+    height?: number;
+    children?: CardNode[] | string[];
+  };
+}
+
 /** Caps a line so it can never blow up the fixed-size layout. */
 function fit(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+function text(
+  content: string,
+  style: Record<string, string | number>,
+): CardNode {
+  // Satori requires an explicit display on every div whose children is an
+  // array — even a single-element one — so text nodes carry flex too.
+  return {
+    type: "div",
+    props: {
+      style: { display: "flex", flexDirection: "column", ...style },
+      children: [content],
+    },
+  };
+}
+
+function div(style: Record<string, string | number>, children: CardNode[]) {
+  return { type: "div", props: { style, children } };
 }
 
 /**
@@ -39,30 +69,100 @@ function fit(text: string, max: number): string {
  * brand accent, the heading, the body line, and a row of sprites along
  * the bottom.
  */
-export function buildCardHtml(content: CardImageContent): string {
-  const heading = escapeHtml(fit(content.heading.trim(), 60));
-  const body = content.body
-    ? `<div style="font-size:32px;color:${BRAND.muted};margin-top:24px;line-height:1.4;font-family:'IBM Plex Sans',sans-serif">${escapeHtml(fit(content.body.trim(), 200))}</div>`
-    : "";
-  const sprites =
-    content.spriteUrls.length > 0
-      ? `<div style="display:flex;flex-direction:row;gap:24px;align-items:flex-end;margin-top:40px">${content.spriteUrls
-          .slice(0, 6)
-          .map(
-            (url) =>
-              `<img src="${escapeHtml(url)}" style="width:130px;height:130px" />`,
-          )
-          .join("")}</div>`
-      : "";
-  return `<div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;width:1200px;height:630px;background-color:${BRAND.page};padding:72px;font-family:'Barlow Semi Condensed',sans-serif">
-  <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;width:100%;height:100%;background-color:${BRAND.page};border:2px solid ${BRAND.border};padding:56px">
-    <div style="display:flex;flex-direction:row;align-items:center;gap:16px">
-      <div style="width:20px;height:20px;background-color:${BRAND.accent}"></div>
-      <div style="font-size:40px;font-weight:700;color:${BRAND.accent};letter-spacing:4px">OHKOLab</div>
-    </div>
-    <div style="font-size:72px;font-weight:700;color:${BRAND.foreground};margin-top:32px;line-height:1.1">${heading}</div>
-    ${body}
-    ${sprites}
-  </div>
-</div>`;
+export function buildCardTree(content: CardImageContent): CardNode {
+  const children: CardNode[] = [
+    // The wordmark: the accent square plus the name.
+    div(
+      {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: "16px",
+      },
+      [
+        {
+          type: "div",
+          props: {
+            style: {
+              width: "20px",
+              height: "20px",
+              backgroundColor: BRAND.accent,
+            },
+          },
+        },
+        text("OHKOLab", {
+          fontSize: "40px",
+          fontWeight: 700,
+          color: BRAND.accent,
+          letterSpacing: "4px",
+        }),
+      ],
+    ),
+    text(fit(content.heading.trim(), 60), {
+      fontSize: "72px",
+      fontWeight: 700,
+      color: BRAND.foreground,
+      marginTop: "32px",
+      lineHeight: "1.1",
+    }),
+  ];
+  if (content.body) {
+    children.push(
+      text(fit(content.body.trim(), 200), {
+        fontSize: "32px",
+        color: BRAND.muted,
+        marginTop: "24px",
+        lineHeight: "1.4",
+      }),
+    );
+  }
+  if (content.spriteUrls.length > 0) {
+    children.push(
+      div(
+        {
+          display: "flex",
+          flexDirection: "row",
+          gap: "24px",
+          alignItems: "flex-end",
+          marginTop: "40px",
+        },
+        content.spriteUrls.slice(0, 6).map<CardNode>((url) => ({
+          type: "img",
+          props: { src: url, width: 130, height: 130 },
+        })),
+      ),
+    );
+  }
+  return div(
+    {
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "flex-start",
+      width: "100%",
+      height: "100%",
+      backgroundColor: BRAND.page,
+      border: `2px solid ${BRAND.border}`,
+      padding: "56px",
+    },
+    children,
+  );
+}
+
+/** The outermost element: the full canvas with the app's fonts. */
+export function buildCardElement(content: CardImageContent): CardNode {
+  return div(
+    {
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "flex-start",
+      width: "1200px",
+      height: "630px",
+      backgroundColor: BRAND.page,
+      padding: "72px",
+      fontFamily: "'Barlow Semi Condensed', sans-serif",
+    },
+    [buildCardTree(content)],
+  );
 }

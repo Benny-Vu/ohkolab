@@ -23,7 +23,7 @@ import {
   type SupabaseConfig,
 } from "./data";
 import { getSpriteUrl } from "./sprites";
-import { buildCardHtml, type CardImageContent } from "./templates";
+import { buildCardElement, type CardImageContent } from "./templates";
 import { TAGLINE } from "./site";
 import type { OgImageRequest } from "./routing";
 
@@ -154,7 +154,7 @@ export async function renderOgImage(
 ): Promise<Response> {
   try {
     const content = await imageContent(image, config, fetcher);
-    const response = new ImageResponse(buildCardHtml(content), {
+    const response = new ImageResponse(buildCardElement(content), {
       width: 1200,
       height: 630,
       fonts: await loadFonts(),

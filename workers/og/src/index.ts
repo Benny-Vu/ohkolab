@@ -39,12 +39,17 @@ import {
   ogImageCacheControl,
   type PageRoute,
 } from "./routing";
-import { ORIGIN_HOST, ORIGIN_URL, SITE_URL } from "./site";
+import { originFor, SITE_URL, type Origin, type OriginMode } from "./site";
 
 /** The Worker's plain vars (see wrangler.toml). */
 export interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
+  /**
+   * How the origin is reached: "host-header" (production, the default) or
+   * "direct" (local wrangler dev — see originFor in site.ts).
+   */
+  ORIGIN_MODE?: OriginMode;
 }
 
 /** The anon REST access, or null when the vars are not set. */
@@ -69,24 +74,36 @@ export default {
       (request.method === "GET" || request.method === "HEAD") &&
       isCrawlerUserAgent(request.headers.get("user-agent"));
     if (crawler) {
-      return serveCrawlerPreview(request, url, supabaseConfig(env));
+      return serveCrawlerPreview(
+        request,
+        url,
+        supabaseConfig(env),
+        originFor(env.ORIGIN_MODE),
+      );
     }
 
-    return proxyToOrigin(request, url);
+    return proxyToOrigin(request, url, originFor(env.ORIGIN_MODE));
   },
 };
 
 /**
- * Passes a request through to GitHub Pages unchanged. The Pages project
- * is a project site whose custom domain is ohkolab.com, so the fetch
- * goes to the github.io host with the Host header set to ohkolab.com:
- * Pages serves the site's content without the 301 to ohkolab.com that
- * would otherwise loop back into this Worker. Redirects are never
+ * Passes a request through to GitHub Pages unchanged. In production the
+ * Pages project is a project site whose custom domain is ohkolab.com, so
+ * the fetch goes to the github.io host with the Host header set to
+ * ohkolab.com: Pages serves the site's content without the 301 to
+ * ohkolab.com that would otherwise loop back into this Worker. In "direct"
+ * mode (local dev) the live site is fetched as-is. Redirects are never
  * followed, so no origin redirect can turn into a loop either.
  */
-async function proxyToOrigin(request: Request, url: URL): Promise<Response> {
+async function proxyToOrigin(
+  request: Request,
+  url: URL,
+  origin: Origin,
+): Promise<Response> {
   const headers = new Headers(request.headers);
-  headers.set("host", ORIGIN_HOST);
+  if (origin.host) {
+    headers.set("host", origin.host);
+  }
   const method = request.method;
   const init: RequestInit = {
     method,
@@ -97,7 +114,7 @@ async function proxyToOrigin(request: Request, url: URL): Promise<Response> {
   if (method !== "GET" && method !== "HEAD") {
     init.body = request.body;
   }
-  return fetch(`${ORIGIN_URL}${url.pathname}${url.search}`, init);
+  return fetch(`${origin.url}${url.pathname}${url.search}`, init);
 }
 
 /** Builds the card a crawler sees for one SPA page. */
@@ -140,12 +157,14 @@ async function serveCrawlerPreview(
   request: Request,
   url: URL,
   config: SupabaseConfig | null,
+  origin: Origin,
 ): Promise<Response> {
   const page = matchPage(url.pathname);
   const pageUrl = `${SITE_URL}${url.pathname}`;
   const card = await buildCardForPage(page, pageUrl, config);
 
-  const html = (await fetchOriginIndexHtml()) ?? buildPreviewDocument(card);
+  const html =
+    (await fetchOriginIndexHtml(origin)) ?? buildPreviewDocument(card);
   const preview = injectPreview(html, card);
 
   return new Response(request.method === "HEAD" ? null : preview, {
@@ -155,10 +174,14 @@ async function serveCrawlerPreview(
 }
 
 /** Fetches the SPA's index.html from the origin, or null when it fails. */
-async function fetchOriginIndexHtml(): Promise<string | null> {
+async function fetchOriginIndexHtml(origin: Origin): Promise<string | null> {
   try {
-    const response = await fetch(`${ORIGIN_URL}/`, {
-      headers: { host: ORIGIN_HOST },
+    const headers: Record<string, string> = {};
+    if (origin.host) {
+      headers.host = origin.host;
+    }
+    const response = await fetch(`${origin.url}/`, {
+      headers,
       redirect: "manual",
     });
     if (!response.ok) return null;
