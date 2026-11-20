@@ -19,13 +19,18 @@ test("home renders feed or tools content inside the app shell", async ({
   await expect(main).toBeVisible();
 
   // The feed has a "Latest / Following" segmented control; the tools
-  // intro does not. One of the two must be on screen.
+  // intro does not. In a Supabase-configured build the feed tabs mount
+  // only once auth state resolves, so wait for either marker instead of
+  // sampling once — a bare count() can read zero before the feed lands.
   const feedTabs = page.getByRole("radio", { name: "Latest" });
+  const toolsLink = main.getByRole("link", { name: /Damage calculator/ });
+  await expect(feedTabs.or(toolsLink)).toBeVisible();
   const isFeed = (await feedTabs.count()) > 0;
 
   if (isFeed) {
     // Demo mode fills the empty feed with sample posts marked as examples.
-    await expect(main.getByText("Rika")).toBeVisible();
+    // Exact: "@rikachu" also contains "Rika" as a substring.
+    await expect(main.getByText("Rika", { exact: true })).toBeVisible();
     await expect(
       main.getByText("Example", { exact: true }).first(),
     ).toBeVisible();
