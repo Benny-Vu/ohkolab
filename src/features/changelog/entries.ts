@@ -18,6 +18,11 @@ export interface ChangelogEntry {
 export const changelogEntries: readonly ChangelogEntry[] = [
   {
     date: "2026-11-20",
+    en: "Battle mode with KO matrices and speed order, battle notes that stay on your device, common sets in the calc, and short guides to damage rolls and Speed.",
+    ja: "KO表と素早さ順のバトルモード、端末内だけに保存されるバトルメモ、計算機のよく使われる型、乱数や素早さの解説ページを追加しました。",
+  },
+  {
+    date: "2026-11-20",
     en: "A leaner site: unused code and text removed. Nothing you see changed.",
     ja: "使われないコードとテキストを削除して、サイトを軽くしました。見た目の変更はありません。",
   },
