@@ -31,6 +31,7 @@ Key facts:
 
 ## About
 
+- [What's new](https://ohkolab.com/changelog): the changelog, one line per release, newest first
 - [Credits](https://ohkolab.com/credits): data sources and licences (PokéAPI, @pkmn, @smogon/calc, Smogon usage statistics, fonts and libraries)
 - [Terms of service](https://ohkolab.com/terms)
 - [Privacy policy](https://ohkolab.com/privacy)

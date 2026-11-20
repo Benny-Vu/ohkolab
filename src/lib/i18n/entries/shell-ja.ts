@@ -30,6 +30,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "footer.disclaimer":
     "OHKOLabは非公式のファンプロジェクトであり、任天堂・ゲームフリーク・クリーチャーズ・ポケモンとは一切関係ありません。",
   "footer.learn": "はじめに",
+  "footer.whatsNew": "更新情報",
   "footer.terms": "利用規約",
   "footer.privacy": "プライバシー",
   "footer.credits": "クレジット",
@@ -295,6 +296,8 @@ export const shellJa: { [K in ShellKey]: string } = {
     "ポケモンチャンピオンズの対戦相手をOHKOLabで見つける。募集、申し込み、マッチング。",
   "seo.learnDescription":
     "ポケモンチャンピオンズのダメージ乱数、1発・2発、ステータスポイント（SP）、同速をやさしく解説。",
+  "seo.changelogDescription":
+    "OHKOLabの更新情報。最新のリリースと改善点を新しい順に紹介します。",
   "seo.pressDescription":
     "OHKOLabのロゴ、カラー、スクリーンショット、紹介文。記事や動画にご利用ください。",
 

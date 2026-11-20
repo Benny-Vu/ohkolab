@@ -7,6 +7,7 @@ import { adminRoutes } from "@/features/admin/routes";
 import { battleRoutes } from "@/features/battles/routes";
 import { battleModeRoutes } from "@/features/battle/routes";
 import { calcRoutes } from "@/features/calc/routes";
+import { changelogRoutes } from "@/features/changelog/routes";
 import { creditsRoutes } from "@/features/credits/routes";
 import { feedbackRoutes } from "@/features/feedback/routes";
 import { groupsRoutes } from "@/features/groups/routes";
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
         children: [
           ...homeRoutes,
           ...learnRoutes,
+          ...changelogRoutes,
           ...legalRoutes,
           ...creditsRoutes,
           ...pressRoutes,

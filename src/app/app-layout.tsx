@@ -141,6 +141,13 @@ export function AppLayout() {
           </Link>
           <Link
             className="underline-offset-4 hover:underline"
+            to="/changelog"
+            viewTransition
+          >
+            {t("footer.whatsNew")}
+          </Link>
+          <Link
+            className="underline-offset-4 hover:underline"
             to="/terms"
             viewTransition
           >
