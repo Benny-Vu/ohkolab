@@ -10,6 +10,15 @@ export const battlesJa: { [K in BattlesKey]: string } = {
   // Battle board
   "battles.description": "Championsの対戦相手を募集する。",
   "battles.newRequest": "対戦相手を募集",
+  // 今すぐ対戦：ワンタップ募集（確認ステップを挟み、1時間のウィンドウ）。
+  "battles.practiseNow": "今すぐ対戦",
+  "battles.practiseNowTitle": "今すぐの募集を投稿しますか？",
+  "battles.practiseNowDescription":
+    "この先1時間のカジュアルな対戦を、いまのフォーマット（{format}）で募集します。ボードを見ている誰でも申し込めます。",
+  "battles.practiseNowConfirm": "募集を投稿",
+  "battles.practiseRules": "カジュアル · 今すぐ",
+  // ボードカードの「今すぐプレイしたい」バッジ。
+  "battles.nowBadge": "今",
   "battles.filterFormatAria": "フォーマットの絞り込み",
   "battles.filterLanguageAria": "言語の絞り込み",
   "battles.formatAll": "すべて",

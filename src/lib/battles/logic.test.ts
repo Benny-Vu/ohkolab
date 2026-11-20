@@ -8,6 +8,7 @@ import {
   startsSoon,
   summarizeBattleReplies,
   summarizeBattleRequests,
+  wantsToPlayNow,
   type BattleRequestLite,
 } from "@/lib/battles/logic";
 import type { BattleRequestRow } from "@/lib/database.types";
@@ -80,6 +81,93 @@ describe("startsSoon", () => {
         requestRow({
           starts_at: "2026-11-22T12:30:00Z",
           ends_at: "2026-11-22T11:00:00Z",
+        }),
+        NOW,
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("wantsToPlayNow", () => {
+  it("is true for a practise-now shaped window (now, plus one hour)", () => {
+    expect(
+      wantsToPlayNow(
+        requestRow({
+          starts_at: "2026-11-22T11:55:00Z",
+          ends_at: "2026-11-22T12:55:00Z",
+          created_at: "2026-11-22T11:55:00Z",
+        }),
+        NOW,
+      ),
+    ).toBe(true);
+  });
+
+  it("falls back to the posted time when the request has no start", () => {
+    // Posted half an hour ago, no window at all: fresh enough to be "now".
+    expect(
+      wantsToPlayNow(requestRow({ created_at: "2026-11-22T11:30:00Z" }), NOW),
+    ).toBe(true);
+    // Posted two hours ago: no longer "now".
+    expect(
+      wantsToPlayNow(requestRow({ created_at: "2026-11-22T10:00:00Z" }), NOW),
+    ).toBe(false);
+  });
+
+  it("is false before the window starts, however soon", () => {
+    expect(
+      wantsToPlayNow(requestRow({ starts_at: "2026-11-22T12:30:00Z" }), NOW),
+    ).toBe(false);
+  });
+
+  it("is true while an older window ends within the hour", () => {
+    expect(
+      wantsToPlayNow(
+        requestRow({
+          starts_at: "2026-11-22T09:00:00Z",
+          ends_at: "2026-11-22T12:30:00Z",
+          created_at: "2026-11-22T09:00:00Z",
+        }),
+        NOW,
+      ),
+    ).toBe(true);
+  });
+
+  it("is false for a window that began hours ago and keeps running", () => {
+    expect(
+      wantsToPlayNow(
+        requestRow({
+          starts_at: "2026-11-22T09:00:00Z",
+          ends_at: "2026-11-23T09:00:00Z",
+          created_at: "2026-11-22T09:00:00Z",
+        }),
+        NOW,
+      ),
+    ).toBe(false);
+  });
+
+  it("is false for closed, matched and expired requests", () => {
+    const practise = {
+      starts_at: "2026-11-22T11:55:00Z" as string | null,
+      ends_at: "2026-11-22T12:55:00Z" as string | null,
+    };
+    expect(
+      wantsToPlayNow(requestRow({ status: "closed", ...practise }), NOW),
+    ).toBe(false);
+    expect(
+      wantsToPlayNow(requestRow({ status: "matched", ...practise }), NOW),
+    ).toBe(false);
+    expect(
+      wantsToPlayNow(requestRow({ status: "expired", ...practise }), NOW),
+    ).toBe(false);
+  });
+
+  it("is false once the window has ended", () => {
+    expect(
+      wantsToPlayNow(
+        requestRow({
+          starts_at: "2026-11-22T10:00:00Z",
+          ends_at: "2026-11-22T11:00:00Z",
+          created_at: "2026-11-22T10:00:00Z",
         }),
         NOW,
       ),

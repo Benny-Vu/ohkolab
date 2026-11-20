@@ -17,7 +17,8 @@ test("learn page renders the explainers and their anchors", async ({
   ).toBeVisible();
 
   // The load-bearing anchors the calc links to; the 2hko spelling shares
-  // the OHKO card.
+  // the OHKO card. The attribute selector works for "2hko" too — an id
+  // starting with a digit is not a valid bare CSS id selector.
   for (const id of [
     "damage-rolls",
     "ohko",
@@ -25,7 +26,7 @@ test("learn page renders the explainers and their anchors", async ({
     "stat-points",
     "speed-ties",
   ]) {
-    await expect(page.locator(`#${id}`)).toBeAttached();
+    await expect(page.locator(`[id="${id}"]`)).toBeAttached();
   }
 
   // The live example: a real damage range from the app's own data layer.
