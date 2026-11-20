@@ -30,7 +30,7 @@ export function CrashScreen({
 
   return (
     <Page title={t("crash.title")} width="narrow">
-      <div className="flex flex-col items-center gap-6 py-12 text-center">
+      <div className="flex flex-col items-center gap-6 py-8 text-center">
         <p className="text-sm text-muted-foreground">{t("crash.body")}</p>
         {crashId ? (
           <p className="text-xs text-muted-foreground">

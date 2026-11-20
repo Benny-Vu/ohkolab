@@ -17,7 +17,9 @@ import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { useAuth } from "@/lib/auth";
 import { useIsModerator } from "@/lib/social/moderator-status";
 import { useT } from "@/lib/i18n/t";
+import { useLocale } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
+import { tabLabelSizeClass } from "@/app/nav-items";
 
 interface AccountMenuProps {
   /** "header" for the desktop header, "tab" for the phone tab bar. */
@@ -28,6 +30,7 @@ interface AccountMenuProps {
 export function AccountMenu({ variant }: AccountMenuProps) {
   const auth = useAuth();
   const t = useT();
+  const [locale] = useLocale();
   const moderator = useIsModerator();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -72,7 +75,8 @@ export function AccountMenu({ variant }: AccountMenuProps) {
         to="/login"
         className={({ isActive }) =>
           cn(
-            "flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground",
+            "flex h-full flex-col items-center justify-center gap-0.5 font-medium text-muted-foreground",
+            tabLabelSizeClass(locale),
             isActive && "text-primary",
           )
         }
@@ -106,7 +110,10 @@ export function AccountMenu({ variant }: AccountMenuProps) {
         ) : (
           <DropdownMenuTrigger
             aria-label={t("account.menuAria")}
-            className="flex h-full min-w-0 flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground aria-expanded:text-primary"
+            className={cn(
+              "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 font-medium text-muted-foreground hover:text-foreground aria-expanded:text-primary",
+              tabLabelSizeClass(locale),
+            )}
           >
             <UserAvatar
               username={profile?.username ?? ""}

@@ -104,7 +104,7 @@ function MoveRow({
 
   return (
     <button
-      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-left transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-muted/50"
+      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-transparent px-2 py-2 text-left transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-muted/50"
       onClick={() => dispatch({ type: "selectMove", side, slot: outcome.slot })}
       type="button"
     >

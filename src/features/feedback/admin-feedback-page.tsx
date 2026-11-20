@@ -22,8 +22,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardTitle } from "@/components/card-title";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";

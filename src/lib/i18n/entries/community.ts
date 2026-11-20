@@ -545,6 +545,7 @@ export const communityEn = {
   "messages.empty": "No conversations yet.",
   "messages.signIn": "Sign in to see your messages.",
   "messages.loadError": "Could not load your messages.",
+  "messages.loadErrorHint": "Check your connection and try again.",
   "messages.loadingConversationsAria": "Loading conversations",
   "messages.loadingThreadAria": "Loading messages",
   "messages.previewDeleted": "Message deleted",

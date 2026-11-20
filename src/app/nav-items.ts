@@ -24,6 +24,14 @@ export interface NavItem {
   badge?: "messages";
 }
 
+/**
+ * Tab-bar label size. 11px is a documented exception in design-rules.md
+ * (nav chrome, short labels); Japanese gets 12px, the Japanese floor.
+ */
+export function tabLabelSizeClass(locale: "en" | "ja"): string {
+  return locale === "ja" ? "text-xs" : "text-[11px]";
+}
+
 /** The destinations shown in the header on desktop and the tab bar on phones. */
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", labelKey: "nav.home", icon: HouseIcon, end: true },

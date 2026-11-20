@@ -39,7 +39,7 @@ export function MessagesPage({
       ) : conversationsQuery.isError ? (
         <ErrorState
           title={t("messages.loadError")}
-          description={t("messages.loadError")}
+          description={t("messages.loadErrorHint")}
           action={
             <Button
               variant="outline"

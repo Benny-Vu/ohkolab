@@ -155,7 +155,7 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
             <tr>
               <th
                 scope="col"
-                className="sticky left-0 z-10 border-b border-border bg-card pr-2 text-left text-[10px] font-medium text-muted-foreground"
+                className="sticky left-0 z-10 border-b border-border bg-card pr-2 text-left text-xs font-medium text-muted-foreground"
               >
                 {mode === "defense"
                   ? t("teams.heatMapPokemon")
@@ -168,7 +168,7 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
                   className="border-b border-border px-0.5 pb-1.5 text-center"
                 >
                   <span
-                    className={`inline-flex h-4 min-w-7 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold tracking-wide text-white uppercase ${
+                    className={`inline-flex h-5 min-w-7 items-center justify-center rounded-md px-1 text-xs font-semibold tracking-wide text-white uppercase ${
                       highlighted.has(type) ? "ring-2 ring-destructive" : ""
                     }`}
                     style={{ backgroundColor: TYPE_COLORS[type] }}
@@ -202,7 +202,7 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
                     <td
                       key={index}
                       title={note ? noteSentence(note) : undefined}
-                      className={`px-0.5 py-1 text-center font-mono text-[10px] tabular-nums ${cellTone(cell, mode)}`}
+                      className={`px-0.5 py-1 text-center font-mono text-2xs tabular-nums ${cellTone(cell, mode)}`}
                     >
                       {formatMultiplier(cell)}
                     </td>
@@ -218,7 +218,7 @@ export function TypeHeatMap({ members, mode }: TypeHeatMapProps) {
           {[...noteByKey.values()].map((note) => (
             <li
               key={`${note.member}-${note.type}`}
-              className="text-[11px] text-muted-foreground"
+              className="text-xs text-muted-foreground"
             >
               {noteSentence(note)}
             </li>

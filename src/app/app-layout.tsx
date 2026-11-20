@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, NavLink, Outlet, ScrollRestoration } from "react-router";
 
 import { AccountMenu } from "@/app/account-menu";
-import { NAV_ITEMS } from "@/app/nav-items";
+import { NAV_ITEMS, tabLabelSizeClass } from "@/app/nav-items";
 import { usePageTitle, usePageView } from "@/app/page-title";
 import { SearchPalette } from "@/app/search-palette";
 import { useNativeApp } from "@/app/use-native-app";
@@ -27,6 +27,7 @@ import { OnboardingDialog } from "@/features/account/onboarding-dialog";
 import { WelcomeFlow } from "@/features/account/welcome-flow";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { NotificationBell } from "@/features/notifications/notification-bell";
+import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { directMessagesEnabled } from "@/lib/messages/flag";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ export function AppLayout() {
   // Native app glue (back button, status bar, splash, external links); no-op on the web.
   useNativeApp();
   const t = useT();
+  const [locale] = useLocale();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   // Pages that want a destination prefetched dispatch the event instead of
@@ -182,7 +184,8 @@ export function AppLayout() {
                 onFocus={() => prefetchDestination(item.to)}
                 className={({ isActive }) =>
                   cn(
-                    "relative flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground",
+                    "relative flex h-full flex-col items-center justify-center gap-0.5 font-medium text-muted-foreground",
+                    tabLabelSizeClass(locale),
                     // The top bar is always in the DOM; it scales and fades
                     // between tabs instead of popping in.
                     "before:absolute before:top-0 before:h-0.5 before:w-8 before:origin-center before:bg-accent-brand-text before:scale-x-0 before:opacity-0 before:transition-[opacity,transform] before:duration-(--motion-base) before:ease-(--motion-ease-out)",

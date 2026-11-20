@@ -13,8 +13,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardTitle } from "@/components/card-title";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";

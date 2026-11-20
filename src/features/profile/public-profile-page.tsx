@@ -28,8 +28,8 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardTitle } from "@/components/card-title";
 import {
   Dialog,
   DialogContent,

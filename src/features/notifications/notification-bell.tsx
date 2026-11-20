@@ -31,7 +31,7 @@ export function NotificationBell() {
       >
         <BellIcon aria-hidden />
         {badge && (
-          <span className="absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground">
+          <span className="absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-2xs font-semibold leading-4 text-primary-foreground">
             {badge}
           </span>
         )}

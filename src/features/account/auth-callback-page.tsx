@@ -9,8 +9,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardTitle } from "@/components/card-title";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import type { AuthFailure } from "@/lib/auth/types";
