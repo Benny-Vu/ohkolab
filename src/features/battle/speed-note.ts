@@ -173,7 +173,11 @@ export type SpeedHint =
   | { kind: "scarf" }
   | { kind: "boostMax"; nature: string }
   | { kind: "boostOrScarf"; nature: string }
-  | { kind: "uninvested"; nature: string };
+  | { kind: "uninvested"; nature: string }
+  /** Slower than its slowest spread: its Speed was lowered in battle. */
+  | { kind: "slowed" }
+  /** Faster than its fastest spread with a Scarf: a boost not in the notes. */
+  | { kind: "boosted" };
 
 function speciesStat(
   species: string,
@@ -201,7 +205,11 @@ function speciesStat(
  * What the range implies about the opponent's nature and item, compared
  * with the speeds the species can actually reach at level 50: 0 to 32
  * Speed SP with a hindering, neutral or boosting nature. A lower bound
- * above every reachable stat means it must be Choice Scarfed.
+ * above every reachable stat means it must be Choice Scarfed. Bounds
+ * outside even those extremes (below the slowest spread, above the
+ * fastest one with a Scarf) mean the stat itself was modified mid-battle,
+ * usually a Speed drop (Icy Wind, paralysis) or an unnoted boost, so the
+ * hint says that instead of guessing a spread.
  */
 export function speedHint(
   species: string,
@@ -212,10 +220,17 @@ export function speedHint(
   const hinder = hinderingNature(species);
   const neutralMax = speciesStat(species, 32, "Serious");
   // Any +Speed nature reaches the same Speed; "Jolly" stands in for the
-  // set of them when computing the maximum.
+  // set of them when computing the maximum, and "Brave" for the -Speed
+  // natures when computing the minimum.
   const boostMax = speciesStat(species, 32, "Jolly");
   const uninvestedMax = speciesStat(species, 0, "Serious");
+  const hinderedMin = speciesStat(species, 0, "Brave");
+  // Choice Scarf is x1.5 through the 4096 chain; with .0 or .5 fractions
+  // its round-half-down equals a floor.
+  const scarfMax = Math.floor(boostMax * 1.5);
 
+  if (range.max !== null && range.max < hinderedMin) return { kind: "slowed" };
+  if (range.min !== null && range.min > scarfMax) return { kind: "boosted" };
   if (range.min !== null && range.min > boostMax) return { kind: "scarf" };
   if (range.min !== null && range.min >= boostMax) {
     return { kind: "boostMax", nature: boost };

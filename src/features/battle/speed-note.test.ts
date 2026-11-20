@@ -195,6 +195,28 @@ describe("speedHint", () => {
     });
   });
 
+  it("reads an upper bound below the slowest spread as a Speed drop", () => {
+    // Garchomp's slowest spread (Brave, 0 SP) is 109: at most 108 means
+    // something lowered it, not an unusual spread.
+    expect(speedHint("Garchomp", { min: null, max: 108 })).toEqual({
+      kind: "slowed",
+    });
+    expect(speedHint("Garchomp", { min: null, max: 109 })).toEqual({
+      kind: "uninvested",
+      nature: "Brave",
+    });
+  });
+
+  it("reads a lower bound above Scarf at max Speed as an unnoted boost", () => {
+    // Jolly max 169 with a Scarf is 253.
+    expect(speedHint("Garchomp", { min: 253, max: null })).toEqual({
+      kind: "scarf",
+    });
+    expect(speedHint("Garchomp", { min: 254, max: null })).toEqual({
+      kind: "boosted",
+    });
+  });
+
   it("calls crossing bounds inconsistent", () => {
     expect(speedHint("Garchomp", { min: 180, max: 100 })).toEqual({
       kind: "inconsistent",

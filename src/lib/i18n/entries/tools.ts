@@ -387,6 +387,10 @@ export const toolsEn = {
   "battle.hintBoostMax": "Speed-boosting nature ({nature}) with max Speed SP.",
   "battle.hintBoostOrScarf": "Speed-boosting nature or Choice Scarf.",
   "battle.hintUninvested": "Uninvested or Speed-lowering nature ({nature}).",
+  "battle.hintSlowed":
+    "Slower than it can be: its Speed was probably lowered (paralysis, Icy Wind).",
+  "battle.hintBoosted":
+    "Faster than even Choice Scarf allows: probably a Speed boost not in your notes.",
   "battle.hintInconsistent": "Inconsistent, check your notes.",
   "battle.speedFromNotes": "from your notes",
   "battle.bandAtLeast": "≥{min}",

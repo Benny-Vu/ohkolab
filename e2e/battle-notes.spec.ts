@@ -121,12 +121,14 @@ test("speed notes tie to your team, give a range and reach the speed order", asy
   await page.getByRole("button", { name: "Note it" }).click();
 
   // The relation chip shows, with the range and the plain hint under it.
+  // Garchomp slower than an Incineroar is below any Garchomp spread, so
+  // the hint says its Speed was lowered rather than guessing a nature.
   await expect(
     page.getByText(/Slower than your Incineroar \(\d+\)/),
   ).toBeVisible();
   await expect(page.getByText(/Speed at most \d+\./)).toBeVisible();
   await expect(
-    page.getByText(/Uninvested or Speed-lowering nature \(Brave\)\./),
+    page.getByText(/Slower than it can be: its Speed was probably lowered/),
   ).toBeVisible();
 
   // The speed order carries the band, labelled as coming from the notes.

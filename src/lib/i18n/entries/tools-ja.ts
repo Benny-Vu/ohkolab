@@ -385,6 +385,10 @@ export const toolsJa: { [K in ToolsKey]: string } = {
     "素早さに良いせいかく、またはこだわりスカーフのはず。",
   "battle.hintUninvested":
     "無振り、または素早さに悪いせいかく（{nature}）のはず。",
+  "battle.hintSlowed":
+    "最低値より遅いです。まひや素早さ低下（こごえるかぜなど）を受けているはず。",
+  "battle.hintBoosted":
+    "こだわりスカーフでも届かない速さです。メモにない素早さ上昇があるはず。",
   "battle.hintInconsistent": "矛盾しています。メモを見直してください。",
   "battle.speedFromNotes": "メモから",
   "battle.bandAtLeast": "≥{min}",

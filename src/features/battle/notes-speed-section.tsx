@@ -284,6 +284,10 @@ function hintLabel(
       return t("battle.hintBoostOrScarf", { nature: hint.nature });
     case "uninvested":
       return t("battle.hintUninvested", { nature: hint.nature });
+    case "slowed":
+      return t("battle.hintSlowed");
+    case "boosted":
+      return t("battle.hintBoosted");
     default:
       return "";
   }
