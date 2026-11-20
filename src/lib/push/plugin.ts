@@ -34,8 +34,31 @@ export interface PushPlugin {
   removeAllListeners(): Promise<void>;
 }
 
-/** The Capacitor push plugin, loaded lazily so it stays out of every bundle it does not belong in. */
+/**
+ * The Capacitor push plugin, loaded lazily so it stays out of every bundle
+ * it does not belong in.
+ *
+ * A Capacitor plugin object is a proxy that turns ANY property into a
+ * native method call, `then` included. Resolving a promise with it makes
+ * the promise machinery call `plugin.then()`, which rejects with
+ * '"PushNotifications.then()" is not implemented on android'. So this
+ * returns a plain object that forwards to the plugin instead of the proxy
+ * itself.
+ */
 export async function getPushPlugin(): Promise<PushPlugin> {
   const { PushNotifications } = await import("@capacitor/push-notifications");
-  return PushNotifications as unknown as PushPlugin;
+  const native = PushNotifications as unknown as PushPlugin;
+  return {
+    checkPermissions: () => native.checkPermissions(),
+    requestPermissions: () => native.requestPermissions(),
+    register: () => native.register(),
+    addListener: ((event: string, listener: (event: never) => void) =>
+      (
+        native.addListener as (
+          event: string,
+          listener: (event: never) => void,
+        ) => Promise<{ remove(): void }>
+      )(event, listener)) as PushPlugin["addListener"],
+    removeAllListeners: () => native.removeAllListeners(),
+  };
 }
