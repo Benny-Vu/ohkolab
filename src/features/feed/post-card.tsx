@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import {
   BanIcon,
   CopyIcon,
+  DownloadIcon,
   ExternalLinkIcon,
   FlagIcon,
   HeartIcon,
@@ -65,7 +66,9 @@ import {
 } from "@/features/feed/attachment";
 import { koResultOf } from "@/features/calc/ko-result";
 import { ReportDialog } from "@/features/feed/report-dialog";
+import { SaveImageDialog } from "@/features/share/save-image";
 import { useShare } from "@/features/share/share-link";
+import type { ShareCardContent } from "@/lib/share-cards/svg";
 
 /**
  * The card unmounts when its post is deleted or removed, taking focus with it;
@@ -125,6 +128,7 @@ export function PostCard({
   const { create } = useTeams();
 
   const [editing, setEditing] = useState(false);
+  const [savingImage, setSavingImage] = useState(false);
   const [editBody, setEditBody] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -156,6 +160,16 @@ export function PostCard({
   const showHandle =
     displayName.trim().toLowerCase() !==
     post.author_username.trim().toLowerCase();
+  // The share card quotes the post: the author as the heading, the body as
+  // the secondary line, the attached team's species as the sprite row.
+  const cardContent: ShareCardContent = {
+    kind: "post",
+    eyebrow: null,
+    heading: displayName,
+    body: post.body,
+    stat: null,
+    species: team ? team.members.map((member) => member.species) : [],
+  };
 
   async function handleLike() {
     setLikePop((count) => count + 1);
@@ -472,6 +486,10 @@ export function PostCard({
               <Share2Icon aria-hidden />
               {t("share.share")}
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setSavingImage(true)}>
+              <DownloadIcon aria-hidden />
+              {t("share.saveImage")}
+            </DropdownMenuItem>
             {isOwn ? (
               <>
                 <DropdownMenuItem
@@ -536,6 +554,12 @@ export function PostCard({
         onOpenChange={setReporting}
         targetType="post"
         targetId={post.id}
+      />
+
+      <SaveImageDialog
+        content={cardContent}
+        onOpenChange={setSavingImage}
+        open={savingImage}
       />
 
       <Dialog open={removing} onOpenChange={setRemoving}>

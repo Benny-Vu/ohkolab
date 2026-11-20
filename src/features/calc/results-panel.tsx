@@ -13,7 +13,9 @@ import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import type { SecondDefenderData } from "@/features/calc/second-defender";
 import { useSideNames } from "@/features/calc/use-side-names";
+import { SaveImageButton } from "@/features/share/save-image";
 import { ShareButton } from "@/features/share/share-button";
+import type { ShareCardContent } from "@/lib/share-cards/svg";
 import { calcShareUrl } from "@/lib/calc/share-url";
 import type { Translate } from "@/components/stat-labels";
 import { useT } from "@/lib/i18n/t";
@@ -181,6 +183,15 @@ function ResultBlock({
     });
   };
 
+  const cardContent: ShareCardContent = {
+    kind: "calc",
+    eyebrow: t("calc.title"),
+    heading: t("postCard.vs", { a: attackerName, b: defender.name }),
+    body: displayName("move", outcome.move),
+    stat: outcomeRangeText(outcome),
+    species: [],
+  };
+
   return (
     <div className="grid gap-3 rounded-lg border bg-muted/40 p-3">
       {hasPartner ? (
@@ -276,6 +287,12 @@ function ResultBlock({
           <ShareButton
             title={`${t("calc.title")} · ${displayName("move", outcome.move)}`}
             url={shareUrl}
+            size="xs"
+            variant="ghost"
+          />
+          <SaveImageButton
+            content={cardContent}
+            iconOnly
             size="xs"
             variant="ghost"
           />

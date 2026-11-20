@@ -537,6 +537,14 @@ export const communityEn = {
   "share.copiedLink": "Link copied to clipboard.",
   "share.copyFailed": "The link could not be copied.",
 
+  // Share cards (marketing wave): save a rendered card as a PNG image.
+  "share.saveImage": "Save as image",
+  "share.imageStory": "Story 1080 × 1920",
+  "share.imageLandscape": "Landscape 1200 × 630",
+  "share.imageFormatDescription": "Pick a format for the image.",
+  "share.imageSaved": "Image saved.",
+  "share.imageSaveFailed": "The image could not be saved.",
+
   // Direct messages (built but not launched; VITE_DIRECT_MESSAGES).
   "pageTitle.messages": "Messages",
   "messages.title": "Messages",

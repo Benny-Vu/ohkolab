@@ -15,9 +15,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MemberCard } from "@/features/team-builder/member-card";
 import { usePublicTeam } from "@/features/team-builder/public-team";
 import { useProfilesByIds } from "@/features/profile/profile-queries";
+import { SaveImageButton } from "@/features/share/save-image";
 import { ShareButton } from "@/features/share/share-button";
 import { useT } from "@/lib/i18n/t";
 import { displayTeamName } from "@/lib/team/display";
+import type { ShareCardContent } from "@/lib/share-cards/svg";
 import { useTeams } from "@/lib/team/use-teams";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 
@@ -130,6 +132,14 @@ export function PublicTeamView({
       : t("calc.formatSingles"),
     t("publicProfile.pokemonCount", { n: team.members.length }),
   ].join(" · ");
+  const cardContent: ShareCardContent = {
+    kind: "team",
+    eyebrow: sharedBy ? `${meta} · ${sharedBy}` : meta,
+    heading: displayTeamName(team.name),
+    body: null,
+    stat: null,
+    species: team.members.map((member) => member.species),
+  };
 
   return (
     <Page
@@ -152,6 +162,7 @@ export function PublicTeamView({
             }
             url={`${window.location.origin}/teams/${team.id}`}
           />
+          <SaveImageButton content={cardContent} />
           <Button variant="outline" size="sm" onClick={copyToMyTeams}>
             <CopyIcon aria-hidden />
             {t("postCard.copyTeam")}
