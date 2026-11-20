@@ -76,7 +76,7 @@ export async function shareLink(target: ShareTarget): Promise<ShareOutcome> {
  * speaks for itself), a toast after a copy, an error toast when even the
  * copy failed. Used by `ShareButton` and the post card's menu item.
  */
-export async function shareWithFeedback(
+async function shareWithFeedback(
   target: ShareTarget,
   t: (key: TranslationKey, params?: TranslationParams) => string,
 ): Promise<void> {

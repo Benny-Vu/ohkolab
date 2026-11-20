@@ -13,7 +13,7 @@ const PokemonSprite = lazy(() =>
   })),
 );
 
-export type UserAvatarSize = "sm" | "md" | "lg";
+type UserAvatarSize = "sm" | "md" | "lg";
 
 const SIZE_CLASSES: Record<UserAvatarSize, string> = {
   sm: "size-7 text-xs",
