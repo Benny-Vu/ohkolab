@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DownloadIcon, LoaderCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { menuItemClass } from "@/components/menu-item-class";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -104,7 +105,11 @@ export function SaveImageButton({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         {FORMATS.map(({ format, label }) => (
-          <DropdownMenuItem key={format} onSelect={() => void save(format)}>
+          <DropdownMenuItem
+            key={format}
+            className={menuItemClass}
+            onSelect={() => void save(format)}
+          >
             {formatLabel(t, label)}
           </DropdownMenuItem>
         ))}

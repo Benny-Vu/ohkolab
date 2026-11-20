@@ -4,6 +4,7 @@ import { LogInIcon, LogOutIcon, MessageSquareIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { UserAvatar } from "@/components/user-avatar";
+import { menuItemClass } from "@/components/menu-item-class";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -94,9 +95,12 @@ export function AccountMenu({ variant }: AccountMenuProps) {
       <DropdownMenu>
         {variant === "header" ? (
           <DropdownMenuTrigger asChild>
+            {/* The avatar is round, so its hover background and focus ring
+                are round too (rounded-full over the kit's rounded-md). */}
             <Button
               variant="ghost"
               size="icon"
+              className="rounded-full"
               aria-label={t("account.menuAria")}
             >
               <UserAvatar
@@ -135,37 +139,41 @@ export function AccountMenu({ variant }: AccountMenuProps) {
               : t("profile.accountSection")}
           </DropdownMenuLabel>
           {profile && (
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className={menuItemClass}>
               <Link to={`/u/${profile.username}`}>
                 {t("profile.publicPage")}
               </Link>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className={menuItemClass}>
             <Link to="/profile">{t("nav.profile")}</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className={menuItemClass}>
             <Link to="/groups">{t("groups.homeTitle")}</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setFeedbackOpen(true)}>
+          <DropdownMenuItem
+            className={menuItemClass}
+            onSelect={() => setFeedbackOpen(true)}
+          >
             <MessageSquareIcon aria-hidden />
             {t("footer.sendFeedback")}
           </DropdownMenuItem>
           {moderator.data === true && (
             <>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className={menuItemClass}>
                 <Link to="/admin/reports">{t("pageTitle.reports")}</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className={menuItemClass}>
                 <Link to="/admin/appeals">{t("account.moderationItem")}</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className={menuItemClass}>
                 <Link to="/admin/feedback">{t("pageTitle.feedback")}</Link>
               </DropdownMenuItem>
             </>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            className={menuItemClass}
             onSelect={() => {
               void handleSignOut();
             }}

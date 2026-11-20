@@ -86,6 +86,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  menuItemClass,
+  menuItemDestructiveClass,
+} from "@/components/menu-item-class";
 
 // The team preview needs the dex (localized names, sprites), so it loads
 // lazily when the team dialog opens, keeping pokemon-data out of the
@@ -574,7 +578,7 @@ function ProfileSocialActions({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className={menuItemClass}>
                   <Link to={signInTo}>
                     <LogInIcon aria-hidden />
                     {t("publicProfile.signInToBlock")}
@@ -622,18 +626,23 @@ function ProfileSocialActions({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   variant="destructive"
+                  className={menuItemDestructiveClass}
                   onSelect={() => setBlockOpen(true)}
                 >
                   <BanIcon aria-hidden />
                   {t("publicProfile.blockUser")}
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setReportOpen(true)}>
+                <DropdownMenuItem
+                  className={menuItemClass}
+                  onSelect={() => setReportOpen(true)}
+                >
                   <FlagIcon aria-hidden />
                   {t("publicProfile.reportUser")}
                 </DropdownMenuItem>
                 {isModerator ? (
                   <DropdownMenuItem
                     variant="destructive"
+                    className={menuItemDestructiveClass}
                     onSelect={() => setSuspendOpen(true)}
                   >
                     <BanIcon aria-hidden />

@@ -36,6 +36,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  menuItemClass,
+  menuItemDestructiveClass,
+} from "@/components/menu-item-class";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -445,12 +449,16 @@ export function TeamDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => openRename()}>
+              <DropdownMenuItem
+                className={menuItemClass}
+                onSelect={() => openRename()}
+              >
                 <PencilIcon aria-hidden />
                 {t("teams.rename")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
+                className={menuItemDestructiveClass}
                 onSelect={() => handleDelete()}
               >
                 <Trash2Icon aria-hidden />

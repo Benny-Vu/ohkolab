@@ -35,6 +35,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  menuItemClass,
+  menuItemDestructiveClass,
+} from "@/components/menu-item-class";
 import { Textarea } from "@/components/ui/textarea";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { TeamIdChip } from "@/components/team-id-chip";
@@ -475,6 +479,7 @@ export function PostCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
+              className={menuItemClass}
               onSelect={() =>
                 void share({
                   title: displayName,
@@ -486,13 +491,17 @@ export function PostCard({
               <Share2Icon aria-hidden />
               {t("share.share")}
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setSavingImage(true)}>
+            <DropdownMenuItem
+              className={menuItemClass}
+              onSelect={() => setSavingImage(true)}
+            >
               <DownloadIcon aria-hidden />
               {t("share.saveImage")}
             </DropdownMenuItem>
             {isOwn ? (
               <>
                 <DropdownMenuItem
+                  className={menuItemClass}
                   onSelect={() => {
                     setEditBody(post.body);
                     setEditing(true);
@@ -503,6 +512,7 @@ export function PostCard({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
+                  className={menuItemDestructiveClass}
                   onSelect={() => setConfirmDelete(true)}
                 >
                   <Trash2Icon aria-hidden />
@@ -511,11 +521,17 @@ export function PostCard({
               </>
             ) : (
               <>
-                <DropdownMenuItem onSelect={() => setReporting(true)}>
+                <DropdownMenuItem
+                  className={menuItemClass}
+                  onSelect={() => setReporting(true)}
+                >
                   <FlagIcon aria-hidden />
                   {t("postCard.reportPost")}
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setBlocking(true)}>
+                <DropdownMenuItem
+                  className={menuItemClass}
+                  onSelect={() => setBlocking(true)}
+                >
                   <BanIcon aria-hidden />
                   {t("postCard.blockUser", { name: post.author_username })}
                 </DropdownMenuItem>
@@ -526,6 +542,7 @@ export function PostCard({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
+                  className={menuItemDestructiveClass}
                   onSelect={() => onRemoveFromGroup()}
                 >
                   <ShieldOffIcon aria-hidden />
@@ -538,6 +555,7 @@ export function PostCard({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
+                  className={menuItemDestructiveClass}
                   onSelect={() => setRemoving(true)}
                 >
                   <Trash2Icon aria-hidden />
