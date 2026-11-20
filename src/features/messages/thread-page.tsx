@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
-import { ArrowLeftIcon, FlagIcon, SendIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  FlagIcon,
+  LoaderCircleIcon,
+  RotateCcwIcon,
+  SendIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { EmptyState } from "@/components/empty-state";
@@ -17,12 +23,12 @@ import { useConversationMeta, useThread } from "@/lib/messages/queries";
 import {
   useMarkConversationRead,
   useSendMessage,
+  type ThreadMessage,
 } from "@/lib/messages/mutations";
 import {
   hasUnreadFromOther,
   MESSAGE_BODY_MAX,
   otherUserIdOf,
-  type MessageRowLite,
 } from "@/lib/messages/logic";
 import { useThreadRealtime } from "@/lib/messages/realtime";
 import { ReportMessageDialog } from "@/features/messages/report-message-dialog";
@@ -50,7 +56,7 @@ export function ThreadPage({
 
   const [body, setBody] = useState("");
   const [closed, setClosed] = useState(false);
-  const [reporting, setReporting] = useState<MessageRowLite | null>(null);
+  const [reporting, setReporting] = useState<ThreadMessage | null>(null);
   const markedRef = useRef<string | null>(null);
 
   const meta = metaQuery.data ?? null;
@@ -85,19 +91,27 @@ export function ThreadPage({
     if (body.trim() === "" || body.trim().length > MESSAGE_BODY_MAX) {
       return;
     }
+    const sent = body;
+    // The optimistic copy appears in the thread at once, so the composer
+    // clears immediately; a refused send keeps its row with a Retry action.
+    setBody("");
     const result = await sendMessage.mutateAsync({
       conversationId,
-      body,
+      body: sent,
     });
-    if (result.ok) {
-      setBody("");
-    } else if (result.error.code === "forbidden") {
-      // A block, a setting or the minor rule: never say who or which.
-      setClosed(true);
-      toast.error(t("messages.threadUnavailable"));
-    } else {
-      toast.error(result.error.message);
+    if (!result.ok) {
+      if (result.error.code === "forbidden") {
+        // A block, a setting or the minor rule: never say who or which.
+        setClosed(true);
+        toast.error(t("messages.threadUnavailable"));
+      } else {
+        toast.error(result.error.message);
+      }
     }
+  };
+
+  const retry = (failedBody: string) => {
+    void sendMessage.mutateAsync({ conversationId, body: failedBody });
   };
 
   const headerTitle = meta?.otherProfile
@@ -146,9 +160,10 @@ export function ThreadPage({
             {messages.map((message) => (
               <MessageRow
                 key={message.id}
-                message={message}
+                message={message as ThreadMessage}
                 fromMe={user !== null && message.sender_id === user.id}
-                onReport={() => setReporting(message)}
+                onReport={() => setReporting(message as ThreadMessage)}
+                onRetry={retry}
               />
             ))}
           </ul>
@@ -219,17 +234,22 @@ function MessageRow({
   message,
   fromMe,
   onReport,
+  onRetry,
 }: {
-  message: MessageRowLite;
+  message: ThreadMessage;
   fromMe: boolean;
   onReport: () => void;
+  onRetry: (body: string) => void;
 }) {
   const t = useT();
+  const pending = message.pending === true;
+  const failed = message.failed === true;
   return (
     <li
       className={cn(
         "flex max-w-[85%] flex-col gap-0.5",
         fromMe ? "ml-auto items-end" : "items-start",
+        (pending || failed) && "opacity-70",
       )}
     >
       <div
@@ -243,10 +263,31 @@ function MessageRow({
         {message.body}
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-[10px] tabular-nums text-muted-foreground">
-          {new Date(message.created_at).toLocaleString()}
-        </span>
-        {!fromMe ? (
+        {pending ? (
+          <LoaderCircleIcon
+            className="size-3 animate-spin text-muted-foreground"
+            aria-hidden
+          />
+        ) : failed ? (
+          <span className="text-xs text-destructive">
+            {t("messages.notSent")}
+          </span>
+        ) : (
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {new Date(message.created_at).toLocaleString()}
+          </span>
+        )}
+        {failed ? (
+          <button
+            type="button"
+            onClick={() => onRetry(message.body)}
+            aria-label={t("common.retry")}
+            className="text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground"
+          >
+            <RotateCcwIcon className="size-3" aria-hidden />
+          </button>
+        ) : null}
+        {!fromMe && !pending ? (
           <button
             type="button"
             onClick={onReport}

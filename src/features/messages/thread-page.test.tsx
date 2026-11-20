@@ -236,6 +236,115 @@ describe("ThreadPage with the flag on", () => {
     });
   });
 
+  it("shows the message at once while the send is in flight", async () => {
+    // The insert resolves only when the test says so.
+    let settleInsert!: () => void;
+    const sent: Array<Record<string, unknown>> = [];
+    const config = threadConfig();
+    const original = config.resolve!;
+    config.resolve = (record) => {
+      if (record.table === "messages" && record.insertValues) {
+        return new Promise((resolve) => {
+          settleInsert = () => {
+            const value = record.insertValues![0] as Record<string, unknown>;
+            const row = {
+              ...value,
+              id: "m-live",
+              created_at: "2026-11-19T11:00:00+00:00",
+              deleted_at: null,
+            };
+            sent.push(row);
+            resolve({ data: row, error: null });
+          };
+        }) as unknown as { data?: unknown; error?: unknown };
+      }
+      if (record.table === "messages" && !record.insertValues) {
+        // Later refetches also return what was sent.
+        return { data: [...THREAD, ...sent], error: null };
+      }
+      return original(record);
+    };
+    const user = userEvent.setup();
+    renderThread(config);
+    const composer = await screen.findByRole("textbox", {
+      name: "Write a message",
+    });
+    await user.type(composer, "Fast one");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    // The optimistic copy is in the thread before the insert resolves, and
+    // the composer is already clear for the next message.
+    expect(screen.getByText("Fast one")).toBeInTheDocument();
+    expect(
+      (
+        screen.getByRole("textbox", {
+          name: "Write a message",
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("");
+
+    settleInsert();
+    // The confirmed message stays after the swap and the refetch the success
+    // triggers. (Re-queried every poll: the pending row's element is replaced
+    // when the confirmed row takes its place.)
+    await waitFor(() => {
+      expect(sent).toHaveLength(1);
+      expect(screen.getByText("Fast one")).toBeInTheDocument();
+    });
+  });
+
+  it("keeps a failed send in the thread with a Retry action", async () => {
+    const insertResult = {
+      data: null as unknown,
+      // An unmapped code: the toast text stays unique across the file's
+      // tests (sonner toasts outlive the render they were fired from).
+      error: { code: "XX000", message: "nope" } as unknown,
+    };
+    const sent: Array<Record<string, unknown>> = [];
+    const config = threadConfig({ insertResult });
+    const original = config.resolve!;
+    config.resolve = (record) => {
+      if (record.table === "messages" && record.insertValues) {
+        const result = original(record);
+        if (!("error" in result) || result.error === null) {
+          const value = record.insertValues![0] as Record<string, unknown>;
+          sent.push({
+            ...value,
+            id: "m-new",
+            created_at: "2026-11-19T11:00:00+00:00",
+            deleted_at: null,
+          });
+        }
+        return result;
+      }
+      if (record.table === "messages" && !record.insertValues) {
+        // Later refetches also return what was sent.
+        return { data: [...THREAD, ...sent], error: null };
+      }
+      return original(record);
+    };
+    const user = userEvent.setup();
+    renderThread(config);
+    const composer = await screen.findByRole("textbox", {
+      name: "Write a message",
+    });
+    await user.type(composer, "Worth retrying");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    // The refused send stays visible, flagged, with a retry button.
+    expect(await screen.findByText("Not sent")).toBeInTheDocument();
+    expect(screen.getByText("Worth retrying")).toBeInTheDocument();
+    const retry = screen.getByRole("button", { name: "Try again" });
+
+    // This time the server takes it.
+    insertResult.error = null;
+    await user.click(retry);
+    await waitFor(() =>
+      expect(screen.queryByText("Not sent")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("Worth retrying")).toBeInTheDocument();
+  });
+
   it("shows the neutral closed notice on a rule failure, without the composer", async () => {
     const user = userEvent.setup();
     renderThread(

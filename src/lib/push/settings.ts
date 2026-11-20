@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
 
 import { isPushAvailable } from "@/lib/push/flag";
 import { useAuth } from "@/lib/auth/use-auth";
@@ -112,25 +117,57 @@ export function usePushSettings(client: AppSupabaseClient | null = supabase) {
     queryKey: ["push", "settings", user?.id ?? null],
     enabled: isPushAvailable() && client !== null && user !== null,
     retry: false,
-    staleTime: 60_000,
+    // Own settings: the switch mutations invalidate this key, so the
+    // staleTime only serves revisits.
+    staleTime: 10 * 60_000,
     queryFn: () => readPushSettings(client, user!.id),
   });
 }
 
-/** Updates my push settings. */
+/** Snapshots restored when an optimistic settings write is refused. */
+export interface PushSettingsSnapshot {
+  snapshots: Array<[QueryKey, unknown]>;
+}
+
+/**
+ * Updates my push settings. Every switch flips optimistically and rolls back
+ * when the write fails.
+ */
 export function useUpdatePushSettings(
   client: AppSupabaseClient | null = supabase,
 ) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  return useMutation<boolean, Error, PushSettings>({
+  return useMutation<boolean, Error, PushSettings, PushSettingsSnapshot>({
     mutationFn: async (settings: PushSettings): Promise<boolean> => {
       if (!isPushAvailable() || !client || !user) return false;
       return writePushSettings(client, user.id, settings);
     },
-    onSuccess: (saved) => {
-      if (saved) {
-        void queryClient.invalidateQueries({ queryKey: ["push", "settings"] });
+    onMutate: (settings) => {
+      if (!isPushAvailable() || !client || !user || !settings) {
+        return { snapshots: [] };
+      }
+      const snapshots = queryClient.getQueriesData({
+        queryKey: ["push", "settings"],
+      });
+      for (const [key] of snapshots) {
+        queryClient.setQueryData(key, settings);
+      }
+      return { snapshots };
+    },
+    onSuccess: (saved, _settings, context) => {
+      if (!saved) {
+        // The write did not go through: the switches flip back.
+        for (const [key, data] of context?.snapshots ?? []) {
+          queryClient.setQueryData(key, data);
+        }
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: ["push", "settings"] });
+    },
+    onError: (_error, _settings, context) => {
+      for (const [key, data] of context?.snapshots ?? []) {
+        queryClient.setQueryData(key, data);
       }
     },
   });

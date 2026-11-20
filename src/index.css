@@ -17,6 +17,11 @@
  * `:root` holds the light theme and `.dark` the default one. Values are
  * OKLCH, originally from the Scoreboard pass in ui-redesign-plan.md.
  *
+ * How to USE these tokens — the page grid, spacing steps, type sizes,
+ * radii, accent rules, copy tone and motion guidance — is written down in
+ * the vault's design-rules.md (C:\Users\Alkun\Documents\ohkolab).
+ * UI work follows that file.
+ *
  * Surfaces read as one stack: `--background` (page) → `--card` (panel) →
  * `--surface-raised` / `--popover` (raised) → `--surface-sunken` (inputs),
  * separated by `--border` hairlines. Focus is always `--ring`.

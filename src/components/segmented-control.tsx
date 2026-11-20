@@ -74,7 +74,7 @@ export function SegmentedControl({
               }
             }}
             className={cn(
-              "inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-[4px] px-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              "inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium whitespace-nowrap transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
               active
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground",

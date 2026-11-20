@@ -72,10 +72,10 @@ const TARGET_LABELS: Record<string, TranslationKey> = {
 
 function reasonBadgeVariant(
   reason: string,
-): "default" | "secondary" | "destructive" | "outline" {
+): "default" | "secondary" | "outline" {
   switch (reason) {
     case "harassment":
-      return "destructive";
+      return "default";
     case "spam":
       return "default";
     case "inappropriate":
@@ -294,6 +294,7 @@ function ConfirmDialog({
   confirmLabel: string;
   onConfirm: () => Promise<void>;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -318,7 +319,7 @@ function ConfirmDialog({
             onClick={() => setOpen(false)}
             disabled={busy}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -395,7 +396,7 @@ function RemoveContentDialog({
             onClick={() => setOpen(false)}
             disabled={busy}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="destructive"

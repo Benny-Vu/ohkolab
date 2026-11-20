@@ -148,6 +148,39 @@ describe("PeopleToFollow", () => {
     );
   });
 
+  it("hides the row the moment the follow starts and brings it back on failure", async () => {
+    let settleFollow!: (value: {
+      ok: boolean;
+      error?: { code: string; message: string };
+    }) => void;
+    const mutateAsync = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          settleFollow = resolve;
+        }),
+    );
+    mutationsMocks.useToggleFollow.mockReturnValue(mutationResult(mutateAsync));
+    suggestionsMocks.useFollowSuggestions.mockReturnValue(
+      queryResult([suggestion]),
+    );
+    const user = userEvent.setup();
+    renderPeopleToFollow();
+
+    await user.click(screen.getByRole("button", { name: /^follow$/i }));
+
+    expect(mutateAsync).toHaveBeenCalled();
+    // Optimistic: the row is gone before the server has answered.
+    expect(screen.queryByText("Brock")).not.toBeInTheDocument();
+
+    settleFollow({
+      ok: false,
+      error: { code: "rate_limited", message: "Follow refused." },
+    });
+    // The refused follow puts the row back, next to the error toast.
+    expect(await screen.findByText("Brock")).toBeInTheDocument();
+    expect(await screen.findByText(/follow refused/i)).toBeInTheDocument();
+  });
+
   it("shows the failure message when following fails", async () => {
     const mutateAsync = vi.fn(async () => ({
       ok: false,

@@ -16,7 +16,12 @@ import { NotFoundPage } from "@/features/system/not-found-page";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
-import { useCreateComment, useDeleteComment } from "@/lib/social/mutations";
+import { cn } from "@/lib/utils";
+import {
+  isPendingComment,
+  useCreateComment,
+  useDeleteComment,
+} from "@/lib/social/mutations";
 import { useComments, usePost } from "@/lib/social/queries";
 import { usePostImages } from "@/lib/social/images";
 import { COMMENT_BODY_MAX } from "@/lib/social/validation";
@@ -143,7 +148,7 @@ export function PostDetailPage() {
           <h2
             ref={commentsHeadingRef}
             tabIndex={-1}
-            className="text-sm font-semibold outline-none"
+            className="font-heading text-sm font-semibold outline-none"
           >
             {t("postDetail.comments")}
           </h2>
@@ -224,57 +229,73 @@ export function PostDetailPage() {
             </p>
           ) : (
             <ul className="grid gap-2">
-              {comments.map((comment) => (
-                <li
-                  key={comment.id}
-                  className="rounded-md border bg-card p-3 text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <UserAvatar
-                      username={comment.author?.username ?? ""}
-                      displayName={comment.author?.displayName ?? null}
-                      avatarSpecies={comment.author?.avatarSpecies ?? null}
-                      size="sm"
-                      className="shrink-0"
-                    />
-                    <Link
-                      to={`/u/${comment.author?.username ?? ""}`}
-                      className="min-w-0 truncate font-medium hover:underline"
-                    >
-                      {comment.author?.displayName ??
-                        comment.author?.username ??
-                        t("postDetail.deletedUser")}
-                    </Link>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatRelativeTime(comment.createdAt)}
-                    </span>
-                    {comment.authorId === user?.id && (
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        className="ml-auto"
-                        onClick={() => handleDeleteComment(comment.id)}
-                        disabled={deleteComment.isPending}
-                      >
-                        {t("common.delete")}
-                      </Button>
+              {comments.map((comment) => {
+                const pending = isPendingComment(comment);
+                return (
+                  <li
+                    key={comment.id}
+                    className={cn(
+                      "rounded-md border bg-card p-3 text-sm",
+                      pending && "opacity-60",
                     )}
-                    {comment.authorId !== user?.id && user && (
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        className="ml-auto"
-                        onClick={() => setReportedCommentId(comment.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserAvatar
+                        username={comment.author?.username ?? ""}
+                        displayName={comment.author?.displayName ?? null}
+                        avatarSpecies={comment.author?.avatarSpecies ?? null}
+                        size="sm"
+                        className="shrink-0"
+                      />
+                      <Link
+                        to={`/u/${comment.author?.username ?? ""}`}
+                        className="min-w-0 truncate font-medium hover:underline"
                       >
-                        {t("postDetail.report")}
-                      </Button>
-                    )}
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap break-words">
-                    {comment.body}
-                  </p>
-                </li>
-              ))}
+                        {comment.author?.displayName ??
+                          comment.author?.username ??
+                          t("postDetail.deletedUser")}
+                      </Link>
+                      {pending ? (
+                        <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                          <LoaderCircleIcon
+                            className="size-3 animate-spin"
+                            aria-hidden
+                          />
+                          {t("postDetail.commentPending")}
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {formatRelativeTime(comment.createdAt)}
+                        </span>
+                      )}
+                      {!pending && comment.authorId === user?.id && (
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          className="ml-auto"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          disabled={deleteComment.isPending}
+                        >
+                          {t("common.delete")}
+                        </Button>
+                      )}
+                      {!pending && comment.authorId !== user?.id && user && (
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          className="ml-auto"
+                          onClick={() => setReportedCommentId(comment.id)}
+                        >
+                          {t("postDetail.report")}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap break-words">
+                      {comment.body}
+                    </p>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

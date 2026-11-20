@@ -34,7 +34,7 @@ export function LegalPage({
   const japanese = getLocale() === "ja";
   return (
     <Page title={title} description={description} width="narrow">
-      <div className="flex gap-10">
+      <div className="flex gap-8">
         <nav
           aria-label={t("legal.onThisPage")}
           className="sticky top-24 hidden w-44 shrink-0 self-start lg:block"
@@ -42,7 +42,7 @@ export function LegalPage({
           <p className="mb-2 text-xs font-medium text-muted-foreground">
             {t("legal.onThisPage")}
           </p>
-          <ul className="grid gap-1">
+          <ul className="grid gap-1.5">
             {sections.map((section) => (
               <li key={section.id}>
                 <a

@@ -127,6 +127,16 @@ export function PostImageGrid({ images, className }: PostImageGridProps) {
                   src={image.url ?? undefined}
                   alt={image.alt ?? t("composer.imageAlt", { n: index + 1 })}
                   loading="lazy"
+                  // Reserve the box from the stored size so the card never
+                  // jumps when the bytes arrive (the grid tiles already
+                  // fix their own height with aspect-square).
+                  style={
+                    single && image.width && image.height
+                      ? {
+                          aspectRatio: `${image.width} / ${image.height}`,
+                        }
+                      : undefined
+                  }
                   className={
                     single
                       ? "max-h-80 w-full rounded-md object-cover sm:max-h-96"

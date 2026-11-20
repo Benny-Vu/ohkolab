@@ -21,6 +21,7 @@ import type {
   PostRow,
 } from "@/lib/database.types";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
+import type { FollowCounts, SocialComment } from "@/lib/social/queries";
 
 import {
   describeWriteError,
@@ -71,6 +72,22 @@ export interface CreateCommentInput {
 export interface DeleteCommentInput {
   commentId: string;
   postId: string;
+}
+
+/**
+ * A comment row while its create is still in flight: the optimistic copy
+ * `useCreateComment` adds to the comments cache. Screens render it dimmed
+ * with a spinner and without actions until the server confirms.
+ */
+export interface PendingComment extends SocialComment {
+  pending: true;
+}
+
+/** True while the comment is the optimistic copy of a create in flight. */
+export function isPendingComment(
+  comment: SocialComment,
+): comment is PendingComment {
+  return (comment as Partial<PendingComment>).pending === true;
 }
 
 export interface CreateReportInput {
@@ -204,20 +221,54 @@ export function useDeletePost(
   });
 }
 
+/** Snapshots restored when an optimistic comment write has to be rolled back. */
+export interface CommentSnapshot {
+  snapshots: Array<[QueryKey, unknown]>;
+}
+
+/**
+ * Applies a comment-count change to every cached copy of the post, no-op
+ * elsewhere. Shared by the optimistic create and delete paths.
+ */
+function mapCachedCommentCount(
+  data: unknown,
+  postId: string,
+  delta: number,
+): unknown {
+  const withCount = (row: FeedPostRow): FeedPostRow => ({
+    ...row,
+    comment_count: Math.max(0, row.comment_count + delta),
+  });
+  if (isInfinitePostPages(data)) {
+    return {
+      ...data,
+      pages: data.pages.map((page) =>
+        page.map((row) => (row.id === postId ? withCount(row) : row)),
+      ),
+    };
+  }
+  if (isFeedPostRow(data) && data.id === postId) {
+    return withCount(data);
+  }
+  return data;
+}
+
 /** Comments on a post as the signed-in user. */
 export function useCreateComment(
   client: AppSupabaseClient | null = supabase,
 ): UseMutationResult<
   SocialResult<CommentRow>,
   SocialFailure,
-  CreateCommentInput
+  CreateCommentInput,
+  CommentSnapshot
 > {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   return useMutation<
     SocialResult<CommentRow>,
     SocialFailure,
-    CreateCommentInput
+    CreateCommentInput,
+    CommentSnapshot
   >({
     mutationFn: async (input): Promise<SocialResult<CommentRow>> => {
       if (isSocialNotInstalled()) return socialFail("not_installed");
@@ -235,9 +286,69 @@ export function useCreateComment(
       if (error) return { ok: false, error: describeWriteError(error) };
       return socialSucceed(data);
     },
-    onSuccess: (result, input) => {
-      if (!result.ok) return;
+    onMutate: (input) => {
+      const me = user?.id ?? null;
+      const body = input ? normalizeCommentBody(input.body) : "";
+      if (
+        !me ||
+        !input ||
+        isSocialNotInstalled() ||
+        !client ||
+        validateCommentBody(body)
+      ) {
+        // The mutation will fail without a write; nothing to show yet.
+        return { snapshots: [] };
+      }
+      const snapshots = queryClient.getQueriesData({ queryKey: ["social"] });
+      const optimistic: PendingComment = {
+        id: `pending-${crypto.randomUUID()}`,
+        postId: input.postId,
+        authorId: me,
+        body,
+        createdAt: new Date().toISOString(),
+        author: profile
+          ? {
+              id: me,
+              username: profile.username,
+              displayName: profile.displayName,
+              avatarSpecies: profile.avatarSpecies,
+            }
+          : null,
+        pending: true,
+      };
+      for (const [key, data] of snapshots) {
+        if (
+          key[0] === "social" &&
+          key[1] === "comments" &&
+          key[2] === input.postId
+        ) {
+          queryClient.setQueryData<SocialComment[]>(key, [
+            ...((data as SocialComment[] | undefined) ?? []),
+            optimistic,
+          ]);
+        } else {
+          queryClient.setQueryData(
+            key,
+            mapCachedCommentCount(data, input.postId, 1),
+          );
+        }
+      }
+      return { snapshots };
+    },
+    onSuccess: (result, _input, context) => {
+      if (!result.ok) {
+        // The optimistic comment (and count) disappears again.
+        if (context) {
+          for (const [key, data] of context.snapshots) {
+            queryClient.setQueryData(key, data);
+          }
+        }
+        return;
+      }
       track("comment_created");
+    },
+    onSettled: (_result, _error, input) => {
+      if (!input) return;
       void queryClient.invalidateQueries({
         queryKey: ["social", "comments", input.postId],
       });
@@ -258,14 +369,16 @@ export function useDeleteComment(
 ): UseMutationResult<
   SocialResult<undefined>,
   SocialFailure,
-  DeleteCommentInput
+  DeleteCommentInput,
+  CommentSnapshot
 > {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   return useMutation<
     SocialResult<undefined>,
     SocialFailure,
-    DeleteCommentInput
+    DeleteCommentInput,
+    CommentSnapshot
   >({
     mutationFn: async (input): Promise<SocialResult<undefined>> => {
       if (isSocialNotInstalled()) return socialFail("not_installed");
@@ -281,8 +394,43 @@ export function useDeleteComment(
       if (!data || data.length === 0) return socialFail("not_found");
       return socialSucceed();
     },
-    onSuccess: (result, input) => {
-      if (!result.ok) return;
+    onMutate: (input) => {
+      const me = user?.id ?? null;
+      if (!me || !input || isSocialNotInstalled() || !client) {
+        return { snapshots: [] };
+      }
+      const snapshots = queryClient.getQueriesData({ queryKey: ["social"] });
+      for (const [key, data] of snapshots) {
+        if (
+          key[0] === "social" &&
+          key[1] === "comments" &&
+          key[2] === input.postId
+        ) {
+          queryClient.setQueryData<SocialComment[]>(
+            key,
+            ((data as SocialComment[] | undefined) ?? []).filter(
+              (comment) => comment.id !== input.commentId,
+            ),
+          );
+        } else {
+          queryClient.setQueryData(
+            key,
+            mapCachedCommentCount(data, input.postId, -1),
+          );
+        }
+      }
+      return { snapshots };
+    },
+    onSuccess: (result, _input, context) => {
+      if (!result.ok && context) {
+        // The comment (and count) come back until the server agrees.
+        for (const [key, data] of context.snapshots) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: (_result, _error, input) => {
+      if (!input) return;
       void queryClient.invalidateQueries({
         queryKey: ["social", "comments", input.postId],
       });
@@ -420,14 +568,49 @@ export function useToggleLike(
   });
 }
 
-/** Toggles following the given user. */
+/** Snapshots restored when an optimistic follow toggle has to be rolled back. */
+export interface FollowSnapshot {
+  snapshots: Array<[QueryKey, unknown]>;
+}
+
+/** Adjusts one side of the cached follow counts for the given user. */
+function adjustCachedFollowCounts(
+  queryClient: ReturnType<typeof useQueryClient>,
+  userId: string,
+  field: "followers" | "following",
+  delta: number,
+): void {
+  for (const [key, data] of queryClient.getQueriesData({
+    queryKey: ["social", "follow-counts"],
+  })) {
+    if (key[2] !== userId) continue;
+    if (typeof data !== "object" || data === null) continue;
+    const counts = data as FollowCounts;
+    queryClient.setQueryData<FollowCounts>(key, {
+      ...counts,
+      [field]: Math.max(0, counts[field] + delta),
+    });
+  }
+}
+
+/** Toggles following the given user, optimistically. */
 export function useToggleFollow(
   userId: string,
   client: AppSupabaseClient | null = supabase,
-): UseMutationResult<SocialResult<undefined>, SocialFailure, void> {
+): UseMutationResult<
+  SocialResult<undefined>,
+  SocialFailure,
+  void,
+  FollowSnapshot
+> {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  return useMutation<SocialResult<undefined>, SocialFailure, void>({
+  return useMutation<
+    SocialResult<undefined>,
+    SocialFailure,
+    void,
+    FollowSnapshot
+  >({
     mutationFn: async (): Promise<SocialResult<undefined>> => {
       if (isSocialNotInstalled()) return socialFail("not_installed");
       if (!client) return socialFail("not_configured");
@@ -459,11 +642,65 @@ export function useToggleFollow(
       }
       return socialSucceed();
     },
-    onSuccess: (result) => {
-      if (!result.ok) return;
+    onMutate: () => {
+      const me = user?.id ?? null;
+      if (!me || userId === me) {
+        return { snapshots: [] };
+      }
+      const snapshots = queryClient.getQueriesData({ queryKey: ["social"] });
+      const stateKey: QueryKey = ["social", "follow-state", me, userId];
+      const current = queryClient.getQueryData<boolean>(stateKey);
+      if (current !== undefined) {
+        queryClient.setQueryData(stateKey, !current);
+      }
+      // Without a per-row cache, the batched follow-states maps (the
+      // notifications rows) decide whether the viewer follows this user.
+      const batched = queryClient.getQueriesData({
+        queryKey: ["social", "follow-states", me],
+      });
+      let wasFollowing = current;
+      if (wasFollowing === undefined) {
+        for (const [, data] of batched) {
+          if (data instanceof Map && data.has(userId)) {
+            wasFollowing = true;
+            break;
+          }
+        }
+      }
+      if (wasFollowing !== undefined) {
+        // Following → unfollow takes one away; the other way adds one.
+        const delta = wasFollowing ? -1 : 1;
+        adjustCachedFollowCounts(queryClient, userId, "followers", delta);
+        adjustCachedFollowCounts(queryClient, me, "following", delta);
+        // Flip the id in every batched map — a new Map each time, so
+        // consumers re-render on the change.
+        for (const [key, data] of batched) {
+          if (!(data instanceof Map)) continue;
+          const next = new Map(data);
+          if (wasFollowing) {
+            next.delete(userId);
+          } else {
+            next.set(userId, true);
+          }
+          queryClient.setQueryData(key, next);
+        }
+      }
+      return { snapshots };
+    },
+    onSuccess: (result, _variables, context) => {
+      if (!result.ok && context) {
+        for (const [key, data] of context.snapshots) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
       const me = user?.id ?? null;
       void queryClient.invalidateQueries({
         queryKey: ["social", "follow-state"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["social", "follow-states"],
       });
       void queryClient.invalidateQueries({
         queryKey: ["social", "follow-counts"],

@@ -19,6 +19,7 @@ import {
   useFollowers,
   useFollowing,
   useFollowState,
+  useFollowStates,
   useGroupFeed,
   useIsModerator,
   usePost,
@@ -569,6 +570,52 @@ describe("useFollowState", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toBe(false);
+  });
+});
+
+describe("useFollowStates", () => {
+  it("answers every followed user in one query", async () => {
+    const fake = createFakeClient(
+      byTable({
+        follows: {
+          data: [{ followee_id: "user-2" }, { followee_id: "user-4" }],
+          error: null,
+        },
+      }),
+    );
+    const { result } = renderHook(
+      () => useFollowStates(["user-2", "user-3", "user-4"], fake.client),
+      { wrapper: createWrapper(queryClient, SIGNED_IN_AUTH) },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toEqual(
+      new Map([
+        ["user-2", true],
+        ["user-4", true],
+      ]),
+    );
+    // One request for the whole list, not one per user.
+    expect(fake.queries.filter((q) => q.table === "follows")).toHaveLength(1);
+    expect(callsOn(fake, "follows", "eq")).toContainEqual([
+      "follower_id",
+      "user-1",
+    ]);
+    expect(callsOn(fake, "follows", "in")).toContainEqual([
+      "followee_id",
+      ["user-2", "user-3", "user-4"],
+    ]);
+  });
+
+  it("is empty for an empty list and never queries", async () => {
+    const fake = createFakeClient(byTable({}));
+    const { result } = renderHook(() => useFollowStates([], fake.client), {
+      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+    });
+
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(fake.queries).toHaveLength(0);
   });
 });
 

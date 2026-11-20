@@ -65,26 +65,26 @@ function PrintSlot({ member, mode }: { member: PokemonSet; mode: PrintMode }) {
         {member.item ? (
           <ItemIcon
             item={member.item}
-            className="absolute right-0 bottom-0 size-3.5 rounded-sm bg-card"
+            className="absolute right-0 bottom-0 size-3.5 rounded-md bg-card"
           />
         ) : null}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-semibold">{title}</p>
         {mode === "full" ? (
-          <p className="text-[10px] leading-tight">
+          <p className="text-xs leading-tight">
             {t("teams.printLevel")} · {natureName}
           </p>
         ) : null}
-        <p className="truncate text-[10px] leading-tight">
+        <p className="truncate text-xs leading-tight">
           {[itemName, abilityName].filter(Boolean).join(" · ") || "—"}
         </p>
         {mode === "full" ? (
-          <p className="font-mono text-[10px] leading-tight tabular-nums">
+          <p className="font-mono text-xs leading-tight tabular-nums">
             {spreadLine(member, (stat) => statLabel(t, stat))}
           </p>
         ) : null}
-        <p className="text-[10px] leading-tight">{moves.join(" · ")}</p>
+        <p className="text-xs leading-tight">{moves.join(" · ")}</p>
       </div>
     </div>
   );
@@ -237,7 +237,7 @@ export function TeamPrintPage() {
             return <PrintSlot key={index} member={member} mode={mode} />;
           })}
         </div>
-        <p className="text-center text-[10px] text-muted-foreground print:text-black">
+        <p className="text-center text-xs text-muted-foreground print:text-black">
           {t("teams.printFooter")}
         </p>
       </div>

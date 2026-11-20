@@ -7,7 +7,7 @@
  * loading, empty, error and signed-out state.
  */
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { CheckIcon, Trash2Icon } from "lucide-react";
@@ -27,6 +27,7 @@ import {
   useNotifications,
   useUnreadNotificationCount,
 } from "@/lib/notifications/queries";
+import { useFollowStates } from "@/lib/social/queries";
 import {
   useDeleteNotification,
   useMarkAllNotificationsRead,
@@ -82,6 +83,16 @@ export function NotificationsPage() {
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const deleteNotification = useDeleteNotification();
+
+  // One batched query for every follow-back row, instead of one
+  // follow-state request per row.
+  const followActorIds = useMemo(() => {
+    const ids = (notifications.data?.pages.flat() ?? [])
+      .filter((item) => item.type === "follow" && item.actor)
+      .map((item) => item.actor!.id);
+    return [...new Set(ids)];
+  }, [notifications.data]);
+  const followStates = useFollowStates(followActorIds);
 
   const unreadCount = unread.data ?? 0;
 
@@ -186,6 +197,7 @@ export function NotificationsPage() {
             >
               <NotificationsList
                 items={notifications.data?.pages.flat() ?? []}
+                followStates={followStates.data}
                 onMarkRead={(ids) => void handleMarkRead(ids)}
                 onDelete={(ids) => void handleDelete(ids)}
                 markPending={markRead.isPending}
@@ -204,6 +216,8 @@ export function NotificationsPage() {
 
 interface NotificationsListProps {
   items: NotificationItem[];
+  /** The batched follow states of every follow row's actor (one query). */
+  followStates: Map<string, boolean> | undefined;
   onMarkRead: (ids: string[]) => void;
   onDelete: (ids: string[]) => void;
   /** A mark-read or delete is in flight: the row buttons wait for it. */
@@ -216,6 +230,7 @@ interface NotificationsListProps {
 
 function NotificationsList({
   items,
+  followStates,
   onMarkRead,
   onDelete,
   markPending,
@@ -239,7 +254,7 @@ function NotificationsList({
   const allRead = items.every((item) => item.readAt !== null);
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       {sections.map((section) => (
         <section key={section.name} className="grid gap-2">
           <h2 className="text-sm font-medium text-muted-foreground">
@@ -257,6 +272,7 @@ function NotificationsList({
               >
                 <NotificationRowCard
                   row={row}
+                  followStates={followStates}
                   onMarkRead={onMarkRead}
                   onDelete={onDelete}
                   markPending={markPending}
@@ -289,6 +305,8 @@ function NotificationsList({
 
 interface NotificationRowCardProps {
   row: NotificationRow;
+  /** The batched follow states of every follow row's actor (one query). */
+  followStates: Map<string, boolean> | undefined;
   onMarkRead: (ids: string[]) => void;
   onDelete: (ids: string[]) => void;
   markPending: boolean;
@@ -297,6 +315,7 @@ interface NotificationRowCardProps {
 
 function NotificationRowCard({
   row,
+  followStates,
   onMarkRead,
   onDelete,
   markPending,
@@ -377,7 +396,10 @@ function NotificationRowCard({
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {canFollowBack && row.kind === "single" && row.item.actor ? (
-          <FollowBackButton actor={row.item.actor} />
+          <FollowBackButton
+            actor={row.item.actor}
+            following={followStates?.get(row.item.actor.id) === true}
+          />
         ) : null}
         {isUnread && (
           <span

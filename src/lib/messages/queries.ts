@@ -253,7 +253,9 @@ export function useMessageSetting(client: AppSupabaseClient | null = supabase) {
     queryKey: ["messages", "setting", user?.id ?? null],
     enabled: directMessagesEnabled() && client !== null && user !== null,
     retry: false,
-    staleTime: 60_000,
+    // Own setting: the switch mutation invalidates this key, so the
+    // staleTime only serves revisits.
+    staleTime: 10 * 60_000,
     queryFn: async () => {
       const { data, error } = await client!
         .from("message_settings")

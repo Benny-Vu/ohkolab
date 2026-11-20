@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -205,6 +205,75 @@ describe("useUpdatePushSettings", () => {
 
     expect(result.current.data).toBe(false);
     expect(fake.records).toEqual([]);
+  });
+
+  it("flips the cached settings before the write settles, and rolls back on failure", async () => {
+    nativeOn();
+    // The upsert only resolves when the test says so.
+    let settle!: (result: { data: unknown; error: unknown }) => void;
+    const gate = new Promise<{ data: unknown; error: unknown }>((resolve) => {
+      settle = resolve;
+    });
+    const fake = createFakePushClient(
+      () => gate as unknown as { data: unknown; error: unknown },
+    );
+    const queryClient = createQueryClient();
+    const initial = { ...DEFAULT_PUSH_SETTINGS };
+    queryClient.setQueryData(["push", "settings", "user-1"], initial);
+
+    const { result } = renderHook(() => useUpdatePushSettings(fake.client), {
+      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+    });
+
+    let settled = false;
+    act(() => {
+      void result.current
+        .mutateAsync({ ...initial, follows: false })
+        .finally(() => {
+          settled = true;
+        });
+    });
+
+    // The switch reads the cache: it has flipped already.
+    expect(
+      queryClient.getQueryData<PushSettings>(["push", "settings", "user-1"])
+        ?.follows,
+    ).toBe(false);
+
+    // The write fails: the switch flips back.
+    settle({ data: null, error: { code: "42501", message: "no" } });
+    await waitFor(() => expect(settled).toBe(true));
+    expect(
+      queryClient.getQueryData<PushSettings>(["push", "settings", "user-1"])
+        ?.follows,
+    ).toBe(true);
+  });
+
+  it("keeps the optimistic settings when the write succeeds", async () => {
+    nativeOn();
+    const fake = createFakePushClient();
+    const queryClient = createQueryClient();
+    const initial = { ...DEFAULT_PUSH_SETTINGS };
+    queryClient.setQueryData(["push", "settings", "user-1"], initial);
+
+    const { result } = renderHook(() => useUpdatePushSettings(fake.client), {
+      wrapper: createWrapper(queryClient, SIGNED_IN_AUTH),
+    });
+
+    let settled = false;
+    act(() => {
+      void result.current
+        .mutateAsync({ ...initial, follows: false })
+        .finally(() => {
+          settled = true;
+        });
+    });
+    await waitFor(() => expect(settled).toBe(true));
+
+    expect(
+      queryClient.getQueryData<PushSettings>(["push", "settings", "user-1"])
+        ?.follows,
+    ).toBe(false);
   });
 });
 

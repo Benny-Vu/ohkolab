@@ -51,6 +51,12 @@ export const GROUP_QUERY_KEYS = {
 /** How many groups the Discover tab loads per search. */
 export const GROUPS_PAGE_SIZE = 50;
 
+/**
+ * Group lists change slowly and every membership mutation invalidates
+ * the prefixes anyway, so ten minutes of staleTime costs nothing.
+ */
+export const GROUPS_STALE_TIME = 10 * 60 * 1000;
+
 /** A group as the screens show it, with the viewer's own membership resolved. */
 export interface GroupSummary {
   id: string;
@@ -129,9 +135,63 @@ export function usePublicGroups(
       }
       return (data ?? []).map(toGroupSummary);
     },
+    staleTime: GROUPS_STALE_TIME,
     enabled: client !== null,
     retry: false,
   });
+}
+
+/** Loads the Discover directory: public groups with their member counts. */
+export async function fetchDiscoverGroups(
+  client: AppSupabaseClient,
+): Promise<DiscoverGroup[]> {
+  const { data: groupRows, error: groupError } = await client
+    .from("groups")
+    .select("*")
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false })
+    .limit(GROUPS_PAGE_SIZE);
+  if (groupError) {
+    return softReadError(groupError, []);
+  }
+  const groups = (groupRows ?? []).map(toGroupSummary);
+  if (groups.length === 0) {
+    return [];
+  }
+  // One aggregate read instead of one count query per group.
+  const { data: memberRows, error: memberError } = await client
+    .from("group_members")
+    .select("group_id")
+    .eq("status", "active")
+    .in(
+      "group_id",
+      groups.map((group) => group.id),
+    );
+  if (memberError) {
+    return softReadError(memberError, []);
+  }
+  const counts = new Map<string, number>();
+  for (const row of memberRows ?? []) {
+    counts.set(row.group_id, (counts.get(row.group_id) ?? 0) + 1);
+  }
+  return groups.map((group) => ({
+    ...group,
+    memberCount: counts.get(group.id) ?? 0,
+  }));
+}
+
+/** The Discover query options, shared by the hook and the nav prefetch. */
+export function discoverGroupsQueryOptions(
+  client: AppSupabaseClient | null = supabase,
+) {
+  return {
+    queryKey: [...GROUP_QUERY_KEYS.discover] as const,
+    queryFn: () =>
+      !client || isSocialNotInstalled() ? [] : fetchDiscoverGroups(client),
+    staleTime: GROUPS_STALE_TIME,
+    enabled: client !== null,
+    retry: false as const,
+  };
 }
 
 /**
@@ -143,49 +203,9 @@ export function usePublicGroups(
 export function useDiscoverGroups(
   client: AppSupabaseClient | null = supabase,
 ): UseQueryResult<DiscoverGroup[], SocialFailure> {
-  return useQuery<DiscoverGroup[], SocialFailure>({
-    queryKey: [...GROUP_QUERY_KEYS.discover],
-    queryFn: async () => {
-      if (!client || isSocialNotInstalled()) {
-        return [];
-      }
-      const { data: groupRows, error: groupError } = await client
-        .from("groups")
-        .select("*")
-        .eq("visibility", "public")
-        .order("created_at", { ascending: false })
-        .limit(GROUPS_PAGE_SIZE);
-      if (groupError) {
-        return softReadError(groupError, []);
-      }
-      const groups = (groupRows ?? []).map(toGroupSummary);
-      if (groups.length === 0) {
-        return [];
-      }
-      // One aggregate read instead of one count query per group.
-      const { data: memberRows, error: memberError } = await client
-        .from("group_members")
-        .select("group_id")
-        .eq("status", "active")
-        .in(
-          "group_id",
-          groups.map((group) => group.id),
-        );
-      if (memberError) {
-        return softReadError(memberError, []);
-      }
-      const counts = new Map<string, number>();
-      for (const row of memberRows ?? []) {
-        counts.set(row.group_id, (counts.get(row.group_id) ?? 0) + 1);
-      }
-      return groups.map((group) => ({
-        ...group,
-        memberCount: counts.get(group.id) ?? 0,
-      }));
-    },
-    enabled: client !== null,
-    retry: false,
-  });
+  return useQuery<DiscoverGroup[], SocialFailure>(
+    discoverGroupsQueryOptions(client),
+  );
 }
 
 /** The signed-in user's active groups, ordered by name. */
@@ -225,6 +245,7 @@ export function useMyGroups(
       }
       return (groupRows ?? []).map(toGroupSummary);
     },
+    staleTime: GROUPS_STALE_TIME,
     enabled: client !== null && user !== null,
     retry: false,
   });

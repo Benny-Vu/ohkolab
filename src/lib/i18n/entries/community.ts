@@ -257,6 +257,7 @@ export const communityEn = {
   "postDetail.loadingComments": "Loading comments…",
   "postDetail.noComments": "No comments yet",
   "postDetail.deletedUser": "Deleted user",
+  "postDetail.commentPending": "Sending",
   "postDetail.report": "Report",
   "postDetail.commentsError": "Could not load comments",
 
@@ -552,6 +553,7 @@ export const communityEn = {
   "messages.composerPlaceholder": "Write a message…",
   "messages.send": "Send",
   "messages.tooLong": "Messages are limited to {max} characters.",
+  "messages.notSent": "Not sent",
   "messages.you": "You",
   "messages.reportButtonAria": "Report this message",
   "messages.targetLabel": "message",

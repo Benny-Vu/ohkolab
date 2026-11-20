@@ -383,7 +383,7 @@ function FollowListRow({
       <Link
         to={`/u/${profile.username}`}
         onClick={onClose}
-        className="flex items-center gap-3 rounded-md p-2 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-accent"
+        className="flex items-center gap-3 rounded-md p-2 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-surface-sunken"
       >
         <UserAvatar
           username={profile.username}
@@ -445,7 +445,7 @@ function FollowListDialog({
         ) : (query.data ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">{emptyText}</p>
         ) : (
-          <ul className="grid gap-1">
+          <ul className="grid gap-1.5">
             {(query.data ?? []).map((summary) => (
               <FollowListRow
                 key={summary.id}
@@ -713,7 +713,7 @@ function ProfileFollowCounts({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm tabular-nums">
         <button
           type="button"
           className="text-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline"
