@@ -6,6 +6,7 @@ import {
   getNature,
   getSpecies,
   listSpecies,
+  resolveBattleForme,
   DEFAULT_NATURE,
   MAX_SP_TOTAL,
   totalStatPoints,
@@ -23,11 +24,21 @@ import {
 import { MAX_TEAM_SIZE } from "@/types/team";
 
 /**
- * Where an opponent's set comes from — the seam a later stream extends with
- * "revealed" (moves seen in battle). Everything the matrix needs is data in
- * `OpponentInput`; nothing is hidden in component state.
+ * Where an opponent's set comes from — the seam the battle-notes stream
+ * extends with "revealed" (fields seen in battle, on top of the guess).
+ * Everything the matrix needs is data in `OpponentInput`; nothing is hidden
+ * in component state.
  */
-export type SetProvenance = "common" | "assumed" | "custom";
+export type SetProvenance = "common" | "assumed" | "custom" | "revealed";
+
+/** The note fields that override a set's guess, from the notes store. */
+export interface RevealedFields {
+  item: string | null;
+  ability: string | null;
+  moves: string[];
+  /** The opponent Mega-evolved this Pokémon. */
+  mega: boolean;
+}
 
 /**
  * One opponent slot as the matrix consumes it: the team-legal species, the
@@ -237,4 +248,76 @@ export function opponentsFromText(text: string): OpponentParseResult {
     );
   }
   return { inputs, warnings };
+}
+
+/** True when the note holds at least one revealed field. */
+export function hasRevealedFields(note: RevealedFields | undefined): boolean {
+  if (!note) return false;
+  return (
+    note.item !== null ||
+    note.ability !== null ||
+    note.moves.length > 0 ||
+    note.mega
+  );
+}
+
+/** The Mega Stone of this species the item is, or null. */
+function stoneFor(species: string, item: string): string | null {
+  const info = getSpecies(species);
+  if (!info) return null;
+  return info.megas.some((mega) => mega.stone === item) ? item : null;
+}
+
+/**
+ * Lays a battle note over an opponent input: revealed fields override the
+ * guess, everything unrevealed stays as it was, and a Mega flag (or a
+ * revealed Mega Stone) turns the set into its Mega forme the way the
+ * calculator does it — forme stats, the forme's own ability, the stone
+ * held. Revealed moves come first; the remaining slots keep the guessed
+ * moves, so the matrix never loses coverage. The provenance becomes
+ * "revealed" only when something was actually revealed.
+ */
+export function applyRevealedFields(
+  input: OpponentInput,
+  note: RevealedFields | undefined,
+): OpponentInput {
+  if (!hasRevealedFields(note) || !note) return input;
+
+  const item = note.item ? (getItem(note.item)?.name ?? null) : null;
+  const stone = item ? stoneFor(input.species, item) : null;
+  const isMega = note.mega || stone !== null;
+
+  const set: PokemonSet = { ...input.set };
+  const revealedAbility = note.ability
+    ? (getAbility(note.ability)?.name ?? null)
+    : null;
+  if (isMega) {
+    const held = stone ?? getSpecies(input.species)?.megas[0]?.stone ?? null;
+    if (held) {
+      set.item = held;
+      const formeName = resolveBattleForme(input.species, held);
+      const forme = getSpecies(formeName);
+      set.species = formeName;
+      set.ability = revealedAbility ?? forme?.abilities[0] ?? set.ability;
+    }
+  } else {
+    if (item) set.item = item;
+    if (revealedAbility) set.ability = revealedAbility;
+  }
+
+  const moves: string[] = note.moves
+    .map((move) => getMove(move)?.name)
+    .filter((name): name is string => name !== undefined);
+  for (const existing of input.set.moves) {
+    if (moves.length >= input.set.moves.length) break;
+    if (existing && !moves.includes(existing)) moves.push(existing);
+  }
+  set.moves = [
+    moves[0] ?? null,
+    moves[1] ?? null,
+    moves[2] ?? null,
+    moves[3] ?? null,
+  ];
+
+  return { species: input.species, set, provenance: "revealed" };
 }

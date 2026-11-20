@@ -17,4 +17,15 @@ export const battleModeRoutes: RouteObject[] = [
       ).BattlePage,
     }),
   },
+  {
+    path: "calc/battle/notes",
+    lazy: async () => ({
+      Component: (
+        await Promise.all([
+          import("@/features/battle/notes-page"),
+          ensureEnglishDomain("tools"),
+        ]).then(([module]) => module)
+      ).NotesPage,
+    }),
+  },
 ];
