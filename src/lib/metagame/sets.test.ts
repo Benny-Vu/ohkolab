@@ -36,7 +36,9 @@ test("battle-only Mega formes become the base species holding its stone", () => 
   expect(usageToSet(usage("Charizard-Mega-Y"))).toEqual({
     species: "Charizard",
     item: "Charizardite Y",
-    ability: "Drought",
+    // The Mega's own ability (Drought) is not legal on the base species
+    // the set is stored under, so it falls back to Charizard's first.
+    ability: "Blaze",
     nature: "Timid",
     statPoints: { hp: 0, atk: 0, def: 0, spa: 28, spd: 0, spe: 32 },
     moves: ["Heat Wave", "Overheat", "Protect", "Fire Blast"],

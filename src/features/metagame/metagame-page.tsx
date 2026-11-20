@@ -589,7 +589,7 @@ export function MetagamePage() {
       }
       actions={
         <>
-          <DataBadge />
+          <DataBadge period={period} />
           <FormatToggle />
           <Picker
             options={monthOptions.map((option) => ({

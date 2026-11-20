@@ -3,6 +3,7 @@ import {
   getAbility,
   getItem,
   getNature,
+  getSpecies,
   MAX_SP_TOTAL,
   totalStatPoints,
 } from "@/data";
@@ -51,10 +52,16 @@ export function usageToSet(usage: PokemonUsage): PokemonSet | null {
       ? (getItem(usage.items[0].name)?.name ?? null)
       : null;
 
-  let ability = usage.abilities[0]
-    ? (getAbility(usage.abilities[0].name)?.name ?? null)
-    : null;
-  if (!ability) ability = forme.abilities[0] ?? null;
+  // The set is stored under the species the app keeps, so the ability must
+  // be one that species can actually have: a Mega forme's own ability
+  // (Drought on Mega Charizard Y) is not legal on the base species.
+  const holder = forme.isBattleOnly ? (getSpecies(species) ?? forme) : forme;
+  let ability: string | null = null;
+  if (usage.abilities[0]) {
+    const named = getAbility(usage.abilities[0].name)?.name ?? null;
+    if (named && holder.abilities.includes(named)) ability = named;
+  }
+  if (!ability) ability = holder.abilities[0] ?? null;
 
   const spread = usage.spreads[0];
   const nature = spread
