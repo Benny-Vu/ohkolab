@@ -6,6 +6,7 @@ import { Page } from "@/components/page";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { SegmentedControl } from "@/components/segmented-control";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { UserAvatar } from "@/components/user-avatar";
 import { DemoBattleList } from "@/components/demo-battle-list";
@@ -69,11 +70,11 @@ export function BattleBoardPage({
       actions={user ? <BattleRequestDialog client={client} /> : null}
     >
       {user === null ? (
-        <div className="grid gap-4">
+        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
           <EmptyState
             title={t("battles.signInToBattle")}
             action={
-              <Button asChild size="sm">
+              <Button asChild size="sm" className={buttonSmTouchClass}>
                 <Link to="/login?returnTo=/battles">{t("common.signIn")}</Link>
               </Button>
             }
@@ -158,6 +159,7 @@ export function BattleBoardPage({
                   <Button
                     variant="outline"
                     size="sm"
+                    className={buttonSmTouchClass}
                     onClick={() => void board.refetch()}
                   >
                     {t("common.retry")}
@@ -182,7 +184,7 @@ export function BattleBoardPage({
                     }
                   />
                 ) : (
-                  <ul className="grid gap-3">
+                  <ul className="grid gap-3 lg:grid-cols-2">
                     {requests.map((summary) => (
                       <li key={summary.request.id}>
                         <BattleCard summary={summary} client={client} />
@@ -231,6 +233,9 @@ function BattleCard({
   const [offered, setOffered] = useState(false);
 
   const { request, author, team } = summary;
+  // Read before the author ternary narrows the type; the fallback line needs
+  // it even when the author did not resolve.
+  const handle = author?.username ?? "?";
   const isOwn = user?.id === request.author_id;
   const showActions = user !== null && !isOwn;
 
@@ -269,20 +274,27 @@ function BattleCard({
         />
         <div className="min-w-0 flex-1">
           {author ? (
+            // The whole name block is the link, so the tap target covers
+            // both lines (design-rules.md: Touch targets).
             <Link
               to={`/u/${author.username}`}
-              className="block truncate text-sm font-medium hover:underline"
+              className="block truncate text-sm font-medium hover:underline max-sm:py-1"
             >
               {author.display_name ?? author.username}
+              <span className="block truncate text-xs font-normal text-muted-foreground">
+                @{author.username}
+              </span>
             </Link>
           ) : (
-            <p className="truncate text-sm font-medium">
-              {t("battles.unknownAuthor")}
-            </p>
+            <>
+              <p className="truncate text-sm font-medium">
+                {t("battles.unknownAuthor")}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                @{handle}
+              </p>
+            </>
           )}
-          <p className="truncate text-xs text-muted-foreground">
-            @{author?.username ?? "?"}
-          </p>
         </div>
         {showActions && (
           <ReportBattleButton requestId={request.id} client={client} />
@@ -330,7 +342,7 @@ function BattleCard({
       {showActions && (
         <>
           <Button
-            className="mt-3"
+            className={`mt-3 ${buttonSmTouchClass}`}
             size="sm"
             variant="outline"
             onClick={() => void handleOffer()}

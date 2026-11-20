@@ -4,6 +4,7 @@ import { HomeIcon } from "lucide-react";
 
 import { Page } from "@/components/page";
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import { useT } from "@/lib/i18n/t";
 
 /**
@@ -21,7 +22,7 @@ export function NotFoundPage() {
         <p className="max-w-sm text-sm text-muted-foreground">
           {t("system.notFoundBody")}
         </p>
-        <Button asChild>
+        <Button asChild className={buttonTouchClass}>
           <Link to="/">
             <HomeIcon className="size-4" />
             {t("authCallback.backHome")}

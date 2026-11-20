@@ -11,6 +11,7 @@
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { rowHitClass } from "@/components/touch-targets";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { useToggleFollow } from "@/lib/social";
@@ -48,6 +49,7 @@ export function FollowBackButton({ actor, following }: FollowBackButtonProps) {
     <Button
       size="sm"
       variant={following ? "secondary" : "outline"}
+      className={rowHitClass}
       disabled={toggleFollow.isPending}
       onClick={() => void handleToggle()}
     >

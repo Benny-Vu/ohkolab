@@ -152,7 +152,9 @@ describe("BattleBoardPage", () => {
     ).toBeInTheDocument();
     // The list lands when the board query resolves.
     await screen.findByText("Reg M-C, best of 3");
-    const author = screen.getByRole("link", { name: "Rika" });
+    // The whole name block (display name + handle) is the link.
+    const author = screen.getByRole("link", { name: /Rika/ });
+    expect(author).toHaveTextContent("@rika");
     expect(author).toHaveAttribute("href", "/u/rika");
     expect(screen.getByText("Reg M-C, best of 3")).toBeInTheDocument();
     expect(screen.getByText("Bring your A team.")).toBeInTheDocument();

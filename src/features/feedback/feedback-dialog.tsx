@@ -3,6 +3,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -138,7 +139,11 @@ export function FeedbackDialog({
             <p className="text-sm text-muted-foreground">
               {t("feedback.signedOutBody")}
             </p>
-            <Button asChild variant="outline" className="w-full">
+            <Button
+              asChild
+              variant="outline"
+              className={`w-full ${buttonTouchClass}`}
+            >
               <a
                 href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
                   "OHKOLab feedback",
@@ -163,7 +168,11 @@ export function FeedbackDialog({
                 variant="outline"
               >
                 {FEEDBACK_KINDS.map((feedbackKind) => (
-                  <ToggleGroupItem key={feedbackKind} value={feedbackKind}>
+                  <ToggleGroupItem
+                    key={feedbackKind}
+                    value={feedbackKind}
+                    className="max-sm:h-11"
+                  >
                     {KIND_ICONS[feedbackKind]}
                     {t(KIND_LABELS[feedbackKind])}
                   </ToggleGroupItem>
@@ -193,7 +202,11 @@ export function FeedbackDialog({
               {crashId ? t("feedback.crashIdSuffix") : ""})
             </label>
             <DialogFooter>
-              <Button type="submit" disabled={sendFeedback.isPending}>
+              <Button
+                type="submit"
+                className={buttonTouchClass}
+                disabled={sendFeedback.isPending}
+              >
                 {sendFeedback.isPending
                   ? t("feedback.sending")
                   : t("feedback.send")}

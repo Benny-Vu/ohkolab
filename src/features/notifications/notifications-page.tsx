@@ -13,6 +13,12 @@ import { toast } from "sonner";
 import { CheckIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  adjacentIconHitSmClass,
+  buttonSmTouchClass,
+  buttonTouchClass,
+  linkHitClass,
+} from "@/components/touch-targets";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { LoadingArea, NotificationListSkeleton } from "@/components/skeletons";
@@ -143,8 +149,10 @@ export function NotificationsPage() {
           <Button
             size="sm"
             variant="outline"
+            className={buttonSmTouchClass}
             aria-label={t("notifications.markAllAsRead")}
             onClick={() => void handleMarkAllRead()}
+            loading={markAllRead.isPending}
             disabled={markAllRead.isPending}
           >
             <CheckIcon aria-hidden />
@@ -158,7 +166,7 @@ export function NotificationsPage() {
           title={t("notifications.signedOutTitle")}
           description={t("notifications.signedOutDescription")}
           action={
-            <Button asChild size="sm">
+            <Button asChild size="sm" className={buttonSmTouchClass}>
               <Link to="/login?returnTo=/notifications">
                 {t("common.signIn")}
               </Link>
@@ -184,6 +192,7 @@ export function NotificationsPage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className={buttonSmTouchClass}
                   onClick={() => void notifications.refetch()}
                 >
                   {t("common.retry")}
@@ -292,6 +301,7 @@ function NotificationsList({
       {hasNextPage && (
         <Button
           variant="outline"
+          className={buttonTouchClass}
           onClick={onLoadMore}
           disabled={isFetchingNextPage}
         >
@@ -382,7 +392,7 @@ function NotificationRowCard({
           {profilePath ? (
             <Link
               to={profilePath}
-              className="font-medium text-foreground hover:underline"
+              className={`font-medium text-foreground hover:underline ${linkHitClass}`}
             >
               {actor}
             </Link>
@@ -392,7 +402,7 @@ function NotificationRowCard({
           {shownSentence.to ? (
             <Link
               to={shownSentence.to}
-              className="text-muted-foreground hover:underline"
+              className={`text-muted-foreground hover:underline ${linkHitClass}`}
             >
               {shownSentence.text}
             </Link>
@@ -421,6 +431,7 @@ function NotificationRowCard({
           <Button
             variant="ghost"
             size="icon-sm"
+            className={adjacentIconHitSmClass}
             aria-label={t(
               isGroup
                 ? "notifications.markGroupRead"
@@ -436,6 +447,7 @@ function NotificationRowCard({
         <Button
           variant="ghost"
           size="icon-sm"
+          className={adjacentIconHitSmClass}
           aria-label={t(
             isGroup ? "notifications.deleteGroup" : "notifications.delete",
             { name: actor },

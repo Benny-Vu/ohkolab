@@ -18,6 +18,10 @@ import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+} from "@/components/touch-targets";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -395,6 +399,7 @@ function ConfirmDialog({
         <DialogFooter>
           <Button
             variant="outline"
+            className={buttonTouchClass}
             onClick={() => setOpen(false)}
             disabled={busy}
           >
@@ -402,6 +407,7 @@ function ConfirmDialog({
           </Button>
           <Button
             variant="destructive"
+            className={buttonTouchClass}
             onClick={() => {
               void handleConfirm();
             }}
@@ -443,7 +449,7 @@ function RemoveContentDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button variant="destructive" size="sm" className={buttonSmTouchClass}>
           <Trash2Icon />
           {t("admin.removeContent")}
         </Button>
@@ -468,6 +474,7 @@ function RemoveContentDialog({
         <DialogFooter>
           <Button
             variant="outline"
+            className={buttonTouchClass}
             onClick={() => setOpen(false)}
             disabled={busy}
           >
@@ -475,6 +482,7 @@ function RemoveContentDialog({
           </Button>
           <Button
             variant="destructive"
+            className={buttonTouchClass}
             onClick={() => {
               void remove();
             }}
@@ -604,7 +612,11 @@ function ReportRowView({
           <div className="flex flex-wrap justify-end gap-2">
             <ConfirmDialog
               trigger={
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={buttonSmTouchClass}
+                >
                   <EyeOffIcon />
                   {t("admin.dismiss")}
                 </Button>
@@ -627,6 +639,7 @@ function ReportRowView({
                 <Button
                   variant="outline"
                   size="sm"
+                  className={buttonSmTouchClass}
                   onClick={() => setSuspendOpen(true)}
                 >
                   <BanIcon />
@@ -721,7 +734,10 @@ function ReportsList({ client }: { client: AppSupabaseClient | null }) {
         value={status}
         onValueChange={(value) => setStatus(value as ReportStatus)}
       >
-        <TabsList aria-label={t("admin.reportStatusAria")}>
+        <TabsList
+          aria-label={t("admin.reportStatusAria")}
+          className="max-sm:h-14"
+        >
           {TAB_STATUSES.map((tab) => (
             <TabsTrigger key={tab.status} value={tab.status}>
               {t(tab.labelKey)}

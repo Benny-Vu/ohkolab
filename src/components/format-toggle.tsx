@@ -18,8 +18,12 @@ export function FormatToggle({ className }: { className?: string }) {
       aria-label="Battle format"
       className={className}
     >
-      <ToggleGroupItem value="singles">Singles</ToggleGroupItem>
-      <ToggleGroupItem value="doubles">Doubles</ToggleGroupItem>
+      <ToggleGroupItem value="singles" className="max-sm:h-11">
+        Singles
+      </ToggleGroupItem>
+      <ToggleGroupItem value="doubles" className="max-sm:h-11">
+        Doubles
+      </ToggleGroupItem>
     </ToggleGroup>
   );
 }

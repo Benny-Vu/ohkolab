@@ -4,6 +4,7 @@ import { LoaderCircleIcon, MessageCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import type { Profile } from "@/lib/auth/types";
@@ -56,6 +57,7 @@ export function ProfileMessageButton({
     <Button
       variant="outline"
       size="sm"
+      className={buttonSmTouchClass}
       disabled={busy}
       onClick={() => void start()}
     >

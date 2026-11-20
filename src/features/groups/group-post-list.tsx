@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { ROW_ENTRANCE, staggerDelay } from "@/lib/motion/entrance";
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import {
   Dialog,
   DialogContent,
@@ -150,6 +151,7 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
             <Button
               type="button"
               variant="outline"
+              className={buttonTouchClass}
               onClick={() => setRemovingPostId(null)}
               disabled={removeGroupPost.isPending}
             >
@@ -158,6 +160,7 @@ export function GroupPostList({ posts, canModerate }: GroupPostListProps) {
             <Button
               type="button"
               variant="destructive"
+              className={buttonTouchClass}
               onClick={submitRemoval}
               disabled={removeGroupPost.isPending}
             >

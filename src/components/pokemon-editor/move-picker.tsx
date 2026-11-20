@@ -6,6 +6,7 @@ import {
   OptionList,
   type OptionGroup,
 } from "@/components/pokemon-editor/combobox";
+import { iconHitClass } from "@/components/touch-targets";
 import { TypeBadge } from "@/components/type-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -274,7 +275,7 @@ export function MovePicker({
           variant="ghost"
           size="icon"
           aria-label={t("pokemonEditor.clear", { label: chosenLabel })}
-          className="shrink-0 text-muted-foreground"
+          className={cn("shrink-0 text-muted-foreground", iconHitClass)}
           onClick={() => onChange(null)}
         >
           <XIcon />
