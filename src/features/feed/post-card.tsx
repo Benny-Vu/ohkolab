@@ -39,6 +39,12 @@ import {
   menuItemClass,
   menuItemDestructiveClass,
 } from "@/components/menu-item-class";
+import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+  iconHitXsClass,
+  linkHitClass,
+} from "@/components/touch-targets";
 import { Textarea } from "@/components/ui/textarea";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { TeamIdChip } from "@/components/team-id-chip";
@@ -273,9 +279,9 @@ export function PostCard({
           <div className="flex items-center gap-2">
             <a
               href={`/u/${post.author_username}`}
-              className="truncate font-medium hover:underline"
+              className={`min-w-0 font-medium hover:underline ${linkHitClass}`}
             >
-              {displayName}
+              <span className="block truncate">{displayName}</span>
             </a>
             {showHandle && (
               <span className="truncate text-sm text-muted-foreground">
@@ -298,6 +304,7 @@ export function PostCard({
               <div className="flex gap-2">
                 <Button
                   size="sm"
+                  className={buttonSmTouchClass}
                   onClick={handleUpdate}
                   disabled={updatePost.isPending}
                 >
@@ -309,6 +316,7 @@ export function PostCard({
                 <Button
                   size="sm"
                   variant="outline"
+                  className={buttonSmTouchClass}
                   onClick={() => setEditing(false)}
                   disabled={updatePost.isPending}
                 >
@@ -347,11 +355,21 @@ export function PostCard({
                 </div>
               ) : null}
               <div className="mt-2 flex flex-wrap gap-2">
-                <Button size="xs" variant="outline" onClick={handleCopyTeam}>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  className={buttonSmTouchClass}
+                  onClick={handleCopyTeam}
+                >
                   <CopyIcon aria-hidden />
                   {t("postCard.copyTeam")}
                 </Button>
-                <Button size="xs" variant="outline" onClick={handleOpenInCalc}>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  className={buttonSmTouchClass}
+                  onClick={handleOpenInCalc}
+                >
                   <ExternalLinkIcon aria-hidden />
                   {t("postCard.openInCalc")}
                 </Button>
@@ -416,6 +434,7 @@ export function PostCard({
                 <Button
                   size="xs"
                   variant="outline"
+                  className={buttonSmTouchClass}
                   onClick={retryImages}
                   disabled={ownImagesQuery.isRefetching}
                 >
@@ -436,7 +455,7 @@ export function PostCard({
           disabled={toggleLike.isPending}
           aria-pressed={liked}
           aria-label={liked ? t("postCard.unlike") : t("postCard.like")}
-          className="text-muted-foreground tabular-nums"
+          className={`text-muted-foreground tabular-nums ${buttonSmTouchClass}`}
         >
           <HeartIcon
             key={likePop}
@@ -460,7 +479,7 @@ export function PostCard({
               { n: post.comment_count },
             )}
             onClick={() => navigate(`/post/${post.id}`)}
-            className="text-muted-foreground tabular-nums"
+            className={`text-muted-foreground tabular-nums ${buttonSmTouchClass}`}
           >
             <MessageCircleIcon aria-hidden />
             {post.comment_count}
@@ -472,7 +491,7 @@ export function PostCard({
               size="icon-xs"
               variant="ghost"
               aria-label={t("postCard.options")}
-              className="ml-auto"
+              className={`ml-auto ${iconHitXsClass}`}
             >
               <MoreHorizontalIcon aria-hidden />
             </Button>
@@ -597,6 +616,7 @@ export function PostCard({
           <DialogFooter>
             <Button
               variant="outline"
+              className={buttonTouchClass}
               onClick={() => setRemoving(false)}
               disabled={removeContent.isPending}
             >
@@ -604,6 +624,7 @@ export function PostCard({
             </Button>
             <Button
               variant="destructive"
+              className={buttonTouchClass}
               onClick={handleRemove}
               disabled={removeContent.isPending || removeReason.trim() === ""}
             >
@@ -627,6 +648,7 @@ export function PostCard({
           <DialogFooter>
             <Button
               variant="outline"
+              className={buttonTouchClass}
               onClick={() => setConfirmDelete(false)}
               disabled={deletePost.isPending}
             >
@@ -634,6 +656,7 @@ export function PostCard({
             </Button>
             <Button
               variant="destructive"
+              className={buttonTouchClass}
               onClick={handleDelete}
               disabled={deletePost.isPending}
             >
@@ -659,6 +682,7 @@ export function PostCard({
           <DialogFooter>
             <Button
               variant="outline"
+              className={buttonTouchClass}
               onClick={() => setBlocking(false)}
               disabled={toggleBlock.isPending}
             >
@@ -666,6 +690,7 @@ export function PostCard({
             </Button>
             <Button
               variant="outline"
+              className={buttonTouchClass}
               onClick={handleBlock}
               disabled={toggleBlock.isPending}
             >

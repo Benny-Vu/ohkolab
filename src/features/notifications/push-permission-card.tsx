@@ -3,6 +3,7 @@ import { BellRingIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import {
   Card,
   CardContent,
@@ -100,7 +101,9 @@ export function PushPermissionCard() {
       <CardContent>
         <Button
           size="sm"
+          className={buttonSmTouchClass}
           onClick={() => void handleTurnOn()}
+          loading={pending}
           disabled={pending}
         >
           <BellRingIcon aria-hidden />

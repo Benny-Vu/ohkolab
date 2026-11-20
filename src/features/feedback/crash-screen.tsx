@@ -2,6 +2,7 @@ import { HomeIcon, RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import { Page } from "@/components/page";
 import { useT } from "@/lib/i18n/t";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
@@ -40,6 +41,7 @@ export function CrashScreen({
         ) : null}
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
+            className={buttonTouchClass}
             onClick={() => (onReload ? onReload() : window.location.reload())}
           >
             <RefreshCwIcon className="size-4" />
@@ -47,6 +49,7 @@ export function CrashScreen({
           </Button>
           <Button
             variant="outline"
+            className={buttonTouchClass}
             onClick={() =>
               onGoHome ? onGoHome() : (window.location.href = "/")
             }
@@ -54,7 +57,11 @@ export function CrashScreen({
             <HomeIcon className="size-4" />
             {t("crash.goHome")}
           </Button>
-          <Button variant="outline" onClick={() => setFeedbackOpen(true)}>
+          <Button
+            variant="outline"
+            className={buttonTouchClass}
+            onClick={() => setFeedbackOpen(true)}
+          >
             {t("crash.tellUs")}
           </Button>
         </div>

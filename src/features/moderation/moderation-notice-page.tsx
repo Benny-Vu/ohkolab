@@ -9,6 +9,10 @@ import { Page } from "@/components/page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+} from "@/components/touch-targets";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -143,7 +147,7 @@ function AppealForm({
           {message.length}/{APPEAL_MESSAGE_MAX}
         </p>
         <Button
-          className="justify-self-start"
+          className={`justify-self-start ${buttonTouchClass}`}
           disabled={busy || message.trim() === ""}
           onClick={() => {
             void submit();
@@ -189,6 +193,7 @@ export function ModerationNoticePage({
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               onClick={() => void actionQuery.refetch()}
             >
               {t("common.retry")}

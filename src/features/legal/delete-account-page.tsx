@@ -69,7 +69,7 @@ export function DeleteAccountPage() {
               <li>
                 <Link
                   to="/profile"
-                  className="text-primary underline underline-offset-4"
+                  className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
                 >
                   プロフィールページ
                 </Link>
@@ -89,7 +89,7 @@ export function DeleteAccountPage() {
               削除したいアカウントのメールアドレスから{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="text-primary underline underline-offset-4"
+                className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
               >
                 {CONTACT_EMAIL}
               </a>{" "}
@@ -124,7 +124,7 @@ export function DeleteAccountPage() {
               詳細は
               <Link
                 to="/privacy"
-                className="text-primary underline underline-offset-4"
+                className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
               >
                 プライバシーポリシー
               </Link>
@@ -153,7 +153,7 @@ export function DeleteAccountPage() {
               Open your{" "}
               <Link
                 to="/profile"
-                className="text-primary underline underline-offset-4"
+                className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
               >
                 profile page
               </Link>{" "}
@@ -176,7 +176,7 @@ export function DeleteAccountPage() {
             Email{" "}
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               {CONTACT_EMAIL}
             </a>{" "}
@@ -221,7 +221,7 @@ export function DeleteAccountPage() {
             The full details are in our{" "}
             <Link
               to="/privacy"
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               privacy policy
             </Link>

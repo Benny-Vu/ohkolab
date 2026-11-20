@@ -8,6 +8,10 @@ import {
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+} from "@/components/touch-targets";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { TeamIdChip } from "@/components/team-id-chip";
 import { Button } from "@/components/ui/button";
@@ -49,7 +53,7 @@ function TeamNotFound() {
       title={t("teams.notFound")}
       description={t("teams.notFoundDescription")}
     >
-      <Button asChild variant="outline">
+      <Button asChild variant="outline" className={buttonTouchClass}>
         <Link to="/teams">{t("teams.backToTeams")}</Link>
       </Button>
     </Page>
@@ -100,7 +104,7 @@ export function PublicTeamView({
             <AlertDescription>{teamQuery.error.message}</AlertDescription>
           </Alert>
           <Button
-            className="justify-self-start"
+            className={`justify-self-start ${buttonTouchClass}`}
             onClick={() => void teamQuery.refetch()}
           >
             {t("teams.retry")}
@@ -147,7 +151,12 @@ export function PublicTeamView({
       description={sharedBy ? `${meta} · ${sharedBy}` : meta}
       actions={
         <>
-          <Button asChild variant="ghost" size="sm">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className={buttonSmTouchClass}
+          >
             <Link to="/teams">
               <ArrowLeftIcon aria-hidden />
               {t("teams.title")}
@@ -163,13 +172,19 @@ export function PublicTeamView({
             url={`${window.location.origin}/teams/${team.id}`}
           />
           <SaveImageButton content={cardContent} />
-          <Button variant="outline" size="sm" onClick={copyToMyTeams}>
+          <Button
+            variant="outline"
+            size="sm"
+            className={buttonSmTouchClass}
+            onClick={copyToMyTeams}
+          >
             <CopyIcon aria-hidden />
             {t("postCard.copyTeam")}
           </Button>
           <Button
             variant="outline"
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => void navigate(`/teams/${team.id}/print`)}
           >
             <PrinterIcon aria-hidden />

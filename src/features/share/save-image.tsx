@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { menuItemClass } from "@/components/menu-item-class";
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import {
   Dialog,
   DialogContent,
@@ -153,6 +154,7 @@ export function SaveImageDialog({
             <Button
               disabled={pending}
               key={format}
+              className={buttonTouchClass}
               onClick={() => {
                 onOpenChange(false);
                 void save(format);

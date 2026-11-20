@@ -4,6 +4,7 @@ import { LoaderCircleIcon, ShieldOffIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { linkHitClass, rowHitXsClass } from "@/components/touch-targets";
 import { useT } from "@/lib/i18n/t";
 import {
   isStalePending,
@@ -36,7 +37,7 @@ function PendingNotice({ image }: { image: PostImageDisplay }) {
         <Button
           size="xs"
           variant="ghost"
-          className="ml-auto h-auto px-2 py-0.5 text-xs"
+          className={`ml-auto h-auto px-2 py-0.5 text-xs ${rowHitXsClass}`}
           disabled={removeImage.isPending}
           onClick={() => {
             removeImage.mutate(image.id, {
@@ -61,7 +62,7 @@ function PendingNotice({ image }: { image: PostImageDisplay }) {
         <Button
           size="xs"
           variant="ghost"
-          className="ml-auto h-auto px-2 py-0.5 text-xs"
+          className={`ml-auto h-auto px-2 py-0.5 text-xs ${rowHitXsClass}`}
           disabled={retryScreen.isPending}
           onClick={() => {
             retryScreen.mutate(image.id, {
@@ -167,7 +168,7 @@ export function PostImageGrid({ images, className }: PostImageGridProps) {
                     {t("postImages.removed")}{" "}
                     <Link
                       to="/notifications"
-                      className="text-primary underline-offset-4 hover:underline"
+                      className={`text-primary underline-offset-4 hover:underline ${linkHitClass}`}
                     >
                       {t("postImages.seeNotice")}
                     </Link>

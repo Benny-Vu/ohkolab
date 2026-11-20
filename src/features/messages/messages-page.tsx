@@ -6,6 +6,7 @@ import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import { DemoConversationList } from "@/components/demo-conversation-list";
 import { ConversationListSkeleton, LoadingArea } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
@@ -52,6 +53,7 @@ export function MessagesPage({
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               onClick={() => void conversationsQuery.refetch()}
             >
               {t("common.retry")}

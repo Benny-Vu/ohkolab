@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+import { buttonTouchClass, iconHitXsClass } from "@/components/touch-targets";
 import {
   Select,
   SelectContent,
@@ -72,7 +73,7 @@ export function ReportBattleButton({
             size="icon-xs"
             variant="ghost"
             aria-label={t("battles.report")}
-            className="ml-auto"
+            className={`ml-auto ${iconHitXsClass}`}
           >
             <MoreHorizontalIcon aria-hidden />
           </Button>
@@ -156,12 +157,17 @@ function ReportBattleDialog({
             <SelectTrigger
               id="battle-report-reason"
               aria-label={t("battles.reportReasonLabel")}
+              className="w-full max-sm:h-11"
             >
               <SelectValue placeholder={t("battles.reportReasonLabel")} />
             </SelectTrigger>
             <SelectContent>
               {REPORT_REASONS.map((candidate) => (
-                <SelectItem key={candidate} value={candidate}>
+                <SelectItem
+                  key={candidate}
+                  value={candidate}
+                  className="max-sm:py-3"
+                >
                   {t(REASON_LABELS[candidate])}
                 </SelectItem>
               ))}
@@ -181,6 +187,7 @@ function ReportBattleDialog({
           <Button
             type="button"
             variant="outline"
+            className={buttonTouchClass}
             onClick={() => onOpenChange(false)}
             disabled={report.isPending}
           >
@@ -188,7 +195,9 @@ function ReportBattleDialog({
           </Button>
           <Button
             type="button"
+            className={buttonTouchClass}
             onClick={() => void submit()}
+            loading={report.isPending}
             disabled={report.isPending}
             aria-describedby={error ? "battle-report-error" : undefined}
           >

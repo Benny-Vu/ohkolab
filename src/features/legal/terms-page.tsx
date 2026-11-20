@@ -128,7 +128,7 @@ function EnglishTermsSections() {
           OHKOLab is run by Vu Forge (Benny Vu). You can reach us at{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             {CONTACT_EMAIL}
           </a>
@@ -247,7 +247,7 @@ function EnglishTermsSections() {
           emailing{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             {CONTACT_EMAIL}
           </a>
@@ -286,14 +286,14 @@ function EnglishTermsSections() {
           Questions about these terms? Email{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             {CONTACT_EMAIL}
           </a>
           . See also our{" "}
           <Link
             to="/privacy"
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             privacy policy
           </Link>

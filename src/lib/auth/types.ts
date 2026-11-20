@@ -87,6 +87,12 @@ export interface SignUpInput {
   password: string;
   /** The "I am 16 or older and accept the terms and privacy policy" box. Sign-up fails without it. */
   acceptedTerms: boolean;
+  /**
+   * The Turnstile token to hand to Supabase Auth. Optional and only present
+   * when the form shows the widget; Supabase checks it once CAPTCHA is
+   * switched on in the dashboard.
+   */
+  captchaToken?: string;
 }
 
 export interface SignUpOutcome {
@@ -118,7 +124,12 @@ export interface AuthContextValue {
    */
   profile: Profile | null;
 
-  signInWithPassword(email: string, password: string): Promise<AuthResult>;
+  signInWithPassword(
+    email: string,
+    password: string,
+    /** Turnstile token, when the form shows the widget. */
+    captchaToken?: string,
+  ): Promise<AuthResult>;
   signUp(input: SignUpInput): Promise<AuthResult<SignUpOutcome>>;
   /**
    * Starts Google or Discord sign-in. On success the browser leaves the app
@@ -131,7 +142,11 @@ export interface AuthContextValue {
   /** Signs out on this device only. */
   signOut(): Promise<AuthResult>;
   /** Emails a link that leads to `/reset-password`. */
-  requestPasswordReset(email: string): Promise<AuthResult>;
+  requestPasswordReset(
+    email: string,
+    /** Turnstile token, when the form shows the widget. */
+    captchaToken?: string,
+  ): Promise<AuthResult>;
   /** Sets a new password for the signed-in user. */
   updatePassword(newPassword: string): Promise<AuthResult>;
 

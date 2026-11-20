@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 
 import { EmptyState } from "@/components/empty-state";
+import { buttonSmTouchClass, linkHitClass } from "@/components/touch-targets";
 import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,12 @@ export function ThreadPage({
   return (
     <Page title={headerTitle} width="narrow">
       <div className="mb-3">
-        <Button variant="ghost" size="sm" asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className={buttonSmTouchClass}
+        >
           <Link to="/messages">
             <ArrowLeftIcon aria-hidden />
             {t("messages.title")}
@@ -142,7 +148,7 @@ export function ThreadPage({
           {meta?.otherProfile ? (
             <Link
               to={`/u/${meta.otherProfile.username}`}
-              className="mb-3 flex items-center gap-2"
+              className={`mb-3 flex items-center gap-2 ${linkHitClass}`}
             >
               <UserAvatar
                 username={meta.otherProfile.username}
@@ -191,6 +197,7 @@ export function ThreadPage({
               <Button
                 type="submit"
                 size="icon"
+                className="max-sm:size-11"
                 aria-label={t("messages.send")}
                 disabled={
                   body.trim() === "" ||
@@ -282,7 +289,7 @@ function MessageRow({
             type="button"
             onClick={() => onRetry(message.body)}
             aria-label={t("common.retry")}
-            className="text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground"
+            className="text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground max-sm:px-2 max-sm:py-4"
           >
             <RotateCcwIcon className="size-3" aria-hidden />
           </button>
@@ -292,7 +299,7 @@ function MessageRow({
             type="button"
             onClick={onReport}
             aria-label={t("messages.reportButtonAria")}
-            className="text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground"
+            className="text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground max-sm:px-2 max-sm:py-4"
           >
             <FlagIcon className="size-3" aria-hidden />
           </button>

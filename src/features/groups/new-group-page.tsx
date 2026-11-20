@@ -7,6 +7,10 @@ import { Page } from "@/components/page";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+} from "@/components/touch-targets";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -84,7 +88,7 @@ export function NewGroupPage() {
         <EmptyState
           title={t("groups.signInToCreate")}
           action={
-            <Button asChild size="sm">
+            <Button asChild size="sm" className={buttonSmTouchClass}>
               <Link to="/login?returnTo=/groups/new">{t("common.signIn")}</Link>
             </Button>
           }
@@ -206,14 +210,15 @@ export function NewGroupPage() {
               <SelectTrigger
                 id="group-visibility"
                 aria-label={t("groups.newVisibilityAria")}
+                className="w-full max-sm:h-11"
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="public">
+                <SelectItem value="public" className="max-sm:py-3">
                   {t("groups.publicOption")}
                 </SelectItem>
-                <SelectItem value="invite_only">
+                <SelectItem value="invite_only" className="max-sm:py-3">
                   {t("groups.inviteOnlyOption")}
                 </SelectItem>
               </SelectContent>
@@ -235,15 +240,16 @@ export function NewGroupPage() {
               <SelectTrigger
                 id="group-category"
                 aria-label={t("groups.newCategoryLabel")}
+                className="w-full max-sm:h-11"
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE_OPTION}>
+                <SelectItem value={NONE_OPTION} className="max-sm:py-3">
                   {t("groups.newCategoryNone")}
                 </SelectItem>
                 {GROUP_CATEGORIES.map((value) => (
-                  <SelectItem key={value} value={value}>
+                  <SelectItem key={value} value={value} className="max-sm:py-3">
                     {t(CATEGORY_LABELS[value])}
                   </SelectItem>
                 ))}
@@ -266,15 +272,16 @@ export function NewGroupPage() {
               <SelectTrigger
                 id="group-language"
                 aria-label={t("groups.newLanguageLabel")}
+                className="w-full max-sm:h-11"
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE_OPTION}>
+                <SelectItem value={NONE_OPTION} className="max-sm:py-3">
                   {t("groups.newLanguageNone")}
                 </SelectItem>
                 {GROUP_LANGUAGES.map((value) => (
-                  <SelectItem key={value} value={value}>
+                  <SelectItem key={value} value={value} className="max-sm:py-3">
                     {t(LANGUAGE_LABELS[value])}
                   </SelectItem>
                 ))}
@@ -295,6 +302,7 @@ export function NewGroupPage() {
           <div className="flex items-center gap-2">
             <Button
               type="button"
+              className={buttonTouchClass}
               onClick={submit}
               disabled={!canSubmit}
               aria-describedby={error ? "new-group-error" : undefined}
@@ -308,6 +316,7 @@ export function NewGroupPage() {
               type="button"
               variant="outline"
               asChild
+              className={buttonTouchClass}
               disabled={createGroup.isPending}
             >
               <Link to="/groups">{t("common.cancel")}</Link>

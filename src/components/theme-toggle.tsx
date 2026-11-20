@@ -1,5 +1,6 @@
 import { MoonIcon, SunIcon } from "lucide-react";
 
+import { iconHitClass } from "@/components/touch-targets";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n/t";
 import { track } from "@/lib/telemetry/analytics";
@@ -14,6 +15,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
+      className={iconHitClass}
       aria-label={isDark ? t("theme.toLight") : t("theme.toDark")}
       onClick={() => {
         const next = isDark ? "light" : "dark";

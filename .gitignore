@@ -31,3 +31,11 @@ dist-ssr
 supabase/.temp/
 
 supabase/.branches/
+
+# Playwright: failure traces, screenshots and the HTML report
+e2e-results/
+playwright-report/
+
+# Graphify knowledge-graph output (breaks the format check otherwise)
+graphify-out/
+.graphifyignore

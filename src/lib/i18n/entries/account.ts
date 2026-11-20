@@ -35,6 +35,8 @@ export const accountEn = {
   "login.termsJoin": "and",
   "login.privacyLink": "privacy policy",
   "login.termsSuffix": "",
+  "login.captchaFailed":
+    "The security check couldn't load. Check your connection or allow challenges.cloudflare.com, then try again.",
 
   // Password reset.
   "reset.title": "Choose a new password",

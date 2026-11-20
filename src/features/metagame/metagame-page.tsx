@@ -17,6 +17,10 @@ import { PokemonIcon } from "@/components/pokemon-sprite";
 import { StatBar } from "@/components/stat-bar";
 import { Button } from "@/components/ui/button";
 import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+} from "@/components/touch-targets";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -113,7 +117,7 @@ function SortButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-6 items-center gap-1 rounded-md px-1 text-xs font-medium transition-colors duration-(--motion-fast) ease-(--motion-ease-out) ${
+      className={`inline-flex h-6 items-center gap-1 rounded-md px-1 text-xs font-medium transition-colors duration-(--motion-fast) ease-(--motion-ease-out) relative after:absolute after:-inset-x-1 after:-inset-y-2.5 after:content-[''] ${
         active
           ? "text-foreground"
           : "text-muted-foreground hover:text-foreground"
@@ -242,13 +246,24 @@ function PokemonDetail({
         <SpreadList spreads={pokemon.spreads} />
       </section>
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>
+        <Button
+          variant="outline"
+          className={buttonTouchClass}
+          onClick={onClose}
+        >
           {t("common.cancel")}
         </Button>
-        <Button variant="secondary" onClick={() => onAddToTeam(pokemon)}>
+        <Button
+          variant="secondary"
+          className={buttonTouchClass}
+          onClick={() => onAddToTeam(pokemon)}
+        >
           {t("meta.addToTeam")}
         </Button>
-        <Button onClick={() => onOpenInCalc(pokemon)}>
+        <Button
+          className={buttonTouchClass}
+          onClick={() => onOpenInCalc(pokemon)}
+        >
           {t("meta.openInCalc")}
         </Button>
       </DialogFooter>
@@ -344,7 +359,12 @@ export function MetagamePage() {
         title={t("meta.loadError")}
         description={t("meta.loadErrorIndex")}
         action={
-          <Button variant="outline" size="sm" onClick={() => index.refetch()}>
+          <Button
+            variant="outline"
+            size="sm"
+            className={buttonSmTouchClass}
+            onClick={() => index.refetch()}
+          >
             {t("meta.retry")}
           </Button>
         }
@@ -374,6 +394,7 @@ export function MetagamePage() {
           <Button
             variant="outline"
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => snapshot.refetch()}
           >
             {t("meta.retry")}
@@ -432,6 +453,7 @@ export function MetagamePage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className={buttonSmTouchClass}
                   onClick={() => setSearch("")}
                 >
                   {t("meta.clearSearch")}
@@ -504,7 +526,7 @@ export function MetagamePage() {
                       <TableCell className="w-full max-w-0">
                         <Button
                           variant="ghost"
-                          className="h-8 max-w-full justify-start"
+                          className="h-8 max-w-full justify-start max-sm:h-11"
                           onClick={() => setSelected(pokemon)}
                         >
                           <span aria-hidden className="shrink-0">

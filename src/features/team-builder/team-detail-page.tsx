@@ -16,6 +16,14 @@ import {
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import {
+  adjacentIconHitXsClass,
+  buttonSmTouchClass,
+  buttonTouchClass,
+  iconHitSmClass,
+  rowHitXsClass,
+  switchHitClass,
+} from "@/components/touch-targets";
 import { displayTeamName } from "@/lib/team/display";
 import { PokemonEditor } from "@/components/pokemon-editor";
 import { LoadingArea, TeamDetailSkeleton } from "@/components/skeletons";
@@ -206,7 +214,12 @@ export function TeamDetailPage() {
             title={t("teams.loadError")}
             description={sync.error}
             action={
-              <Button variant="outline" size="sm" onClick={() => sync.retry()}>
+              <Button
+                variant="outline"
+                size="sm"
+                className={buttonSmTouchClass}
+                onClick={() => sync.retry()}
+              >
                 {t("teams.retry")}
               </Button>
             }
@@ -307,7 +320,12 @@ export function TeamDetailPage() {
       })}
       actions={
         <>
-          <Button asChild variant="ghost" size="sm">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className={buttonSmTouchClass}
+          >
             <Link to="/teams">
               <ArrowLeftIcon aria-hidden />
               {t("teams.title")}
@@ -323,10 +341,10 @@ export function TeamDetailPage() {
               if (value) setFormat(team.id, value as BattleFormat);
             }}
           >
-            <ToggleGroupItem value="singles">
+            <ToggleGroupItem value="singles" className="max-sm:h-11">
               {t("calc.formatSingles")}
             </ToggleGroupItem>
-            <ToggleGroupItem value="doubles">
+            <ToggleGroupItem value="doubles" className="max-sm:h-11">
               {t("calc.formatDoubles")}
             </ToggleGroupItem>
           </ToggleGroup>
@@ -334,6 +352,7 @@ export function TeamDetailPage() {
             <div className="flex items-center gap-2">
               <Switch
                 id="team-public"
+                className={switchHitClass}
                 checked={team.isPublic ?? false}
                 onCheckedChange={(checked) => {
                   setPublic(team.id, checked);
@@ -380,6 +399,7 @@ export function TeamDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  className={iconHitSmClass}
                   aria-label={t("teams.renameTeam")}
                   onClick={() => {
                     setInlineDraft(team.name);
@@ -407,7 +427,7 @@ export function TeamDetailPage() {
                 variant="ghost"
                 size="icon-sm"
                 aria-label={t("teams.exportTeam")}
-                className="md:hidden"
+                className={`md:hidden ${iconHitSmClass}`}
                 onClick={() => setExportOpen(true)}
               >
                 <DownloadIcon aria-hidden />
@@ -430,7 +450,7 @@ export function TeamDetailPage() {
                 variant="ghost"
                 size="icon-sm"
                 aria-label={t("teams.duplicateTeam")}
-                className="md:hidden"
+                className={`md:hidden ${iconHitSmClass}`}
                 onClick={handleDuplicate}
               >
                 <CopyIcon aria-hidden />
@@ -443,6 +463,7 @@ export function TeamDetailPage() {
               <Button
                 variant="ghost"
                 size="icon-sm"
+                className={iconHitSmClass}
                 aria-label={t("teams.moreActions")}
               >
                 <MoreHorizontalIcon aria-hidden />
@@ -496,10 +517,18 @@ export function TeamDetailPage() {
                 )}
               </form>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setRenameOpen(false)}>
+                <Button
+                  variant="outline"
+                  className={buttonTouchClass}
+                  onClick={() => setRenameOpen(false)}
+                >
                   {t("common.cancel")}
                 </Button>
-                <Button type="submit" form="rename-team-form">
+                <Button
+                  type="submit"
+                  form="rename-team-form"
+                  className={buttonTouchClass}
+                >
                   {t("common.save")}
                 </Button>
               </DialogFooter>
@@ -520,10 +549,14 @@ export function TeamDetailPage() {
                 value={exportText}
               />
               <DialogFooter>
-                <Button variant="outline" onClick={() => setExportOpen(false)}>
+                <Button
+                  variant="outline"
+                  className={buttonTouchClass}
+                  onClick={() => setExportOpen(false)}
+                >
                   {t("common.cancel")}
                 </Button>
-                <Button onClick={copyExport}>
+                <Button className={buttonTouchClass} onClick={copyExport}>
                   <ClipboardCopyIcon aria-hidden />
                   {t("calc.copy")}
                 </Button>
@@ -562,6 +595,7 @@ export function TeamDetailPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
+                      className={adjacentIconHitXsClass}
                       aria-label={t("teams.moveUp", { name: label })}
                       disabled={index === 0}
                       onClick={() => moveMember(team.id, index, index - 1)}
@@ -571,6 +605,7 @@ export function TeamDetailPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
+                      className={adjacentIconHitXsClass}
                       aria-label={t("teams.moveDown", { name: label })}
                       disabled={index === team.members.length - 1}
                       onClick={() => moveMember(team.id, index, index + 1)}
@@ -580,6 +615,7 @@ export function TeamDetailPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
+                      className={adjacentIconHitXsClass}
                       aria-label={t("teams.editMember", { name: label })}
                       onClick={() => openEdit(index)}
                     >
@@ -588,6 +624,7 @@ export function TeamDetailPage() {
                     <Button
                       variant="ghost"
                       size="xs"
+                      className={rowHitXsClass}
                       onClick={() =>
                         navigate("/calc", { state: { attacker: member } })
                       }
@@ -598,6 +635,7 @@ export function TeamDetailPage() {
                     <Button
                       variant="ghost"
                       size="icon-xs"
+                      className={adjacentIconHitXsClass}
                       aria-label={t("teams.removeMember", { name: label })}
                       onClick={() => {
                         removeMember(team.id, index);
@@ -630,7 +668,7 @@ export function TeamDetailPage() {
                   setAnalysisOpen(next);
                   if (next) setAnalysisLoaded(true);
                 }}
-                className="flex w-full items-center justify-between gap-2 text-left font-heading text-base leading-snug font-medium"
+                className="flex w-full items-center justify-between gap-2 text-left font-heading text-base leading-snug font-medium max-sm:py-3"
               >
                 {t("teams.analysis")}
                 <ChevronDownIcon
@@ -695,10 +733,15 @@ export function TeamDetailPage() {
             {draft && <PokemonEditor value={draft} onChange={setDraft} />}
           </div>
           <SheetFooter className="flex-row! items-center justify-end gap-2">
-            <Button variant="outline" onClick={() => setEditorOpen(false)}>
+            <Button
+              variant="outline"
+              className={buttonTouchClass}
+              onClick={() => setEditorOpen(false)}
+            >
               {t("common.cancel")}
             </Button>
             <Button
+              className={buttonTouchClass}
               onClick={saveDraft}
               disabled={!draft || validateSet(draft).length > 0}
             >

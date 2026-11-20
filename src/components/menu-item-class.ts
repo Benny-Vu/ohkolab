@@ -7,9 +7,12 @@
  * Radix focuses hovered items, so `focus:` also carries the highlight to
  * keyboard navigation. Destructive rows use `menuItemDestructiveClass`,
  * the same shape with the destructive tint instead of the lime.
+ *
+ * `max-sm:py-3` grows menu items to the 44px touch target on phones
+ * (design-rules.md: Touch targets); desktop menus keep the compact look.
  */
 export const menuItemClass =
-  "cursor-pointer transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-accent-brand-subtle focus:bg-accent-brand-subtle";
+  "cursor-pointer transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-accent-brand-subtle focus:bg-accent-brand-subtle max-sm:py-3";
 
 export const menuItemDestructiveClass =
-  "cursor-pointer transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-destructive/10 dark:hover:bg-destructive/20";
+  "cursor-pointer transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-destructive/10 dark:hover:bg-destructive/20 max-sm:py-3";
