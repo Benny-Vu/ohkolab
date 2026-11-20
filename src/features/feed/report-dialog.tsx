@@ -24,10 +24,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { useCreateReport } from "@/lib/social/mutations";
-import { REPORT_DETAILS_MAX, REPORT_REASONS } from "@/lib/social/validation";
+import {
+  REPORT_DETAILS_MAX,
+  REPORT_REASONS,
+  type ReportTargetType,
+} from "@/lib/social/validation";
 import type { TranslationKey } from "@/lib/i18n/en";
-
-type ReportTargetType = "post" | "comment" | "profile";
 
 interface ReportDialogProps {
   open: boolean;

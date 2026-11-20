@@ -147,7 +147,6 @@ function profileRow(overrides: Partial<ProfileRow> = {}): ProfileRow {
     display_name: "Ash",
     avatar_species: "Pikachu",
     bio: "Pallet Town",
-    favourite_species: null,
     main_format: null,
     looking_for: null,
     youtube_url: null,
@@ -436,9 +435,12 @@ describe("PublicProfilePage", () => {
     expect(screen.getAllByText("@misty")).toHaveLength(1);
     expect(screen.getByText("Water Pokémon master.")).toBeInTheDocument();
     expect(screen.getByText("Joined March 2024")).toBeInTheDocument();
-    expect(screen.getByAltText("Pikachu")).toBeInTheDocument();
+    expect(await screen.findByAltText("Pikachu")).toBeInTheDocument();
     expect(screen.getByText(/Doubles · 2 Pokémon/)).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Garchomp" })).toBeInTheDocument();
+    // The team-member icons load lazily (they pull the Pokémon data layer).
+    expect(
+      await screen.findByRole("img", { name: "Garchomp" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Incineroar" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View" })).toBeInTheDocument();
   });
@@ -446,7 +448,6 @@ describe("PublicProfilePage", () => {
   it("shows the profile's community fields", async () => {
     const client = createFakeClient({
       profile: profileRow({
-        favourite_species: "Garchomp",
         main_format: "both",
         looking_for: "team feedback",
         youtube_url: "https://youtube.com/@ash",
@@ -457,7 +458,6 @@ describe("PublicProfilePage", () => {
 
     expect(await screen.findByText("Singles and doubles")).toBeInTheDocument();
     expect(screen.getByText("team feedback")).toBeInTheDocument();
-    expect(screen.getByAltText("Garchomp")).toBeInTheDocument();
     const youtube = screen.getByRole("link", { name: /YouTube/ });
     expect(youtube).toHaveAttribute("href", "https://youtube.com/@ash");
     expect(screen.getByText("ashketchum")).toBeInTheDocument();

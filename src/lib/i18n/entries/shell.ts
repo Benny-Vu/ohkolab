@@ -31,6 +31,8 @@ export const shellEn = {
   // Footer.
   "footer.disclaimer":
     "OHKOLab is an unofficial fan project, not affiliated with Nintendo, Game Freak, Creatures or The Pokémon Company.",
+  "footer.learn": "Learn",
+  "footer.whatsNew": "What's new",
   "footer.terms": "Terms",
   "footer.privacy": "Privacy",
   "footer.credits": "Credits",
@@ -203,8 +205,7 @@ export const shellEn = {
   // onboarding; every step is skippable).
   "welcome.title": "Welcome to OHKOLab",
   "welcome.stepOf": "Step {n} of {total}",
-  "welcome.profileDescription":
-    "Pick your main format and a favourite Pokémon — both optional.",
+  "welcome.profileDescription": "Pick your main format — it's optional.",
   "welcome.followDescription": "Follow a few people to get your feed started.",
   "welcome.joinDescription": "Join a group to meet people to play with.",
   "welcome.next": "Next",
@@ -216,7 +217,6 @@ export const shellEn = {
   "profile.usernameLabel": "Username",
   "profile.displayNameLabel": "Display name",
   "profile.displayNameHint": "Optional. At most {max} characters.",
-  "profile.favouriteSpecies": "Favourite Pokémon",
   "profile.mainFormatLabel": "Main format",
   "profile.mainFormatSingles": "Singles",
   "profile.mainFormatDoubles": "Doubles",
@@ -294,6 +294,10 @@ export const shellEn = {
     "The data sources and libraries OHKOLab is built on, and their licences.",
   "seo.battlesDescription":
     "Find an opponent for a Pokémon Champions battle: open requests, offers and matches on OHKOLab.",
+  "seo.learnDescription":
+    "Plain-language guides to Pokémon Champions damage rolls, OHKO and 2HKO, Stat Points and Speed ties.",
+  "seo.changelogDescription":
+    "What's new on OHKOLab: the latest releases and improvements, newest first.",
   "seo.pressDescription":
     "OHKOLab logos, colours, screenshots and press copy for writers and creators.",
 

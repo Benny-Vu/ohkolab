@@ -241,7 +241,7 @@ describe("ModerationNoticePage", () => {
     );
     renderNoticePage();
 
-    const submit = screen.getByRole("button", { name: /submit appeal/i });
+    const submit = screen.getByRole("button", { name: /send appeal/i });
     expect(submit).toBeDisabled();
 
     const message = screen.getByPlaceholderText(
@@ -269,7 +269,7 @@ describe("ModerationNoticePage", () => {
       /why should this decision be reconsidered\?/i,
     );
     await user.type(message, "This was a misunderstanding.");
-    await user.click(screen.getByRole("button", { name: /submit appeal/i }));
+    await user.click(screen.getByRole("button", { name: /send appeal/i }));
 
     await waitFor(() => expect(create).toHaveBeenCalled());
     expect(create.mock.calls[0]![0]).toEqual({
@@ -290,7 +290,7 @@ describe("ModerationNoticePage", () => {
     expect(screen.getByText("Your appeal")).toBeInTheDocument();
     expect(screen.getByText(/Under review/)).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /submit appeal/i }),
+      screen.queryByRole("button", { name: /send appeal/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -313,7 +313,7 @@ describe("ModerationNoticePage", () => {
     renderNoticePage();
 
     expect(
-      screen.queryByRole("button", { name: /submit appeal/i }),
+      screen.queryByRole("button", { name: /send appeal/i }),
     ).not.toBeInTheDocument();
   });
 });

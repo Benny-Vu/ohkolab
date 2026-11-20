@@ -79,16 +79,6 @@ export function validateAvatarSpecies(species: string | null): string | null {
   return null;
 }
 
-/** The favourite Pokémon uses the same shape as the avatar species. */
-export function validateFavouriteSpecies(
-  species: string | null,
-): string | null {
-  if (species !== null && species.length > AVATAR_SPECIES_MAX_LENGTH) {
-    return t("auth.errAvatarSpecies");
-  }
-  return null;
-}
-
 /** The "looking for" line: free text, at most 100 characters. */
 export function validateLookingFor(value: string | null): string | null {
   if (value !== null && value.length > LOOKING_FOR_MAX_LENGTH) {

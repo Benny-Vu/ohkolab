@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   BanIcon,
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ErrorState } from "@/components/error-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -46,17 +47,13 @@ import {
   linkHitClass,
 } from "@/components/touch-targets";
 import { Textarea } from "@/components/ui/textarea";
-import { TeamPreview } from "@/components/team-preview/team-preview";
 import { TeamIdChip } from "@/components/team-id-chip";
 import { UserAvatar } from "@/components/user-avatar";
-import { DamageMeter } from "@/components/damage-meter";
-import { KoLabel } from "@/components/ko-label";
-import { useDisplayName } from "@/data";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 import { displayTeamName } from "@/lib/team/display";
-import { useTeams } from "@/lib/team";
+import { useTeams } from "@/lib/team/use-teams";
 import {
   useDeletePost,
   useToggleBlock,
@@ -68,17 +65,30 @@ import { useIsModerator } from "@/lib/social/queries";
 import { usePostImages, visiblePostImages } from "@/lib/social/images";
 import { POST_BODY_MAX } from "@/lib/social/validation";
 import type { FeedPostRow, PostImageRow } from "@/lib/database.types";
-import { formatRelativeTime } from "@/features/feed/relative-time";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { PostImageGrid } from "@/features/feed/post-images";
 import {
   parseCalcResultAttachment,
   parseTeamAttachment,
 } from "@/features/feed/attachment";
-import { koResultOf } from "@/features/calc/ko-result";
 import { ReportDialog } from "@/features/feed/report-dialog";
 import { SaveImageDialog } from "@/features/share/save-image";
 import { useShare } from "@/features/share/share-link";
 import type { ShareCardContent } from "@/lib/share-cards/svg";
+
+// Post attachments that need the Pokémon data layer (species display
+// names) load in their own chunks, so a feed without them — the signed-out
+// home page — never downloads the dex.
+const TeamPreview = lazy(() =>
+  import("@/components/team-preview/team-preview").then((m) => ({
+    default: m.TeamPreview,
+  })),
+);
+const CalcAttachment = lazy(() =>
+  import("@/features/feed/calc-attachment").then((m) => ({
+    default: m.CalcAttachment,
+  })),
+);
 
 /**
  * The card unmounts when its post is deleted or removed, taking focus with it;
@@ -127,7 +137,6 @@ export function PostCard({
   const t = useT();
   // The calc-result attachment stores English roster names; show the
   // localized ones, falling back to the stored string.
-  const nameOf = useDisplayName();
   const toggleLike = useToggleLike(post.id);
   const toggleBlock = useToggleBlock(post.author_id);
   const deletePost = useDeletePost();
@@ -347,11 +356,13 @@ export function PostCard({
               </div>
               {team.members.length > 0 ? (
                 <div className="mt-2">
-                  <TeamPreview
-                    team={team}
-                    variant="compact"
-                    ariaLabel={displayTeamName(team.name)}
-                  />
+                  <Suspense fallback={<Skeleton className="h-16 w-full" />}>
+                    <TeamPreview
+                      team={team}
+                      variant="compact"
+                      ariaLabel={displayTeamName(team.name)}
+                    />
+                  </Suspense>
                 </div>
               ) : null}
               <div className="mt-2 flex flex-wrap gap-2">
@@ -378,49 +389,9 @@ export function PostCard({
           )}
 
           {calcResult && (
-            <div className="mt-3 rounded-md border bg-surface-sunken p-3">
-              <div className="flex items-center gap-2">
-                <p className="min-w-0 truncate text-sm font-medium">
-                  {t("postCard.vs", {
-                    a: nameOf("species", calcResult.attacker),
-                    b: nameOf("species", calcResult.defender),
-                  })}
-                </p>
-                {(() => {
-                  const ko = koResultOf(calcResult.koText);
-                  return ko ? (
-                    <KoLabel className="ml-auto shrink-0" result={ko} />
-                  ) : (
-                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                      {calcResult.koText}
-                    </span>
-                  );
-                })()}
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="text-sm font-medium">
-                  {nameOf("move", calcResult.move)}
-                </span>
-                <span className="font-heading text-lg font-semibold tabular-nums">
-                  {calcResult.minPercent === calcResult.maxPercent
-                    ? `${calcResult.maxPercent}%`
-                    : `${calcResult.minPercent} - ${calcResult.maxPercent}%`}
-                </span>
-                <span className="text-xs tabular-nums text-muted-foreground">
-                  {t("postCard.damageRange", {
-                    min: calcResult.min,
-                    max: calcResult.max,
-                  })}
-                </span>
-              </div>
-              <DamageMeter
-                className="mt-2"
-                minPercent={calcResult.minPercent}
-                maxPercent={calcResult.maxPercent}
-                hpPercent={100}
-                size="sm"
-              />
-            </div>
+            <Suspense fallback={<Skeleton className="mt-3 h-24 w-full" />}>
+              <CalcAttachment calcResult={calcResult} />
+            </Suspense>
           )}
 
           {imageItems.length > 0 && (

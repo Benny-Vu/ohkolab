@@ -27,6 +27,7 @@ import { useT } from "@/lib/i18n/t";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { useCreateBattleRequest } from "@/lib/battles/mutations";
 import type { BattleFormat } from "@/types/battle";
+import { createErrorMessage } from "@/features/battles/board/create-error-message";
 import { useMyPublicTeams } from "@/features/battles/board/use-my-public-teams";
 
 const RULES_MAX = 80;
@@ -38,17 +39,6 @@ const QUICK_PICKS = [
   "battles.chipBestOf3",
   "battles.chipCasual",
 ] as const;
-
-/** Maps a raw database error message to a friendly bilingual toast string. */
-function createErrorMessage(
-  raw: string | undefined,
-  t: ReturnType<typeof useT>,
-): string {
-  if (raw?.includes("Too many open battle requests")) {
-    return t("battles.errorTooManyOpen");
-  }
-  return t("battles.errorGeneric");
-}
 
 /**
  * The "New battle request" action and its form: the match rules (with quick

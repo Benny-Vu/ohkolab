@@ -89,7 +89,6 @@ function profileRow(overrides: Partial<ProfileRow> = {}): ProfileRow {
     display_name: "Target User",
     avatar_species: "Snorlax",
     bio: null,
-    favourite_species: null,
     main_format: null,
     looking_for: null,
     youtube_url: null,

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -16,11 +16,11 @@ import {
   buttonSmTouchClass,
 } from "@/components/touch-targets";
 import { Picker } from "@/components/picker";
-import { TeamPreview } from "@/components/team-preview/team-preview";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth/use-auth";
 import { displayTeamName } from "@/lib/team/display";
-import { useTeams } from "@/lib/team";
+import { useTeams } from "@/lib/team/use-teams";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { useCreatePost } from "@/lib/social/mutations";
@@ -37,6 +37,15 @@ import { POST_BODY_MAX } from "@/lib/social/validation";
 import { track } from "@/lib/telemetry/analytics";
 import { teamAttachment, teamAttachmentJson } from "@/features/feed/attachment";
 import type { TeamAttachment } from "@/features/feed/attachment";
+
+// The team preview pulls the Pokémon data layer (species display names),
+// which no post needs until a team is actually attached: keep it in its
+// own chunk so the home page never downloads the dex for the composer.
+const TeamPreview = lazy(() =>
+  import("@/components/team-preview/team-preview").then((m) => ({
+    default: m.TeamPreview,
+  })),
+);
 
 /** One chosen image: the processed WebP blob plus its composer state. */
 interface ImageDraft {
@@ -396,13 +405,15 @@ export function Composer({ groupId }: { groupId?: string | null }) {
       {attachment && (
         <div className="mt-2">
           {attachment.members.length > 0 ? (
-            <TeamPreview
-              team={attachment}
-              variant="compact"
-              ariaLabel={t("composer.attachedTeam", {
-                name: attachment.name,
-              })}
-            />
+            <Suspense fallback={<Skeleton className="h-16 w-full" />}>
+              <TeamPreview
+                team={attachment}
+                variant="compact"
+                ariaLabel={t("composer.attachedTeam", {
+                  name: attachment.name,
+                })}
+              />
+            </Suspense>
           ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
             {t("composer.attachedTeam", { name: attachment.name })}

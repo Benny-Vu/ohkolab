@@ -15,7 +15,6 @@ import { Switch } from "@/components/ui/switch";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import { calcSideLabel } from "@/features/calc/side-labels";
 import type { Translate } from "@/components/stat-labels";
-import type { TranslationKey } from "@/lib/i18n/en";
 import { useT } from "@/lib/i18n/t";
 import {
   SIDE_IDS,
@@ -27,12 +26,18 @@ import {
 import { useBattleFormat } from "@/lib/preferences";
 import { cn } from "@/lib/utils";
 import {
+  ALL_SIDE_FLAGS,
+  DOUBLES_FLAGS,
+  SIDE_FLAGS,
+  TERRAIN_LABEL_KEYS,
+  WEATHER_LABEL_KEYS,
+  type DisplayName,
+} from "@/features/calc/field-labels";
+import {
   TERRAINS,
   WEATHERS,
   type BattleFormat,
   type SideState,
-  type Terrain,
-  type Weather,
 } from "@/types/battle";
 
 /** Weather choices for the picker, with None first. */
@@ -46,20 +51,6 @@ function weatherOptions(t: Translate): PickerOption[] {
   ];
 }
 
-const WEATHER_LABEL_KEYS: Record<Weather, TranslationKey> = {
-  Sun: "calc.weatherSun",
-  Rain: "calc.weatherRain",
-  Sand: "calc.weatherSand",
-  Snow: "calc.weatherSnow",
-};
-
-const TERRAIN_LABEL_KEYS: Record<Terrain, TranslationKey> = {
-  Electric: "calc.terrainElectric",
-  Grassy: "calc.terrainGrassy",
-  Psychic: "calc.terrainPsychic",
-  Misty: "calc.terrainMisty",
-};
-
 /** Terrain choices for the picker, with None first. */
 function terrainOptions(t: Translate): PickerOption[] {
   return [
@@ -70,30 +61,6 @@ function terrainOptions(t: Translate): PickerOption[] {
     })),
   ];
 }
-
-/** The display-name function `useDisplayName` returns. */
-type DisplayName = (kind: NameKind, id: string) => string;
-
-/**
- * The screens, support and hazards every side can carry. Each label is a
- * roster name: a move for the screens and hazards, an ability for
- * Friend Guard, so the flags render through `displayName`.
- */
-const SIDE_FLAGS: { flag: SideFlag; label: string; kind: NameKind }[] = [
-  { flag: "reflect", label: "Reflect", kind: "move" },
-  { flag: "lightScreen", label: "Light Screen", kind: "move" },
-  { flag: "auroraVeil", label: "Aurora Veil", kind: "move" },
-  { flag: "tailwind", label: "Tailwind", kind: "move" },
-  { flag: "stealthRock", label: "Stealth Rock", kind: "move" },
-];
-
-/** Doubles-only conditions; they do nothing in singles. */
-const DOUBLES_FLAGS: { flag: SideFlag; label: string; kind: NameKind }[] = [
-  { flag: "helpingHand", label: "Helping Hand", kind: "move" },
-  { flag: "friendGuard", label: "Friend Guard", kind: "ability" },
-];
-
-const ALL_SIDE_FLAGS = [...SIDE_FLAGS, ...DOUBLES_FLAGS];
 
 /** Short summary of a side's active conditions, for the field bar buttons. */
 function activeConditionsText(

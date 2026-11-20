@@ -169,7 +169,7 @@ export function CreditsPage() {
           "ロゴとスクリーンショットはプレスキットにあります。",
         )}{" "}
         <Link
-          className="text-primary underline-offset-4 hover:underline"
+          className="text-primary underline underline-offset-4 hover:underline"
           to="/press"
         >
           {heading("Press kit", "プレスキット")}

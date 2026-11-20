@@ -13,7 +13,14 @@ import {
 } from "lucide-react";
 
 import { Page } from "@/components/page";
-import { PokemonIcon, PokemonSprite } from "@/components/pokemon-sprite";
+// The team-member icons are the only thing on this page that needs the
+// Pokémon data layer; loading them lazily keeps a bare profile (no
+// public teams) from downloading the dex.
+const PokemonIcon = lazy(() =>
+  import("@/components/pokemon-sprite").then((m) => ({
+    default: m.PokemonIcon,
+  })),
+);
 import { TeamIdChip } from "@/components/team-id-chip";
 import { UserAvatar } from "@/components/user-avatar";
 import { EmptyState } from "@/components/empty-state";
@@ -239,7 +246,17 @@ function TeamCard({ team, username }: { team: Team; username: string }) {
           {Array.from({ length: MAX_TEAM_SIZE }, (_, index) => {
             const member = team.members[index];
             return member ? (
-              <PokemonIcon key={index} species={member.species} />
+              <Suspense
+                key={index}
+                fallback={
+                  <div
+                    className="size-[40px] rounded-md border border-dashed"
+                    aria-hidden="true"
+                  />
+                }
+              >
+                <PokemonIcon species={member.species} />
+              </Suspense>
             ) : (
               <div
                 key={index}
@@ -782,12 +799,11 @@ function ProfileFollowCounts({
   );
 }
 
-/** The community fields of a profile: favourite Pokémon, main format,
- * "looking for", and links. Only the rows the profile filled in. */
+/** The community fields of a profile: main format, "looking for", and
+ * links. Only the rows the profile filled in. */
 function ProfileCommunityFields({ profile }: { profile: Profile }) {
   const t = useT();
   const hasAny =
-    profile.favouriteSpecies !== null ||
     profile.mainFormat !== null ||
     profile.lookingFor !== null ||
     profile.youtubeUrl !== null ||
@@ -806,14 +822,6 @@ function ProfileCommunityFields({ profile }: { profile: Profile }) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-      {profile.favouriteSpecies ? (
-        <span className="flex items-center gap-1.5">
-          <PokemonSprite species={profile.favouriteSpecies} size={24} />
-          <span className="text-muted-foreground">
-            {t("publicProfile.favouriteLabel")}
-          </span>
-        </span>
-      ) : null}
       {mainFormat ? (
         <span className="flex items-center gap-1.5">
           <span className="text-muted-foreground">

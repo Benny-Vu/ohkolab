@@ -84,17 +84,11 @@ describe("WelcomeFlow", () => {
 
     expect(screen.getByText("Step 1 of 3")).toBeInTheDocument();
     await user.click(screen.getByRole("radio", { name: "Doubles" }));
-    await user.click(
-      await screen.findByRole("button", { name: "Choose a Pokémon" }),
-    );
     await user.click(screen.getByRole("button", { name: "Next" }));
 
     await waitFor(() => {
       const call = auth.calls.find((c) => c.name === "updateProfile");
-      expect(call?.args[0]).toEqual({
-        mainFormat: "doubles",
-        favouriteSpecies: "Pikachu",
-      });
+      expect(call?.args[0]).toEqual({ mainFormat: "doubles" });
     });
     expect(await screen.findByText("Step 2 of 3")).toBeInTheDocument();
   });

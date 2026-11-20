@@ -34,7 +34,7 @@ vi.mock("@/lib/notifications/mutations", () => ({
   useDeleteNotification: mocks.useDeleteNotification,
 }));
 
-vi.mock("@/features/feed/relative-time", () => ({
+vi.mock("@/lib/relative-time", () => ({
   formatRelativeTime: () => "2h ago",
 }));
 

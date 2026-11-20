@@ -30,7 +30,7 @@ import {
 import { useComments, usePost } from "@/lib/social/queries";
 import { usePostImages } from "@/lib/social/images";
 import { COMMENT_BODY_MAX } from "@/lib/social/validation";
-import { formatRelativeTime } from "@/features/feed/relative-time";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { PostCard } from "@/features/feed/post-card";
 import { ReportDialog } from "@/features/feed/report-dialog";
 

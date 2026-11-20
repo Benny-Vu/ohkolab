@@ -4,6 +4,7 @@ import type { TranslationKey } from "@/lib/i18n/en";
 import { accountEn } from "@/lib/i18n/entries/account";
 import { battlesEn } from "@/lib/i18n/entries/battles";
 import { communityEn } from "@/lib/i18n/entries/community";
+import { learnEn } from "@/lib/i18n/entries/learn";
 import { shellEn } from "@/lib/i18n/entries/shell";
 import { toolsEn } from "@/lib/i18n/entries/tools";
 import { ja } from "@/lib/i18n/ja";
@@ -22,6 +23,7 @@ const en: Record<TranslationKey, string> = {
   ...accountEn,
   ...toolsEn,
   ...battlesEn,
+  ...learnEn,
 };
 
 describe("dictionaries", () => {
@@ -65,6 +67,9 @@ describe("dictionaries", () => {
       // Platform brand names: the Japanese uses the same branding.
       "YouTube",
       "Twitch",
+      // Symbol-only values (the speed-order band) have nothing to translate.
+      "≥{min}",
+      "≤{max}",
     ]);
     // Keys whose English value is intentionally not English (or not shown in
     // the en locale at all).

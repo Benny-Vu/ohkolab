@@ -32,9 +32,6 @@ function battleInvalidations(
   queryClient.invalidateQueries({ queryKey: ["battles", "my-offers"] });
   if (requestId !== null) {
     queryClient.invalidateQueries({
-      queryKey: ["battles", "request", requestId],
-    });
-    queryClient.invalidateQueries({
       queryKey: ["battles", "replies", requestId],
     });
     queryClient.invalidateQueries({

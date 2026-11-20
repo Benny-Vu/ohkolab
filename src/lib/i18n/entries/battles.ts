@@ -10,6 +10,15 @@ export const battlesEn = {
   // Battle board
   "battles.description": "Find an opponent for a Champions match.",
   "battles.newRequest": "New battle request",
+  // Practise now: the one-tap request (confirm step, then a 1-hour window).
+  "battles.practiseNow": "Practise now",
+  "battles.practiseNowTitle": "Post a practise request?",
+  "battles.practiseNowDescription":
+    "This posts an open request for a casual match in the next hour, in your current format ({format}). Anyone on the board can offer.",
+  "battles.practiseNowConfirm": "Post request",
+  "battles.practiseRules": "Casual · now",
+  // The "wants to play right now" badge on board cards.
+  "battles.nowBadge": "Now",
   "battles.filterFormatAria": "Format filter",
   "battles.filterLanguageAria": "Language filter",
   "battles.formatAll": "All",
