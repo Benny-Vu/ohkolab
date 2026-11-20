@@ -601,6 +601,15 @@ export const communityEn = {
   "groups.newCategoryNone": "No category",
   "groups.newLanguageLabel": "Language (optional)",
   "groups.newLanguageNone": "No language",
+
+  // Recording mode (?demo=1): sample feed posts shown in place of the
+  // empty feed. Clearly marked as examples; never written to the database.
+  "demo.post1Body":
+    "New rain team is holding up in doubles — the calc breakdown paid off.",
+  "demo.post2Body":
+    "Flutter Mane outspeeds the whole meta at plus one. The speed tiers view made the team building so much easier.",
+  "demo.post3Body":
+    "Built a Trick Room team around Torkoal and Amoonguss. Sharing the sheet if anyone wants to test against it.",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;

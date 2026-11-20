@@ -591,4 +591,13 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "groups.newCategoryNone": "カテゴリーなし",
   "groups.newLanguageLabel": "言語（任意）",
   "groups.newLanguageNone": "言語なし",
+
+  // 録画モード（?demo=1）。空のフィード代わりに表示するサンプル投稿。
+  // サンプルであることが明示され、データベースには書き込まれない。
+  "demo.post1Body":
+    "あめの構築がダブルで機能中。ダメージ計算の結果どおりだった。",
+  "demo.post2Body":
+    "ポラカゲンマはプラス1でメタ全体を抜ける。素早さ関係の表のおかげで構築がはかどった。",
+  "demo.post3Body":
+    "コータスとモローガンを軸にしたトリックルーム構築を作った。対戦したい人は構築表を共有する。",
 };

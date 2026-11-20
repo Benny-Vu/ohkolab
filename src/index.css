@@ -331,6 +331,17 @@ main {
   }
 }
 
+/*
+ * Recording mode (?demo=1): the app frame sets `data-demo` on <html>, and
+ * presses read larger — a clear scale-down on every active control — so
+ * screen recordings show each tap. Reduced motion keeps the scale but the
+ * rest of the page already snaps.
+ */
+html[data-demo="true"] button:active,
+html[data-demo="true"] a:active {
+  transform: scale(0.95);
+}
+
 /* Toasts (sonner) run on the motion tokens, not sonner's own defaults. */
 .cn-toast {
   animation-duration: var(--motion-base) !important;

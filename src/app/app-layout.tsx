@@ -27,6 +27,7 @@ import { OnboardingDialog } from "@/features/account/onboarding-dialog";
 import { WelcomeFlow } from "@/features/account/welcome-flow";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { NotificationBell } from "@/features/notifications/notification-bell";
+import { isDemoMode } from "@/lib/demo-mode";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { directMessagesEnabled } from "@/lib/messages/flag";
@@ -42,6 +43,17 @@ export function AppLayout() {
   const t = useT();
   const [locale] = useLocale();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // Recording mode (?demo=1): personal UI stays hidden and touch feedback
+  // is enlarged, so screen recordings stay clean. Sample content lives in
+  // the pages' empty states; nothing in demo mode posts or changes data.
+  const demo = isDemoMode();
+
+  // The data attribute carries demo mode into CSS (bigger pressed states).
+  useEffect(() => {
+    if (demo) {
+      document.documentElement.dataset.demo = "true";
+    }
+  }, [demo]);
 
   // Pages that want a destination prefetched dispatch the event instead of
   // importing the prefetch module (their feature graphs must stay chunk-free).
@@ -86,7 +98,9 @@ export function AppLayout() {
                 }
               >
                 {t(item.labelKey)}
-                {item.badge === "messages" && directMessagesEnabled() ? (
+                {item.badge === "messages" &&
+                directMessagesEnabled() &&
+                !demo ? (
                   <Suspense fallback={null}>
                     <MessagesNavBadge />
                   </Suspense>
@@ -96,8 +110,8 @@ export function AppLayout() {
           </nav>
           <div className="ml-auto flex items-center gap-1">
             <SearchPalette />
-            <NotificationBell />
-            <AccountMenu variant="header" />
+            {demo ? null : <NotificationBell />}
+            {demo ? null : <AccountMenu variant="header" />}
           </div>
         </div>
         {/* Native apps only: a thin "You're offline" overlay under the
@@ -196,7 +210,9 @@ export function AppLayout() {
               >
                 <item.icon className="size-5" aria-hidden />
                 {t(item.labelKey)}
-                {item.badge === "messages" && directMessagesEnabled() ? (
+                {item.badge === "messages" &&
+                directMessagesEnabled() &&
+                !demo ? (
                   <Suspense fallback={null}>
                     <MessagesNavBadge />
                   </Suspense>
@@ -204,9 +220,11 @@ export function AppLayout() {
               </NavLink>
             </li>
           ))}
-          <li>
-            <AccountMenu variant="tab" />
-          </li>
+          {demo ? null : (
+            <li>
+              <AccountMenu variant="tab" />
+            </li>
+          )}
         </ul>
       </nav>
 

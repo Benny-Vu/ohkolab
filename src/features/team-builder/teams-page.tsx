@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { CopyIcon, DownloadIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
+import { DemoTeamGrid } from "@/components/demo-team-grid";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import {
@@ -34,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TeamName } from "@/features/team-builder/team-name";
 import { TeamPreviewPanel } from "@/features/team-builder/team-preview-panel";
 import { formatDate } from "@/lib/format-date";
+import { isDemoMode } from "@/lib/demo-mode";
 import { useT } from "@/lib/i18n/t";
 import { useBattleFormat } from "@/lib/preferences";
 import { importTeam, sortByUpdated, useTeams } from "@/lib/team";
@@ -286,10 +288,16 @@ export function TeamsPage() {
           }
         />
       ) : sorted.length === 0 ? (
-        <EmptyState
-          title={t("teams.empty")}
-          description={t("teams.emptyDescription")}
-        />
+        // Recording mode fills the empty list with sample teams instead of
+        // an empty state; they are marked as examples and never clickable.
+        isDemoMode() ? (
+          <DemoTeamGrid />
+        ) : (
+          <EmptyState
+            title={t("teams.empty")}
+            description={t("teams.emptyDescription")}
+          />
+        )
       ) : (
         <div
           className={cn(

@@ -324,6 +324,14 @@ export const shellEn = {
   // the nav label lives here, because nav-items.ts is part of the entry
   // graph. Everything else sits in the community domain.
   "nav.messages": "Messages",
+
+  // Recording mode (?demo=1). The sample-content tag and format labels
+  // sit in the shell because demo cards render from both the community
+  // and tools routes; the sample bodies and team names sit with their
+  // owning feature.
+  "demo.example": "Example",
+  "demo.formatDoubles": "Doubles",
+  "demo.formatSingles": "Singles",
 } as const;
 
 export type ShellKey = keyof typeof shellEn;

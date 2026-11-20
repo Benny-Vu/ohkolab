@@ -324,4 +324,11 @@ export const shellJa: { [K in ShellKey]: string } = {
   // ダイレクトメッセージ（未リリース、VITE_DIRECT_MESSAGES）。ここにある
   // のはナビラベルのみ。ほかはcommunityドメイン。
   "nav.messages": "メッセージ",
+
+  // 録画モード（?demo=1）。サンプルであることの表示と形式ラベルは、
+  // communityとtools両方のルートから描かれるためここに置く。本文と
+  // 構術名はそれぞれの機能のドメインに置く。
+  "demo.example": "サンプル",
+  "demo.formatDoubles": "ダブル",
+  "demo.formatSingles": "シングル",
 };
