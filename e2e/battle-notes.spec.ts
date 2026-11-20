@@ -6,7 +6,9 @@ import { expectNoHorizontalOverflow, test } from "./smoke";
  * Battle notes (/calc/battle/notes, and inline in battle mode): notes taken
  * on the phone survive a reload, and the revealed fields reach the KO
  * matrix — the provenance badge turns "Revealed" and a revealed Mega Stone
- * turns the opponent's column into its Mega forme.
+ * turns the opponent's column into its Mega forme. Speed relations name one
+ * of my Pokémon, narrow the opponent into a Speed range with a plain hint,
+ * and the speed order carries that band labelled as coming from the notes.
  */
 
 const MY_PASTE = [
@@ -92,6 +94,43 @@ test("battle notes persist across a reload and reach the matrix", async ({
   await expect(
     page.locator("table button", { hasText: "%" }).first(),
   ).toBeVisible();
+
+  await expectNoHorizontalOverflow(page);
+});
+
+test("speed notes tie to your team, give a range and reach the speed order", async ({
+  page,
+}) => {
+  await page.goto("/calc/battle");
+
+  // My side pasted in (so the notes can name my Pokémon), their side typed.
+  await page.getByRole("button", { name: "Paste a team" }).click();
+  const myDialog = page.getByRole("dialog");
+  await myDialog.getByRole("textbox").fill(MY_PASTE);
+  await myDialog.getByRole("button", { name: "Use paste" }).click();
+
+  await page.getByRole("button", { name: "Paste from team preview" }).click();
+  const theirDialog = page.getByRole("dialog");
+  await theirDialog.getByRole("textbox").fill("Garchomp");
+  await theirDialog.getByRole("button", { name: "Read team" }).click();
+
+  // Open the opponent's card and note "Slower than my Incineroar".
+  await page.getByRole("button", { name: "Notes for Garchomp" }).click();
+  await page.getByRole("button", { name: "Slower than" }).click();
+  await page.getByRole("button", { name: /Incineroar \d+/ }).click();
+  await page.getByRole("button", { name: "Note it" }).click();
+
+  // The relation chip shows, with the range and the plain hint under it.
+  await expect(
+    page.getByText(/Slower than your Incineroar \(\d+\)/),
+  ).toBeVisible();
+  await expect(page.getByText(/Speed at most \d+\./)).toBeVisible();
+  await expect(
+    page.getByText(/Uninvested or Speed-lowering nature \(Brave\)\./),
+  ).toBeVisible();
+
+  // The speed order carries the band, labelled as coming from the notes.
+  await expect(page.getByText(/≤\d+ · from your notes/)).toBeVisible();
 
   await expectNoHorizontalOverflow(page);
 });

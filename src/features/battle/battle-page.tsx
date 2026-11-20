@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { DataBadge } from "@/components/data-badge";
 import { EmptyState } from "@/components/empty-state";
@@ -14,7 +14,12 @@ import {
   applyRevealedFields,
   hasRevealedFields,
 } from "@/features/battle/opponent-input";
-import { useBattleNotesState } from "@/features/battle/notes-store";
+import {
+  setNotesMyTeam,
+  useBattleNotesState,
+} from "@/features/battle/notes-store";
+import { speedRange, type SpeedRange } from "@/features/battle/speed-note";
+import { calcStats } from "@/data";
 import { useBattleFormat } from "@/lib/preferences";
 import { useT } from "@/lib/i18n/t";
 import type { PokemonSet } from "@/types/pokemon";
@@ -34,6 +39,32 @@ export function BattlePage() {
   const [mySets, setMySets] = useState<PokemonSet[]>([]);
   const [opponents, setOpponents] = useState<OpponentInput[]>([]);
   const { current: currentNotes } = useBattleNotesState();
+
+  // My six (with each one's Speed) sync into the notes store, so speed
+  // relations there can name my Pokémon. Emptying the team clears it, and
+  // a new set re-syncs. The store no-ops an unchanged team, so this can
+  // never loop.
+  useEffect(() => {
+    const seen = new Set<string>();
+    const members: { species: string; speed: number }[] = [];
+    for (const set of mySets) {
+      if (seen.has(set.species)) continue;
+      seen.add(set.species);
+      members.push({ species: set.species, speed: calcStats(set).spe });
+    }
+    setNotesMyTeam(members);
+  }, [mySets, currentNotes]);
+
+  // The Speed range the notes narrowed each opponent into, for the band
+  // in the speed order.
+  const notedRanges = useMemo(() => {
+    const ranges: Record<string, SpeedRange> = {};
+    for (const [species, note] of Object.entries(currentNotes.notes)) {
+      const range = speedRange(note.relations);
+      if (range.min !== null || range.max !== null) ranges[species] = range;
+    }
+    return ranges;
+  }, [currentNotes]);
 
   // The species with anything revealed, for the provenance badges.
   const revealedSpecies = useMemo(() => {
@@ -95,7 +126,11 @@ export function BattlePage() {
           <EmptyState title={t("battle.emptyMatrix")} />
         )}
 
-        <SpeedOrderPanel mySets={mySets} opponents={notedOpponents} />
+        <SpeedOrderPanel
+          mySets={mySets}
+          opponents={notedOpponents}
+          notedRanges={notedRanges}
+        />
       </div>
     </Page>
   );

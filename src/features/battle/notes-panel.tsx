@@ -28,14 +28,12 @@ import { useT } from "@/lib/i18n/t";
 import { MAX_TEAM_SIZE } from "@/types/team";
 import {
   addNotesMove,
-  addNotesSpeedChip,
   clearNotesHistory,
   deleteNotesHistoryEntry,
   logNotesMove,
   logNotesText,
   removeNotesMove,
   removeNotesSpecies,
-  removeNotesSpeedChip,
   removeNotesTurn,
   revealNotesAbility,
   revealNotesItem,
@@ -51,6 +49,7 @@ import {
   type SpeciesNote,
   type TurnLine,
 } from "@/features/battle/notes-store";
+import { NotesSpeedSection } from "@/features/battle/notes-speed-section";
 
 interface NotesPanelProps {
   /**
@@ -456,7 +455,7 @@ function SpeciesCard({ species }: { species: string }) {
   );
 }
 
-/** The pickers and chips of one card. */
+/** The pickers and notes of one card. */
 function CardBody({
   species,
   note,
@@ -466,6 +465,7 @@ function CardBody({
 }) {
   const t = useT();
   const displayName = useDisplayName();
+  const { current } = useBattleNotesState();
   const moves = note?.moves ?? [];
   const megas = getSpecies(species)?.megas ?? [];
 
@@ -476,8 +476,6 @@ function CardBody({
       : note?.mega
         ? (megas[0]?.forme ?? species)
         : species;
-
-  const scarfChip = note?.speed.find((chip) => chip.kind === "scarf");
 
   return (
     <div className="grid gap-3">
@@ -559,79 +557,11 @@ function CardBody({
         </div>
       </div>
 
-      <div className="grid gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">
-          {t("battle.notesSpeed")}
-        </span>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Button
-            type="button"
-            variant={scarfChip ? "secondary" : "outline"}
-            size="xs"
-            className={rowHitXsClass}
-            aria-pressed={Boolean(scarfChip)}
-            onClick={() => {
-              const chip = { kind: "scarf" as const, other: null };
-              if (scarfChip) removeNotesSpeedChip(species, chip);
-              else addNotesSpeedChip(species, chip);
-            }}
-          >
-            {t("battle.notesScarfChip")}
-          </Button>
-          <SpeciesPicker
-            value={null}
-            onChange={(other) => {
-              if (other !== species) {
-                addNotesSpeedChip(species, { kind: "faster", other });
-              }
-            }}
-            label={t("battle.notesFasterPick")}
-            placeholder={t("battle.notesFasterPick")}
-          />
-          <SpeciesPicker
-            value={null}
-            onChange={(other) => {
-              if (other !== species) {
-                addNotesSpeedChip(species, { kind: "slower", other });
-              }
-            }}
-            label={t("battle.notesSlowerPick")}
-            placeholder={t("battle.notesSlowerPick")}
-          />
-        </div>
-        {(note?.speed.length ?? 0) > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {note?.speed.map((chip) => (
-              <Button
-                key={`${chip.kind}-${chip.other ?? ""}`}
-                type="button"
-                variant="secondary"
-                size="xs"
-                className={rowHitXsClass}
-                aria-label={t("battle.notesRemoveChip")}
-                onClick={() => removeNotesSpeedChip(species, chip)}
-              >
-                {chip.kind === "scarf"
-                  ? t("battle.notesScarfChip")
-                  : chip.kind === "faster"
-                    ? t("battle.notesFasterChip", {
-                        name:
-                          chip.other !== null
-                            ? displayName("species", chip.other)
-                            : "",
-                      })
-                    : t("battle.notesSlowerChip", {
-                        name:
-                          chip.other !== null
-                            ? displayName("species", chip.other)
-                            : "",
-                      })}
-                <XIcon aria-hidden />
-              </Button>
-            ))}
-          </div>
-        ) : null}
-      </div>
+      <NotesSpeedSection
+        species={species}
+        note={note}
+        myTeam={current.myTeam}
+      />
 
       <div className="grid gap-1.5">
         <Label htmlFor={`notes-text-${species}`} className="text-sm">

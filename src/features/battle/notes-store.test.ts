@@ -4,7 +4,7 @@ import {
   NOTES_STORAGE_KEY,
   MAX_NOTE_HISTORY,
   addNotesMove,
-  addNotesSpeedChip,
+  addNotesSpeedRelation,
   clearNotesHistory,
   deleteNotesHistoryEntry,
   getBattleNotesState,
@@ -12,18 +12,21 @@ import {
   logNotesText,
   migrateStoredNotes,
   notesSetHasContent,
+  removeNotesSpeedRelation,
   removeNotesTurn,
   resetBattleNotesStore,
   revealNotesAbility,
   revealNotesItem,
   setNotesGame,
   setNotesMega,
+  setNotesMyTeam,
   setNotesPreview,
   setNotesText,
   setNotesTurn,
   startNewNotesSet,
   toggleNotesBrought,
 } from "@/features/battle/notes-store";
+import { EMPTY_SPEED_FIELD } from "@/features/battle/speed-note";
 
 /**
  * Battle notes storage: the versioned envelope, what parsing keeps and
@@ -63,7 +66,7 @@ describe("stored envelope", () => {
       version: number;
       state: { current: { notes: Record<string, { item: string | null }> } };
     };
-    expect(envelope.version).toBe(1);
+    expect(envelope.version).toBe(2);
     expect(envelope.state.current.notes["Incineroar"]?.item).toBe("Leftovers");
   });
 
@@ -111,7 +114,7 @@ describe("stored envelope", () => {
 
   it("drops malformed pieces and keeps the valid ones", () => {
     const parsed = migrateStoredNotes({
-      version: 1,
+      version: 2,
       state: {
         current: {
           id: "set-1",
@@ -119,13 +122,29 @@ describe("stored envelope", () => {
           game: 7,
           turn: 0,
           preview: ["Garchomp", "Missingno", "Charizard-Mega-Y"],
+          myTeam: [
+            { species: "Garchomp", speed: 50000 },
+            "junk",
+            { species: "Incineroar", speed: 150 },
+            { species: "Incineroar", speed: 200 },
+          ],
           notes: {
             Garchomp: {
               item: "not an item",
               ability: "Rough Skin",
               moves: ["Earthquake", "not a move", "Earthquake"],
               mega: "yes",
-              speed: [{ kind: "faster", other: "Missingno" }],
+              relations: [
+                { kind: "warp", mineSpecies: "Incineroar", mineSpeed: 100 },
+                { kind: "faster" },
+                { kind: "faster", mineSpecies: "Missingno" },
+                {
+                  kind: "faster",
+                  mineSpecies: "Incineroar",
+                  mineSpeed: 99999,
+                  field: { stageMine: 9 },
+                },
+              ],
               note: "x".repeat(500),
             },
           },
@@ -140,13 +159,22 @@ describe("stored envelope", () => {
     expect(set?.game).toBe(1);
     expect(set?.turn).toBe(1);
     expect(set?.preview).toEqual(["Garchomp"]);
+    expect(set?.myTeam).toEqual([{ species: "Incineroar", speed: 150 }]);
     expect(set?.notes["Garchomp"]).toEqual({
       species: "Garchomp",
       item: null,
       ability: "Rough Skin",
       moves: ["Earthquake"],
       mega: false,
-      speed: [],
+      relations: [
+        {
+          id: expect.any(String),
+          kind: "faster",
+          mineSpecies: "Incineroar",
+          mineSpeed: null,
+          field: { ...EMPTY_SPEED_FIELD },
+        },
+      ],
       note: "x".repeat(280),
     });
     expect(set?.brought).toEqual([{ game: 2, species: ["Garchomp"] }]);
@@ -159,6 +187,48 @@ describe("stored envelope", () => {
         text: "",
       },
     ]);
+  });
+
+  it("upgrades version-1 speed chips into plain relations", () => {
+    const parsed = migrateStoredNotes({
+      version: 1,
+      state: {
+        current: {
+          preview: ["Garchomp"],
+          notes: {
+            Garchomp: {
+              speed: [
+                { kind: "faster", other: "Incineroar" },
+                { kind: "scarf", other: null },
+                { kind: "slower", other: "Missingno" },
+                { kind: "slower", other: "Charizard" },
+              ],
+            },
+          },
+        },
+        history: [],
+      },
+    });
+    expect(parsed).not.toBeNull();
+    // faster/slower chips become plain relations with no Speed bound; the
+    // scarf chips carried nothing that survives, so they drop out.
+    expect(parsed?.current.notes["Garchomp"]?.relations).toEqual([
+      {
+        id: expect.any(String),
+        kind: "faster",
+        mineSpecies: "Incineroar",
+        mineSpeed: null,
+        field: { ...EMPTY_SPEED_FIELD },
+      },
+      {
+        id: expect.any(String),
+        kind: "slower",
+        mineSpecies: "Charizard",
+        mineSpeed: null,
+        field: { ...EMPTY_SPEED_FIELD },
+      },
+    ]);
+    expect(parsed?.current.myTeam).toBeNull();
   });
 });
 
@@ -295,8 +365,18 @@ describe("revealed fields", () => {
     revealNotesAbility("Garchomp", "Rough Skin");
     addNotesMove("Garchomp", "Earthquake");
     addNotesMove("Garchomp", "Earthquake");
-    addNotesSpeedChip("Garchomp", { kind: "scarf", other: null });
-    addNotesSpeedChip("Garchomp", { kind: "faster", other: "Incineroar" });
+    addNotesSpeedRelation("Garchomp", {
+      kind: "faster",
+      mineSpecies: "Incineroar",
+      mineSpeed: 169,
+      field: { ...EMPTY_SPEED_FIELD },
+    });
+    addNotesSpeedRelation("Garchomp", {
+      kind: "tie",
+      mineSpecies: "Charizard",
+      mineSpeed: null,
+      field: { ...EMPTY_SPEED_FIELD, priority: true },
+    });
     setNotesText("Garchomp", "scarf is real");
 
     let note = getBattleNotesState().current.notes["Garchomp"];
@@ -304,17 +384,67 @@ describe("revealed fields", () => {
       item: "Choice Scarf",
       ability: "Rough Skin",
       moves: ["Earthquake"],
-      speed: [
-        { kind: "scarf", other: null },
-        { kind: "faster", other: "Incineroar" },
-      ],
       note: "scarf is real",
     });
+    expect(note?.relations).toEqual([
+      {
+        id: expect.any(String),
+        kind: "faster",
+        mineSpecies: "Incineroar",
+        mineSpeed: 169,
+        field: { ...EMPTY_SPEED_FIELD },
+      },
+      {
+        id: expect.any(String),
+        kind: "tie",
+        mineSpecies: "Charizard",
+        mineSpeed: null,
+        field: { ...EMPTY_SPEED_FIELD, priority: true },
+      },
+    ]);
+
+    removeNotesSpeedRelation("Garchomp", note?.relations[0]?.id ?? "");
+    note = getBattleNotesState().current.notes["Garchomp"];
+    expect(note?.relations).toHaveLength(1);
+    expect(note?.relations[0]?.mineSpecies).toBe("Charizard");
 
     revealNotesItem("Garchomp", null);
     setNotesMega("Garchomp", true);
     note = getBattleNotesState().current.notes["Garchomp"];
     expect(note?.item).toBeNull();
     expect(note?.mega).toBe(true);
+  });
+});
+
+describe("my team", () => {
+  beforeEach(freshStore);
+
+  it("stores the team validated and deduped, and clears back to null", () => {
+    setNotesMyTeam([
+      { species: "Incineroar", speed: 150 },
+      { species: "Incineroar", speed: 999 },
+      { species: "Missingno", speed: 100 },
+      { species: "Garchomp", speed: -1 },
+    ]);
+    expect(getBattleNotesState().current.myTeam).toEqual([
+      { species: "Incineroar", speed: 150 },
+    ]);
+
+    setNotesMyTeam([]);
+    expect(getBattleNotesState().current.myTeam).toBeNull();
+  });
+
+  it("caps the relations per opponent", () => {
+    setNotesPreview(["Garchomp"]);
+    for (let i = 0; i < 10; i += 1) {
+      addNotesSpeedRelation("Garchomp", {
+        kind: "faster",
+        mineSpecies: "Incineroar",
+        mineSpeed: 150,
+        field: { ...EMPTY_SPEED_FIELD },
+      });
+    }
+    const note = getBattleNotesState().current.notes["Garchomp"];
+    expect(note?.relations).toHaveLength(6);
   });
 });

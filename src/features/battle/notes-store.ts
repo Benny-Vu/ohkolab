@@ -3,11 +3,18 @@ import { useSyncExternalStore } from "react";
 import { getAbility, getItem, getMove, getSpecies } from "@/data";
 import { MAX_TEAM_SIZE } from "@/types/team";
 
+import {
+  EMPTY_SPEED_FIELD,
+  type SpeedFieldState,
+  type SpeedRelation,
+} from "@/features/battle/speed-note";
+
 /**
  * Battle notes: what the player saw in the match, one note per opponent
- * Pokémon — revealed item, ability and moves, a Mega flag, speed chips and
- * free text — plus a best-of-3 game counter, the four the opponent brought
- * each game and an optional turn log.
+ * Pokémon — revealed item, ability and moves, a Mega flag, speed
+ * relations and free text — plus a best-of-3 game counter, the four the
+ * opponent brought each game, an optional turn log and the player's own
+ * team (chosen once, so speed relations can name their Pokémon).
  *
  * Device-only by design: everything lives in localStorage under a versioned
  * envelope, autosaved on every change, wrapped in try/catch (private windows
@@ -16,7 +23,7 @@ import { MAX_TEAM_SIZE } from "@/types/team";
  */
 
 export const NOTES_STORAGE_KEY = "ohkolab:battle:notes";
-const STORAGE_VERSION = 1;
+const STORAGE_VERSION = 2;
 
 /** How many archived sets the history keeps. */
 export const MAX_NOTE_HISTORY = 20;
@@ -24,21 +31,20 @@ export const MAX_NOTE_HISTORY = 20;
 const MAX_NOTE_LENGTH = 280;
 const MAX_TURN_LINES = 100;
 const MAX_TURN_TEXT = 200;
-const MAX_SPEED_CHIPS = 4;
+const MAX_SPEED_RELATIONS = 6;
 const MAX_REVEALED_MOVES = 4;
 const MAX_TURN = 999;
+const MAX_STORED_SPEED = 10000;
 /** Upper bound for the stored JSON; the oldest archives drop out first. */
 const MAX_STORED_BYTES = 128 * 1024;
 
 const GAMES = [1, 2, 3] as const;
 
-export type SpeedChipKind = "scarf" | "faster" | "slower";
-
-/** One speed chip: "Scarf?", "faster than X" or "slower than X". */
-export interface SpeedChip {
-  kind: SpeedChipKind;
-  /** The other Pokémon a "faster"/"slower" chip names; null for "scarf". */
-  other: string | null;
+/** One of my Pokémon the speed relations can name, with its Speed stat. */
+export interface MyTeamMember {
+  species: string;
+  /** The Pokémon's Speed at level 50 from its set, before modifiers. */
+  speed: number;
 }
 
 /** What was revealed about one opponent Pokémon. */
@@ -50,7 +56,8 @@ export interface SpeciesNote {
   moves: string[];
   /** The opponent Mega-evolved this Pokémon. */
   mega: boolean;
-  speed: SpeedChip[];
+  /** Speed relations against my Pokémon, newest last. */
+  relations: SpeedRelation[];
   note: string;
 }
 
@@ -80,6 +87,8 @@ export interface NotesSet {
   turn: number;
   /** The team-preview six, so the notes work on their own page too. */
   preview: string[];
+  /** My team for this set, with Speeds; null when none was chosen. */
+  myTeam: MyTeamMember[] | null;
   notes: Record<string, SpeciesNote>;
   brought: GameBrought[];
   turns: TurnLine[];
@@ -138,8 +147,46 @@ function validGame(raw: unknown): number | null {
   return GAMES.some((game) => game === raw) ? raw : null;
 }
 
-function sameChip(a: SpeedChip, b: SpeedChip): boolean {
-  return a.kind === b.kind && a.other === b.other;
+/** A stored Speed stat: a whole number a set can actually reach. */
+function validSpeed(raw: unknown): number | null {
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
+  const speed = Math.round(raw);
+  return speed >= 0 && speed <= MAX_STORED_SPEED ? speed : null;
+}
+
+/** The field state a relation records, defaulting every toggle to off. */
+function validField(raw: unknown): SpeedFieldState {
+  const rec = isRecord(raw) ? raw : {};
+  return {
+    tailwindMine: rec.tailwindMine === true,
+    tailwindTheirs: rec.tailwindTheirs === true,
+    trickRoom: rec.trickRoom === true,
+    paralyzedMine: rec.paralyzedMine === true,
+    scarfMine: rec.scarfMine === true,
+    stageMine:
+      typeof rec.stageMine === "number" &&
+      Number.isFinite(rec.stageMine) &&
+      rec.stageMine >= -6 &&
+      rec.stageMine <= 6
+        ? Math.round(rec.stageMine)
+        : 0,
+    priority: rec.priority === true,
+  };
+}
+
+function parseRelation(raw: unknown): SpeedRelation | null {
+  if (!isRecord(raw)) return null;
+  const kind = raw.kind;
+  if (kind !== "faster" && kind !== "slower" && kind !== "tie") return null;
+  const mineSpecies = validSpecies(raw.mineSpecies);
+  if (!mineSpecies) return null;
+  return {
+    id: typeof raw.id === "string" && raw.id ? raw.id : newId(),
+    kind,
+    mineSpecies,
+    mineSpeed: validSpeed(raw.mineSpeed),
+    field: validField(raw.field),
+  };
 }
 
 function parseNote(species: string, raw: unknown): SpeciesNote {
@@ -153,20 +200,13 @@ function parseNote(species: string, raw: unknown): SpeciesNote {
       }
     }
   }
-  const speed: SpeedChip[] = [];
-  if (Array.isArray(rec.speed)) {
-    for (const entry of rec.speed) {
-      if (!isRecord(entry)) continue;
-      const kind = entry.kind;
-      if (kind !== "scarf" && kind !== "faster" && kind !== "slower") continue;
-      const other = validSpecies(entry.other);
-      const chip: SpeedChip = {
-        kind,
-        other: kind === "scarf" ? null : other,
-      };
-      if (kind !== "scarf" && !other) continue;
-      if (speed.some((existing) => sameChip(existing, chip))) continue;
-      if (speed.length < MAX_SPEED_CHIPS) speed.push(chip);
+  const relations: SpeedRelation[] = [];
+  if (Array.isArray(rec.relations)) {
+    for (const entry of rec.relations) {
+      const parsed = parseRelation(entry);
+      if (parsed && relations.length < MAX_SPEED_RELATIONS) {
+        relations.push(parsed);
+      }
     }
   }
   return {
@@ -175,9 +215,33 @@ function parseNote(species: string, raw: unknown): SpeciesNote {
     ability: validAbility(rec.ability),
     moves,
     mega: rec.mega === true,
-    speed,
+    relations,
     note: boundedText(rec.note, MAX_NOTE_LENGTH),
   };
+}
+
+/** Parses a v1 note's "speed" chips into plain v2 relations. */
+function upgradeChips(raw: unknown): SpeedRelation[] {
+  const rec = isRecord(raw) ? raw : {};
+  const relations: SpeedRelation[] = [];
+  if (Array.isArray(rec.speed)) {
+    for (const entry of rec.speed) {
+      if (!isRecord(entry)) continue;
+      const kind = entry.kind;
+      if (kind !== "faster" && kind !== "slower") continue;
+      const other = validSpecies(entry.other);
+      if (!other) continue;
+      relations.push({
+        id: newId(),
+        kind,
+        mineSpecies: other,
+        // v1 chips carried no speed, so these stay plain notes.
+        mineSpeed: null,
+        field: { ...EMPTY_SPEED_FIELD },
+      });
+    }
+  }
+  return relations.slice(0, MAX_SPEED_RELATIONS);
 }
 
 function parseTurnLine(raw: unknown): TurnLine | null {
@@ -201,7 +265,39 @@ function parseTurnLine(raw: unknown): TurnLine | null {
   };
 }
 
-function parseSet(raw: unknown): NotesSet {
+function parseMyTeam(raw: unknown): MyTeamMember[] | null {
+  if (!Array.isArray(raw)) return null;
+  const team: MyTeamMember[] = [];
+  for (const entry of raw) {
+    if (!isRecord(entry)) continue;
+    const species = validSpecies(entry.species);
+    const speed = validSpeed(entry.speed);
+    if (!species || speed === null) continue;
+    if (!team.some((member) => member.species === species)) {
+      team.push({ species, speed });
+    }
+    if (team.length >= MAX_TEAM_SIZE) break;
+  }
+  return team.length > 0 ? team : null;
+}
+
+/** Two parsed teams are the same list, or both absent. */
+function sameMyTeam(
+  next: MyTeamMember[] | null,
+  stored: MyTeamMember[] | null,
+): boolean {
+  if (next === null || stored === null) return next === stored;
+  return (
+    next.length === stored.length &&
+    next.every(
+      (member, index) =>
+        member.species === stored[index]?.species &&
+        member.speed === stored[index]?.speed,
+    )
+  );
+}
+
+function parseSet(raw: unknown, legacy = false): NotesSet {
   const rec = isRecord(raw) ? raw : {};
   const preview: string[] = [];
   if (Array.isArray(rec.preview)) {
@@ -220,7 +316,13 @@ function parseSet(raw: unknown): NotesSet {
   const rawNotes = isRecord(rec.notes) ? rec.notes : {};
   for (const [key, value] of Object.entries(rawNotes)) {
     const species = validSpecies(key);
-    if (species) notes[species] = parseNote(species, value);
+    if (species) {
+      const note = parseNote(species, value);
+      // v1 sets kept speed chips; they become plain relations without a
+      // bound, so nothing the player wrote is lost on upgrade.
+      if (legacy) note.relations = upgradeChips(value);
+      notes[species] = note;
+    }
   }
   const brought: GameBrought[] = [];
   if (Array.isArray(rec.brought)) {
@@ -257,6 +359,7 @@ function parseSet(raw: unknown): NotesSet {
         ? Math.min(MAX_TURN, Math.max(1, Math.round(rec.turn)))
         : 1,
     preview,
+    myTeam: legacy ? null : parseMyTeam(rec.myTeam),
     notes,
     brought,
     turns,
@@ -266,17 +369,21 @@ function parseSet(raw: unknown): NotesSet {
 /**
  * Reads a stored envelope from any schema version and brings it to the
  * current one, or returns null when nothing usable is stored (corrupt JSON
- * never reaches here — the caller catches that). Version 1 is the first
- * schema; a future version migrates step by step before this returns it.
+ * never reaches here — the caller catches that). Version 1 sets upgrade in
+ * place: their speed chips become plain relations, and they had no team.
  */
 export function migrateStoredNotes(raw: unknown): BattleNotesState | null {
-  if (!isRecord(raw) || raw.version !== STORAGE_VERSION) return null;
+  if (!isRecord(raw)) return null;
+  const legacy = raw.version === 1;
+  if (!legacy && raw.version !== STORAGE_VERSION) return null;
   const state = raw.state;
   if (!isRecord(state)) return null;
   const history = Array.isArray(state.history)
-    ? state.history.map(parseSet).slice(0, MAX_NOTE_HISTORY)
+    ? state.history
+        .map((entry) => parseSet(entry, legacy))
+        .slice(0, MAX_NOTE_HISTORY)
     : [];
-  return { current: parseSet(state.current), history };
+  return { current: parseSet(state.current, legacy), history };
 }
 
 // --- The store: one module-level snapshot, autosaved on every change. ---
@@ -289,6 +396,7 @@ export function createEmptyNotesSet(now: number = Date.now()): NotesSet {
     game: 1,
     turn: 1,
     preview: [],
+    myTeam: null,
     notes: {},
     brought: [],
     turns: [],
@@ -376,7 +484,7 @@ function noteOf(set: NotesSet, species: string): SpeciesNote {
       ability: null,
       moves: [],
       mega: false,
-      speed: [],
+      relations: [],
       note: "",
     }
   );
@@ -469,28 +577,47 @@ export function setNotesMega(species: string, mega: boolean): void {
   updateCurrent((set) => withNote(set, { ...noteOf(set, species), mega }));
 }
 
-/** Adds a speed chip, replacing an identical one. */
-export function addNotesSpeedChip(species: string, chip: SpeedChip): void {
+/**
+ * My team for this set, with each member's Speed from its set. Chosen
+ * once (the battle page syncs its my-side team in); null clears it.
+ * A no-op when the parsed team already matches, so re-syncing from a
+ * render loop can never churn the store.
+ */
+export function setNotesMyTeam(members: readonly MyTeamMember[]): void {
+  const next = parseMyTeam(members);
+  if (sameMyTeam(next, current().current.myTeam)) return;
+  updateCurrent((set) => ({ ...set, myTeam: next }));
+}
+
+/** Adds a speed relation to an opponent, at most a handful per Pokémon. */
+export function addNotesSpeedRelation(
+  species: string,
+  relation: Omit<SpeedRelation, "id">,
+): void {
   updateCurrent((set) => {
     const note = noteOf(set, species);
-    const kept = note.speed.filter((existing) => !sameChip(existing, chip));
-    if (
-      kept.length === note.speed.length &&
-      note.speed.length >= MAX_SPEED_CHIPS
-    ) {
-      return set;
-    }
-    return withNote(set, { ...note, speed: [...kept, chip] });
+    if (note.relations.length >= MAX_SPEED_RELATIONS) return set;
+    const parsed = parseRelation({ ...relation, id: newId() });
+    if (!parsed) return set;
+    return withNote(set, {
+      ...note,
+      relations: [...note.relations, parsed],
+    });
   });
 }
 
-/** Removes a speed chip. */
-export function removeNotesSpeedChip(species: string, chip: SpeedChip): void {
+/** Removes one speed relation by id. */
+export function removeNotesSpeedRelation(
+  species: string,
+  relationId: string,
+): void {
   updateCurrent((set) => {
     const note = noteOf(set, species);
     return withNote(set, {
       ...note,
-      speed: note.speed.filter((existing) => !sameChip(existing, chip)),
+      relations: note.relations.filter(
+        (existing) => existing.id !== relationId,
+      ),
     });
   });
 }
@@ -598,7 +725,7 @@ export function notesSetHasContent(set: NotesSet): boolean {
         note.ability !== null ||
         note.moves.length > 0 ||
         note.mega ||
-        note.speed.length > 0 ||
+        note.relations.length > 0 ||
         note.note !== "",
     )
   );

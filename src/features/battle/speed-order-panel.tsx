@@ -17,18 +17,32 @@ import {
   type SpeedMember,
   type SpeedToggles,
 } from "@/features/battle/speed-order";
+import {
+  rangeIsInconsistent,
+  type SpeedRange,
+} from "@/features/battle/speed-note";
 
 interface SpeedOrderPanelProps {
   mySets: PokemonSet[];
   opponents: OpponentInput[];
+  /**
+   * The Speed range the battle notes narrowed each opponent into, keyed by
+   * species. The list shows it as a band and sorts by it where it can.
+   */
+  notedRanges?: Readonly<Record<string, SpeedRange>>;
 }
 
 /**
  * One list of all twelve, fastest first: Tailwind per side, Trick Room and a
  * per-Pokémon Choice Scarf re-order it live, with the Speed values shown so
- * the order is never a mystery.
+ * the order is never a mystery. Opponents the notes narrowed into a Speed
+ * range carry that band, labelled as coming from the notes.
  */
-export function SpeedOrderPanel({ mySets, opponents }: SpeedOrderPanelProps) {
+export function SpeedOrderPanel({
+  mySets,
+  opponents,
+  notedRanges,
+}: SpeedOrderPanelProps) {
   const t = useT();
   const displayName = useDisplayName();
   const titleId = useId();
@@ -51,7 +65,10 @@ export function SpeedOrderPanel({ mySets, opponents }: SpeedOrderPanelProps) {
     })),
   ];
 
-  const rows = orderSpeedRows(speedRows(members, toggles), toggles.trickRoom);
+  const rows = orderSpeedRows(
+    speedRows(members, toggles, notedRanges),
+    toggles.trickRoom,
+  );
 
   const toggle = (patch: Partial<SpeedToggles>) =>
     setToggles((current) => ({ ...current, ...patch }));
@@ -122,6 +139,18 @@ export function SpeedOrderPanel({ mySets, opponents }: SpeedOrderPanelProps) {
                     </span>
                   </span>
                   <span className="flex flex-wrap gap-1">
+                    {row.range ? (
+                      rangeIsInconsistent(row.range) ? (
+                        <Badge variant="outline" className="px-1 text-2xs">
+                          {t("battle.hintInconsistent")}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="px-1 text-2xs">
+                          {bandLabel(t, row.range)} ·{" "}
+                          {t("battle.speedFromNotes")}
+                        </Badge>
+                      )
+                    ) : null}
                     {modifiers.map((modifier) => (
                       <Badge
                         key={modifier.key}
@@ -165,3 +194,13 @@ export function SpeedOrderPanel({ mySets, opponents }: SpeedOrderPanelProps) {
 
 /** The `SpeedToggles` keys that are plain booleans. */
 type BooleanToggleKey = "myTailwind" | "theirTailwind" | "trickRoom";
+
+/** The compact band text for a noted range: "≥170", "≤96", "170–200". */
+function bandLabel(t: ReturnType<typeof useT>, range: SpeedRange): string {
+  if (range.min !== null && range.max !== null) {
+    return t("battle.bandBetween", { min: range.min, max: range.max });
+  }
+  if (range.min !== null) return t("battle.bandAtLeast", { min: range.min });
+  if (range.max !== null) return t("battle.bandAtMost", { max: range.max });
+  return "";
+}

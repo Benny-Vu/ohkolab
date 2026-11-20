@@ -67,6 +67,9 @@ describe("dictionaries", () => {
       // Platform brand names: the Japanese uses the same branding.
       "YouTube",
       "Twitch",
+      // Symbol-only values (the speed-order band) have nothing to translate.
+      "≥{min}",
+      "≤{max}",
     ]);
     // Keys whose English value is intentionally not English (or not shown in
     // the en locale at all).

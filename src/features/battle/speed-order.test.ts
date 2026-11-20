@@ -67,6 +67,22 @@ describe("speedRows", () => {
     expect(rows.find((row) => row.key === "my-0")?.tailwind).toBe(false);
     expect(rows.find((row) => row.key === "their-0")?.tailwind).toBe(true);
   });
+
+  it("carries a noted range on their side only, when it bounds anything", () => {
+    const rows = speedRows([GARCHOMP, INCINEROAR], EMPTY_SPEED_TOGGLES, {
+      Incineroar: { min: 100, max: null },
+    });
+    expect(rows.find((row) => row.key === "their-0")?.range).toEqual({
+      min: 100,
+      max: null,
+    });
+    expect(rows.find((row) => row.key === "my-0")?.range).toBeUndefined();
+
+    const open = speedRows([INCINEROAR], EMPTY_SPEED_TOGGLES, {
+      Incineroar: { min: null, max: null },
+    });
+    expect(open[0]?.range).toBeUndefined();
+  });
 });
 
 describe("orderSpeedRows", () => {
@@ -110,5 +126,38 @@ describe("orderSpeedRows", () => {
     );
     expect(withoutTailwind[0]?.key).toBe("my-0");
     expect(withTheirTailwind[0]?.key).toBe("their-0");
+  });
+
+  it("sorts a banded opponent by the range bound, not the guess", () => {
+    // Noted "at least 500": the band places it above the guess however
+    // fast the guessed set looks.
+    const fast = speedRows([GARCHOMP, INCINEROAR], EMPTY_SPEED_TOGGLES, {
+      Incineroar: { min: 500, max: null },
+    });
+    expect(orderSpeedRows(fast, false).map((row) => row.key)).toEqual([
+      "their-0",
+      "my-0",
+    ]);
+
+    // Noted "at most 5": slow, even with the scarf toggle on the guess.
+    const slow = speedRows(
+      [GARCHOMP, INCINEROAR],
+      { ...EMPTY_SPEED_TOGGLES, scarves: { "their-0": true } },
+      { Incineroar: { min: null, max: 5 } },
+    );
+    expect(orderSpeedRows(slow, false).map((row) => row.key)).toEqual([
+      "my-0",
+      "their-0",
+    ]);
+  });
+
+  it("ignores a range the notes contradict and sorts by the guess", () => {
+    const rows = speedRows([GARCHOMP, INCINEROAR], EMPTY_SPEED_TOGGLES, {
+      Incineroar: { min: 900, max: 1 },
+    });
+    expect(orderSpeedRows(rows, false).map((row) => row.key)).toEqual([
+      "my-0",
+      "their-0",
+    ]);
   });
 });
