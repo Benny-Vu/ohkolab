@@ -23,7 +23,7 @@ interface SupabaseEnv {
  * runner, so a test can never reach the real project even when a developer's
  * `.env.local` is present.
  */
-export function readSupabaseConfig(env: SupabaseEnv): SupabaseConfig | null {
+function readSupabaseConfig(env: SupabaseEnv): SupabaseConfig | null {
   if (env.MODE === "test") return null;
   const url = env.VITE_SUPABASE_URL?.trim();
   const anonKey = env.VITE_SUPABASE_ANON_KEY?.trim();
@@ -64,11 +64,7 @@ export const supabaseConfig: SupabaseConfig | null = readSupabaseConfig(
 /**
  * The shared Supabase client, or null when `VITE_SUPABASE_URL` or
  * `VITE_SUPABASE_ANON_KEY` is missing (tests, a fresh clone). Importing this
- * module never throws: check for null, or `isSupabaseConfigured`, and fall
- * back to guest behaviour. For anything about the signed-in user, prefer
- * `useAuth()` from `@/lib/auth`.
+ * module never throws: check for null and fall back to guest behaviour. For
+ * anything about the signed-in user, prefer `useAuth()` from `@/lib/auth`.
  */
 export const supabase: AppSupabaseClient | null = buildClient(supabaseConfig);
-
-/** False when the app runs in guest mode, with no accounts or cloud saves. */
-export const isSupabaseConfigured: boolean = supabase !== null;

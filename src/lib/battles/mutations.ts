@@ -10,7 +10,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/lib/auth/use-auth";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
-import { battlesEnabled } from "@/lib/battles/flag";
 
 import type { BattleRequestInsert } from "@/lib/database.types";
 
@@ -18,7 +17,7 @@ import type { BattleRequestInsert } from "@/lib/database.types";
 export type NewBattleRequest = Omit<BattleRequestInsert, "author_id">;
 
 /** Surfaces the raw error; the UI maps codes to friendly i18n strings. */
-export type BattleMutationError = { message: string };
+type BattleMutationError = { message: string };
 
 /** The invalidations every successful write shares. */
 function battleInvalidations(
@@ -239,12 +238,4 @@ export function useReportBattleRequest(
       }
     },
   });
-}
-
-/** Whether the battles hooks may run at all (flag + client + user). */
-export function battlesUsable(
-  client: AppSupabaseClient | null,
-  signedIn: boolean,
-): boolean {
-  return battlesEnabled() && client !== null && signedIn;
 }
