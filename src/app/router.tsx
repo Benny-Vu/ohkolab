@@ -16,6 +16,7 @@ import { moderationRoutes } from "@/features/moderation/routes";
 import { notificationRoutes } from "@/features/notifications/routes";
 import { postRoutes } from "@/features/post/routes";
 import { profileRoutes } from "@/features/profile/routes";
+import { sourceRoutes } from "@/features/source-links/routes";
 import { styleguideRoutes } from "@/features/styleguide/routes";
 import { RouteErrorPage } from "@/features/system/route-error-page";
 import { systemRoutes } from "@/features/system/routes";
@@ -51,6 +52,7 @@ export const router = createBrowserRouter([
           ...notificationRoutes,
           ...moderationRoutes,
           ...groupsRoutes,
+          ...sourceRoutes,
           ...styleguideRoutes,
           ...systemRoutes,
         ],

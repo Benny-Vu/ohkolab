@@ -29,6 +29,7 @@ export type TelemetryEvent =
   | "feedback_sent"
   | "link_shared"
   | "share_card_saved"
+  | "source_visit"
   | "theme_changed";
 
 export type SearchKind = "pokemon" | "move" | "item" | "page";
@@ -37,6 +38,10 @@ export type PostAttachment = "none" | "team" | "calc";
 export type FeedbackEventKind = "bug" | "idea" | "other";
 /** What was shared, by the link's route — never the link itself. */
 export type SharedLinkKind = "calc" | "team" | "profile" | "post" | "group";
+
+/** A marketing platform a visitor arrived from, and nothing else. */
+export type SourceName =
+  "tiktok" | "shorts" | "reels" | "reddit" | "bluesky" | "note";
 
 /** The properties each catalogue event carries, beyond the shared ones. */
 export interface EventProperties {
@@ -76,6 +81,8 @@ export interface EventProperties {
     format: "1080x1920" | "1200x630";
     language: "en" | "ja";
   };
+  /** Which platform the visitor came from — the only property it carries. */
+  source_visit: { source: SourceName };
   theme_changed: { theme: "dark" | "light" };
 }
 

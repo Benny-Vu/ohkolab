@@ -28,6 +28,7 @@ const PARAMETER_ROUTES: ReadonlyArray<{ pattern: RegExp; template: string }> = [
   { pattern: /^\/u\/[^/]+$/, template: "/u/:username" },
   { pattern: /^\/moderation\/[^/]+$/, template: "/moderation/:actionId" },
   { pattern: /^\/g\/[^/]+$/, template: "/g/:slug" },
+  { pattern: /^\/from\/[^/]+$/, template: "/from/:source" },
 ];
 
 /** The template for paths that match no known route. */
