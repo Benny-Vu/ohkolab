@@ -976,6 +976,18 @@ jobs:
           select gen_random_uuid(), 'c7c7c7c7-c7c7-47c7-87c7-c7c7c7c7c7c7',
                  'doubles', 'casual', 'en', now() - interval '25 hours'
           from generate_series(1, 31);
+          -- The reply seed runs with bat_blocked's claims: the reply
+          -- trigger's helpers answer only for the caller, and without
+          -- claims there is no caller.
+          begin;
+          select set_config(
+            'request.jwt.claims',
+            json_build_object(
+              'sub', 'e9e9e9e9-e9e9-49e9-89e9-e9e9e9e9e9e9',
+              'role', 'authenticated'
+            )::text,
+            true
+          );
           insert into public.battle_replies (request_id, responder_id, created_at)
           select r.id, 'e9e9e9e9-e9e9-49e9-89e9-e9e9e9e9e9e9', now() - interval '2 hours'
           from (
@@ -984,6 +996,7 @@ jobs:
             order by created_at
             limit 30
           ) r;
+          commit;
 
           -- Behaviour checks, as the authenticated role with each user's
           -- claims. Every failure raises with BAT-CHECK.
@@ -1405,6 +1418,42 @@ jobs:
                 raise exception 'BAT-CHECK: a non-moderator remove raised %', sqlerrm;
               end if;
             end;
+
+            -- The visibility helpers answer only for the caller:
+            -- battle_visible_between and battle_playable_by are not
+            -- executable by clients at all, and the policy helpers return
+            -- false for any viewer other than the caller — even one who
+            -- could see the row (bat_b is the accepted responder on
+            -- req_main, bat_a asking for them gets no answer).
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            begin
+              perform public.battle_visible_between(bat_a, bat_b);
+              raise exception 'BAT-CHECK: a client called battle_visible_between';
+            exception when others then
+              if sqlerrm not like 'permission denied%' then
+                raise exception 'BAT-CHECK: battle_visible_between raised %', sqlerrm;
+              end if;
+            end;
+            begin
+              perform public.battle_playable_by(req_main, bat_a);
+              raise exception 'BAT-CHECK: a client called battle_playable_by';
+            exception when others then
+              if sqlerrm not like 'permission denied%' then
+                raise exception 'BAT-CHECK: battle_playable_by raised %', sqlerrm;
+              end if;
+            end;
+            if public.battle_request_visible(req_main, bat_b) then
+              raise exception 'BAT-CHECK: battle_request_visible answered for another viewer';
+            end if;
+            if public.battle_code_visible(req_main, bat_b) then
+              raise exception 'BAT-CHECK: battle_code_visible answered for another viewer';
+            end if;
+            if not public.battle_request_visible(req_main, bat_a) then
+              raise exception 'BAT-CHECK: battle_request_visible stopped answering for the caller';
+            end if;
+            if not public.battle_code_visible(req_main, bat_a) then
+              raise exception 'BAT-CHECK: battle_code_visible stopped answering for the caller';
+            end if;
           end;
           $bat$;
 
