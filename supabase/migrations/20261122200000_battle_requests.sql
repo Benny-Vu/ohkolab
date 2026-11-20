@@ -87,6 +87,35 @@ create index if not exists battle_requests_window_idx
   where status = 'open';
 
 -- ---------------------------------------------------------------------------
+-- battle_replies: one offer to battle per user per request. Created before
+-- the visibility helpers, which read it.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.battle_replies (
+  id uuid primary key default gen_random_uuid(),
+  request_id uuid not null references public.battle_requests (id) on delete cascade,
+  responder_id uuid not null references public.profiles (id) on delete cascade,
+  -- pending / accepted / declined / withdrawn.
+  status text not null default 'pending'
+    constraint battle_replies_status_check
+      check (status in ('pending', 'accepted', 'declined', 'withdrawn')),
+  created_at timestamptz not null default now(),
+  constraint battle_replies_once_per_request unique (request_id, responder_id)
+);
+
+alter table public.battle_replies enable row level security;
+
+revoke all on public.battle_replies from anon, authenticated;
+grant select on public.battle_replies to authenticated;
+grant insert (request_id, responder_id) on public.battle_replies to authenticated;
+grant update (status) on public.battle_replies to authenticated;
+
+create index if not exists battle_replies_request_idx
+  on public.battle_replies (request_id, created_at);
+create index if not exists battle_replies_responder_created_idx
+  on public.battle_replies (responder_id, created_at desc);
+
+-- ---------------------------------------------------------------------------
 -- Visibility helpers. All security definer with `set search_path = ''`, so
 -- they read blocks, birth dates, follows and replies without extra grants
 -- and without applying RLS to their subqueries (no policy recursion).
@@ -440,32 +469,9 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- battle_replies: one offer to battle per user per request.
+-- battle_replies policies and triggers (the table itself is created above,
+-- before the visibility helpers).
 -- ---------------------------------------------------------------------------
-
-create table if not exists public.battle_replies (
-  id uuid primary key default gen_random_uuid(),
-  request_id uuid not null references public.battle_requests (id) on delete cascade,
-  responder_id uuid not null references public.profiles (id) on delete cascade,
-  -- pending / accepted / declined / withdrawn.
-  status text not null default 'pending'
-    constraint battle_replies_status_check
-      check (status in ('pending', 'accepted', 'declined', 'withdrawn')),
-  created_at timestamptz not null default now(),
-  constraint battle_replies_once_per_request unique (request_id, responder_id)
-);
-
-alter table public.battle_replies enable row level security;
-
-revoke all on public.battle_replies from anon, authenticated;
-grant select on public.battle_replies to authenticated;
-grant insert (request_id, responder_id) on public.battle_replies to authenticated;
-grant update (status) on public.battle_replies to authenticated;
-
-create index if not exists battle_replies_request_idx
-  on public.battle_replies (request_id, created_at);
-create index if not exists battle_replies_responder_created_idx
-  on public.battle_replies (responder_id, created_at desc);
 
 do $$
 begin
