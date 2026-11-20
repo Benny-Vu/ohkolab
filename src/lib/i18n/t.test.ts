@@ -4,6 +4,7 @@ import type { TranslationKey } from "@/lib/i18n/en";
 import { accountEn } from "@/lib/i18n/entries/account";
 import { battlesEn } from "@/lib/i18n/entries/battles";
 import { communityEn } from "@/lib/i18n/entries/community";
+import { learnEn } from "@/lib/i18n/entries/learn";
 import { shellEn } from "@/lib/i18n/entries/shell";
 import { toolsEn } from "@/lib/i18n/entries/tools";
 import { ja } from "@/lib/i18n/ja";
@@ -22,6 +23,7 @@ const en: Record<TranslationKey, string> = {
   ...accountEn,
   ...toolsEn,
   ...battlesEn,
+  ...learnEn,
 };
 
 describe("dictionaries", () => {

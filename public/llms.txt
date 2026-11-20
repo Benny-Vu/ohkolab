@@ -25,6 +25,10 @@ Key facts:
 - [Team builder](https://ohkolab.com/teams): six-Pokémon teams with SP spreads, Showdown import and export, team analysis (weaknesses, coverage, speed tiers), Champions team IDs, a team preview and a printable tournament team sheet
 - [Metagame](https://ohkolab.com/meta): usage rankings with common moves, items, abilities, natures, SP spreads and teammates; any set opens in the calc or the team builder
 
+## Learn
+
+- [Learn](https://ohkolab.com/learn): short plain-language explainers of the numbers — damage rolls (`/learn#damage-rolls`), OHKO and 2HKO (`/learn#ohko`), Stat Points (`/learn#stat-points`) and speed ties (`/learn#speed-ties`)
+
 ## About
 
 - [Credits](https://ohkolab.com/credits): data sources and licences (PokéAPI, @pkmn, @smogon/calc, Smogon usage statistics, fonts and libraries)

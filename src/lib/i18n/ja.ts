@@ -9,6 +9,7 @@
 import { accountJa } from "@/lib/i18n/entries/account-ja";
 import { battlesJa } from "@/lib/i18n/entries/battles-ja";
 import { communityJa } from "@/lib/i18n/entries/community-ja";
+import { learnJa } from "@/lib/i18n/entries/learn-ja";
 import { shellJa } from "@/lib/i18n/entries/shell-ja";
 import { toolsJa } from "@/lib/i18n/entries/tools-ja";
 import type { TranslationKey } from "@/lib/i18n/en";
@@ -19,4 +20,5 @@ export const ja: Partial<Record<TranslationKey, string>> = {
   ...accountJa,
   ...toolsJa,
   ...battlesJa,
+  ...learnJa,
 };

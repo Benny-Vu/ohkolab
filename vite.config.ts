@@ -53,6 +53,7 @@ const SITEMAP_ROUTES = new Set([
   "teams",
   "meta",
   "groups",
+  "learn",
   "terms",
   "privacy",
   "credits",
