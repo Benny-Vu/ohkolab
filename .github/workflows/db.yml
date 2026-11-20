@@ -31,9 +31,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Pinned to the release the 2026-11-20 run passed with: resolving
+      # "latest" hits the GitHub API and fails on rate limits
+      # (run 44644992101). Bump deliberately, after a green run.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.2.0
 
       - name: Start a local Supabase and apply all migrations
         run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime
