@@ -1,0 +1,22 @@
+fix: apply the battle finder review fixes
+
+Three must-fixes from the review, plus the small items:
+
+- The battle_requests update policies ORed together, letting the
+  accepted responder (or the author) flip a matched request's status.
+  played_at is now RPC-only (mark_battle_played, either matched
+  player, once) and the update grant covers the status column alone,
+  so the author's close policy is the only client update path.
+- accept_battle_reply locks the reply and the request rows (no double
+  accept from a double tap) and rechecks battle_visible_between, so a
+  block that arose after the offer forbids accepting it.
+- Battle request reports are moderatable: the reports page shows the
+  rules, note and author, suspends the author, and Remove closes the
+  request through remove_battle_request_with_reason, which records
+  the moderation action (the actions check gains 'battle_request').
+
+Small: the code policy is renamed to "matched players manage the
+code" with matching comments; the selects use "if found/not found";
+the matched banner leads with the Room ID exchange (the common path,
+since most pairs are not friends) and names the other player on the
+responder's side too. db.yml covers the new rules end to end.

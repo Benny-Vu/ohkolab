@@ -79,7 +79,7 @@ export interface HandleReportInput {
 }
 
 export interface RemoveContentInput {
-  type: "post" | "comment";
+  type: "post" | "comment" | "battle_request";
   id: string;
   /** Why the content is being removed. Required, 1 to 500 characters. */
   reason: ModerationReason;
@@ -142,7 +142,7 @@ export function useHandleReport(
   );
 }
 
-/** Marks a post or comment removed. Moderators only. */
+/** Marks a post or comment removed, or closes a battle request. Moderators only. */
 export function useRemoveContent(
   client: AppSupabaseClient | null = supabase,
 ): UseMutationResult<
@@ -179,10 +179,22 @@ export function useRemoveContent(
           source_report_id: input.reportId,
         });
         if (error) return { ok: false, error: describeWriteError(error) };
+      } else if (input.type === "battle_request") {
+        // Removing a battle request closes it: it leaves the board and a
+        // matched pair can no longer read its code.
+        const { error } = await client.rpc(
+          "remove_battle_request_with_reason",
+          {
+            target_request_id: input.id,
+            removal_reason: reason,
+            source_report_id: input.reportId,
+          },
+        );
+        if (error) return { ok: false, error: describeWriteError(error) };
       } else {
         return socialFail(
           "invalid_input",
-          "Choose a post or a comment to remove.",
+          "Choose a post, a comment or a battle request to remove.",
         );
       }
       return socialSucceed();

@@ -175,7 +175,11 @@ export function useSetBattleRequestOpen(
   });
 }
 
-/** Either matched player marks the battle played. */
+/**
+ * Either matched player marks the battle played, through the RPC: clients
+ * have no update grant on played_at, so no policy can be ORed into letting
+ * players flip a matched request's status.
+ */
 export function useMarkBattlePlayed(
   client: AppSupabaseClient | null = supabase,
 ) {
@@ -183,10 +187,9 @@ export function useMarkBattlePlayed(
   return useMutation({
     mutationKey: ["battles", "mark-played"],
     mutationFn: async (requestId: string) => {
-      const { error } = await client!
-        .from("battle_requests")
-        .update({ played_at: new Date().toISOString() })
-        .eq("id", requestId);
+      const { error } = await client!.rpc("mark_battle_played", {
+        request_id: requestId,
+      });
       if (error) {
         throw { message: error.message } satisfies BattleMutationError;
       }
@@ -196,7 +199,7 @@ export function useMarkBattlePlayed(
   });
 }
 
-/** The author sets or replaces the request's in-game code. */
+/** Either matched player sets or replaces the request's in-game code. */
 export function useSetBattleCode(client: AppSupabaseClient | null = supabase) {
   const queryClient = useQueryClient();
   return useMutation({

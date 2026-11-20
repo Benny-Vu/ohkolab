@@ -1,9 +1,11 @@
 /**
- * The matched banner: what the author of a matched battle request sees.
- * The two players, the direct-message thread (when the feature is on), the
- * Room ID exchange and the "we played" toggle. Every matching rule lives
- * server side; this only renders the matched state and maps write failures
- * to one friendly toast.
+ * The matched banner: what either player of a matched battle request
+ * sees. The Room ID exchange leads — it is the common path, since most
+ * matched pairs are not friends and open no message thread — with the
+ * direct-message link (when the feature is on) as the bonus, and the
+ * "we played" toggle for both players. Every matching rule lives server
+ * side; this only renders the matched state and maps write failures to
+ * one friendly toast.
  */
 
 import { useState } from "react";
@@ -14,6 +16,7 @@ import { CheckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { directMessagesEnabled } from "@/lib/messages/flag";
@@ -37,6 +40,7 @@ export function MatchedBanner({
   client = supabase,
 }: MatchedBannerProps) {
   const t = useT();
+  const { user } = useAuth();
   const { request } = summary;
   const replies = useBattleReplies(request.id, client);
   const code = useBattleCode(request.id, client);
@@ -48,7 +52,10 @@ export function MatchedBanner({
   const accepted = (replies.data ?? []).find(
     (reply) => reply.reply.id === request.accepted_reply_id,
   );
-  const partner = accepted?.responder ?? null;
+  // Either player sees the banner; the partner is always the other one:
+  // the accepted responder for the author, the author for the responder.
+  const isAuthor = user?.id === request.author_id;
+  const partner = isAuthor ? (accepted?.responder ?? null) : summary.author;
   const partnerName = partner?.display_name ?? partner?.username ?? null;
   const savedCode = code.data ?? null;
   const value = draft ?? savedCode ?? "";
@@ -86,11 +93,6 @@ export function MatchedBanner({
           </p>
         ) : null}
       </div>
-      {directMessagesEnabled() ? (
-        <Button asChild size="sm" variant="outline" className="mt-3">
-          <Link to="/messages">{t("battles.openMessages")}</Link>
-        </Button>
-      ) : null}
       <div className="mt-3 grid gap-2">
         <label htmlFor={inputId} className="text-sm font-medium">
           {t("battles.roomIdLabel")}
@@ -119,6 +121,11 @@ export function MatchedBanner({
           {t("battles.codeFallbackHint")}
         </p>
       </div>
+      {directMessagesEnabled() ? (
+        <Button asChild size="sm" variant="outline" className="mt-3">
+          <Link to="/messages">{t("battles.openMessages")}</Link>
+        </Button>
+      ) : null}
       {request.played_at === null ? (
         <Button
           variant="outline"

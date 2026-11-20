@@ -1001,10 +1001,12 @@ jobs:
             req_main uuid;
             req_minor uuid;
             req_fallback uuid;
+            req_blocked uuid;
             reply_main uuid;
             reply_fallback uuid;
             reply_c uuid;
             reply_teen uuid;
+            reply_blocked uuid;
             conv uuid;
             old_request uuid;
           begin
@@ -1273,22 +1275,53 @@ jobs:
               raise exception 'BAT-CHECK: a moderator cannot read the request';
             end if;
 
-            -- Either matched player marks the battle played; nobody else
-            -- can change it afterwards.
+            -- Nobody can flip a matched request's status: the update
+            -- grant covers the status column, but the only update policy
+            -- is the author's close policy, whose USING clause requires
+            -- the row to be open or closed (matched rows are invisible to
+            -- it), and the responder fails the author check.
             perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
-            update public.battle_requests set played_at = now() where id = req_main;
+            update public.battle_requests set status = 'open' where id = req_main;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            update public.battle_requests set status = 'closed' where id = req_main;
+            if exists (select 1 from public.battle_requests where id = req_main and status <> 'matched') then
+              raise exception 'BAT-CHECK: a matched request changed status';
+            end if;
+            -- played_at is not client-updatable at all.
+            begin
+              update public.battle_requests set played_at = now() where id = req_main;
+              raise exception 'BAT-CHECK: a client wrote played_at directly';
+            exception when others then
+              if sqlerrm not like 'permission denied%' then
+                raise exception 'BAT-CHECK: a direct played_at write raised %', sqlerrm;
+              end if;
+            end;
+
+            -- Either matched player marks the battle played through the
+            -- RPC, exactly once; nobody else can.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            perform public.mark_battle_played(req_main);
             if not exists (select 1 from public.battle_requests where id = req_main and played_at is not null) then
               raise exception 'BAT-CHECK: the responder could not mark the battle played';
             end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            begin
+              perform public.mark_battle_played(req_main);
+              raise exception 'BAT-CHECK: the battle was marked played twice';
+            exception when others then
+              if sqlerrm not like 'You cannot mark this battle played%' then
+                raise exception 'BAT-CHECK: a second mark-played raised %', sqlerrm;
+              end if;
+            end;
             perform set_config('request.jwt.claims', json_build_object('sub', bat_c, 'role', 'authenticated')::text, true);
-            update public.battle_requests set played_at = now() + interval '1 day' where id = req_main;
-            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
-            if exists (
-              select 1 from public.battle_requests
-              where id = req_main and played_at > now()
-            ) then
-              raise exception 'BAT-CHECK: an outsider changed the played mark';
-            end if;
+            begin
+              perform public.mark_battle_played(req_main);
+              raise exception 'BAT-CHECK: an outsider marked the battle played';
+            exception when others then
+              if sqlerrm not like 'You cannot mark this battle played%' then
+                raise exception 'BAT-CHECK: an outsider mark-played raised %', sqlerrm;
+              end if;
+            end;
 
             -- The author closes one of their open requests, can reopen it,
             -- and cannot forge 'matched' directly.
@@ -1322,6 +1355,56 @@ jobs:
             ) then
               raise exception 'BAT-CHECK: the battle request report was not filed';
             end if;
+
+            -- A block that arises after the offer hides it: accepting
+            -- fails, so the pair is never matched against the rules.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            insert into public.battle_requests (author_id, format, rules, language)
+            values (bat_a, 'doubles', 'block test', 'en')
+            returning id into req_blocked;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_blocked, bat_b)
+            returning id into reply_blocked;
+            reset role;
+            insert into public.blocks (blocker_id, blocked_id) values (bat_a, bat_b);
+            set local role authenticated;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            begin
+              perform public.accept_battle_reply(reply_blocked);
+              raise exception 'BAT-CHECK: a blocked offer was accepted';
+            exception when others then
+              if sqlerrm not like 'You cannot accept this offer%' then
+                raise exception 'BAT-CHECK: a blocked accept raised %', sqlerrm;
+              end if;
+            end;
+
+            -- The moderation queue's Remove: a moderator closes the request
+            -- and the action is recorded against the author; nobody else
+            -- can call it.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_mod, 'role', 'authenticated')::text, true);
+            perform public.remove_battle_request_with_reason(req_fallback, 'test closing', null);
+            if not exists (
+              select 1 from public.battle_requests
+              where id = req_fallback and status = 'closed'
+            ) then
+              raise exception 'BAT-CHECK: the moderation RPC did not close the request';
+            end if;
+            if not exists (
+              select 1 from public.moderation_actions
+              where target_type = 'battle_request' and target_id = req_fallback
+            ) then
+              raise exception 'BAT-CHECK: the moderation action was not recorded';
+            end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            begin
+              perform public.remove_battle_request_with_reason(req_fallback, 'nope', null);
+              raise exception 'BAT-CHECK: a non-moderator closed a request';
+            exception when others then
+              if sqlerrm not like 'Only moderators can remove battle requests%' then
+                raise exception 'BAT-CHECK: a non-moderator remove raised %', sqlerrm;
+              end if;
+            end;
           end;
           $bat$;
 

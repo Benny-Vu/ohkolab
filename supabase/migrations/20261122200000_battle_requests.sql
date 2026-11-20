@@ -71,12 +71,14 @@ alter table public.battle_requests enable row level security;
 
 revoke all on public.battle_requests from anon, authenticated;
 -- Reads pass the select policies; writes go through the insert/update
--- grants plus their policies and triggers.
+-- grants plus their policies and triggers. played_at is not updatable
+-- by clients at all: marking a battle played goes through the
+-- mark_battle_played() RPC, which is the only path that sets it.
 grant select on public.battle_requests to authenticated;
 grant insert (author_id, format, rules, note, starts_at, ends_at, timezone,
               language, team_id)
   on public.battle_requests to authenticated;
-grant update (status, played_at) on public.battle_requests to authenticated;
+grant update (status) on public.battle_requests to authenticated;
 
 create index if not exists battle_requests_status_created_idx
   on public.battle_requests (status, created_at desc);
@@ -261,7 +263,7 @@ $$;
 
 -- True when the viewer is one of the matched pair (the author of a matched
 -- request, or the accepted responder) and the battle is not marked played
--- yet. Either of them can mark it played.
+-- yet. Backs the mark_battle_played() RPC: either of them can mark it.
 create or replace function public.battle_playable_by(
   request uuid,
   viewer uuid
@@ -384,29 +386,21 @@ begin
     where schemaname = 'public' and tablename = 'battle_requests'
       and policyname = 'authors close their battle requests'
   ) then
+    -- The only client UPDATE path: authors move their own request between
+    -- 'open' and 'closed' (never to 'matched' — that belongs to
+    -- accept_battle_reply — nor 'expired', which belongs to the cron).
+    -- Marking played has no policy on purpose: Postgres ORs the USING
+    -- clauses of permissive update policies, so a second policy would let
+    -- the accepted responder (or the author) also flip a matched request's
+    -- status. played_at is RPC-only instead (mark_battle_played).
     create policy "authors close their battle requests" on public.battle_requests
       for update
       to authenticated
       using (author_id = (select auth.uid()) and status in ('open', 'closed'))
       with check (
         author_id = (select auth.uid())
-        -- 'matched' is set only by accept_battle_reply(); 'expired' only by
-        -- the hourly cron.
         and status in ('open', 'closed')
       );
-  end if;
-
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'battle_requests'
-      and policyname = 'matched players mark the battle played'
-  ) then
-    create policy "matched players mark the battle played"
-      on public.battle_requests
-      for update
-      to authenticated
-      using (public.battle_playable_by(id, (select auth.uid())))
-      with check (played_at is not null);
   end if;
 end;
 $$;
@@ -563,7 +557,7 @@ begin
   select * into existing from public.battle_replies
   where request_id = new.request_id
     and responder_id = new.responder_id;
-  if existing is not null then
+  if found then
     if existing.status <> 'withdrawn' then
       raise exception 'You already offered on this battle request'
         using errcode = '23505';
@@ -677,9 +671,11 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'public' and tablename = 'battle_request_codes'
-      and policyname = 'authors manage the code'
+      and policyname = 'matched players manage the code'
   ) then
-    create policy "authors manage the code" on public.battle_request_codes
+    -- Either matched player can host the Private Battle room, so either
+    -- may set or replace the code.
+    create policy "matched players manage the code" on public.battle_request_codes
       for all
       to authenticated
       using (public.battle_code_visible(request_id, (select auth.uid())))
@@ -718,15 +714,20 @@ begin
     raise exception 'Not signed in' using errcode = '42501';
   end if;
 
+  -- Both rows are locked for update: without the locks, two concurrent
+  -- accepts (a double tap, two tabs) can both pass the open/pending
+  -- checks and match two responders to one request.
   select * into the_reply from public.battle_replies
-  where id = accept_battle_reply.reply_id;
-  if the_reply is null or the_reply.status <> 'pending' then
+  where id = accept_battle_reply.reply_id
+  for update;
+  if not found or the_reply.status <> 'pending' then
     raise exception 'This offer is no longer available' using errcode = '42501';
   end if;
 
   select * into the_request from public.battle_requests
-  where id = the_reply.request_id;
-  if the_request is null then
+  where id = the_reply.request_id
+  for update;
+  if not found then
     raise exception 'Battle request not found' using errcode = '42501';
   end if;
   if the_request.author_id <> caller then
@@ -735,6 +736,11 @@ begin
   if the_request.status <> 'open' then
     raise exception 'This battle request is no longer open'
       using errcode = '42501';
+  end if;
+  -- A block that arose after the offer hides the reply from the author;
+  -- accepting it anyway would match the pair against the messaging rules.
+  if not public.battle_visible_between(caller, the_reply.responder_id) then
+    raise exception 'You cannot accept this offer' using errcode = '42501';
   end if;
 
   update public.battle_replies set status = 'accepted'
@@ -767,6 +773,119 @@ $$;
 
 revoke execute on function public.accept_battle_reply(uuid) from public, anon;
 grant execute on function public.accept_battle_reply(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- mark_battle_played(request_id): either matched player marks the battle
+-- played. This is the only path that sets played_at — the update grant on
+-- battle_requests covers the status column only, because a second update
+-- policy would OR with the author's close policy and let the matched pair
+-- reopen or close the request themselves.
+-- ---------------------------------------------------------------------------
+
+create or replace function public.mark_battle_played(request_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+begin
+  if caller is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+  if not public.battle_playable_by(request_id, caller) then
+    raise exception 'You cannot mark this battle played'
+      using errcode = '42501';
+  end if;
+
+  update public.battle_requests
+  set played_at = now(), updated_at = now()
+  where id = request_id;
+end;
+$$;
+
+revoke execute on function public.mark_battle_played(uuid) from public, anon;
+grant execute on function public.mark_battle_played(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- remove_battle_request_with_reason(request_id, reason, source_report):
+-- the moderation queue's "Remove" for battle requests. Moderators only.
+-- Removing means closing the request (open or matched): it leaves the
+-- board, and a matched pair can no longer read its code. The action is
+-- recorded in moderation_actions with the author as the target user, and
+-- the author gets a moderation notification they can appeal.
+-- ---------------------------------------------------------------------------
+
+create or replace function public.remove_battle_request_with_reason(
+  target_request_id uuid,
+  removal_reason text,
+  source_report_id uuid default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_author_id uuid;
+  v_rules text;
+  v_note text;
+  v_action_id uuid;
+begin
+  if not public.is_moderator() then
+    raise exception 'Only moderators can remove battle requests'
+      using errcode = '42501';
+  end if;
+  if char_length(remove_battle_request_with_reason.removal_reason)
+       not between 1 and 500 then
+    raise exception 'Invalid removal reason'
+      using errcode = '23514';
+  end if;
+
+  select author_id, rules, note into v_author_id, v_rules, v_note
+  from public.battle_requests
+  where public.battle_requests.id =
+        remove_battle_request_with_reason.target_request_id;
+  if not found then
+    return;
+  end if;
+
+  update public.battle_requests
+  set status = 'closed', updated_at = now()
+  where public.battle_requests.id =
+          remove_battle_request_with_reason.target_request_id
+    and status in ('open', 'matched');
+  if not found then
+    return;
+  end if;
+
+  insert into public.moderation_actions
+    (target_type, target_id, target_user_id, action, reason, report_id,
+     moderator_id, content_snapshot, content_kind)
+  values
+    ('battle_request', remove_battle_request_with_reason.target_request_id,
+     v_author_id, 'remove', remove_battle_request_with_reason.removal_reason,
+     remove_battle_request_with_reason.source_report_id, (select auth.uid()),
+     coalesce(v_rules || ' — ' || v_note, v_rules), 'battle_request')
+  returning id into v_action_id;
+
+  if v_author_id <> (select auth.uid())
+     and not public.has_unread_notification(
+       v_author_id, (select auth.uid()), 'moderation', null, null, null,
+       v_action_id)
+  then
+    insert into public.notifications (recipient_id, actor_id, type,
+                                      moderation_action_id)
+    values (v_author_id, (select auth.uid()), 'moderation', v_action_id);
+  end if;
+end;
+$$;
+
+revoke execute on function public.remove_battle_request_with_reason(uuid, text, uuid)
+  from public, anon;
+grant execute on function public.remove_battle_request_with_reason(uuid, text, uuid)
+  to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Expiry: open requests expire when their time window passes, or after 24
@@ -831,7 +950,7 @@ $$;
 
 -- The moderation queue accepts reports on battle requests (the existing
 -- report flow, rate limits and moderation UI; requests are public content,
--- so no snapshot is needed). Idempotent constraint rebuild.
+-- so no snapshot is needed). Idempotent constraint rebuilds.
 do $$
 begin
   if exists (
@@ -845,6 +964,22 @@ begin
     alter table public.reports
       add constraint reports_target_type_check
       check (target_type in ('post', 'comment', 'profile', 'message', 'battle_request'));
+  end if;
+
+  -- Closing a reported request records a moderation action, so the
+  -- actions constraint learns 'battle_request' too.
+  if exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.moderation_actions'::regclass
+      and conname = 'moderation_actions_target_type_check'
+      and pg_get_constraintdef(oid) not like '%battle_request%'
+  ) then
+    alter table public.moderation_actions
+      drop constraint moderation_actions_target_type_check;
+    alter table public.moderation_actions
+      add constraint moderation_actions_target_type_check
+      check (target_type in ('post', 'comment', 'profile', 'battle_request'));
   end if;
 end;
 $$;

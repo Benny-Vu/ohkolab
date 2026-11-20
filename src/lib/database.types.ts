@@ -311,11 +311,12 @@ export type Database = {
       moderation_actions: {
         Row: {
           id: string;
-          /** One of "post", "comment", "profile". */
+          /** One of "post", "comment", "profile", "battle_request". */
           target_type: string;
           /**
-           * Id of the removed post or comment, or of the suspended profile.
-           * Not a foreign key: the record survives its target being deleted.
+           * Id of the removed post or comment, of the suspended profile, or
+           * of the closed battle request. Not a foreign key: the record
+           * survives its target being deleted.
            */
           target_id: string;
           /** The user the action was taken against; null if deleted. */
@@ -1119,6 +1120,27 @@ export type Database = {
       accept_battle_reply: {
         Args: { reply_id: string };
         Returns: string | null;
+      };
+      /**
+       * Either matched player marks the battle played. The only path that
+       * sets played_at: clients have no update grant on the column.
+       */
+      mark_battle_played: {
+        Args: { request_id: string };
+        Returns: undefined;
+      };
+      /**
+       * The moderation queue's Remove for battle requests: closes the
+       * request, records the action (the author as the target user) and
+       * notifies them. Moderators only.
+       */
+      remove_battle_request_with_reason: {
+        Args: {
+          target_request_id: string;
+          removal_reason: string;
+          source_report_id?: string;
+        };
+        Returns: undefined;
       };
     };
     Enums: { [_ in never]: never };

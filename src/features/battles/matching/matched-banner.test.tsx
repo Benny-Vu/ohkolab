@@ -172,7 +172,7 @@ describe("MatchedBanner", () => {
     await waitFor(() => expect(success).toHaveBeenCalledWith("Room ID saved."));
   });
 
-  it("marks the battle played through the data layer", async () => {
+  it("marks the battle played through the RPC", async () => {
     const fake = createFakeClient({ resolve: resolveWith() });
     renderBanner(fake, matchedRequest());
 
@@ -181,13 +181,39 @@ describe("MatchedBanner", () => {
       .click(await screen.findByRole("button", { name: "Mark as played" }));
 
     await waitFor(() => {
-      const update = fake.records.find(
-        (record) =>
-          record.table === "battle_requests" && record.updateValues !== null,
-      );
-      expect(update?.updateValues?.played_at).toEqual(expect.any(String));
-      expect(update?.eqFilters).toContainEqual(["id", "req-1"]);
+      expect(fake.rpcCalls).toContainEqual({
+        fn: "mark_battle_played",
+        args: { request_id: "req-1" },
+      });
     });
+  });
+
+  it("shows the author's opponent when the responder views it", async () => {
+    const fake = createFakeClient({ resolve: resolveWith() });
+    // The signed-in viewer (user-1) is the accepted responder; the author
+    // is someone else, so the banner must name the author, not the viewer.
+    const request = matchedRequest({ author_id: "user-2" });
+    const summary: BattleRequestSummary = {
+      request,
+      author: {
+        id: "user-2",
+        username: "kenta",
+        display_name: "Kenta",
+        avatar_species: null,
+      },
+      team: null,
+    };
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider value={SIGNED_IN_AUTH}>
+          <QueryClientProvider client={createQueryClient()}>
+            <MatchedBanner summary={summary} client={fake.client} />
+          </QueryClientProvider>
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Matched with Kenta")).toBeVisible();
   });
 
   it("shows the played line instead of the toggle once played", async () => {
