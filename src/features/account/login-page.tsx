@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { buttonTouchClass, switchHitClass } from "@/components/touch-targets";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -225,7 +226,7 @@ export function LoginPage() {
             </p>
             <Button
               variant="link"
-              className="relative h-auto p-0 justify-self-start after:absolute after:-inset-y-3 after:inset-x-0"
+              className="relative h-auto p-0 justify-self-start after:absolute after:-inset-y-3 after:inset-x-0 after:content-['']"
               onClick={() => setNeedsEmailConfirmation(false)}
             >
               {t("common.signIn")}
@@ -253,7 +254,7 @@ export function LoginPage() {
             </p>
             <Button
               variant="link"
-              className="relative h-auto p-0 justify-self-start after:absolute after:-inset-y-3 after:inset-x-0"
+              className="relative h-auto p-0 justify-self-start after:absolute after:-inset-y-3 after:inset-x-0 after:content-['']"
               onClick={() => setResetSent(false)}
             >
               {t("login.backToSignIn")}
@@ -269,7 +270,7 @@ export function LoginPage() {
       <div className="mx-auto grid w-full max-w-sm justify-items-center gap-6">
         <Link
           to="/"
-          className="relative rounded-md after:absolute after:-inset-y-2 after:inset-x-0"
+          className="relative rounded-md after:absolute after:-inset-y-2 after:inset-x-0 after:content-['']"
           aria-label={t("nav.homeAria")}
         >
           <Wordmark className="text-3xl" />
@@ -333,7 +334,7 @@ export function LoginPage() {
                     aria-describedby={
                       formError ? "signin-form-error" : undefined
                     }
-                    className="max-md:h-11"
+                    className={buttonTouchClass}
                   >
                     {pending === "signIn" ? (
                       <LoaderCircleIcon className="animate-spin" aria-hidden />
@@ -343,7 +344,7 @@ export function LoginPage() {
                   <Button
                     type="button"
                     variant="link"
-                    className="relative h-auto p-0 justify-self-start after:absolute after:-inset-y-3 after:inset-x-0"
+                    className="relative h-auto p-0 justify-self-start after:absolute after:-inset-y-3 after:inset-x-0 after:content-['']"
                     onClick={handleReset}
                     disabled={busy || signInCaptcha.missing}
                   >
@@ -398,6 +399,7 @@ export function LoginPage() {
                     <div className="flex items-start gap-2">
                       <Checkbox
                         id="signup-terms"
+                        className={switchHitClass}
                         checked={acceptedTerms}
                         onCheckedChange={(checked) =>
                           setAcceptedTerms(checked === true)
@@ -445,7 +447,7 @@ export function LoginPage() {
                     aria-describedby={
                       formError ? "signup-form-error" : undefined
                     }
-                    className="max-md:h-11"
+                    className={buttonTouchClass}
                   >
                     {pending === "signUp" ? (
                       <LoaderCircleIcon className="animate-spin" aria-hidden />
@@ -463,7 +465,7 @@ export function LoginPage() {
             variant="outline"
             onClick={() => handleProvider("google")}
             disabled={busy}
-            className="max-md:h-11"
+            className={buttonTouchClass}
           >
             {pending === "google" ? (
               <LoaderCircleIcon className="animate-spin" aria-hidden />
@@ -474,7 +476,7 @@ export function LoginPage() {
             variant="outline"
             onClick={() => handleProvider("discord")}
             disabled={busy}
-            className="max-md:h-11"
+            className={buttonTouchClass}
           >
             {pending === "discord" ? (
               <LoaderCircleIcon className="animate-spin" aria-hidden />

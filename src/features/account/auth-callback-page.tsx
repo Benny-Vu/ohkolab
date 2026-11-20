@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { Page } from "@/components/page";
+import { buttonTouchClass } from "@/components/touch-targets";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -82,7 +83,11 @@ export function AuthCallbackPage() {
     return (
       <Page title={t("authCallback.finishing")} width="narrow">
         <UnconfiguredNotice />
-        <Button asChild variant="outline" className="mt-4 max-md:h-11">
+        <Button
+          asChild
+          variant="outline"
+          className={`mt-4 ${buttonTouchClass}`}
+        >
           <Link to="/">{t("authCallback.backHome")}</Link>
         </Button>
       </Page>
@@ -108,7 +113,7 @@ export function AuthCallbackPage() {
         </CardHeader>
         <CardContent>
           {failure ? (
-            <Button asChild className="max-md:h-11">
+            <Button asChild className={buttonTouchClass}>
               <Link to="/login">{t("login.backToSignIn")}</Link>
             </Button>
           ) : (

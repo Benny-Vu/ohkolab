@@ -18,6 +18,7 @@ import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { buttonTouchClass, rowHitClass } from "@/components/touch-targets";
 import { Picker } from "@/components/picker";
 import { ErrorState } from "@/components/error-state";
 import { UserAvatar } from "@/components/user-avatar";
@@ -127,7 +128,7 @@ function GuestPrompt() {
         <CardDescription>{t("profile.guestDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button asChild className="max-md:h-11">
+        <Button asChild className={buttonTouchClass}>
           <Link to="/login">{t("common.signIn")}</Link>
         </Button>
       </CardContent>
@@ -397,7 +398,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   onValueChange={(value) =>
                     setMainFormat(value === "" ? null : (value as MainFormat))
                   }
-                  placeholder="—"
+                  placeholder="â€”"
                   searchPlaceholder={t("common.search")}
                   emptyMessage={t("common.noResults")}
                   options={[
@@ -525,7 +526,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               <div className="flex flex-wrap items-center gap-2">
                 <Button
                   type="submit"
-                  className="max-md:h-11"
+                  className={buttonTouchClass}
                   disabled={busy}
                   aria-describedby={
                     formError ? "profile-form-error" : undefined
@@ -541,7 +542,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="max-md:h-11"
+                  className={buttonTouchClass}
                   disabled={busy}
                   onClick={() => {
                     setUsername(profile.username);
@@ -585,7 +586,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
             <CardContent className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
-                className="max-md:h-11"
+                className={buttonTouchClass}
                 onClick={handleSignOut}
                 disabled={busy}
               >
@@ -646,7 +647,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               <DialogTrigger asChild>
                 <Button
                   variant="destructive"
-                  className="max-md:h-11"
+                  className={buttonTouchClass}
                   disabled={busy}
                 >
                   <Trash2Icon aria-hidden />
@@ -676,7 +677,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                 <DialogFooter>
                   <Button
                     variant="outline"
-                    className="max-md:h-11"
+                    className={buttonTouchClass}
                     onClick={() => setDeleteOpen(false)}
                     disabled={busy}
                   >
@@ -684,7 +685,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   </Button>
                   <Button
                     variant="destructive"
-                    className="max-md:h-11"
+                    className={buttonTouchClass}
                     onClick={handleDelete}
                     disabled={
                       busy ||
@@ -705,7 +706,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               variant="link"
               size="sm"
               asChild
-              className="relative justify-self-start px-0 after:absolute after:-inset-y-3 after:inset-x-0"
+              className="relative justify-self-start px-0 after:absolute after:-inset-y-3 after:inset-x-0 after:content-['']"
             >
               <Link to="/delete-account">{t("legal.deleteDetailsLink")}</Link>
             </Button>
@@ -757,7 +758,7 @@ function BlockedUserRow({ profile }: { profile: Profile }) {
       <Button
         variant="outline"
         size="sm"
-        className="relative after:absolute after:-inset-y-2 after:inset-x-0"
+        className={rowHitClass}
         onClick={() => {
           void handleUnblock();
         }}
@@ -803,7 +804,7 @@ function BlockedUsersCard() {
               <Button
                 variant="outline"
                 size="sm"
-                className="relative after:absolute after:-inset-y-2 after:inset-x-0"
+                className={rowHitClass}
                 onClick={() => void blocksQuery.refetch()}
               >
                 {t("common.retry")}
@@ -826,7 +827,7 @@ function BlockedUsersCard() {
               <Button
                 variant="outline"
                 size="sm"
-                className="relative after:absolute after:-inset-y-2 after:inset-x-0"
+                className={rowHitClass}
                 onClick={() => void profilesQuery.refetch()}
               >
                 {t("common.retry")}
@@ -881,12 +882,7 @@ export function ProfilePage() {
       width="narrow"
       actions={
         auth.profile ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="relative after:absolute after:-inset-y-2 after:inset-x-0"
-          >
+          <Button variant="ghost" size="sm" asChild className={rowHitClass}>
             <Link to={`/u/${auth.profile.username}`}>
               <ExternalLinkIcon aria-hidden />
               {t("profile.publicPage")}
@@ -905,7 +901,7 @@ export function ProfilePage() {
             <AlertDescription>{t("profile.loadFailedBody")}</AlertDescription>
           </Alert>
           <Button
-            className="max-md:h-11 justify-self-start"
+            className={`${buttonTouchClass} justify-self-start`}
             onClick={() => {
               void auth.refreshProfile();
             }}

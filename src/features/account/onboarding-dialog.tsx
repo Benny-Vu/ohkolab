@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import {
   Dialog,
   DialogContent,
@@ -79,7 +80,7 @@ export interface OnboardingDialogProps {
 
 /**
  * First-run profile setup: shown while the signed-in player still has a
- * generated `trainer_…` username. Skippable; it comes back on the next
+ * generated `trainer_â€¦` username. Skippable; it comes back on the next
  * visit until a username is chosen. The lead mounts it once in the layout.
  */
 export function OnboardingDialog({ client = supabase }: OnboardingDialogProps) {
@@ -325,14 +326,14 @@ function OnboardingForm({
             <Button
               type="button"
               variant="outline"
-              className="max-md:h-11"
+              className={buttonTouchClass}
               onClick={skip}
             >
               {t("onboarding.skip")}
             </Button>
             <Button
               type="submit"
-              className="max-md:h-11"
+              className={buttonTouchClass}
               disabled={pending || status === "checking" || status === "taken"}
             >
               {pending ? (

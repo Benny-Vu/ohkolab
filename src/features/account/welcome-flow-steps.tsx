@@ -11,6 +11,7 @@ import { Link } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { rowHitClass } from "@/components/touch-targets";
 import { Button } from "@/components/ui/button";
 import { LoadingArea, TextLinesSkeleton } from "@/components/skeletons";
 import { UserAvatar } from "@/components/user-avatar";
@@ -115,7 +116,7 @@ function WelcomeFollowRow({
       <Button
         size="sm"
         variant="outline"
-        className="relative after:absolute after:-inset-y-2 after:inset-x-0"
+        className={rowHitClass}
         loading={toggleFollow.isPending}
         disabled={toggleFollow.isPending}
         onClick={() => void follow()}
@@ -198,7 +199,7 @@ function WelcomeGroupRow({ group }: WelcomeGroupRowProps) {
       <Button
         size="sm"
         variant="outline"
-        className="relative after:absolute after:-inset-y-2 after:inset-x-0"
+        className={rowHitClass}
         loading={joinGroup.isPending}
         disabled={joined || joinGroup.isPending}
         onClick={() => void join()}

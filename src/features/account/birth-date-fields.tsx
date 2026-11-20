@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { buttonTouchClass, rowHitClass } from "@/components/touch-targets";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -94,7 +95,7 @@ export function BirthDateField({
       <Button
         type="button"
         size="sm"
-        className="relative justify-self-start after:absolute after:-inset-y-2 after:inset-x-0"
+        className={`${rowHitClass} justify-self-start`}
         onClick={() => void handleSave()}
         disabled={pending}
       >
@@ -106,7 +107,7 @@ export function BirthDateField({
 
 /**
  * The one-time prompt for signed-in players who have no birth date yet.
- * Dismissible; a dismissed prompt never returns on its own — until they add
+ * Dismissible; a dismissed prompt never returns on its own â€” until they add
  * a birth date they are treated as a minor (friends-only messaging).
  */
 export function BirthDatePrompt({
@@ -159,7 +160,7 @@ export function BirthDatePrompt({
           <Button
             type="button"
             variant="ghost"
-            className="max-md:h-11"
+            className={buttonTouchClass}
             onClick={dismiss}
           >
             {t("birthDate.later")}

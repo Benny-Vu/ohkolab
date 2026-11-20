@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { buttonTouchClass } from "@/components/touch-targets";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -135,7 +136,7 @@ export function ResetPasswordPage() {
               type="submit"
               disabled={pending}
               aria-describedby={formError ? "reset-form-error" : undefined}
-              className="max-md:h-11"
+              className={buttonTouchClass}
             >
               {pending ? (
                 <LoaderCircleIcon className="animate-spin" />
@@ -147,7 +148,7 @@ export function ResetPasswordPage() {
             <Button
               asChild
               variant="link"
-              className="relative h-auto justify-self-start p-0 after:absolute after:-inset-y-3 after:inset-x-0"
+              className="relative h-auto justify-self-start p-0 after:absolute after:-inset-y-3 after:inset-x-0 after:content-['']"
             >
               <Link to="/login">{t("login.backToSignIn")}</Link>
             </Button>

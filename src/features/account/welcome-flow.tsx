@@ -1,7 +1,7 @@
 /**
  * The welcome flow: three skippable steps shown after the first sign-up
  * (once the onboarding dialog is done, because it owns the username step):
- * pick a main format and favourite Pokémon, follow a few people, join a
+ * pick a main format and favourite PokÃ©mon, follow a few people, join a
  * group. Every step can be skipped, and finishing or skipping remembers
  * the choice per account in localStorage. The two social steps live in a
  * lazy chunk (welcome-flow-steps.tsx) so the entry bundle stays lean.
@@ -11,6 +11,7 @@ import { lazy, Suspense, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import {
   Dialog,
   DialogContent,
@@ -86,7 +87,7 @@ export function WelcomeFlow() {
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed || auth.loading || !profile) return null;
-  // The onboarding dialog owns the trainer_… username step; the welcome
+  // The onboarding dialog owns the trainer_â€¦ username step; the welcome
   // flow starts right after it. (The id is read before the predicate call:
   // needsOnboarding's false-branch narrows Profile to never.)
   const profileId = profile.id;
@@ -223,7 +224,7 @@ function WelcomeFlowDialog({
           <Button
             type="button"
             variant="ghost"
-            className="max-md:h-11"
+            className={buttonTouchClass}
             onClick={() => close(false)}
           >
             {t("onboarding.skip")}
@@ -233,7 +234,7 @@ function WelcomeFlowDialog({
               <Button
                 type="button"
                 variant="outline"
-                className="max-md:h-11"
+                className={buttonTouchClass}
                 onClick={() => setStep(step - 1)}
               >
                 {t("common.back")}
@@ -241,7 +242,7 @@ function WelcomeFlowDialog({
             )}
             <Button
               type="button"
-              className="max-md:h-11"
+              className={buttonTouchClass}
               onClick={() => void next()}
               disabled={saving}
             >
