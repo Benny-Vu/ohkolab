@@ -28,7 +28,7 @@ export function JaTermsSections({
           OHKOLab は Vu Forge（Benny Vu）が運営しています。お問い合わせは{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             {CONTACT_EMAIL}
           </a>{" "}
@@ -124,7 +124,7 @@ export function JaTermsSections({
           サインイン中は、サイト上から投稿・コメント・プロフィールを報告できます。未サインインの場合は{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             {CONTACT_EMAIL}
           </a>{" "}
@@ -160,14 +160,14 @@ export function JaTermsSections({
           本規約についてのご質問は{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             {CONTACT_EMAIL}
           </a>{" "}
           まで。{" "}
           <Link
             to="/privacy"
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             プライバシーポリシー
           </Link>

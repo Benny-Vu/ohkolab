@@ -14,6 +14,7 @@ import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass, linkHitClass } from "@/components/touch-targets";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -126,6 +127,7 @@ function AppealRowView({
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               disabled={handleAppeal.isPending}
               onClick={() => {
                 void decide("upheld");
@@ -141,6 +143,7 @@ function AppealRowView({
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               disabled={handleAppeal.isPending}
               onClick={() => {
                 void decide("reversed");
@@ -174,7 +177,7 @@ function AppealRowView({
                 {action.target_type === "post" ? (
                   <Link
                     to={`/post/${action.target_id}`}
-                    className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+                    className={`inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline ${linkHitClass}`}
                   >
                     <ExternalLinkIcon className="size-3" aria-hidden />
                     {t("admin.viewPost")}
@@ -269,6 +272,7 @@ function AppealsList({ client }: { client: AppSupabaseClient | null }) {
               <Button
                 variant="outline"
                 size="sm"
+                className={buttonSmTouchClass}
                 onClick={() => {
                   void appealsQuery.refetch();
                 }}

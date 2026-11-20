@@ -5,6 +5,7 @@ import { Picker, type PickerOption } from "@/components/picker";
 import { PokemonEditor } from "@/components/pokemon-editor";
 import { useDisplayName } from "@/data/display-names";
 import { Button } from "@/components/ui/button";
+import { iconHitSmClass, rowHitXsClass } from "@/components/touch-targets";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Panel, PanelTitle } from "@/features/calc/panel";
@@ -96,6 +97,7 @@ export function BattleStateEditor({
             type="button"
             variant="ghost"
             size="xs"
+            className={rowHitXsClass}
             onClick={handlers.onClearBoosts}
           >
             {t("calc.clear")}
@@ -114,6 +116,7 @@ export function BattleStateEditor({
                     type="button"
                     variant="outline"
                     size="icon-sm"
+                    className={iconHitSmClass}
                     aria-label={t("calc.boostDown", {
                       side: label,
                       stat: statLabel(t, stat),
@@ -130,6 +133,7 @@ export function BattleStateEditor({
                     type="button"
                     variant="outline"
                     size="icon-sm"
+                    className={iconHitSmClass}
                     aria-label={t("calc.boostUp", {
                       side: label,
                       stat: statLabel(t, stat),

@@ -7,6 +7,7 @@ import { Page } from "@/components/page";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { SegmentedControl } from "@/components/segmented-control";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,7 +71,7 @@ export function GroupsPage() {
       description={t("groups.homeDescription")}
       actions={
         user ? (
-          <Button asChild size="sm">
+          <Button asChild size="sm" className={buttonSmTouchClass}>
             <Link to="/groups/new">{t("groups.createGroup")}</Link>
           </Button>
         ) : null
@@ -98,7 +99,7 @@ export function GroupsPage() {
             <EmptyState
               title={t("groups.signInToSeeGroups")}
               action={
-                <Button asChild size="sm">
+                <Button asChild size="sm" className={buttonSmTouchClass}>
                   <Link to="/login?returnTo=/groups">{t("common.signIn")}</Link>
                 </Button>
               }
@@ -168,17 +169,17 @@ function DiscoverTab({ myGroupIds }: { myGroupIds: Set<string> }) {
           >
             <SelectTrigger
               aria-label={t("groups.categoryFilter")}
-              className="w-auto"
+              className="w-auto max-sm:h-11"
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_OPTION}>
+              <SelectItem value={ALL_OPTION} className="max-sm:py-3">
                 {t("groups.categoryAll")}
               </SelectItem>
               {(Object.keys(CATEGORY_LABELS) as GroupCategory[]).map(
                 (value) => (
-                  <SelectItem key={value} value={value}>
+                  <SelectItem key={value} value={value} className="max-sm:py-3">
                     {t(CATEGORY_LABELS[value])}
                   </SelectItem>
                 ),
@@ -195,17 +196,17 @@ function DiscoverTab({ myGroupIds }: { myGroupIds: Set<string> }) {
           >
             <SelectTrigger
               aria-label={t("groups.languageFilter")}
-              className="w-auto"
+              className="w-auto max-sm:h-11"
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_OPTION}>
+              <SelectItem value={ALL_OPTION} className="max-sm:py-3">
                 {t("groups.languageAll")}
               </SelectItem>
               {(Object.keys(LANGUAGE_LABELS) as GroupLanguage[]).map(
                 (value) => (
-                  <SelectItem key={value} value={value}>
+                  <SelectItem key={value} value={value} className="max-sm:py-3">
                     {t(LANGUAGE_LABELS[value])}
                   </SelectItem>
                 ),
@@ -224,6 +225,7 @@ function DiscoverTab({ myGroupIds }: { myGroupIds: Set<string> }) {
               <Button
                 variant="outline"
                 size="sm"
+                className={buttonSmTouchClass}
                 onClick={() => void discover.refetch()}
               >
                 {t("common.retry")}
@@ -328,7 +330,7 @@ function JoinButton({ group }: { group: DiscoverGroup }) {
     <Button
       size="sm"
       variant="outline"
-      className="self-center"
+      className={`self-center ${buttonSmTouchClass}`}
       loading={joinGroup.isPending}
       disabled={joinGroup.isPending}
       onClick={() => void join()}
@@ -355,6 +357,7 @@ function MineList({ query, emptyTitle, emptyDescription }: MineListProps) {
           <Button
             variant="outline"
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => void query.refetch()}
           >
             {t("common.retry")}

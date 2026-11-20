@@ -147,13 +147,13 @@ export function PressPage() {
             <span>{japanese ? asset.ja : asset.en}</span>
             <span className="flex gap-3 font-mono text-xs">
               <a
-                className="text-primary underline-offset-4 hover:underline"
+                className="text-primary underline-offset-4 hover:underline relative after:absolute after:-inset-x-2 after:-inset-y-3 after:content-['']"
                 href={`/press/${asset.slug}.svg`}
               >
                 SVG
               </a>
               <a
-                className="text-primary underline-offset-4 hover:underline"
+                className="text-primary underline-offset-4 hover:underline relative after:absolute after:-inset-x-2 after:-inset-y-3 after:content-['']"
                 href={`/press/${asset.slug}.png`}
               >
                 PNG
@@ -242,7 +242,7 @@ export function PressPage() {
               width={720}
             />
             <a
-              className="mt-1 block truncate text-xs text-primary underline-offset-4 hover:underline"
+              className="mt-1 block truncate text-xs text-primary underline-offset-4 hover:underline relative after:absolute after:-inset-x-2 after:-inset-y-3 after:content-['']"
               download
               href={`/press/screenshots/${shot.file}`}
             >

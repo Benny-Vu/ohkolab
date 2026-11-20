@@ -5,6 +5,7 @@ import { Picker, type PickerOption } from "@/components/picker";
 import { SegmentedControl } from "@/components/segmented-control";
 import { useDisplayName, type NameKind } from "@/data/display-names";
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import {
   Popover,
   PopoverContent,
@@ -364,7 +365,12 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
       {SIDE_IDS.map((side) => (
         <Popover key={side}>
           <PopoverTrigger asChild>
-            <Button type="button" variant="outline" size="sm">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={buttonSmTouchClass}
+            >
               {calcSideLabel(t, side)} ·{" "}
               {activeConditionsText(state.fieldSides[side], t, displayName)}
             </Button>
@@ -380,7 +386,12 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
       ))}
       <Popover>
         <PopoverTrigger asChild>
-          <Button type="button" variant="outline" size="sm">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={buttonSmTouchClass}
+          >
             {t("calc.moreConditions")}
           </Button>
         </PopoverTrigger>

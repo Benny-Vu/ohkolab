@@ -63,7 +63,7 @@ export function Combobox({
           onPointerEnter={onIntent}
           onFocus={onIntent}
           className={cn(
-            "h-8 w-full min-w-0 justify-between gap-1 border-input bg-transparent px-2 font-normal",
+            "h-8 w-full min-w-0 justify-between gap-1 border-input bg-transparent px-2 font-normal max-sm:h-11",
             className,
           )}
         >
@@ -216,6 +216,7 @@ export function OptionList<T>({
           <CommandGroup>
             <CommandItem
               value={NONE_VALUE}
+              className="max-sm:py-3"
               data-checked={selected === null}
               onSelect={() => onSelectNone?.()}
             >
@@ -231,6 +232,7 @@ export function OptionList<T>({
                 <CommandItem
                   key={name}
                   value={name}
+                  className="max-sm:py-3"
                   aria-label={getLabel?.(option)}
                   data-checked={name === selected}
                   onSelect={() => onSelect(name)}

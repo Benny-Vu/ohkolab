@@ -39,7 +39,7 @@ export function SegmentedControl({
     <div
       role="radiogroup"
       className={cn(
-        "inline-flex h-8 items-center gap-0.5 rounded-md bg-surface-sunken p-0.5",
+        "inline-flex h-8 items-center gap-0.5 rounded-md bg-surface-sunken p-0.5 max-sm:h-12",
         className,
       )}
       {...props}
@@ -74,7 +74,7 @@ export function SegmentedControl({
               }
             }}
             className={cn(
-              "inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium whitespace-nowrap transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              "inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium whitespace-nowrap transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none focus-visible:ring-3 focus-visible:ring-ring/50 max-sm:h-11",
               active
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground",

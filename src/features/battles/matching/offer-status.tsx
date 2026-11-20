@@ -10,6 +10,7 @@
 import { Link } from "react-router";
 import { toast } from "sonner";
 
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n/t";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
@@ -62,7 +63,9 @@ export function OfferStatus({
           <Button
             variant="ghost"
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => void handleWithdraw()}
+            loading={withdraw.isPending}
             disabled={withdraw.isPending}
           >
             {t("battles.withdrawOffer")}
@@ -84,7 +87,12 @@ export function OfferStatus({
           </p>
           {directMessagesEnabled() ? (
             <div>
-              <Button asChild size="sm" variant="outline">
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className={buttonSmTouchClass}
+              >
                 <Link to="/messages">{t("battles.openMessages")}</Link>
               </Button>
             </div>

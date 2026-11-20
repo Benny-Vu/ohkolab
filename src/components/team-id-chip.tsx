@@ -1,6 +1,7 @@
 import { CopyIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { iconHitXsClass } from "@/components/touch-targets";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ export function TeamIdChip({ id, compact, className }: TeamIdChipProps) {
       <Button
         variant="ghost"
         size="icon-xs"
+        className={iconHitXsClass}
         aria-label={t("teams.gameIdCopyAria")}
         onClick={copy}
       >

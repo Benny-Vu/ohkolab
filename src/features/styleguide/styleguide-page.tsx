@@ -147,14 +147,30 @@ export function StyleguidePage() {
 
       <Section title="Buttons">
         <div className="flex flex-wrap items-center gap-2">
-          <Button>Primary</Button>
-          <Button variant="accent">Accent</Button>
-          <Button variant="secondary">Secondary</Button>
-          <Button variant="outline">Outline</Button>
-          <Button variant="ghost">Ghost</Button>
-          <Button variant="destructive">Destructive</Button>
-          <Button disabled>Disabled</Button>
-          <Button loading>Loading</Button>
+          {/* max-sm:h-11: buttons grow to the 44px phone target
+              (design-rules.md: Touch targets); desktop keeps h-8. */}
+          <Button className="max-sm:h-11">Primary</Button>
+          <Button variant="accent" className="max-sm:h-11">
+            Accent
+          </Button>
+          <Button variant="secondary" className="max-sm:h-11">
+            Secondary
+          </Button>
+          <Button variant="outline" className="max-sm:h-11">
+            Outline
+          </Button>
+          <Button variant="ghost" className="max-sm:h-11">
+            Ghost
+          </Button>
+          <Button variant="destructive" className="max-sm:h-11">
+            Destructive
+          </Button>
+          <Button disabled className="max-sm:h-11">
+            Disabled
+          </Button>
+          <Button loading className="max-sm:h-11">
+            Loading
+          </Button>
         </div>
       </Section>
 
@@ -194,7 +210,7 @@ export function StyleguidePage() {
 
       <Section title="Tabs">
         <Tabs defaultValue="one">
-          <TabsList>
+          <TabsList className="max-sm:h-14">
             <TabsTrigger value="one">Singles</TabsTrigger>
             <TabsTrigger value="two">Doubles</TabsTrigger>
             <TabsTrigger value="three">Archive</TabsTrigger>
@@ -279,13 +295,21 @@ export function StyleguidePage() {
           <EmptyState
             title="No teams yet"
             description="Build your first team to see it here."
-            action={<Button size="sm">New team</Button>}
+            action={
+              <Button size="sm" className="max-sm:h-11 max-sm:px-3">
+                New team
+              </Button>
+            }
           />
           <ErrorState
             title="Could not load teams"
             description="Check your connection and try again."
             action={
-              <Button size="sm" variant="outline">
+              <Button
+                size="sm"
+                variant="outline"
+                className="max-sm:h-11 max-sm:px-3"
+              >
                 Retry
               </Button>
             }

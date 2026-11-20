@@ -41,7 +41,11 @@ export function SpeedTiers({ members }: SpeedTiersProps) {
         className="flex-wrap"
       >
         {MODES.map((option) => (
-          <ToggleGroupItem key={option.value} value={option.value}>
+          <ToggleGroupItem
+            key={option.value}
+            value={option.value}
+            className="max-sm:h-11"
+          >
             {t(`teams.${option.key}`)}
           </ToggleGroupItem>
         ))}

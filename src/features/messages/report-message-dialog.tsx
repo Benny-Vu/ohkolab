@@ -3,6 +3,7 @@ import { FlagIcon, LoaderCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import {
   Dialog,
   DialogContent,
@@ -95,12 +96,17 @@ export function ReportMessageDialog({
             <SelectTrigger
               id="message-report-reason"
               aria-label={t("report.reasonAria")}
+              className="w-full max-sm:h-11"
             >
               <SelectValue placeholder={t("report.chooseReasonPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {MESSAGE_REPORT_REASONS.map((candidate) => (
-                <SelectItem key={candidate} value={candidate}>
+                <SelectItem
+                  key={candidate}
+                  value={candidate}
+                  className="max-sm:py-3"
+                >
                   {t(REASON_LABELS[candidate])}
                 </SelectItem>
               ))}
@@ -116,6 +122,7 @@ export function ReportMessageDialog({
           <Button
             type="button"
             variant="outline"
+            className={buttonTouchClass}
             onClick={() => onOpenChange(false)}
             disabled={report.isPending}
           >
@@ -123,6 +130,7 @@ export function ReportMessageDialog({
           </Button>
           <Button
             type="button"
+            className={buttonTouchClass}
             onClick={() => void submit()}
             disabled={report.isPending}
           >
