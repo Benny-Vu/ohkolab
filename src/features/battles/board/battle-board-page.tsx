@@ -24,10 +24,17 @@ import {
   type BattleFilter,
   type BattleRequestSummary,
 } from "@/lib/battles/logic";
-import { useBattleBoard } from "@/lib/battles/queries";
+import {
+  useBattleBoard,
+  useMyBattleRequests,
+  useMyMatches,
+} from "@/lib/battles/queries";
 import { useOfferToBattle } from "@/lib/battles/mutations";
 import { BattleRequestDialog } from "@/features/battles/board/battle-request-dialog";
 import { ReportBattleButton } from "@/features/battles/board/report-battle-dialog";
+import { MatchedBanner } from "@/features/battles/matching/matched-banner";
+import { MyBattleRequestsPanel } from "@/features/battles/matching/my-battle-requests-panel";
+import { OfferStatus } from "@/features/battles/matching/offer-status";
 
 /**
  * /battles: the battle board. Open requests for a Champions match, filtered
@@ -45,6 +52,10 @@ export function BattleBoardPage({
   const t = useT();
   const [filter, setFilter] = useState<BattleFilter>(NO_BATTLE_FILTER);
   const board = useBattleBoard(filter, client);
+  // Both reuse cached queries; empty lists render nothing, so the board
+  // stays the page's main content for users with no requests or matches.
+  const myMatches = useMyMatches(client);
+  const mine = useMyBattleRequests(client);
 
   const requests = board.data ?? [];
   const filtersActive =
@@ -71,7 +82,31 @@ export function BattleBoardPage({
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2">
+          {(myMatches.data ?? []).length > 0 && (
+            <section
+              className="mb-6 grid gap-3"
+              aria-label={t("battles.myMatchesTitle")}
+            >
+              <h2 className="font-heading text-sm font-semibold">
+                {t("battles.myMatchesTitle")}
+              </h2>
+              {(myMatches.data ?? []).map((summary) => (
+                <MatchedBanner
+                  key={summary.request.id}
+                  summary={summary}
+                  client={client}
+                />
+              ))}
+            </section>
+          )}
+
+          {(mine.data ?? []).length > 0 && (
+            <div className="mb-6">
+              <MyBattleRequestsPanel client={client} />
+            </div>
+          )}
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
             <SegmentedControl
               aria-label={t("battles.filterFormatAria")}
               value={filter.format}
@@ -293,16 +328,24 @@ function BattleCard({
       )}
 
       {showActions && (
-        <Button
-          className="mt-3"
-          size="sm"
-          variant="outline"
-          onClick={() => void handleOffer()}
-          loading={offer.isPending}
-          disabled={offer.isPending || offered}
-        >
-          {offered ? t("battles.offered") : t("battles.offer")}
-        </Button>
+        <>
+          <Button
+            className="mt-3"
+            size="sm"
+            variant="outline"
+            onClick={() => void handleOffer()}
+            loading={offer.isPending}
+            disabled={offer.isPending || offered}
+          >
+            {offered ? t("battles.offered") : t("battles.offer")}
+          </Button>
+          {/* The viewer's own offer, once made: pending (withdraw),
+              accepted (Room ID and thread) or declined. Renders nothing
+              while they have not offered. */}
+          <div className="mt-3">
+            <OfferStatus requestId={request.id} client={client} />
+          </div>
+        </>
       )}
     </article>
   );

@@ -8,6 +8,7 @@ import { GUEST_AUTH } from "@/lib/auth/use-auth";
 import {
   createFakeClient,
   SIGNED_IN_AUTH,
+  type ChainRecord,
   type FakeClientConfig,
   type FakeResult,
 } from "@/lib/social/test-client";
@@ -56,6 +57,22 @@ const REQUEST_SINGLES: BattleRequestRow = {
   starts_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
 };
 
+/**
+ * The page runs several battle_requests reads through the same fake (the
+ * board, "my requests", "my matches"), separated only by their `.eq()`
+ * filters — so the fake honours the filters the way Postgres would.
+ */
+function filterRows(
+  rows: BattleRequestRow[],
+  record: ChainRecord,
+): BattleRequestRow[] {
+  return rows.filter((row) =>
+    record.eqFilters.every(
+      ([column, value]) => row[column as keyof BattleRequestRow] === value,
+    ),
+  );
+}
+
 /** Resolves each table the board touches with its fixture rows. */
 function boardConfig(overrides: FakeClientConfig = {}): FakeClientConfig {
   return {
@@ -65,7 +82,7 @@ function boardConfig(overrides: FakeClientConfig = {}): FakeClientConfig {
           return { data: [{ id: "new-1" }], error: null };
         }
         return {
-          data: [REQUEST_DOUBLES, REQUEST_SINGLES],
+          data: filterRows([REQUEST_DOUBLES, REQUEST_SINGLES], record),
           error: null,
         };
       }
@@ -239,10 +256,10 @@ describe("BattleBoardPage", () => {
         resolve: (record): FakeResult => {
           if (record.table === "battle_requests") {
             return {
-              data: [
-                { ...REQUEST_DOUBLES, author_id: "user-1" },
-                REQUEST_SINGLES,
-              ],
+              data: filterRows(
+                [{ ...REQUEST_DOUBLES, author_id: "user-1" }, REQUEST_SINGLES],
+                record,
+              ),
               error: null,
             };
           }
@@ -252,7 +269,11 @@ describe("BattleBoardPage", () => {
     );
     renderBoardPage(<BattleBoardPage client={fake.client} />, SIGNED_IN_AUTH);
 
-    await screen.findByText("Reg M-C, best of 3");
+    // The viewer's own request also appears in the "My battle requests"
+    // panel, so the rules text shows twice: once on the board, once there.
+    await waitFor(() =>
+      expect(screen.getAllByText("Reg M-C, best of 3")).toHaveLength(2),
+    );
     // Only the other author's card keeps its offer button.
     expect(
       screen.getAllByRole("button", { name: "Offer to battle" }),

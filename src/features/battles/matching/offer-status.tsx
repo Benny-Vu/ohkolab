@@ -2,18 +2,19 @@
  * The responder's own offer on one request: pending (with a withdraw
  * control), accepted (with the matched pair's Room ID and the message
  * thread), declined or withdrawn. Renders nothing while the viewer has not
- * offered, so the board can mount it next to every request card.
+ * offered, so the board can mount it next to every request card: they all
+ * read from one shared "my offers" query instead of one read per card, and
+ * only an accepted offer fetches the request's code.
  */
 
 import { Link } from "react-router";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { directMessagesEnabled } from "@/lib/messages/flag";
-import { useBattleCode, useBattleReplies } from "@/lib/battles/queries";
+import { useBattleCode, useMyBattleOffers } from "@/lib/battles/queries";
 import { useWithdrawBattleOffer } from "@/lib/battles/mutations";
 
 interface OfferStatusProps {
@@ -28,14 +29,14 @@ export function OfferStatus({
   client = supabase,
 }: OfferStatusProps) {
   const t = useT();
-  const { user } = useAuth();
-  const replies = useBattleReplies(requestId, client);
-  const code = useBattleCode(requestId, client);
+  const offers = useMyBattleOffers(client);
   const withdraw = useWithdrawBattleOffer(client);
 
-  const mine = (replies.data ?? []).find(
-    (reply) => reply.reply.responder_id === user?.id,
+  const mine = (offers.data ?? []).find(
+    (offer) => offer.reply.request_id === requestId,
   );
+  const accepted = mine?.reply.status === "accepted";
+  const code = useBattleCode(requestId, client, accepted);
   if (mine === undefined) {
     return null;
   }

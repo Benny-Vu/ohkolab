@@ -211,14 +211,94 @@ export function useBattleReplies(
   });
 }
 
-/** The matched pair's in-game code for one request (null while unset). */
+/**
+ * Every offer I have ever made, any status, in one query. The board mounts
+ * OfferStatus next to each card; a per-request query would fire once per
+ * card, so they all share this single "my offers" read instead.
+ */
+export function useMyBattleOffers(client: AppSupabaseClient | null = supabase) {
+  const { user } = useAuth();
+  return useQuery<BattleReplySummary[]>({
+    queryKey: ["battles", "my-offers", user?.id ?? null],
+    enabled: battlesEnabled() && client !== null && user !== null,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await client!
+        .from("battle_replies")
+        .select(REPLY_COLUMNS)
+        .eq("responder_id", user!.id);
+      if (error) {
+        return softEmpty(error, []);
+      }
+      const rows = (data ?? []) as unknown as BattleReplyLite[];
+      const responderIds = [...new Set(rows.map((row) => row.responder_id))];
+      let responders: BattleAuthorLite[] = [];
+      if (responderIds.length > 0) {
+        const { data: profiles, error: profilesError } = await client!
+          .from("profiles")
+          .select(AUTHOR_COLUMNS)
+          .in("id", responderIds);
+        if (profilesError) {
+          return softEmpty(profilesError, []);
+        }
+        responders = (profiles ?? []) as unknown as BattleAuthorLite[];
+      }
+      return summarizeBattleReplies(rows, responders);
+    },
+  });
+}
+
+/** The requests my accepted offer matched me into (the opponent's side). */
+export function useMyMatches(client: AppSupabaseClient | null = supabase) {
+  const { user } = useAuth();
+  return useQuery<BattleRequestSummary[]>({
+    queryKey: ["battles", "my-matches", user?.id ?? null],
+    enabled: battlesEnabled() && client !== null && user !== null,
+    retry: false,
+    queryFn: async () => {
+      const { data: replies, error } = await client!
+        .from("battle_replies")
+        .select(REPLY_COLUMNS)
+        .eq("responder_id", user!.id)
+        .eq("status", "accepted");
+      if (error) {
+        return softEmpty(error, []);
+      }
+      const replyRows = (replies ?? []) as unknown as BattleReplyLite[];
+      if (replyRows.length === 0) {
+        return [];
+      }
+      const { data: requests, error: requestError } = await client!
+        .from("battle_requests")
+        .select(REQUEST_COLUMNS)
+        .in(
+          "id",
+          replyRows.map((row) => row.request_id),
+        );
+      if (requestError) {
+        return softEmpty(requestError, []);
+      }
+      const requestRows = (requests ?? []) as unknown as BattleRequestLite[];
+      const authors = await fetchAuthors(client!, requestRows);
+      const teams = await fetchTeams(client!, requestRows);
+      return summarizeBattleRequests(requestRows, authors, teams);
+    },
+  });
+}
+
+/**
+ * The matched pair's in-game code for one request (null while unset). The
+ * third argument lets the board fetch it only for accepted offers, so
+ * ordinary cards never query the code table.
+ */
 export function useBattleCode(
   requestId: string,
   client: AppSupabaseClient | null = supabase,
+  enabled = true,
 ) {
   return useQuery<string | null>({
     queryKey: ["battles", "code", requestId],
-    enabled: battlesEnabled() && client !== null && requestId !== "",
+    enabled: battlesEnabled() && client !== null && requestId !== "" && enabled,
     retry: false,
     queryFn: async () => {
       const { data, error } = await client!

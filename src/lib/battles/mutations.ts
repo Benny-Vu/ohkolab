@@ -28,6 +28,9 @@ function battleInvalidations(
   // The board and "my requests" change on create, close and match.
   queryClient.invalidateQueries({ queryKey: ["battles", "board"] });
   queryClient.invalidateQueries({ queryKey: ["battles", "mine"] });
+  queryClient.invalidateQueries({ queryKey: ["battles", "my-matches"] });
+  // The shared "my offers" read feeds every card's OfferStatus.
+  queryClient.invalidateQueries({ queryKey: ["battles", "my-offers"] });
   if (requestId !== null) {
     queryClient.invalidateQueries({
       queryKey: ["battles", "request", requestId],

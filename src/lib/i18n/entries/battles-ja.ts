@@ -7,7 +7,6 @@ import type { BattlesKey } from "@/lib/i18n/entries/battles";
 export const battlesJa: { [K in BattlesKey]: string } = {
   // 対戦ボード（ナビとページタイトル）。
   "battles.title": "対戦",
-HEAD
   // Battle board
   "battles.description": "Championsの対戦相手を募集する。",
   "battles.newRequest": "対戦相手を募集",
@@ -72,6 +71,7 @@ HEAD
   "demo.battle3Rules": "シングル、伝説なし",
 
   // バトルマッチング。
+  "battles.myMatchesTitle": "あなたのマッチ",
   "battles.myRequestsTitle": "自分の対戦リクエスト",
   "battles.noRequests": "対戦リクエストはまだありません。作成しましょう。",
   "battles.loadingMyRequestsAria": "対戦リクエストを読み込み中",
@@ -121,5 +121,4 @@ HEAD
   "demo.conversation2Preview": "3本先取、レギュM-Cで。20時に。",
   "demo.conversation3Name": "ミオ",
   "demo.conversation3Preview": "いい対戦でした。モロバレルが手強かったです。",
-agent/battles-matching
 };

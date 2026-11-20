@@ -7,7 +7,6 @@
 export const battlesEn = {
   // The board's own frame (the nav entry and the page title).
   "battles.title": "Battles",
-HEAD
   // Battle board
   "battles.description": "Find an opponent for a Champions match.",
   "battles.newRequest": "New battle request",
@@ -71,6 +70,7 @@ HEAD
   "demo.battle3Rules": "Singles, no legendaries",
 
   // Battle matching
+  "battles.myMatchesTitle": "Your matches",
   "battles.myRequestsTitle": "My battle requests",
   "battles.noRequests": "No battle requests yet. Create one.",
   "battles.loadingMyRequestsAria": "Loading your battle requests",
@@ -119,7 +119,6 @@ HEAD
   "demo.conversation2Preview": "Best of 3, Reg M-C. See you at 8.",
   "demo.conversation3Name": "Mio",
   "demo.conversation3Preview": "Good games. Your Amoonguss was a problem.",
-agent/battles-matching
 } as const;
 
 export type BattlesKey = keyof typeof battlesEn;

@@ -132,7 +132,8 @@ describe("OfferStatus", () => {
     renderStatus(fake);
 
     expect(await screen.findByText("Offer accepted")).toBeVisible();
-    expect(screen.getByText("ROOM-1234")).toBeVisible();
+    // The code read starts only once the offer is known to be accepted.
+    expect(await screen.findByText("ROOM-1234")).toBeVisible();
     expect(screen.getByRole("link", { name: "Open messages" })).toHaveAttribute(
       "href",
       "/messages",
