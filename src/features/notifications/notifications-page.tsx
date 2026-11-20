@@ -37,6 +37,7 @@ import {
   actorLabel,
   actorProfilePath,
   describeNotification,
+  type NotificationSentence,
 } from "@/lib/notifications/sentences";
 import {
   describeGroupedNotification,
@@ -330,6 +331,15 @@ function NotificationRowCard({
     row.kind === "group"
       ? describeGroupedNotification(row)
       : describeNotification(row.item);
+  // A battle notification carries no post, group or request content to the
+  // row, so it gets one neutral line per actor and links to the board. It
+  // can say "offered" or "accepted" only by leaking request state, which
+  // never shows here.
+  const battleSentence: NotificationSentence | null =
+    lead?.type === "battle"
+      ? { text: t("battles.notificationLine"), to: "/battles" }
+      : null;
+  const shownSentence = battleSentence ?? sentence;
   const ids =
     row.kind === "single" ? [row.item.id] : row.items.map((item) => item.id);
   const isUnread =
@@ -379,15 +389,15 @@ function NotificationRowCard({
           ) : (
             <span className="font-medium text-foreground">{actor}</span>
           )}{" "}
-          {sentence.to ? (
+          {shownSentence.to ? (
             <Link
-              to={sentence.to}
+              to={shownSentence.to}
               className="text-muted-foreground hover:underline"
             >
-              {sentence.text}
+              {shownSentence.text}
             </Link>
           ) : (
-            <span className="text-muted-foreground">{sentence.text}</span>
+            <span className="text-muted-foreground">{shownSentence.text}</span>
           )}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
