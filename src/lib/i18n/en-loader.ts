@@ -14,7 +14,7 @@ import { shellEn } from "@/lib/i18n/entries/shell";
  */
 
 /** The feature domains whose strings load with their routes. */
-export type EnglishDomain = "community" | "account" | "tools";
+export type EnglishDomain = "community" | "account" | "tools" | "battles";
 
 type EnglishDictionary = Partial<Record<TranslationKey, string>>;
 
@@ -46,6 +46,7 @@ const DOMAIN_CHUNKS: Record<EnglishDomain, () => Promise<EnglishDictionary>> = {
     import("@/lib/i18n/entries/community").then((m) => m.communityEn),
   account: () => import("@/lib/i18n/entries/account").then((m) => m.accountEn),
   tools: () => import("@/lib/i18n/entries/tools").then((m) => m.toolsEn),
+  battles: () => import("@/lib/i18n/entries/battles").then((m) => m.battlesEn),
 };
 
 /**

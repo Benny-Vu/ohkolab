@@ -241,9 +241,9 @@ export type Database = {
           id: string;
           /** Null once the reporter's account is deleted; the report is kept. */
           reporter_id: string | null;
-          /** One of "post", "comment", "profile". */
+          /** One of "post", "comment", "profile", "message", "battle_request". */
           target_type: string;
-          /** Id of the reported post, comment or profile. Not a foreign key. */
+          /** Id of the reported content. Not a foreign key. */
           target_id: string;
           /** One of "spam", "harassment", "inappropriate", "other". */
           reason: string;
@@ -471,12 +471,14 @@ export type Database = {
           recipient_id: string;
           /** Who did it; null when the actor's account is deleted. */
           actor_id: string | null;
-          /** One of "like", "comment", "follow", "moderation", "appeal", "group_invite". */
+          /** One of "like", "comment", "follow", "moderation", "appeal", "group_invite", "battle". */
           type: string;
           post_id: string | null;
           comment_id: string | null;
           group_id: string | null;
           moderation_action_id: string | null;
+          /** The battle request a "battle" notification points at. */
+          battle_request_id: string | null;
           /** Null until the recipient marks the notification read. */
           read_at: string | null;
           created_at: string;
@@ -495,6 +497,7 @@ export type Database = {
           comment_id?: string | null;
           group_id?: string | null;
           moderation_action_id?: string | null;
+          battle_request_id?: string | null;
           read_at?: string | null;
           created_at?: string;
         };
@@ -779,6 +782,99 @@ export type Database = {
         Update: { [_ in never]: never };
         Relationships: [];
       };
+      battle_requests: {
+        Row: {
+          id: string;
+          /** Row-level security forces this to the signed-in user. */
+          author_id: string;
+          /** One of "singles", "doubles". */
+          format: string;
+          /** 1 to 80 characters, e.g. "Reg M-C, best of 3". */
+          rules: string;
+          /** Up to 300 characters, the one free-text field. */
+          note: string | null;
+          /** Optional window, UTC instants; null means "whenever". */
+          starts_at: string | null;
+          ends_at: string | null;
+          /** Optional IANA time zone the window is meant in. */
+          timezone: string | null;
+          /** One of "en", "ja". */
+          language: string;
+          /** The author's own public team, or null; enforced by trigger. */
+          team_id: string | null;
+          /** One of "open", "matched", "closed", "expired". */
+          status: string;
+          /** Set by accept_battle_reply(); the accepted offer's id. */
+          accepted_reply_id: string | null;
+          /** Set by either matched player: "we played". */
+          played_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          author_id: string;
+          format: string;
+          rules: string;
+          note?: string | null;
+          starts_at?: string | null;
+          ends_at?: string | null;
+          timezone?: string | null;
+          language: string;
+          team_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        /** Only status (the author's close/reopen) and played_at are granted. */
+        Update: {
+          status?: string;
+          played_at?: string | null;
+        };
+        Relationships: [];
+      };
+      battle_replies: {
+        Row: {
+          id: string;
+          request_id: string;
+          /** Row-level security forces this to the signed-in user. */
+          responder_id: string;
+          /** One of "pending", "accepted", "declined", "withdrawn". */
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          request_id: string;
+          responder_id: string;
+          created_at?: string;
+        };
+        /** Only status is granted: authors decline, responders withdraw. */
+        Update: {
+          status?: string;
+        };
+        Relationships: [];
+      };
+      battle_request_codes: {
+        Row: {
+          request_id: string;
+          /** 1 to 64 characters: a Private Battle Room ID or Trainer ID. */
+          code: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          request_id: string;
+          code: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        /** Only code is granted for update, by the request's author. */
+        Update: {
+          code?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       /**
@@ -1013,6 +1109,17 @@ export type Database = {
           score: number;
         }[];
       };
+      /**
+       * The single way a battle request becomes matched: the author accepts
+       * one pending offer, the others are declined, both players are
+       * notified and a DM thread is opened when the messaging rules allow
+       * it. Returns the conversation id, or null when no DM could be opened
+       * (the code exchange inside the request is the fallback).
+       */
+      accept_battle_reply: {
+        Args: { reply_id: string };
+        Returns: string | null;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
@@ -1069,3 +1176,11 @@ export type PushSettingsInsert =
   Database["public"]["Tables"]["push_settings"]["Insert"];
 export type PushSettingsUpdate =
   Database["public"]["Tables"]["push_settings"]["Update"];
+export type BattleRequestRow =
+  Database["public"]["Tables"]["battle_requests"]["Row"];
+export type BattleRequestInsert =
+  Database["public"]["Tables"]["battle_requests"]["Insert"];
+export type BattleReplyRow =
+  Database["public"]["Tables"]["battle_replies"]["Row"];
+export type BattleRequestCodeRow =
+  Database["public"]["Tables"]["battle_request_codes"]["Row"];
