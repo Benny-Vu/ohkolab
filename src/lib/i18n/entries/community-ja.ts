@@ -528,6 +528,14 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "share.copiedLink": "リンクをクリップボードにコピーしました。",
   "share.copyFailed": "リンクをコピーできませんでした。",
 
+  // シェアカード（marketing ウェーブ）：カードをPNG画像として保存。
+  "share.saveImage": "画像として保存",
+  "share.imageStory": "ストーリー 1080 × 1920",
+  "share.imageLandscape": "ランドスケープ 1200 × 630",
+  "share.imageFormatDescription": "画像の形式を選んでください。",
+  "share.imageSaved": "画像を保存しました。",
+  "share.imageSaveFailed": "画像を保存できませんでした。",
+
   // ダイレクトメッセージ（未リリース、VITE_DIRECT_MESSAGES）。
   "pageTitle.messages": "メッセージ",
   "messages.title": "メッセージ",
