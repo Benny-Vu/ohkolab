@@ -204,12 +204,12 @@ function ResultBlock({
         <p className="min-w-0 font-heading text-lg leading-tight font-semibold">
           {displayName("move", outcome.move)}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs tabular-nums text-muted-foreground">
           {categoryLabel(outcome.category, t)}
           {outcome.category !== "Status" && move ? ` · ${move.basePower}` : ""}
         </p>
         {hasDamage && isSpread ? (
-          <span className="rounded-full border bg-card px-2 py-0.5 text-xs text-muted-foreground">
+          <span className="rounded-full border bg-card px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
             {t("calc.spreadMove", { factor: SPREAD_FACTOR })}
           </span>
         ) : null}
