@@ -30,6 +30,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "footer.terms": "利用規約",
   "footer.privacy": "プライバシー",
   "footer.credits": "クレジット",
+  "footer.press": "プレスキット",
   "footer.sendFeedback": "フィードバックを送る",
   "footer.madeBy": "OHKOLabの制作:",
 
@@ -289,6 +290,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "seo.privacyDescription": "OHKOLabの個人情報の取り扱いについて。",
   "seo.creditsDescription":
     "OHKOLabで使っているデータソースとライブラリ、そのライセンス。",
+  "seo.pressDescription":
+    "OHKOLabのロゴ、カラー、スクリーンショット、紹介文。記事や動画にご利用ください。",
 
   // フィードバックダイアログとクラッシュ画面（どちらもアプリの
   // フレームから表示。テレメトリー切り替えの文言はcommunity側）。
@@ -324,4 +327,11 @@ export const shellJa: { [K in ShellKey]: string } = {
   // ダイレクトメッセージ（未リリース、VITE_DIRECT_MESSAGES）。ここにある
   // のはナビラベルのみ。ほかはcommunityドメイン。
   "nav.messages": "メッセージ",
+
+  // 録画モード（?demo=1）。サンプルであることの表示と形式ラベルは、
+  // communityとtools両方のルートから描かれるためここに置く。本文と
+  // 構術名はそれぞれの機能のドメインに置く。
+  "demo.example": "サンプル",
+  "demo.formatDoubles": "ダブル",
+  "demo.formatSingles": "シングル",
 };

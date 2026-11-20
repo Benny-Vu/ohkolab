@@ -317,8 +317,8 @@ export function Composer({ groupId }: { groupId?: string | null }) {
           <span
             className={
               body.length > POST_BODY_MAX
-                ? "ml-auto text-xs text-destructive"
-                : "ml-auto text-xs text-muted-foreground"
+                ? "ml-auto text-xs tabular-nums text-destructive"
+                : "ml-auto text-xs tabular-nums text-muted-foreground"
             }
           >
             {body.length}/{POST_BODY_MAX}
@@ -343,7 +343,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
               <img
                 src={draft.previewUrl}
                 alt={draft.alt || t("composer.imageAlt", { n: index + 1 })}
-                className="size-12 shrink-0 rounded object-cover"
+                className="size-12 shrink-0 rounded-md object-cover"
               />
               <Input
                 value={draft.alt}

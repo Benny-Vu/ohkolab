@@ -295,6 +295,11 @@ export const toolsEn = {
   "teams.speedTrickRoom": "Trick Room",
   "teams.trickRoomNote":
     "Trick Room reverses the order: the slowest Pokémon moves first. Priority moves still go first, and equal Speeds still tie.",
+
+  // Recording mode (?demo=1): sample teams shown in place of the empty
+  // list. Clearly marked as examples; never written to the database.
+  "demo.team1Name": "Rain ride",
+  "demo.team2Name": "Trick room core",
 } as const;
 
 export type ToolsKey = keyof typeof toolsEn;

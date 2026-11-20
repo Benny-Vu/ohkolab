@@ -1,5 +1,5 @@
 import { screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { NAV_ITEMS } from "@/app/nav-items";
 import { t } from "@/lib/i18n/t";
@@ -105,5 +105,26 @@ describe("AppLayout", () => {
     ).toHaveAttribute("href", "/");
     // tabIndex -1 lets deletion flows park focus on the page landmark.
     expect(main).toHaveAttribute("tabindex", "-1");
+  });
+
+  describe("recording mode", () => {
+    afterEach(() => {
+      window.sessionStorage.clear();
+    });
+
+    it("hides the account menu and the notifications bell", () => {
+      window.sessionStorage.setItem("ohkolab:demo", "1");
+      renderAt("/calc");
+
+      expect(
+        screen.queryByRole("button", { name: "Account menu" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: "Notifications" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: "Sign in" }),
+      ).not.toBeInTheDocument();
+    });
   });
 });

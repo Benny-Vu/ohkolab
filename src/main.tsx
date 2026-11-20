@@ -6,6 +6,7 @@ import "@/index.css";
 import { Providers } from "@/app/providers";
 import { router } from "@/app/router";
 import { createAuthActions } from "@/lib/auth/auth-actions";
+import { initDemoMode } from "@/lib/demo-mode";
 import { loadJapaneseDictionary } from "@/lib/i18n/ja-loader";
 import { getLocale, initLocale } from "@/lib/i18n/locale";
 import { initSentry } from "@/lib/telemetry/sentry";
@@ -14,6 +15,9 @@ import { supabase } from "@/lib/supabase";
 initSentry();
 // Mirrors the active locale onto <html lang> before the first paint.
 initLocale();
+// Recording mode (?demo=1) is read before the first render, so personal UI
+// never flashes in a recording.
+initDemoMode();
 
 // In the native app, sign-in runs in the system browser and returns through
 // the custom scheme; the listener that finishes that redirect lives in its

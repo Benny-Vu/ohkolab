@@ -8,8 +8,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardTitle } from "@/components/card-title";
 import { useT } from "@/lib/i18n/t";
 import { isPushAvailable } from "@/lib/push/flag";
 import { requestPermissionAndRegister } from "@/lib/push/notifications";

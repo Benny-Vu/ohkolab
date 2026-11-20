@@ -16,6 +16,7 @@ describe("routeTemplate", () => {
     expect(routeTemplate("/teams/team-9")).toBe("/teams/:teamId");
     expect(routeTemplate("/g/vgc-eu")).toBe("/g/:slug");
     expect(routeTemplate("/moderation/act-1")).toBe("/moderation/:actionId");
+    expect(routeTemplate("/from/tiktok")).toBe("/from/:source");
   });
 
   it("strips query strings and fragments", () => {

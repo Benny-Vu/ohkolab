@@ -68,10 +68,10 @@ export function MemberCard({
           {STAT_IDS.map((stat) => (
             <div key={stat} className="flex flex-col gap-1">
               <span className="flex items-baseline justify-between gap-1">
-                <span className="text-[9px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {statLabel(t, stat)}
                 </span>
-                <span className="font-mono text-[10px] tabular-nums">
+                <span className="font-mono text-xs tabular-nums">
                   {finalStats[stat]}
                 </span>
               </span>

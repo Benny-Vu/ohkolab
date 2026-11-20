@@ -4,6 +4,7 @@ import { LogInIcon, LogOutIcon, MessageSquareIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { UserAvatar } from "@/components/user-avatar";
+import { menuItemClass } from "@/components/menu-item-class";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,7 +18,9 @@ import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
 import { useAuth } from "@/lib/auth";
 import { useIsModerator } from "@/lib/social/moderator-status";
 import { useT } from "@/lib/i18n/t";
+import { useLocale } from "@/lib/i18n/locale";
 import { cn } from "@/lib/utils";
+import { tabLabelSizeClass } from "@/app/nav-items";
 
 interface AccountMenuProps {
   /** "header" for the desktop header, "tab" for the phone tab bar. */
@@ -28,6 +31,7 @@ interface AccountMenuProps {
 export function AccountMenu({ variant }: AccountMenuProps) {
   const auth = useAuth();
   const t = useT();
+  const [locale] = useLocale();
   const moderator = useIsModerator();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -72,7 +76,8 @@ export function AccountMenu({ variant }: AccountMenuProps) {
         to="/login"
         className={({ isActive }) =>
           cn(
-            "flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground",
+            "flex h-full flex-col items-center justify-center gap-0.5 font-medium text-muted-foreground",
+            tabLabelSizeClass(locale),
             isActive && "text-primary",
           )
         }
@@ -90,9 +95,12 @@ export function AccountMenu({ variant }: AccountMenuProps) {
       <DropdownMenu>
         {variant === "header" ? (
           <DropdownMenuTrigger asChild>
+            {/* The avatar is round, so its hover background and focus ring
+                are round too (rounded-full over the kit's rounded-md). */}
             <Button
               variant="ghost"
               size="icon"
+              className="rounded-full"
               aria-label={t("account.menuAria")}
             >
               <UserAvatar
@@ -106,7 +114,10 @@ export function AccountMenu({ variant }: AccountMenuProps) {
         ) : (
           <DropdownMenuTrigger
             aria-label={t("account.menuAria")}
-            className="flex h-full min-w-0 flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground aria-expanded:text-primary"
+            className={cn(
+              "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 font-medium text-muted-foreground hover:text-foreground aria-expanded:text-primary",
+              tabLabelSizeClass(locale),
+            )}
           >
             <UserAvatar
               username={profile?.username ?? ""}
@@ -128,37 +139,41 @@ export function AccountMenu({ variant }: AccountMenuProps) {
               : t("profile.accountSection")}
           </DropdownMenuLabel>
           {profile && (
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className={menuItemClass}>
               <Link to={`/u/${profile.username}`}>
                 {t("profile.publicPage")}
               </Link>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className={menuItemClass}>
             <Link to="/profile">{t("nav.profile")}</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className={menuItemClass}>
             <Link to="/groups">{t("groups.homeTitle")}</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setFeedbackOpen(true)}>
+          <DropdownMenuItem
+            className={menuItemClass}
+            onSelect={() => setFeedbackOpen(true)}
+          >
             <MessageSquareIcon aria-hidden />
             {t("footer.sendFeedback")}
           </DropdownMenuItem>
           {moderator.data === true && (
             <>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className={menuItemClass}>
                 <Link to="/admin/reports">{t("pageTitle.reports")}</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className={menuItemClass}>
                 <Link to="/admin/appeals">{t("account.moderationItem")}</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className={menuItemClass}>
                 <Link to="/admin/feedback">{t("pageTitle.feedback")}</Link>
               </DropdownMenuItem>
             </>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            className={menuItemClass}
             onSelect={() => {
               void handleSignOut();
             }}

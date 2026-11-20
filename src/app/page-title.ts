@@ -29,6 +29,7 @@ const EXACT_TITLES: Record<string, TranslationKey> = {
   "/terms": "footer.terms",
   "/privacy": "footer.privacy",
   "/credits": "footer.credits",
+  "/press": "footer.press",
   "/delete-account": "pageTitle.deleteAccount",
 };
 
@@ -52,6 +53,7 @@ const EXACT_DESCRIPTIONS: Record<string, TranslationKey> = {
   "/terms": "seo.termsDescription",
   "/privacy": "seo.privacyDescription",
   "/credits": "seo.creditsDescription",
+  "/press": "seo.pressDescription",
 };
 
 /** Meta descriptions for parameterised routes, keyed by path prefix. */

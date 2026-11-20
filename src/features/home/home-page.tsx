@@ -21,11 +21,13 @@ import {
   TextLinesSkeleton,
 } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
+import { isDemoMode } from "@/lib/demo-mode";
 import { useMyGroups } from "@/lib/groups/queries";
 import { getLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { socialAvailability } from "@/lib/social/availability";
 import { useFeed, type FeedLanguage } from "@/lib/social/queries";
+import { DemoPostList } from "@/components/demo-post-list";
 import { Composer } from "@/features/feed/composer";
 import { PostList } from "@/features/feed/post-list";
 import { PeopleToFollow } from "@/features/home/people-to-follow";
@@ -145,7 +147,9 @@ function FeedHome() {
       <div className="min-w-0">
         {!user && <SignedOutIntro />}
 
-        {user && (
+        {/* Recording mode never shows the composer: demo mode must not be a
+         * way to post or change data. */}
+        {user && !isDemoMode() && (
           <div className="mb-4">
             <Composer />
           </div>
@@ -385,7 +389,13 @@ function FeedTabContent({
     >
       <div className="grid gap-3">
         {posts.length === 0 ? (
-          <EmptyState title={emptyTitle} description={emptyDescription} />
+          // Recording mode fills the empty feed with sample posts instead
+          // of an empty state, so recordings show a lively community.
+          isDemoMode() ? (
+            <DemoPostList />
+          ) : (
+            <EmptyState title={emptyTitle} description={emptyDescription} />
+          )
         ) : (
           <PostList posts={posts} />
         )}

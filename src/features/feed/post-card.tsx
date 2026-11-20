@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import {
   BanIcon,
   CopyIcon,
+  DownloadIcon,
   ExternalLinkIcon,
   FlagIcon,
   HeartIcon,
@@ -34,6 +35,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  menuItemClass,
+  menuItemDestructiveClass,
+} from "@/components/menu-item-class";
 import { Textarea } from "@/components/ui/textarea";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { TeamIdChip } from "@/components/team-id-chip";
@@ -65,7 +70,9 @@ import {
 } from "@/features/feed/attachment";
 import { koResultOf } from "@/features/calc/ko-result";
 import { ReportDialog } from "@/features/feed/report-dialog";
+import { SaveImageDialog } from "@/features/share/save-image";
 import { useShare } from "@/features/share/share-link";
+import type { ShareCardContent } from "@/lib/share-cards/svg";
 
 /**
  * The card unmounts when its post is deleted or removed, taking focus with it;
@@ -125,6 +132,7 @@ export function PostCard({
   const { create } = useTeams();
 
   const [editing, setEditing] = useState(false);
+  const [savingImage, setSavingImage] = useState(false);
   const [editBody, setEditBody] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -156,6 +164,16 @@ export function PostCard({
   const showHandle =
     displayName.trim().toLowerCase() !==
     post.author_username.trim().toLowerCase();
+  // The share card quotes the post: the author as the heading, the body as
+  // the secondary line, the attached team's species as the sprite row.
+  const cardContent: ShareCardContent = {
+    kind: "post",
+    eyebrow: null,
+    heading: displayName,
+    body: post.body,
+    stat: null,
+    species: team ? team.members.map((member) => member.species) : [],
+  };
 
   async function handleLike() {
     setLikePop((count) => count + 1);
@@ -461,6 +479,7 @@ export function PostCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
+              className={menuItemClass}
               onSelect={() =>
                 void share({
                   title: displayName,
@@ -472,9 +491,17 @@ export function PostCard({
               <Share2Icon aria-hidden />
               {t("share.share")}
             </DropdownMenuItem>
+            <DropdownMenuItem
+              className={menuItemClass}
+              onSelect={() => setSavingImage(true)}
+            >
+              <DownloadIcon aria-hidden />
+              {t("share.saveImage")}
+            </DropdownMenuItem>
             {isOwn ? (
               <>
                 <DropdownMenuItem
+                  className={menuItemClass}
                   onSelect={() => {
                     setEditBody(post.body);
                     setEditing(true);
@@ -485,6 +512,7 @@ export function PostCard({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
+                  className={menuItemDestructiveClass}
                   onSelect={() => setConfirmDelete(true)}
                 >
                   <Trash2Icon aria-hidden />
@@ -493,11 +521,17 @@ export function PostCard({
               </>
             ) : (
               <>
-                <DropdownMenuItem onSelect={() => setReporting(true)}>
+                <DropdownMenuItem
+                  className={menuItemClass}
+                  onSelect={() => setReporting(true)}
+                >
                   <FlagIcon aria-hidden />
                   {t("postCard.reportPost")}
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setBlocking(true)}>
+                <DropdownMenuItem
+                  className={menuItemClass}
+                  onSelect={() => setBlocking(true)}
+                >
                   <BanIcon aria-hidden />
                   {t("postCard.blockUser", { name: post.author_username })}
                 </DropdownMenuItem>
@@ -508,6 +542,7 @@ export function PostCard({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
+                  className={menuItemDestructiveClass}
                   onSelect={() => onRemoveFromGroup()}
                 >
                   <ShieldOffIcon aria-hidden />
@@ -520,6 +555,7 @@ export function PostCard({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
+                  className={menuItemDestructiveClass}
                   onSelect={() => setRemoving(true)}
                 >
                   <Trash2Icon aria-hidden />
@@ -536,6 +572,12 @@ export function PostCard({
         onOpenChange={setReporting}
         targetType="post"
         targetId={post.id}
+      />
+
+      <SaveImageDialog
+        content={cardContent}
+        onOpenChange={setSavingImage}
+        open={savingImage}
       />
 
       <Dialog open={removing} onOpenChange={setRemoving}>
@@ -623,7 +665,7 @@ export function PostCard({
               {t("common.cancel")}
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
               onClick={handleBlock}
               disabled={toggleBlock.isPending}
             >

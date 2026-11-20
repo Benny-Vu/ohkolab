@@ -31,6 +31,7 @@ export const shellEn = {
   "footer.terms": "Terms",
   "footer.privacy": "Privacy",
   "footer.credits": "Credits",
+  "footer.press": "Press kit",
   "footer.sendFeedback": "Send feedback",
   "footer.madeBy": "OHKOLab is made by",
 
@@ -288,6 +289,8 @@ export const shellEn = {
   "seo.privacyDescription": "How OHKOLab handles your data and privacy.",
   "seo.creditsDescription":
     "The data sources and libraries OHKOLab is built on, and their licences.",
+  "seo.pressDescription":
+    "OHKOLab logos, colours, screenshots and press copy for writers and creators.",
 
   // The feedback dialog and the crash screen (both mount from the app
   // frame; the telemetry switch strings stay with the community domain).
@@ -324,6 +327,14 @@ export const shellEn = {
   // the nav label lives here, because nav-items.ts is part of the entry
   // graph. Everything else sits in the community domain.
   "nav.messages": "Messages",
+
+  // Recording mode (?demo=1). The sample-content tag and format labels
+  // sit in the shell because demo cards render from both the community
+  // and tools routes; the sample bodies and team names sit with their
+  // owning feature.
+  "demo.example": "Example",
+  "demo.formatDoubles": "Doubles",
+  "demo.formatSingles": "Singles",
 } as const;
 
 export type ShellKey = keyof typeof shellEn;

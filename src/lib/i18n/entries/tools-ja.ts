@@ -291,4 +291,9 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "teams.speedTrickRoom": "トリックルーム",
   "teams.trickRoomNote":
     "トリックルーム中は遅いポケモンから行動します。先制技は先に動き、同じ素早さなら順番は入れ替わりません。",
+
+  // 録画モード（?demo=1）。空のリスト代わりに表示するサンプル構築。
+  // サンプルであることが明示され、データベースには書き込まれない。
+  "demo.team1Name": "あめの構築",
+  "demo.team2Name": "トリックルーム軸",
 };

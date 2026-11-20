@@ -528,6 +528,14 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "share.copiedLink": "リンクをクリップボードにコピーしました。",
   "share.copyFailed": "リンクをコピーできませんでした。",
 
+  // シェアカード（marketing ウェーブ）：カードをPNG画像として保存。
+  "share.saveImage": "画像として保存",
+  "share.imageStory": "ストーリー 1080 × 1920",
+  "share.imageLandscape": "ランドスケープ 1200 × 630",
+  "share.imageFormatDescription": "画像の形式を選んでください。",
+  "share.imageSaved": "画像を保存しました。",
+  "share.imageSaveFailed": "画像を保存できませんでした。",
+
   // ダイレクトメッセージ（未リリース、VITE_DIRECT_MESSAGES）。
   "pageTitle.messages": "メッセージ",
   "messages.title": "メッセージ",
@@ -536,6 +544,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "messages.empty": "まだ会話がありません。",
   "messages.signIn": "メッセージを見るにはサインインしてください。",
   "messages.loadError": "メッセージを読み込めませんでした。",
+  "messages.loadErrorHint": "接続を確認して、もう一度お試しください。",
   "messages.loadingConversationsAria": "トークを読み込み中",
   "messages.loadingThreadAria": "メッセージを読み込み中",
   "messages.previewDeleted": "削除されたメッセージ",
@@ -590,4 +599,13 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "groups.newCategoryNone": "カテゴリーなし",
   "groups.newLanguageLabel": "言語（任意）",
   "groups.newLanguageNone": "言語なし",
+
+  // 録画モード（?demo=1）。空のフィード代わりに表示するサンプル投稿。
+  // サンプルであることが明示され、データベースには書き込まれない。
+  "demo.post1Body":
+    "あめの構築がダブルで機能中。ダメージ計算の結果どおりだった。",
+  "demo.post2Body":
+    "ポラカゲンマはプラス1でメタ全体を抜ける。素早さ関係の表のおかげで構築がはかどった。",
+  "demo.post3Body":
+    "コータスとモローガンを軸にしたトリックルーム構築を作った。対戦したい人は構築表を共有する。",
 };

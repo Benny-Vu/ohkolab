@@ -13,7 +13,9 @@ import { koResultOf, summaryText } from "@/features/calc/ko-result";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import type { SecondDefenderData } from "@/features/calc/second-defender";
 import { useSideNames } from "@/features/calc/use-side-names";
+import { SaveImageButton } from "@/features/share/save-image";
 import { ShareButton } from "@/features/share/share-button";
+import type { ShareCardContent } from "@/lib/share-cards/svg";
 import { calcShareUrl } from "@/lib/calc/share-url";
 import type { Translate } from "@/components/stat-labels";
 import { useT } from "@/lib/i18n/t";
@@ -104,7 +106,7 @@ function MoveRow({
 
   return (
     <button
-      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-transparent px-2.5 py-2 text-left transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-muted/50"
+      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-transparent px-2 py-2 text-left transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-muted/50"
       onClick={() => dispatch({ type: "selectMove", side, slot: outcome.slot })}
       type="button"
     >
@@ -181,6 +183,15 @@ function ResultBlock({
     });
   };
 
+  const cardContent: ShareCardContent = {
+    kind: "calc",
+    eyebrow: t("calc.title"),
+    heading: t("postCard.vs", { a: attackerName, b: defender.name }),
+    body: displayName("move", outcome.move),
+    stat: outcomeRangeText(outcome),
+    species: [],
+  };
+
   return (
     <div className="grid gap-3 rounded-lg border bg-muted/40 p-3">
       {hasPartner ? (
@@ -193,12 +204,12 @@ function ResultBlock({
         <p className="min-w-0 font-heading text-lg leading-tight font-semibold">
           {displayName("move", outcome.move)}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs tabular-nums text-muted-foreground">
           {categoryLabel(outcome.category, t)}
           {outcome.category !== "Status" && move ? ` · ${move.basePower}` : ""}
         </p>
         {hasDamage && isSpread ? (
-          <span className="rounded-full border bg-card px-2 py-0.5 text-xs text-muted-foreground">
+          <span className="rounded-full border bg-card px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
             {t("calc.spreadMove", { factor: SPREAD_FACTOR })}
           </span>
         ) : null}
@@ -276,6 +287,12 @@ function ResultBlock({
           <ShareButton
             title={`${t("calc.title")} · ${displayName("move", outcome.move)}`}
             url={shareUrl}
+            size="xs"
+            variant="ghost"
+          />
+          <SaveImageButton
+            content={cardContent}
+            iconOnly
             size="xs"
             variant="ghost"
           />

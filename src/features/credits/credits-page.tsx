@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router";
 
 import { Page } from "@/components/page";
 import { useLocale } from "@/lib/i18n/locale";
@@ -162,6 +163,18 @@ export function CreditsPage() {
         )}
       </p>
       <SourceList sources={sources} />
+      <p className="mt-6 text-sm text-muted-foreground">
+        {heading(
+          "Need logos and screenshots? See the press kit.",
+          "ロゴとスクリーンショットはプレスキットにあります。",
+        )}{" "}
+        <Link
+          className="text-primary underline-offset-4 hover:underline"
+          to="/press"
+        >
+          {heading("Press kit", "プレスキット")}
+        </Link>
+      </p>
       <p className="mt-6 text-xs text-muted-foreground">
         {t("footer.disclaimer")}
       </p>

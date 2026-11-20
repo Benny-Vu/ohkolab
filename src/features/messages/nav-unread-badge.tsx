@@ -27,7 +27,7 @@ export function MessagesNavBadge({
     return null;
   }
   return (
-    <span className="ml-1 inline-grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground">
+    <span className="ml-1 inline-grid min-w-4 place-items-center rounded-full bg-primary px-1 text-2xs font-semibold leading-4 text-primary-foreground">
       {badge}
       <span className="sr-only">{t("notifications.unreadSr")}</span>
     </span>

@@ -12,9 +12,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { SaveImageButton } from "@/features/share/save-image";
 import { ShareButton } from "@/features/share/share-button";
 import { useT } from "@/lib/i18n/t";
 import { displayTeamName } from "@/lib/team/display";
+import type { ShareCardContent } from "@/lib/share-cards/svg";
 import type { Team } from "@/types/team";
 
 /**
@@ -67,6 +69,14 @@ export function TeamPreviewPanel({
       : t("calc.formatSingles"),
     t("publicProfile.pokemonCount", { n: team.members.length }),
   ].join(" · ");
+  const cardContent: ShareCardContent = {
+    kind: "team",
+    eyebrow: meta,
+    heading: displayTeamName(team.name),
+    body: null,
+    stat: null,
+    species: team.members.map((member) => member.species),
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -113,6 +123,7 @@ export function TeamPreviewPanel({
               size="sm"
               variant="outline"
             />
+            <SaveImageButton content={cardContent} />
             <Button
               size="sm"
               variant="outline"

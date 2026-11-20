@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+﻿import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { MemoryRouter } from "react-router";
 
 import { setLocale } from "@/lib/i18n/locale";
 import { CreditsPage } from "@/features/credits/credits-page";
@@ -7,7 +8,8 @@ import { CreditsPage } from "@/features/credits/credits-page";
 /**
  * The credits page names every data source and library, in both languages,
  * and keeps PokéAPI's copyright notice verbatim — its BSD licence requires
- * the notice to travel with the data.
+ * the notice to travel with the data. The press-kit link needs a router
+ * around the page, as in the app.
  */
 describe("CreditsPage", () => {
   beforeEach(() => {
@@ -21,7 +23,11 @@ describe("CreditsPage", () => {
 
   it("lists the data sources and libraries with their licences", () => {
     setLocale("en");
-    render(<CreditsPage />);
+    render(
+      <MemoryRouter>
+        <CreditsPage />
+      </MemoryRouter>,
+    );
 
     expect(
       screen.getByRole("heading", { name: "Credits" }),
@@ -36,7 +42,11 @@ describe("CreditsPage", () => {
 
   it("keeps PokéAPI's copyright notice verbatim in English mode", () => {
     setLocale("en");
-    render(<CreditsPage />);
+    render(
+      <MemoryRouter>
+        <CreditsPage />
+      </MemoryRouter>,
+    );
 
     expect(
       screen.getByText(
@@ -47,7 +57,11 @@ describe("CreditsPage", () => {
 
   it("renders the Japanese list in Japanese mode, notice verbatim", () => {
     setLocale("ja");
-    render(<CreditsPage />);
+    render(
+      <MemoryRouter>
+        <CreditsPage />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText("日本語のポケモン名。")).toBeInTheDocument();
     expect(

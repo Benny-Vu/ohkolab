@@ -537,6 +537,14 @@ export const communityEn = {
   "share.copiedLink": "Link copied to clipboard.",
   "share.copyFailed": "The link could not be copied.",
 
+  // Share cards (marketing wave): save a rendered card as a PNG image.
+  "share.saveImage": "Save as image",
+  "share.imageStory": "Story 1080 × 1920",
+  "share.imageLandscape": "Landscape 1200 × 630",
+  "share.imageFormatDescription": "Pick a format for the image.",
+  "share.imageSaved": "Image saved.",
+  "share.imageSaveFailed": "The image could not be saved.",
+
   // Direct messages (built but not launched; VITE_DIRECT_MESSAGES).
   "pageTitle.messages": "Messages",
   "messages.title": "Messages",
@@ -545,6 +553,7 @@ export const communityEn = {
   "messages.empty": "No conversations yet.",
   "messages.signIn": "Sign in to see your messages.",
   "messages.loadError": "Could not load your messages.",
+  "messages.loadErrorHint": "Check your connection and try again.",
   "messages.loadingConversationsAria": "Loading conversations",
   "messages.loadingThreadAria": "Loading messages",
   "messages.previewDeleted": "Message deleted",
@@ -600,6 +609,15 @@ export const communityEn = {
   "groups.newCategoryNone": "No category",
   "groups.newLanguageLabel": "Language (optional)",
   "groups.newLanguageNone": "No language",
+
+  // Recording mode (?demo=1): sample feed posts shown in place of the
+  // empty feed. Clearly marked as examples; never written to the database.
+  "demo.post1Body":
+    "New rain team is holding up in doubles — the calc breakdown paid off.",
+  "demo.post2Body":
+    "Flutter Mane outspeeds the whole meta at plus one. The speed tiers view made the team building so much easier.",
+  "demo.post3Body":
+    "Built a Trick Room team around Torkoal and Amoonguss. Sharing the sheet if anyone wants to test against it.",
 } as const;
 
 export type CommunityKey = keyof typeof communityEn;
