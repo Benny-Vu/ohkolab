@@ -3,6 +3,7 @@ import { ArrowLeftRightIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { BigNumber } from "@/components/big-number";
+import { BattleModeLink } from "@/features/battle/battle-link";
 import { DamageMeter } from "@/components/damage-meter";
 import { KoLabel } from "@/components/ko-label";
 import { Page } from "@/components/page";
@@ -250,6 +251,7 @@ export function CalcPage() {
       <Page
         actions={
           <>
+            <BattleModeLink />
             <Button
               onClick={() => dispatch({ type: "swapSides" })}
               variant="outline"
@@ -299,14 +301,17 @@ export function CalcPage() {
   return (
     <Page
       actions={
-        <Button
-          onClick={handleReset}
-          variant="outline"
-          className={buttonTouchClass}
-        >
-          <RotateCcwIcon aria-hidden />
-          {t("calc.reset")}
-        </Button>
+        <>
+          <BattleModeLink />
+          <Button
+            onClick={handleReset}
+            variant="outline"
+            className={buttonTouchClass}
+          >
+            <RotateCcwIcon aria-hidden />
+            {t("calc.reset")}
+          </Button>
+        </>
       }
       title={t("calc.title")}
     >

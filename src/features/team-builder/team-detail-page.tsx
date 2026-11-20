@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { Page } from "@/components/page";
+import { BattleModeLink } from "@/features/battle/battle-link";
 import {
   adjacentIconHitXsClass,
   buttonSmTouchClass,
@@ -331,6 +332,7 @@ export function TeamDetailPage() {
               {t("teams.title")}
             </Link>
           </Button>
+          <BattleModeLink />
           <ToggleGroup
             type="single"
             variant="outline"
