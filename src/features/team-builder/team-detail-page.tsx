@@ -22,6 +22,7 @@ import {
   buttonTouchClass,
   iconHitSmClass,
   rowHitXsClass,
+  switchHitClass,
 } from "@/components/touch-targets";
 import { displayTeamName } from "@/lib/team/display";
 import { PokemonEditor } from "@/components/pokemon-editor";
@@ -351,6 +352,7 @@ export function TeamDetailPage() {
             <div className="flex items-center gap-2">
               <Switch
                 id="team-public"
+                className={switchHitClass}
                 checked={team.isPublic ?? false}
                 onCheckedChange={(checked) => {
                   setPublic(team.id, checked);

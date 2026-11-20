@@ -6,7 +6,7 @@ import { Page } from "@/components/page";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { SegmentedControl } from "@/components/segmented-control";
-import { buttonSmTouchClass } from "@/components/touch-targets";
+import { buttonSmTouchClass, switchHitClass } from "@/components/touch-targets";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { UserAvatar } from "@/components/user-avatar";
 import { DemoBattleList } from "@/components/demo-battle-list";
@@ -141,6 +141,7 @@ export function BattleBoardPage({
             />
             <span className="flex items-center gap-2 text-sm font-medium">
               <Switch
+                className={switchHitClass}
                 aria-label={t("battles.startingSoon")}
                 checked={filter.startingSoon}
                 onCheckedChange={(checked) =>

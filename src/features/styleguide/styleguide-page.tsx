@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { switchHitClass } from "@/components/touch-targets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TYPE_NAMES } from "@/types/pokemon";
 
@@ -184,8 +185,16 @@ export function StyleguidePage() {
 
       <Section title="Selection controls">
         <div className="flex flex-wrap items-center gap-6">
-          <Switch aria-label="Switch" defaultChecked />
-          <Checkbox aria-label="Checkbox" defaultChecked />
+          <Switch
+            aria-label="Switch"
+            className={switchHitClass}
+            defaultChecked
+          />
+          <Checkbox
+            aria-label="Checkbox"
+            className={switchHitClass}
+            defaultChecked
+          />
           <SegmentedControl
             options={[
               { value: "singles", label: "Singles" },

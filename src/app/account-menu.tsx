@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { menuItemClass } from "@/components/menu-item-class";
+import { iconHitClass } from "@/components/touch-targets";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -100,7 +101,7 @@ export function AccountMenu({ variant }: AccountMenuProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full"
+              className={cn("rounded-full", iconHitClass)}
               aria-label={t("account.menuAria")}
             >
               <UserAvatar

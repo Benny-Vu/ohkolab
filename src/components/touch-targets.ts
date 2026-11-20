@@ -58,3 +58,10 @@ export const buttonTouchClass = "max-sm:h-11";
 
 /** Small text buttons (`size="sm"`/`xs`, 28/24px): 44px tall on phones. */
 export const buttonSmTouchClass = "max-sm:h-11 max-sm:px-3";
+
+/**
+ * Switches and checkboxes: the kit already widens their hit area with an
+ * `after` pseudo-element (`-inset-y-2`), which lands at ~34/32px tall. This
+ * pushes the inset to reach 44px on phones, keeping the visual unchanged.
+ */
+export const switchHitClass = "max-sm:after:-inset-y-3.5";

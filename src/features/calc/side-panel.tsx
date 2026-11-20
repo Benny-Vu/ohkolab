@@ -5,7 +5,11 @@ import { Picker, type PickerOption } from "@/components/picker";
 import { PokemonEditor } from "@/components/pokemon-editor";
 import { useDisplayName } from "@/data/display-names";
 import { Button } from "@/components/ui/button";
-import { iconHitSmClass, rowHitXsClass } from "@/components/touch-targets";
+import {
+  iconHitSmClass,
+  rowHitXsClass,
+  switchHitClass,
+} from "@/components/touch-targets";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Panel, PanelTitle } from "@/features/calc/panel";
@@ -193,6 +197,7 @@ export function BattleStateEditor({
             </span>
           </span>
           <Switch
+            className={switchHitClass}
             checked={side.mega}
             onCheckedChange={handlers.onMega}
             aria-label={t("calc.megaAria", { side: label })}
@@ -250,6 +255,7 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
               <span className="text-sm">{displayName("move", move)}</span>
               <Switch
                 size="sm"
+                className={switchHitClass}
                 checked={calcSide.crits[slot] ?? false}
                 onCheckedChange={(on) =>
                   dispatch({ type: "setCrit", side, slot, on })

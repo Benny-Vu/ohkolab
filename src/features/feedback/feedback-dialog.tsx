@@ -3,7 +3,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { buttonTouchClass } from "@/components/touch-targets";
+import { buttonTouchClass, switchHitClass } from "@/components/touch-targets";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -193,13 +193,14 @@ export function FeedbackDialog({
             </div>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
+                className={switchHitClass}
                 checked={includeDetails}
                 onCheckedChange={(checked) =>
                   setIncludeDetails(checked === true)
                 }
               />
               {t("feedback.includeDetails")}
-              {crashId ? t("feedback.crashIdSuffix") : ""})
+              {crashId ? t("feedback.crashIdSuffix") : ""}
             </label>
             <DialogFooter>
               <Button

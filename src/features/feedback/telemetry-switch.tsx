@@ -1,8 +1,10 @@
 import { Switch } from "@/components/ui/switch";
+import { switchHitClass } from "@/components/touch-targets";
 import {
   useTelemetryConsent,
   setTelemetryEnabled,
 } from "@/lib/telemetry/consent";
+import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n/t";
 
 /**
@@ -20,7 +22,7 @@ export function TelemetrySwitch() {
         checked={consent.enabled}
         onCheckedChange={(checked) => setTelemetryEnabled(checked)}
         aria-label={t("feedback.telemetryAria")}
-        className="mt-0.5"
+        className={cn("mt-0.5", switchHitClass)}
       />
       <span className="text-sm text-muted-foreground">
         {t("feedback.telemetryBody")}
