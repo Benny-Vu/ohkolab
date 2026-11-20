@@ -227,6 +227,20 @@ export interface CommentSnapshot {
 }
 
 /**
+ * Restores the cached rows an optimistic update captured before mutating.
+ * Shared by every rollback path: comment create/delete, like and follow.
+ */
+function rollbackSnapshots(
+  queryClient: ReturnType<typeof useQueryClient>,
+  context: { snapshots: Array<[QueryKey, unknown]> } | undefined,
+): void {
+  if (!context) return;
+  for (const [key, data] of context.snapshots) {
+    queryClient.setQueryData(key, data);
+  }
+}
+
+/**
  * Applies a comment-count change to every cached copy of the post, no-op
  * elsewhere. Shared by the optimistic create and delete paths.
  */
@@ -338,11 +352,7 @@ export function useCreateComment(
     onSuccess: (result, _input, context) => {
       if (!result.ok) {
         // The optimistic comment (and count) disappears again.
-        if (context) {
-          for (const [key, data] of context.snapshots) {
-            queryClient.setQueryData(key, data);
-          }
-        }
+        rollbackSnapshots(queryClient, context);
         return;
       }
       track("comment_created");
@@ -424,9 +434,7 @@ export function useDeleteComment(
     onSuccess: (result, _input, context) => {
       if (!result.ok && context) {
         // The comment (and count) come back until the server agrees.
-        for (const [key, data] of context.snapshots) {
-          queryClient.setQueryData(key, data);
-        }
+        rollbackSnapshots(queryClient, context);
       }
     },
     onSettled: (_result, _error, input) => {
@@ -551,9 +559,7 @@ export function useToggleLike(
     },
     onSuccess: (result, _variables, context) => {
       if (!result.ok && context) {
-        for (const [key, data] of context.snapshots) {
-          queryClient.setQueryData(key, data);
-        }
+        rollbackSnapshots(queryClient, context);
       }
     },
     onSettled: () => {
@@ -689,9 +695,7 @@ export function useToggleFollow(
     },
     onSuccess: (result, _variables, context) => {
       if (!result.ok && context) {
-        for (const [key, data] of context.snapshots) {
-          queryClient.setQueryData(key, data);
-        }
+        rollbackSnapshots(queryClient, context);
       }
     },
     onSettled: () => {
