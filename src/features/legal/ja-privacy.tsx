@@ -21,10 +21,12 @@ export function JaPrivacySections({
   images,
   messages = false,
   battles = false,
+  captcha = false,
 }: {
   images: boolean;
   messages?: boolean;
   battles?: boolean;
+  captcha?: boolean;
 }) {
   return (
     <div className="space-y-8">
@@ -56,6 +58,26 @@ export function JaPrivacySections({
           や Discord
           でサインインした場合はそのプロバイダー名を保存します。また、16歳以上であることと利用規約への同意、およびその同意日も保存されます。
         </LegalText>
+        {captcha && (
+          <LegalText>
+            サインアップ・サインイン・パスワードリセットのフォームをボットから守るため、Cloudflare
+            Turnstile
+            を使用しています。これらのフォームを開くと、お使いのブラウザーが
+            Cloudflare
+            に接続し、人間であるかを確認するために、IPアドレスやブラウザー情報などの技術情報が処理されます。当方が受け取るのは確認に合格したかどうかだけです。Cloudflare
+            はこの情報を広告に使用しないとしています。この確認は、アカウントとサービスを安全に保つという当方の正当な利益に基づいて行います。Cloudflare
+            による処理には、同社の{" "}
+            <a
+              href="https://www.cloudflare.com/privacypolicy/"
+              className="text-primary underline underline-offset-4"
+              rel="noreferrer"
+              target="_blank"
+            >
+              プライバシーポリシー
+            </a>
+            が適用されます。
+          </LegalText>
+        )}
       </LegalSection>
 
       <LegalSection id="your-public-profile" heading="あなたの公開プロフィール">

@@ -14,15 +14,18 @@ import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { directMessagesEnabled } from "@/lib/messages/flag";
 import { imagePostsEnabled } from "@/lib/social";
+import { isTurnstileEnabled } from "@/lib/turnstile/site-key";
 
 // The image-post text (approved by the owner on 2026-11-18) is shown only when
 // the VITE_IMAGE_POSTS flag is on, so the policy never describes processing
 // that isn't happening yet. The direct message text (approved 2026-11-19)
 // follows VITE_DIRECT_MESSAGES the same way, and the battle request text
-// (approved 2026-11-20) follows VITE_BATTLES.
+// (approved 2026-11-20) follows VITE_BATTLES. The bot-check text (approved
+// 2026-11-20) shows only when the build has a Turnstile site key.
 const IMAGES = imagePostsEnabled();
 const MESSAGES = directMessagesEnabled();
 const BATTLES = battlesEnabled();
+const CAPTCHA = isTurnstileEnabled();
 
 const SECTIONS: Array<{ id: string; heading: string; headingJa: string }> = [
   {
@@ -146,6 +149,7 @@ export function PrivacyPage() {
           images={IMAGES}
           messages={MESSAGES}
           battles={BATTLES}
+          captcha={CAPTCHA}
         />
       </LegalPage>
     );
@@ -189,6 +193,27 @@ export function PrivacyPage() {
             stores that you confirmed being 16 or older and accepted the terms,
             with the date of that confirmation.
           </LegalText>
+          {CAPTCHA && (
+            <LegalText>
+              To protect sign-up, sign-in and password reset from bots, these
+              forms use Cloudflare Turnstile. When you open them, your browser
+              connects to Cloudflare, which processes technical information such
+              as your IP address and browser details to check that you are a
+              person. We only receive whether the check passed. Cloudflare says
+              it does not use this information for advertising. We use the check
+              for our legitimate interest in keeping accounts and the service
+              safe. Cloudflare&apos;s{" "}
+              <a
+                href="https://www.cloudflare.com/privacypolicy/"
+                className="text-primary underline underline-offset-4"
+                rel="noreferrer"
+                target="_blank"
+              >
+                privacy policy
+              </a>{" "}
+              applies to its processing.
+            </LegalText>
+          )}
         </LegalSection>
 
         <LegalSection id="your-public-profile" heading="Your public profile">
