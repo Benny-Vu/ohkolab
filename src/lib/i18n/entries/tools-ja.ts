@@ -293,6 +293,27 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "teams.trickRoomNote":
     "トリックルーム中は遅いポケモンから行動します。先制技は先に動き、同じ素早さなら順番は入れ替わりません。",
 
+  // ダメージ計算：型の出典ラベル、その切り替え、計算結果の下の前提行。
+  "calc.setSourceCommon": "定番の型 ・ {usage}",
+  "calc.setSourceCommonN": "定番の型{index} ・ {usage}",
+  "calc.setSourceCustom": "カスタム",
+  "calc.setSourceAssumed": "想定のステータスポイント",
+  "calc.setOptionN": "型{index}",
+  "calc.setSourceAria": "{side}の型の出典",
+  "calc.assumptionsLabel": "前提",
+  "calc.level50": "レベル50",
+
+  // ダメージ計算：既知の制限メモ。
+  "calc.knownLimitations": "既知の制限",
+  "calc.limitationWeather":
+    "場に出たときに天候やフィールドを起こす特性（あまごい、ひでり、各種グミ）は自動ではオンになりません。天候とフィールドを自分で設定してください。",
+  "calc.limitationSecondary":
+    "計算するのはダメージの乱数だけです。技の追加効果（ひるみ、ランク変化、二次的な状態異常）は結果に含まれません。",
+  "calc.limitationRecoil":
+    "反動ダメージと自傷は表示されず、いしあたまなどの反動を無効する特性も反映されません。",
+  "calc.limitationLearnsets":
+    "技の候補は本編の思い出せる技をChampionsの技リストで絞ったものなので、Championsでは実際に使えない技がまれに含まれます。",
+
   // 録画モード（?demo=1）。空のリスト代わりに表示するサンプル構築。
   // サンプルであることが明示され、データベースには書き込まれない。
   "demo.team1Name": "あめの構築",

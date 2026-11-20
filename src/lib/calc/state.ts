@@ -20,6 +20,25 @@ import type { PokemonSet } from "@/types/pokemon";
 export const SIDE_IDS = ["p1", "p2"] as const;
 export type SideId = (typeof SIDE_IDS)[number];
 
+/** The highest common set the chooser offers. */
+export const MAX_COMMON_SETS = 3;
+
+/**
+ * Where a side's set came from, so results can say what they assumed:
+ * filled from usage data (which of the top sets, and the species' usage
+ * share), hand-edited or loaded (custom), or the blank default a fresh
+ * species pick starts from (assumed Stat Points).
+ */
+export type SetOrigin =
+  | { kind: "common"; index: number; speciesUsage: number | null }
+  | { kind: "custom" }
+  | { kind: "assumed" };
+
+/** The origins a fresh state starts from: the app's own curated sets. */
+export function defaultOrigins(): Record<SideId, SetOrigin> {
+  return { p1: { kind: "custom" }, p2: { kind: "custom" } };
+}
+
 export const MOVE_SLOTS = [0, 1, 2, 3] as const;
 export const MIN_STAGE = -6;
 export const MAX_STAGE = 6;
@@ -53,6 +72,8 @@ export interface MoveSelection {
 
 export interface CalcState {
   sides: Record<SideId, CalcSide>;
+  /** Where each side's set came from; see `SetOrigin`. */
+  origins: Record<SideId, SetOrigin>;
   /** Conditions on each Pokémon's own side of the field. */
   fieldSides: Record<SideId, SideState>;
   weather: Weather | null;
@@ -65,7 +86,18 @@ export interface CalcState {
 }
 
 export type CalcAction =
-  | { type: "setSet"; side: SideId; set: PokemonSet }
+  | {
+      type: "setSet";
+      side: SideId;
+      set: PokemonSet;
+      /**
+       * Where the set comes from. Given by the smart-set fill and the set
+       * chooser; without it an edit of the same species means "custom" and a
+       * new species means the blank, assumed default.
+       */
+      origin?: SetOrigin;
+    }
+  | { type: "setOrigin"; side: SideId; origin: SetOrigin }
   | { type: "setBoost"; side: SideId; stat: BoostStatId; value: number }
   | { type: "clearBoosts"; side: SideId }
   | { type: "setStatus"; side: SideId; status: StatusName | null }
@@ -147,6 +179,7 @@ export function createDefaultCalcState(): CalcState {
   const sets = defaultSets();
   return {
     sides: { p1: createSide(sets.p1), p2: createSide(sets.p2) },
+    origins: defaultOrigins(),
     fieldSides: { p1: emptySide(), p2: emptySide() },
     weather: null,
     terrain: null,
@@ -181,23 +214,43 @@ function withFieldSide(
   };
 }
 
-function setSet(state: CalcState, id: SideId, set: PokemonSet): CalcState {
+function setSet(
+  state: CalcState,
+  id: SideId,
+  set: PokemonSet,
+  origin?: SetOrigin,
+): CalcState {
   const side = state.sides[id];
-  // A different Pokémon starts fresh: stages, status and HP belonged to the old one.
+  // A different Pokémon starts fresh: stages, status and HP belonged to the
+  // old one, and the set goes back to the assumed blank default until the
+  // usage data fills it.
   if (set.species !== side.set.species) {
-    return withSide(state, id, createSide(set));
+    return {
+      ...withSide(state, id, createSide(set)),
+      origins: { ...state.origins, [id]: origin ?? { kind: "assumed" } },
+    };
   }
   const couldMega = megaFormeOf(side.set) !== null;
   const canMega = megaFormeOf(set) !== null;
   // Picking up a Mega Stone switches Mega Evolution on; losing it switches it off.
   const mega = canMega ? (couldMega ? side.mega : true) : false;
-  return withSide(state, id, { set, mega });
+  return {
+    ...withSide(state, id, { set, mega }),
+    // Editing any field of the same Pokémon makes the set custom; the
+    // chooser and the smart-set fill say otherwise explicitly.
+    origins: { ...state.origins, [id]: origin ?? { kind: "custom" } },
+  };
 }
 
 export function calcReducer(state: CalcState, action: CalcAction): CalcState {
   switch (action.type) {
     case "setSet":
-      return setSet(state, action.side, action.set);
+      return setSet(state, action.side, action.set, action.origin);
+    case "setOrigin":
+      return {
+        ...state,
+        origins: { ...state.origins, [action.side]: action.origin },
+      };
     case "setBoost":
       return withSide(state, action.side, {
         boosts: {
@@ -244,6 +297,7 @@ export function calcReducer(state: CalcState, action: CalcAction): CalcState {
       return {
         ...state,
         sides: { p1: state.sides.p2, p2: state.sides.p1 },
+        origins: { p1: state.origins.p2, p2: state.origins.p1 },
         fieldSides: { p1: state.fieldSides.p2, p2: state.fieldSides.p1 },
         selected: { ...state.selected, side: otherSide(state.selected.side) },
       };
@@ -253,11 +307,16 @@ export function calcReducer(state: CalcState, action: CalcAction): CalcState {
       return action.state;
     case "loadSets": {
       const sides = { ...state.sides };
+      const origins = { ...state.origins };
       for (const id of SIDE_IDS) {
         const set = action.sets[id];
-        if (set) sides[id] = createSide(set);
+        // A handed-over set is the user's own: never refilled, always custom.
+        if (set) {
+          sides[id] = createSide(set);
+          origins[id] = { kind: "custom" };
+        }
       }
-      return { ...state, sides, selected: { side: "p1", slot: 0 } };
+      return { ...state, sides, origins, selected: { side: "p1", slot: 0 } };
     }
   }
 }

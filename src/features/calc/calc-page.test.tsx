@@ -1,7 +1,9 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { Providers } from "@/app/providers";
 import { createDefaultSet } from "@/data";
@@ -12,6 +14,25 @@ import { setBattleFormat } from "@/lib/preferences";
 import { setLocale } from "@/lib/i18n/locale";
 
 const DIRECTION_ARROW = "\u2192";
+
+/**
+ * Serves the committed metagame JSON from `public/` to the page's `fetch`
+ * calls, so the smart-set fill runs against the real usage data.
+ */
+function serveMetagameFromPublic() {
+  // `process.cwd()` is the repo root under `npm run test`; the paths the
+  // app asks for are root-relative (`/data/metagame/...`). Plain
+  // `new URL(..., import.meta.url)` is off limits here: Vite rewrites a
+  // dynamic `new URL` into an asset helper that yields "undefined".
+  const read = (path: string) =>
+    JSON.parse(
+      readFileSync(resolve(process.cwd(), "public", `.${path}`), "utf8"),
+    );
+  vi.stubGlobal("fetch", (input: RequestInfo | URL) => {
+    const url = String(input);
+    return Promise.resolve({ ok: true, json: async () => read(url) });
+  });
+}
 
 function renderCalc(state?: unknown) {
   const initialEntries =
@@ -40,6 +61,10 @@ async function openResults(
 describe("CalcPage", () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("shows both sides' moves and the selected result", async () => {
@@ -144,6 +169,90 @@ describe("CalcPage", () => {
     );
   });
 
+  it("fills a picked species with its most common set from the usage data", async () => {
+    serveMetagameFromPublic();
+    const user = userEvent.setup();
+    renderCalc();
+
+    await user.click(screen.getByRole("radio", { name: "Defender" }));
+    await user.click(screen.getByRole("combobox", { name: "Species" }));
+    await user.type(
+      screen.getByRole("combobox", { name: "Search Pokémon" }),
+      "sneasler",
+    );
+    await user.click(screen.getByText("Sneasler"));
+
+    // Set 1 of the doubles snapshot: the top item, ability, spread and
+    // four moves, with the species' usage share as the label (shown next
+    // to the species picker and as the chooser's selected option).
+    const labelled = await screen.findAllByText("Common set · 35.6% usage");
+    expect(labelled).toHaveLength(2);
+    expect(screen.getByRole("combobox", { name: "Item" })).toHaveTextContent(
+      "White Herb",
+    );
+    expect(screen.getByRole("combobox", { name: "Ability" })).toHaveTextContent(
+      "Unburden",
+    );
+    expect(screen.getByRole("combobox", { name: "Nature" })).toHaveTextContent(
+      "Adamant",
+    );
+    expect(screen.getByRole("combobox", { name: "Move 1" })).toHaveTextContent(
+      "Close Combat",
+    );
+    expect(screen.getByRole("combobox", { name: "Move 2" })).toHaveTextContent(
+      "Dire Claw",
+    );
+
+    // The result says which set it assumed: the attacker's Earthquake
+    // into the freshly filled Sneasler.
+    const dialog = await openResults(user);
+    expect(
+      dialog.getAllByText(/Assumptions: Common set · 35.6% usage · Level 50/),
+    ).toHaveLength(1);
+  });
+
+  it("switches between the numbered sets and Custom without losing edits", async () => {
+    serveMetagameFromPublic();
+    const user = userEvent.setup();
+    renderCalc();
+
+    await user.click(screen.getByRole("radio", { name: "Defender" }));
+    await user.click(screen.getByRole("combobox", { name: "Species" }));
+    await user.type(
+      screen.getByRole("combobox", { name: "Search Pokémon" }),
+      "sneasler",
+    );
+    await user.click(screen.getByText("Sneasler"));
+    await screen.findAllByText("Common set · 35.6% usage");
+
+    // Set 2 carries the second-most-common spread and item.
+    await user.click(
+      screen.getByRole("combobox", { name: "Defender set source" }),
+    );
+    await user.click(screen.getByRole("option", { name: "Set 2" }));
+    expect(await screen.findByText("Common set 2 · 35.6% usage")).toBeVisible();
+    expect(screen.getByRole("combobox", { name: "Item" })).toHaveTextContent(
+      "Psychic Seed",
+    );
+
+    // Editing a field flips the source to Custom and keeps the set.
+    await user.click(screen.getByRole("combobox", { name: "Nature" }));
+    await user.click(screen.getByRole("option", { name: "Careful" }));
+    expect(screen.getAllByText("Custom").length).toBeGreaterThan(0);
+    expect(screen.getByRole("combobox", { name: "Nature" })).toHaveTextContent(
+      "Careful",
+    );
+
+    // Choosing Custom from the picker keeps the set exactly as it is.
+    await user.click(
+      screen.getByRole("combobox", { name: "Defender set source" }),
+    );
+    await user.click(screen.getByRole("option", { name: "Custom" }));
+    expect(screen.getByRole("combobox", { name: "Nature" })).toHaveTextContent(
+      "Careful",
+    );
+  });
+
   it("shows the selected move's result in the sticky bar", () => {
     renderCalc();
 
@@ -207,6 +316,55 @@ describe("CalcPage", () => {
     await openResults(user);
 
     expect(document.querySelector("select")).toBeNull();
+  });
+
+  it("says what each result assumed about the defender and the field", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    const dialog = await openResults(user);
+
+    // The default sets are the app's own, so the assumption is "Custom", and
+    // nothing is on on the field: the line ends with Level 50.
+    expect(dialog.getAllByText(/Assumptions: Custom · Level 50/)).toHaveLength(
+      1,
+    );
+
+    await user.click(dialog.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("radio", { name: "Field" }));
+    await user.click(screen.getByRole("combobox", { name: "Weather" }));
+    await user.click(screen.getByRole("option", { name: "Sun" }));
+
+    const reopened = await openResults(user);
+    expect(
+      reopened.getAllByText(/Assumptions: Custom · Sun · Level 50/),
+    ).toHaveLength(1);
+  });
+
+  it("links the KO, damage and speed-tie labels to the learn explainers", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    const dialog = await openResults(user);
+
+    expect(
+      dialog.getByRole("link", { name: "GUARANTEED 2HKO" }),
+    ).toHaveAttribute("href", "/learn#ohko");
+    expect(dialog.getByRole("link", { name: /^Damage:/ })).toHaveAttribute(
+      "href",
+      "/learn#damage-rolls",
+    );
+  });
+
+  it("expands the known-limitations note", async () => {
+    const user = userEvent.setup();
+    renderCalc();
+
+    await user.click(screen.getByRole("button", { name: "Known limitations" }));
+
+    expect(
+      screen.getByText(/Only the damage roll is calculated/),
+    ).toBeVisible();
   });
 
   it("adds a second defender and shows both results in doubles", async () => {

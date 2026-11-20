@@ -297,6 +297,28 @@ export const toolsEn = {
   "teams.trickRoomNote":
     "Trick Room reverses the order: the slowest Pokémon moves first. Priority moves still go first, and equal Speeds still tie.",
 
+  // Damage calculator: the set source label, its chooser and the
+  // assumptions line under each result.
+  "calc.setSourceCommon": "Common set · {usage} usage",
+  "calc.setSourceCommonN": "Common set {index} · {usage} usage",
+  "calc.setSourceCustom": "Custom",
+  "calc.setSourceAssumed": "Assumed SP",
+  "calc.setOptionN": "Set {index}",
+  "calc.setSourceAria": "{side} set source",
+  "calc.assumptionsLabel": "Assumptions",
+  "calc.level50": "Level 50",
+
+  // Damage calculator: the known-limitations note.
+  "calc.knownLimitations": "Known limitations",
+  "calc.limitationWeather":
+    "Abilities that set the weather or terrain when a Pokémon enters (Drizzle, Drought, the terrains' Surge abilities) are not switched on automatically — set the weather and terrain controls yourself.",
+  "calc.limitationSecondary":
+    "Only the damage roll is calculated. A move's added effects — flinches, stat changes, secondary status — are not part of the result.",
+  "calc.limitationRecoil":
+    "Recoil and self-damage are not shown, and abilities such as Rock Head that ignore recoil are not applied.",
+  "calc.limitationLearnsets":
+    "Move choices come from mainline learnsets filtered to the Champions move list, so a rare move may be offered that Champions does not allow.",
+
   // Recording mode (?demo=1): sample teams shown in place of the empty
   // list. Clearly marked as examples; never written to the database.
   "demo.team1Name": "Rain ride",

@@ -7,10 +7,15 @@ import { DamageMeter } from "@/components/damage-meter";
 import { KoLabel } from "@/components/ko-label";
 import { TypeBadge } from "@/components/type-badge";
 import { Button } from "@/components/ui/button";
-import { iconHitXsClass, rowHitXsClass } from "@/components/touch-targets";
+import {
+  iconHitXsClass,
+  linkHitClass,
+  rowHitXsClass,
+} from "@/components/touch-targets";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMove, useDisplayName } from "@/data";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
+import { AssumptionsLine } from "@/features/calc/assumptions";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import type { SecondDefenderData } from "@/features/calc/second-defender";
 import { useSideNames } from "@/features/calc/use-side-names";
@@ -35,15 +40,29 @@ import {
   otherSide,
   type CalcAction,
   type CalcState,
+  type SetOrigin,
   type SideId,
 } from "@/lib/calc/state";
 import { track } from "@/lib/telemetry/analytics";
+import { cn } from "@/lib/utils";
 import type { BattleFormat } from "@/types/battle";
 import type { MoveCategory } from "@/types/pokemon";
 
 const DIRECTION_ARROW = "→";
 /** The damage multiplier a spread move takes in doubles. */
 const SPREAD_FACTOR = "0.75";
+
+/** The /learn explainer anchors behind the results area's labels. */
+const LEARN_DAMAGE_ROLLS = "/learn#damage-rolls";
+const LEARN_OHKO = "/learn#ohko";
+const LEARN_SPEED_TIES = "/learn#speed-ties";
+
+/**
+ * A quiet link into the /learn explainers: underlined so it reads as a
+ * link, with a 44px hit area on phones (`linkHitClass`).
+ */
+const learnLinkClass =
+  "text-foreground underline decoration-muted-foreground underline-offset-4 hover:decoration-foreground";
 
 /** The move categories shown next to a move's name, as translation keys. */
 const CATEGORY_KEYS: Record<MoveCategory, TranslationKey> = {
@@ -137,11 +156,14 @@ type ResultBlockProps = {
   attackerName: string;
   defender: DefenderView;
   outcome: MoveOutcome;
+  state: CalcState;
   format: BattleFormat;
   /** True when a second defender's block sits next to this one. */
   hasPartner: boolean;
   /** The shareable calculator URL for the current state. */
   shareUrl: string;
+  /** Where the defender's set came from; shown in the assumptions line. */
+  origin: SetOrigin;
 };
 
 /**
@@ -153,9 +175,11 @@ function ResultBlock({
   attackerName,
   defender,
   outcome,
+  state,
   format,
   hasPartner,
   shareUrl,
+  origin,
 }: ResultBlockProps) {
   const t = useT();
   const displayName = useDisplayName();
@@ -215,7 +239,12 @@ function ResultBlock({
           </span>
         ) : null}
         {ko ? (
-          <KoLabel className="ml-auto" result={ko} />
+          <a
+            className={cn("ml-auto", linkHitClass, learnLinkClass)}
+            href={LEARN_OHKO}
+          >
+            <KoLabel result={ko} />
+          </a>
         ) : (
           <span className="ml-auto text-xs text-muted-foreground">
             {summaryText(summary, t)}
@@ -255,12 +284,17 @@ function ResultBlock({
       ) : null}
       {hasDamage && result && hp ? (
         <p className="text-xs tabular-nums text-muted-foreground">
-          {t("calc.damageLine", {
-            min: result.min,
-            max: result.max,
-            minPercent: result.minPercent,
-            maxPercent: result.maxPercent,
-          })}
+          <a
+            className={cn(linkHitClass, learnLinkClass)}
+            href={LEARN_DAMAGE_ROLLS}
+          >
+            {t("calc.damageLine", {
+              min: result.min,
+              max: result.max,
+              minPercent: result.minPercent,
+              maxPercent: result.maxPercent,
+            })}
+          </a>
         </p>
       ) : null}
       {hasDamage && result && hp ? (
@@ -310,6 +344,7 @@ function ResultBlock({
           </Button>
         </div>
       </div>
+      <AssumptionsLine origin={origin} state={state} />
     </div>
   );
 }
@@ -355,7 +390,9 @@ function DirectionContent({
             format={format}
             hasPartner={showSecond}
             outcome={selectedOutcome}
+            origin={state.origins[otherSide(side)]}
             shareUrl={shareUrl}
+            state={state}
           />
           {showSecond && second && secondOutcome ? (
             <ResultBlock
@@ -367,7 +404,10 @@ function DirectionContent({
               format={format}
               hasPartner
               outcome={secondOutcome}
+              // The second defender is always a hand-built copy.
+              origin={{ kind: "custom" }}
               shareUrl={shareUrl}
+              state={state}
             />
           ) : null}
         </div>
@@ -439,9 +479,16 @@ function SpeedLine({
         {"·"}
       </span>
       <span className="font-medium text-accent-brand-text">
-        {first === "tie"
-          ? t("calc.speedTie")
-          : t("calc.movesFirst", { name: names[first] })}
+        {first === "tie" ? (
+          <a
+            className={cn(linkHitClass, learnLinkClass)}
+            href={LEARN_SPEED_TIES}
+          >
+            {t("calc.speedTie")}
+          </a>
+        ) : (
+          t("calc.movesFirst", { name: names[first] })
+        )}
       </span>
       {state.trickRoom ? (
         <>
