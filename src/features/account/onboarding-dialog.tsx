@@ -322,11 +322,17 @@ function OnboardingForm({
             </p>
           ) : null}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={skip}>
+            <Button
+              type="button"
+              variant="outline"
+              className="max-md:h-11"
+              onClick={skip}
+            >
               {t("onboarding.skip")}
             </Button>
             <Button
               type="submit"
+              className="max-md:h-11"
               disabled={pending || status === "checking" || status === "taken"}
             >
               {pending ? (

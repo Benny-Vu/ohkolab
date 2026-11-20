@@ -115,6 +115,7 @@ function WelcomeFollowRow({
       <Button
         size="sm"
         variant="outline"
+        className="relative after:absolute after:-inset-y-2 after:inset-x-0"
         loading={toggleFollow.isPending}
         disabled={toggleFollow.isPending}
         onClick={() => void follow()}
@@ -197,6 +198,7 @@ function WelcomeGroupRow({ group }: WelcomeGroupRowProps) {
       <Button
         size="sm"
         variant="outline"
+        className="relative after:absolute after:-inset-y-2 after:inset-x-0"
         loading={joinGroup.isPending}
         disabled={joined || joinGroup.isPending}
         onClick={() => void join()}

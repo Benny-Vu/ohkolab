@@ -23,6 +23,7 @@ import type { AuthFailure, OAuthProvider } from "@/lib/auth/types";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { track } from "@/lib/telemetry/analytics";
+import { useCaptcha } from "@/lib/turnstile/use-captcha";
 
 type FieldErrors = Partial<
   Record<"email" | "password" | "acceptedTerms", string>
@@ -72,6 +73,11 @@ export function LoginPage() {
   >(null);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  // Each form carries its own Turnstile challenge (tokens are one-time), so
+  // a token is never reused between the sign-in, reset and sign-up flows.
+  // With no site key configured both stay inert and the forms work as before.
+  const signInCaptcha = useCaptcha();
+  const signUpCaptcha = useCaptcha();
 
   if (!auth.loading && auth.user) {
     return <Navigate to={returnTo} replace />;
@@ -115,13 +121,21 @@ export function LoginPage() {
     if (errors.email || errors.password) return;
 
     setPending("signIn");
-    const result = await auth.signInWithPassword(normalizedEmail, password);
+    const result = signInCaptcha.token
+      ? await auth.signInWithPassword(
+          normalizedEmail,
+          password,
+          signInCaptcha.token,
+        )
+      : await auth.signInWithPassword(normalizedEmail, password);
     setPending(null);
     if (result.ok) {
       toast.success(t("login.signedInToast"));
       navigate(returnTo, { replace: true });
     } else {
       applyFailure(result.error);
+      // The failed submit consumed the token: demand a fresh one.
+      signInCaptcha.retry();
     }
   };
 
@@ -145,6 +159,7 @@ export function LoginPage() {
       email: normalizedEmail,
       password,
       acceptedTerms,
+      captchaToken: signUpCaptcha.token ?? undefined,
     });
     setPending(null);
     if (result.ok) {
@@ -157,6 +172,8 @@ export function LoginPage() {
       }
     } else {
       applyFailure(result.error);
+      // The failed submit consumed the token: demand a fresh one.
+      signUpCaptcha.retry();
     }
   };
 
@@ -177,13 +194,17 @@ export function LoginPage() {
     if (emailError) return;
 
     setPending("reset");
-    const result = await auth.requestPasswordReset(normalizedEmail);
+    const result = signInCaptcha.token
+      ? await auth.requestPasswordReset(normalizedEmail, signInCaptcha.token)
+      : await auth.requestPasswordReset(normalizedEmail);
     setPending(null);
     if (result.ok) {
       setResetSent(true);
       toast.success(t("login.resetSentToast"));
     } else {
       applyFailure(result.error);
+      // The failed request consumed the token: demand a fresh one.
+      signInCaptcha.retry();
     }
   };
 
@@ -204,7 +225,7 @@ export function LoginPage() {
             </p>
             <Button
               variant="link"
-              className="h-auto p-0 justify-self-start"
+              className="relative h-auto p-0 justify-self-start after:absolute after:-inset-y-3 after:inset-x-0"
               onClick={() => setNeedsEmailConfirmation(false)}
             >
               {t("common.signIn")}
@@ -232,7 +253,7 @@ export function LoginPage() {
             </p>
             <Button
               variant="link"
-              className="h-auto p-0 justify-self-start"
+              className="relative h-auto p-0 justify-self-start after:absolute after:-inset-y-3 after:inset-x-0"
               onClick={() => setResetSent(false)}
             >
               {t("login.backToSignIn")}
@@ -246,7 +267,11 @@ export function LoginPage() {
   return (
     <Page title={t("common.signIn")} width="narrow">
       <div className="mx-auto grid w-full max-w-sm justify-items-center gap-6">
-        <Link to="/" className="rounded-md" aria-label={t("nav.homeAria")}>
+        <Link
+          to="/"
+          className="relative rounded-md after:absolute after:-inset-y-2 after:inset-x-0"
+          aria-label={t("nav.homeAria")}
+        >
           <Wordmark className="text-3xl" />
         </Link>
 
@@ -301,12 +326,14 @@ export function LoginPage() {
                     />
                   </div>
                   <FormError id="signin-form-error" failure={formError} />
+                  {signInCaptcha.widget}
                   <Button
                     type="submit"
-                    disabled={busy}
+                    disabled={busy || signInCaptcha.missing}
                     aria-describedby={
                       formError ? "signin-form-error" : undefined
                     }
+                    className="max-md:h-11"
                   >
                     {pending === "signIn" ? (
                       <LoaderCircleIcon className="animate-spin" aria-hidden />
@@ -316,9 +343,9 @@ export function LoginPage() {
                   <Button
                     type="button"
                     variant="link"
-                    className="h-auto p-0 justify-self-start"
+                    className="relative h-auto p-0 justify-self-start after:absolute after:-inset-y-3 after:inset-x-0"
                     onClick={handleReset}
-                    disabled={busy}
+                    disabled={busy || signInCaptcha.missing}
                   >
                     {t("login.forgotPassword")}
                   </Button>
@@ -411,12 +438,14 @@ export function LoginPage() {
                     />
                   </div>
                   <FormError id="signup-form-error" failure={formError} />
+                  {signUpCaptcha.widget}
                   <Button
                     type="submit"
-                    disabled={busy}
+                    disabled={busy || signUpCaptcha.missing}
                     aria-describedby={
                       formError ? "signup-form-error" : undefined
                     }
+                    className="max-md:h-11"
                   >
                     {pending === "signUp" ? (
                       <LoaderCircleIcon className="animate-spin" aria-hidden />
@@ -434,6 +463,7 @@ export function LoginPage() {
             variant="outline"
             onClick={() => handleProvider("google")}
             disabled={busy}
+            className="max-md:h-11"
           >
             {pending === "google" ? (
               <LoaderCircleIcon className="animate-spin" aria-hidden />
@@ -444,6 +474,7 @@ export function LoginPage() {
             variant="outline"
             onClick={() => handleProvider("discord")}
             disabled={busy}
+            className="max-md:h-11"
           >
             {pending === "discord" ? (
               <LoaderCircleIcon className="animate-spin" aria-hidden />

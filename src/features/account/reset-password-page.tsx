@@ -135,6 +135,7 @@ export function ResetPasswordPage() {
               type="submit"
               disabled={pending}
               aria-describedby={formError ? "reset-form-error" : undefined}
+              className="max-md:h-11"
             >
               {pending ? (
                 <LoaderCircleIcon className="animate-spin" />
@@ -146,7 +147,7 @@ export function ResetPasswordPage() {
             <Button
               asChild
               variant="link"
-              className="h-auto justify-self-start p-0"
+              className="relative h-auto justify-self-start p-0 after:absolute after:-inset-y-3 after:inset-x-0"
             >
               <Link to="/login">{t("login.backToSignIn")}</Link>
             </Button>

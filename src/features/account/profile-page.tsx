@@ -127,7 +127,7 @@ function GuestPrompt() {
         <CardDescription>{t("profile.guestDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button asChild>
+        <Button asChild className="max-md:h-11">
           <Link to="/login">{t("common.signIn")}</Link>
         </Button>
       </CardContent>
@@ -525,6 +525,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               <div className="flex flex-wrap items-center gap-2">
                 <Button
                   type="submit"
+                  className="max-md:h-11"
                   disabled={busy}
                   aria-describedby={
                     formError ? "profile-form-error" : undefined
@@ -540,6 +541,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                 <Button
                   type="button"
                   variant="ghost"
+                  className="max-md:h-11"
                   disabled={busy}
                   onClick={() => {
                     setUsername(profile.username);
@@ -581,7 +583,12 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={handleSignOut} disabled={busy}>
+              <Button
+                variant="outline"
+                className="max-md:h-11"
+                onClick={handleSignOut}
+                disabled={busy}
+              >
                 {pending === "signOut" ? (
                   <LoaderCircleIcon className="animate-spin" aria-hidden />
                 ) : (
@@ -637,7 +644,11 @@ function ProfileEditor({ profile }: { profile: Profile }) {
           <CardContent className="grid gap-2">
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <DialogTrigger asChild>
-                <Button variant="destructive" disabled={busy}>
+                <Button
+                  variant="destructive"
+                  className="max-md:h-11"
+                  disabled={busy}
+                >
                   <Trash2Icon aria-hidden />
                   {t("profile.deleteAccountTitle")}
                 </Button>
@@ -665,6 +676,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                 <DialogFooter>
                   <Button
                     variant="outline"
+                    className="max-md:h-11"
                     onClick={() => setDeleteOpen(false)}
                     disabled={busy}
                   >
@@ -672,6 +684,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   </Button>
                   <Button
                     variant="destructive"
+                    className="max-md:h-11"
                     onClick={handleDelete}
                     disabled={
                       busy ||
@@ -692,7 +705,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
               variant="link"
               size="sm"
               asChild
-              className="justify-self-start px-0"
+              className="relative justify-self-start px-0 after:absolute after:-inset-y-3 after:inset-x-0"
             >
               <Link to="/delete-account">{t("legal.deleteDetailsLink")}</Link>
             </Button>
@@ -744,6 +757,7 @@ function BlockedUserRow({ profile }: { profile: Profile }) {
       <Button
         variant="outline"
         size="sm"
+        className="relative after:absolute after:-inset-y-2 after:inset-x-0"
         onClick={() => {
           void handleUnblock();
         }}
@@ -789,6 +803,7 @@ function BlockedUsersCard() {
               <Button
                 variant="outline"
                 size="sm"
+                className="relative after:absolute after:-inset-y-2 after:inset-x-0"
                 onClick={() => void blocksQuery.refetch()}
               >
                 {t("common.retry")}
@@ -811,6 +826,7 @@ function BlockedUsersCard() {
               <Button
                 variant="outline"
                 size="sm"
+                className="relative after:absolute after:-inset-y-2 after:inset-x-0"
                 onClick={() => void profilesQuery.refetch()}
               >
                 {t("common.retry")}
@@ -865,7 +881,12 @@ export function ProfilePage() {
       width="narrow"
       actions={
         auth.profile ? (
-          <Button variant="ghost" size="sm" asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="relative after:absolute after:-inset-y-2 after:inset-x-0"
+          >
             <Link to={`/u/${auth.profile.username}`}>
               <ExternalLinkIcon aria-hidden />
               {t("profile.publicPage")}
@@ -884,7 +905,7 @@ export function ProfilePage() {
             <AlertDescription>{t("profile.loadFailedBody")}</AlertDescription>
           </Alert>
           <Button
-            className="justify-self-start"
+            className="max-md:h-11 justify-self-start"
             onClick={() => {
               void auth.refreshProfile();
             }}

@@ -215,6 +215,23 @@ describe("signInWithPassword", () => {
     });
   });
 
+  it("passes the captcha token through to Supabase", async () => {
+    const fake = createFakeClient();
+    const actions = createAuthActions(fake.client);
+
+    await actions.signInWithPassword(
+      "ash@example.com",
+      "password1",
+      "token-123",
+    );
+
+    expect(fake.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: "ash@example.com",
+      password: "password1",
+      options: { captchaToken: "token-123" },
+    });
+  });
+
   it("rejects an invalid email before calling the client", async () => {
     const fake = createFakeClient();
     const actions = createAuthActions(fake.client);
@@ -386,6 +403,31 @@ describe("signUp", () => {
       password: "password1",
       options: {
         emailRedirectTo: getAuthCallbackUrl(),
+        data: {
+          age_13_or_older: true,
+          terms_accepted_at: expect.any(String),
+        },
+      },
+    });
+  });
+
+  it("passes the captcha token through to Supabase", async () => {
+    const fake = createFakeClient();
+    const actions = createAuthActions(fake.client);
+
+    await actions.signUp({
+      email: "new@example.com",
+      password: "password1",
+      acceptedTerms: true,
+      captchaToken: "token-123",
+    });
+
+    expect(fake.auth.signUp).toHaveBeenCalledWith({
+      email: "new@example.com",
+      password: "password1",
+      options: {
+        emailRedirectTo: getAuthCallbackUrl(),
+        captchaToken: "token-123",
         data: {
           age_13_or_older: true,
           terms_accepted_at: expect.any(String),
@@ -621,6 +663,18 @@ describe("requestPasswordReset", () => {
       { redirectTo: getAuthCallbackUrl() },
     );
     expect(consumeReturnTo()).toBe("/reset-password");
+  });
+
+  it("passes the captcha token through to Supabase", async () => {
+    const fake = createFakeClient();
+    const actions = createAuthActions(fake.client);
+
+    await actions.requestPasswordReset("ash@example.com", "token-123");
+
+    expect(fake.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+      "ash@example.com",
+      { redirectTo: getAuthCallbackUrl(), captchaToken: "token-123" },
+    );
   });
 
   it("validates the email", async () => {

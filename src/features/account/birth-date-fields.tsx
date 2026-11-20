@@ -94,7 +94,7 @@ export function BirthDateField({
       <Button
         type="button"
         size="sm"
-        className="justify-self-start"
+        className="relative justify-self-start after:absolute after:-inset-y-2 after:inset-x-0"
         onClick={() => void handleSave()}
         disabled={pending}
       >
@@ -156,7 +156,12 @@ export function BirthDatePrompt({
           }}
         />
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={dismiss}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="max-md:h-11"
+            onClick={dismiss}
+          >
             {t("birthDate.later")}
           </Button>
         </DialogFooter>

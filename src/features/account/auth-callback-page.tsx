@@ -82,7 +82,7 @@ export function AuthCallbackPage() {
     return (
       <Page title={t("authCallback.finishing")} width="narrow">
         <UnconfiguredNotice />
-        <Button asChild variant="outline" className="mt-4">
+        <Button asChild variant="outline" className="mt-4 max-md:h-11">
           <Link to="/">{t("authCallback.backHome")}</Link>
         </Button>
       </Page>
@@ -108,7 +108,7 @@ export function AuthCallbackPage() {
         </CardHeader>
         <CardContent>
           {failure ? (
-            <Button asChild>
+            <Button asChild className="max-md:h-11">
               <Link to="/login">{t("login.backToSignIn")}</Link>
             </Button>
           ) : (

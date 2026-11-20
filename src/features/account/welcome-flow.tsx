@@ -220,7 +220,12 @@ function WelcomeFlowDialog({
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Button type="button" variant="ghost" onClick={() => close(false)}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="max-md:h-11"
+            onClick={() => close(false)}
+          >
             {t("onboarding.skip")}
           </Button>
           <div className="flex items-center gap-2">
@@ -228,12 +233,18 @@ function WelcomeFlowDialog({
               <Button
                 type="button"
                 variant="outline"
+                className="max-md:h-11"
                 onClick={() => setStep(step - 1)}
               >
                 {t("common.back")}
               </Button>
             )}
-            <Button type="button" onClick={() => void next()} disabled={saving}>
+            <Button
+              type="button"
+              className="max-md:h-11"
+              onClick={() => void next()}
+              disabled={saving}
+            >
               {lastStep ? t("common.done") : t("welcome.next")}
             </Button>
           </div>
