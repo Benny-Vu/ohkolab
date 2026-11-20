@@ -967,7 +967,7 @@ begin
   end if;
 
   -- Closing a reported request records a moderation action, so the
-  -- actions constraint learns 'battle_request' too.
+  -- actions constraints learn 'battle_request' too.
   if exists (
     select 1
     from pg_constraint
@@ -980,6 +980,20 @@ begin
     alter table public.moderation_actions
       add constraint moderation_actions_target_type_check
       check (target_type in ('post', 'comment', 'profile', 'battle_request'));
+  end if;
+
+  if exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.moderation_actions'::regclass
+      and conname = 'moderation_actions_content_kind_check'
+      and pg_get_constraintdef(oid) not like '%battle_request%'
+  ) then
+    alter table public.moderation_actions
+      drop constraint moderation_actions_content_kind_check;
+    alter table public.moderation_actions
+      add constraint moderation_actions_content_kind_check
+      check (content_kind in ('post', 'comment', 'group_post', 'battle_request'));
   end if;
 end;
 $$;
