@@ -5,7 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminReportsPage } from "@/features/admin/admin-reports-page";
 import { createFakeAuth, renderPage } from "@/features/account/test-utils";
 import type { AppSupabaseClient } from "@/lib/supabase";
-import type { CommentRow, ProfileRow, ReportRow } from "@/lib/database.types";
+import type {
+  BattleRequestRow,
+  CommentRow,
+  ProfileRow,
+  ReportRow,
+} from "@/lib/database.types";
 
 const socialMocks = vi.hoisted(() => ({
   socialAvailability: vi.fn(() => "ready"),
@@ -96,6 +101,29 @@ function profileRow(overrides: Partial<ProfileRow> = {}): ProfileRow {
   };
 }
 
+function battleRequestRow(
+  overrides: Partial<BattleRequestRow> = {},
+): BattleRequestRow {
+  return {
+    id: "req-1",
+    author_id: "user-target",
+    format: "doubles",
+    rules: "Reg M-C, best of 3",
+    note: "No legendaries.",
+    starts_at: null,
+    ends_at: null,
+    timezone: null,
+    language: "en",
+    team_id: null,
+    status: "open",
+    accepted_reply_id: null,
+    played_at: null,
+    created_at: "2026-11-20T10:00:00Z",
+    updated_at: "2026-11-20T10:00:00Z",
+    ...overrides,
+  };
+}
+
 /**
  * Fake Supabase client for the admin feature's feature-local queries:
  * `comments`, `profiles` and (for message reports) `message_reports`
@@ -107,6 +135,7 @@ function createFakeClient(
     profile?: ProfileRow | null;
     messageReport?: { snapshot: unknown } | null;
     profileList?: ProfileRow[];
+    battleRequest?: BattleRequestRow | null;
   } = {},
 ) {
   const from = (table: string) => {
@@ -116,6 +145,19 @@ function createFakeClient(
           eq: () => ({
             maybeSingle: () =>
               Promise.resolve({ data: options.comment ?? null, error: null }),
+          }),
+        }),
+      };
+    }
+    if (table === "battle_requests") {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: () =>
+              Promise.resolve({
+                data: options.battleRequest ?? null,
+                error: null,
+              }),
           }),
         }),
       };
@@ -290,6 +332,118 @@ describe("AdminReportsPage", () => {
 
     const link = await screen.findByRole("link", { name: /@target/i });
     expect(link).toHaveAttribute("href", "/u/target");
+  });
+
+  describe("battle request reports", () => {
+    function battleReportRow(overrides: Partial<ReportRow> = {}): ReportRow {
+      return reportRow({
+        id: "report-battle",
+        target_type: "battle_request",
+        target_id: "req-1",
+        ...overrides,
+      });
+    }
+
+    it("renders the rules, note and author, and the target label", async () => {
+      socialMocks.useReports.mockReturnValue(queryResult([battleReportRow()]));
+      renderReportsPage(
+        createFakeClient({
+          battleRequest: battleRequestRow(),
+          profile: profileRow(),
+        }),
+      );
+
+      expect(await screen.findByText("Reg M-C, best of 3")).toBeInTheDocument();
+      expect(screen.getByText("No legendaries.")).toBeInTheDocument();
+      expect(screen.getByText("Comment by target")).toBeInTheDocument();
+      // The target column names the report's type, not "profile".
+      expect(screen.getByText("battle request")).toBeInTheDocument();
+    });
+
+    it("says content not available when the request is gone", async () => {
+      // A fresh id, so the shared query client has no cached row from the
+      // test above (the app's query client is a singleton across tests).
+      socialMocks.useReports.mockReturnValue(
+        queryResult([battleReportRow({ target_id: "req-gone" })]),
+      );
+      renderReportsPage(createFakeClient({ battleRequest: null }));
+
+      expect(
+        await screen.findByText("Content not available."),
+      ).toBeInTheDocument();
+    });
+
+    it("closes the request through Remove content", async () => {
+      const user = userEvent.setup();
+      const remove = vi.fn(
+        async (input: { type: string; id: string; reason: string }) => ({
+          ok: true,
+          data: undefined,
+          input,
+        }),
+      );
+      socialMocks.useReports.mockReturnValue(queryResult([battleReportRow()]));
+      socialMocks.useRemoveContent.mockReturnValue(
+        mutationResult(
+          remove as unknown as (args?: unknown) => Promise<unknown>,
+        ),
+      );
+      renderReportsPage(
+        createFakeClient({
+          battleRequest: battleRequestRow(),
+          profile: profileRow(),
+        }),
+      );
+
+      await user.click(screen.getByRole("button", { name: /remove content/i }));
+      expect(
+        screen.getByText("Remove this battle request?"),
+      ).toBeInTheDocument();
+
+      const reason = screen.getByPlaceholderText(/reason for the removal/i);
+      await user.type(reason, "Hostile rules");
+
+      await user.click(
+        screen.getByRole("button", { name: /^remove content$/i }),
+      );
+
+      await waitFor(() => expect(remove).toHaveBeenCalled());
+      expect(remove.mock.calls[0]![0]).toMatchObject({
+        type: "battle_request",
+        id: "req-1",
+        reason: "Hostile rules",
+        reportId: "report-battle",
+      });
+    });
+
+    it("suspends the battle request's author", async () => {
+      const user = userEvent.setup();
+      const suspend = vi.fn(async (input: { userId: string }) => ({
+        ok: true,
+        data: undefined,
+        input,
+      }));
+      socialMocks.useReports.mockReturnValue(queryResult([battleReportRow()]));
+      moderationMocks.useSuspendUser.mockReturnValue(
+        mutationResult(
+          suspend as unknown as (args?: unknown) => Promise<unknown>,
+        ),
+      );
+      renderReportsPage(
+        createFakeClient({
+          battleRequest: battleRequestRow(),
+          profile: profileRow(),
+        }),
+      );
+
+      await user.click(screen.getByRole("button", { name: /suspend user/i }));
+      const reason = screen.getByPlaceholderText(/reason for the suspension/i);
+      await user.type(reason, "Harassment");
+      await user.click(screen.getByRole("button", { name: /1 day/i }));
+
+      await waitFor(() => expect(suspend).toHaveBeenCalled());
+      expect(suspend.mock.calls[0]![0].userId).toBe("user-target");
+    });
   });
 
   it("dismisses a report after confirming", async () => {

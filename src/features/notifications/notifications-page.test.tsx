@@ -7,7 +7,13 @@ import { Providers } from "@/app/providers";
 import { AuthContext } from "@/lib/auth/use-auth";
 import type { AuthContextValue } from "@/lib/auth/types";
 import { createFakeAuth } from "@/features/account/test-utils";
+import { registerEnglishDomain } from "@/lib/i18n/en-loader";
+import { battlesEn } from "@/lib/i18n/entries/battles";
 import { NotificationsPage } from "@/features/notifications/notifications-page";
+
+// Battle rows render one line from the battles dictionary; the test setup
+// preloads every other domain, so this file registers it too.
+registerEnglishDomain("battles", battlesEn);
 
 const mocks = vi.hoisted(() => ({
   useNotifications: vi.fn(),
@@ -585,5 +591,24 @@ describe("NotificationsPage", () => {
     renderNotificationsPage(createFakeAuth());
 
     expect(screen.queryByText("follow back button")).toBeNull();
+  });
+
+  it("renders battle notifications with one neutral line to the board", () => {
+    mocks.useNotifications.mockReturnValue(
+      infiniteResult([item({ id: "n-1", type: "battle", postId: null })]),
+    );
+    renderNotificationsPage(createFakeAuth());
+
+    // The row cannot tell an offer from an acceptance, so every battle
+    // actor gets the same sentence, and no request content shows here.
+    expect(screen.getByText("Brock")).toBeVisible();
+    const line = screen.getByRole("link", {
+      name: "sent you a battle request update",
+    });
+    expect(line).toHaveAttribute("href", "/battles");
+    expect(screen.getByRole("link", { name: "Brock" })).toHaveAttribute(
+      "href",
+      "/u/brock",
+    );
   });
 });

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { TranslationKey } from "@/lib/i18n/en";
 import { accountEn } from "@/lib/i18n/entries/account";
+import { battlesEn } from "@/lib/i18n/entries/battles";
 import { communityEn } from "@/lib/i18n/entries/community";
 import { shellEn } from "@/lib/i18n/entries/shell";
 import { toolsEn } from "@/lib/i18n/entries/tools";
@@ -20,6 +21,7 @@ const en: Record<TranslationKey, string> = {
   ...communityEn,
   ...accountEn,
   ...toolsEn,
+  ...battlesEn,
 };
 
 describe("dictionaries", () => {

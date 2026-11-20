@@ -47,6 +47,8 @@ export interface ChainRecord {
   limitCount: number | null;
   insertValues: unknown[] | null;
   updateValues: Record<string, unknown> | null;
+  upsertValues: unknown[] | null;
+  upsertOnConflict: string | null;
   isDelete: boolean;
   isSingle: boolean;
   isMaybeSingle: boolean;
@@ -69,6 +71,7 @@ interface ChainNode {
   order(column: string, options: { ascending: boolean }): ChainNode;
   limit(count: number): ChainNode;
   insert(values: unknown): ChainNode;
+  upsert(values: unknown, options?: { onConflict?: string }): ChainNode;
   update(values: Record<string, unknown>): ChainNode;
   delete(): ChainNode;
   single(): ChainNode;
@@ -177,6 +180,11 @@ export function createFakeClient(config: FakeClientConfig = {}): FakeClient {
         record.insertValues = Array.isArray(values) ? values : [values];
         return node;
       },
+      upsert(values, options) {
+        record.upsertValues = Array.isArray(values) ? values : [values];
+        record.upsertOnConflict = options?.onConflict ?? null;
+        return node;
+      },
       update(values) {
         record.updateValues = values;
         return node;
@@ -214,6 +222,8 @@ export function createFakeClient(config: FakeClientConfig = {}): FakeClient {
         limitCount: null,
         insertValues: null,
         updateValues: null,
+        upsertValues: null,
+        upsertOnConflict: null,
         isDelete: false,
         isSingle: false,
         isMaybeSingle: false,
@@ -477,6 +487,7 @@ export function notificationRow(
     comment_id: null,
     group_id: null,
     moderation_action_id: null,
+    battle_request_id: null,
     read_at: null,
     created_at: "2026-11-18T10:00:00.000Z",
     pushed_at: null,

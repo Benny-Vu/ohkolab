@@ -10,6 +10,8 @@ export const notificationRoutes: RouteObject[] = [
         await Promise.all([
           import("@/features/notifications/notifications-page"),
           ensureEnglishDomain("community"),
+          // The battle rows render one line from the battles dictionary.
+          ensureEnglishDomain("battles"),
         ]).then(([module]) => module)
       ).NotificationsPage,
     }),

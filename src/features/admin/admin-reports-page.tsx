@@ -39,7 +39,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { formatDate } from "@/lib/format-date";
-import type { CommentRow, ProfileRow, ReportRow } from "@/lib/database.types";
+import type {
+  BattleRequestRow,
+  CommentRow,
+  ProfileRow,
+  ReportRow,
+} from "@/lib/database.types";
 import {
   socialAvailability,
   useHandleReport,
@@ -68,6 +73,7 @@ const TARGET_LABELS: Record<string, TranslationKey> = {
   comment: "report.targetComment",
   profile: "report.targetProfile",
   message: "messages.targetLabel",
+  battle_request: "battles.targetLabel",
 };
 
 function reasonBadgeVariant(
@@ -106,6 +112,32 @@ function useCommentRow(
         throw error;
       }
       return (data as CommentRow | null) ?? null;
+    },
+  });
+  return { data: query.data ?? null, isPending: query.isPending };
+}
+
+function useBattleRequestRow(
+  requestId: string,
+  client: AppSupabaseClient | null,
+): { data: BattleRequestRow | null; isPending: boolean } {
+  const query = useReactQuery({
+    queryKey: ["admin", "battle-request", requestId],
+    enabled: client !== null && requestId !== "",
+    retry: false,
+    queryFn: async () => {
+      if (client === null) {
+        return null;
+      }
+      const { data, error } = await client
+        .from("battle_requests")
+        .select("*")
+        .eq("id", requestId)
+        .maybeSingle();
+      if (error) {
+        throw error;
+      }
+      return (data as BattleRequestRow | null) ?? null;
     },
   });
   return { data: query.data ?? null, isPending: query.isPending };
@@ -156,6 +188,11 @@ function ReportContent({
   }
   if (report.target_type === "message") {
     return <MessageReportContent report={report} client={client} />;
+  }
+  if (report.target_type === "battle_request") {
+    return (
+      <BattleRequestContent requestId={report.target_id} client={client} />
+    );
   }
   return (
     <p className="text-sm text-muted-foreground">{t("admin.unknownTarget")}</p>
@@ -231,6 +268,48 @@ function CommentContent({
         <ExternalLinkIcon className="size-3" aria-hidden />
         {t("admin.viewComment")}
       </Link>
+    </div>
+  );
+}
+
+/**
+ * A reported battle request: the rules line, the note and the author —
+ * the two fields a report can be judged on. Moderators can read every
+ * request whatever its status; a closed one stays readable here.
+ */
+function BattleRequestContent({
+  requestId,
+  client,
+}: {
+  requestId: string;
+  client: AppSupabaseClient | null;
+}) {
+  const t = useT();
+  const { data: request, isPending } = useBattleRequestRow(requestId, client);
+  const profile = useProfileRow(request?.author_id ?? "", client);
+  if (isPending || (request !== null && profile.isPending)) {
+    return <Skeleton className="h-16 w-full" />;
+  }
+  if (request === null) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        {t("admin.contentUnavailable")}
+      </p>
+    );
+  }
+  return (
+    <div className="grid gap-1">
+      <p className="break-words text-sm font-medium">{request.rules}</p>
+      {request.note ? (
+        <p className="break-words text-sm text-muted-foreground">
+          {request.note}
+        </p>
+      ) : null}
+      {profile.data ? (
+        <p className="text-xs text-muted-foreground">
+          {t("admin.commentBy", { id: profile.data.username })}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -341,7 +420,7 @@ function RemoveContentDialog({
   targetType,
   onRemove,
 }: {
-  targetType: "post" | "comment";
+  targetType: "post" | "comment" | "battle_request";
   onRemove: (reason: string) => Promise<void>;
 }) {
   const t = useT();
@@ -373,11 +452,7 @@ function RemoveContentDialog({
         <DialogHeader>
           <DialogTitle>
             {t("admin.removeThis", {
-              target: t(
-                targetType === "post"
-                  ? "report.targetPost"
-                  : "report.targetComment",
-              ),
+              target: t(TARGET_LABELS[targetType] ?? "report.targetPost"),
             })}
           </DialogTitle>
           <DialogDescription>{t("admin.removeDescription")}</DialogDescription>
@@ -427,15 +502,19 @@ function ReportRowView({
   const [suspendOpen, setSuspendOpen] = useState(false);
 
   // The author of the reported content: the profile itself for profile
-  // reports, the post or comment author, or — for message reports — the
-  // sender of the reported message, read from the report's snapshot (never
-  // from the messages table).
+  // reports, the post, comment or battle request author, or — for message
+  // reports — the sender of the reported message, read from the report's
+  // snapshot (never from the messages table).
   const postQuery = usePost(
     report.target_type === "post" ? report.target_id : "",
     client,
   );
   const commentQuery = useCommentRow(
     report.target_type === "comment" ? report.target_id : "",
+    client,
+  );
+  const battleRequestQuery = useBattleRequestRow(
+    report.target_type === "battle_request" ? report.target_id : "",
     client,
   );
   const messageSnapshot = useMessageReportSnapshot(
@@ -447,10 +526,12 @@ function ReportRowView({
       ? report.target_id
       : report.target_type === "post"
         ? (postQuery.data?.author_id ?? null)
-        : report.target_type === "message"
-          ? (reportedSnapshotEntry(messageSnapshot.data ?? [])?.sender_id ??
-            null)
-          : (commentQuery.data?.author_id ?? null);
+        : report.target_type === "battle_request"
+          ? (battleRequestQuery.data?.author_id ?? null)
+          : report.target_type === "message"
+            ? (reportedSnapshotEntry(messageSnapshot.data ?? [])?.sender_id ??
+              null)
+            : (commentQuery.data?.author_id ?? null);
 
   const dismiss = async () => {
     const result = await handleReport.mutateAsync({
@@ -465,7 +546,11 @@ function ReportRowView({
   };
 
   const remove = async (reason: string) => {
-    if (report.target_type !== "post" && report.target_type !== "comment") {
+    if (
+      report.target_type !== "post" &&
+      report.target_type !== "comment" &&
+      report.target_type !== "battle_request"
+    ) {
       return;
     }
     const removed = await removeContent.mutateAsync({
@@ -530,7 +615,8 @@ function ReportRowView({
               onConfirm={dismiss}
             />
             {report.target_type === "post" ||
-            report.target_type === "comment" ? (
+            report.target_type === "comment" ||
+            report.target_type === "battle_request" ? (
               <RemoveContentDialog
                 targetType={report.target_type}
                 onRemove={remove}

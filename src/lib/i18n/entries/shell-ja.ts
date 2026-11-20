@@ -14,6 +14,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "nav.meta": "環境",
   "nav.profile": "プロフィール",
   "nav.main": "メイン",
+  // 対戦ボードのナビラベルはエントリグラフで描画されるため、ここに置く。
+  "nav.battles": "対戦",
   "account.menuAria": "アカウントメニュー",
   "account.moderationItem": "モデレーション",
 
@@ -290,6 +292,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "seo.privacyDescription": "OHKOLabの個人情報の取り扱いについて。",
   "seo.creditsDescription":
     "OHKOLabで使っているデータソースとライブラリ、そのライセンス。",
+  "seo.battlesDescription":
+    "ポケモンチャンピオンズの対戦相手をOHKOLabで見つける。募集、申し込み、マッチング。",
   "seo.pressDescription":
     "OHKOLabのロゴ、カラー、スクリーンショット、紹介文。記事や動画にご利用ください。",
 

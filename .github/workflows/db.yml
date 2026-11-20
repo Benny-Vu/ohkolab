@@ -914,6 +914,574 @@ jobs:
           $fs$;
           SQL
 
+      # Exercises the battle requests migration (20261122200000): visibility
+      # (blocks and minors), the offer/accept/decline flow, the in-game code
+      # seen only by the matched pair, rate limits, expiry and reports.
+      - name: Battle request policies
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+          values
+            ('a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'bat-a@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('b6b6b6b6-b6b6-46b6-86b6-b6b6b6b6b6b6', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'bat-b@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('c7c7c7c7-c7c7-47c7-87c7-c7c7c7c7c7c7', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'bat-c@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('d8d8d8d8-d8d8-48d8-88d8-d8d8d8d8d8d8', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'bat-teen@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('e9e9e9e9-e9e9-49e9-89e9-e9e9e9e9e9e9', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'bat-blocked@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('f0f0f0f0-f0f0-40f0-80f0-f0f0f0f0f0f0', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'bat-dm@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('5a5a5a5a-5a5a-45a5-85a5-5a5a5a5a5a5a', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'bat-mod@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now());
+          insert into public.profiles (id, username) values
+            ('a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5', 'bat_a'),
+            ('b6b6b6b6-b6b6-46b6-86b6-b6b6b6b6b6b6', 'bat_b'),
+            ('c7c7c7c7-c7c7-47c7-87c7-c7c7c7c7c7c7', 'bat_c'),
+            ('d8d8d8d8-d8d8-48d8-88d8-d8d8d8d8d8d8', 'bat_teen'),
+            ('e9e9e9e9-e9e9-49e9-89e9-e9e9e9e9e9e9', 'bat_blocked'),
+            ('f0f0f0f0-f0f0-40f0-80f0-f0f0f0f0f0f0', 'bat_dm'),
+            ('5a5a5a5a-5a5a-45a5-85a5-5a5a5a5a5a5a', 'bat_mod')
+          on conflict (id) do update set username = excluded.username;
+          -- Everyone is an adult except bat_teen (14): battle content is
+          -- friends-only for minors, mirroring the messaging rules.
+          insert into public.profile_birth_dates (user_id, birth_date)
+          values
+            ('a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5', '1990-01-01'),
+            ('b6b6b6b6-b6b6-46b6-86b6-b6b6b6b6b6b6', '1990-01-01'),
+            ('c7c7c7c7-c7c7-47c7-87c7-c7c7c7c7c7c7', '1990-01-01'),
+            ('d8d8d8d8-d8d8-48d8-88d8-d8d8d8d8d8d8', '2012-06-01'),
+            ('e9e9e9e9-e9e9-49e9-89e9-e9e9e9e9e9e9', '1990-01-01'),
+            ('f0f0f0f0-f0f0-40f0-80f0-f0f0f0f0f0f0', '1990-01-01'),
+            ('5a5a5a5a-5a5a-45a5-85a5-5a5a5a5a5a5a', '1990-01-01');
+          insert into public.user_roles (user_id, role)
+          values ('5a5a5a5a-5a5a-45a5-85a5-5a5a5a5a5a5a', 'moderator');
+          -- bat_a and bat_b are friends, so the main accept flow opens a
+          -- DM thread; bat_c accepts messages from nobody, so a match with
+          -- bat_c falls back to the in-game code inside the request.
+          insert into public.follows (follower_id, followee_id) values
+            ('a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5', 'b6b6b6b6-b6b6-46b6-86b6-b6b6b6b6b6b6'),
+            ('b6b6b6b6-b6b6-46b6-86b6-b6b6b6b6b6b6', 'a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5');
+          update public.message_settings set who_can_message = 'nobody'
+          where user_id = 'c7c7c7c7-c7c7-47c7-87c7-c7c7c7c7c7c7';
+          -- bat_a blocks bat_blocked.
+          insert into public.blocks (blocker_id, blocked_id) values
+            ('a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5', 'e9e9e9e9-e9e9-49e9-89e9-e9e9e9e9e9e9');
+          -- bat_a's public and private teams (the team rule).
+          insert into public.teams (id, user_id, name, data, is_public) values
+            ('62626262-6262-4626-8262-626262626262', 'a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5', 'Public team', '[]'::jsonb, true),
+            ('63636363-6363-4636-8363-636363636363', 'a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5', 'Private team', '[]'::jsonb, false);
+          -- 31 back-dated open requests by bat_c (outside the 24-hour
+          -- request rate window, still open until the cron runs). bat_blocked
+          -- has 30 back-dated replies on the first 30, so the reply rate
+          -- limit has one spare request left to fail on.
+          insert into public.battle_requests (id, author_id, format, rules, language, created_at)
+          select gen_random_uuid(), 'c7c7c7c7-c7c7-47c7-87c7-c7c7c7c7c7c7',
+                 'doubles', 'casual', 'en', now() - interval '25 hours'
+          from generate_series(1, 31);
+          -- The reply seed runs with bat_blocked's claims: the reply
+          -- trigger's helpers answer only for the caller, and without
+          -- claims there is no caller.
+          begin;
+          select set_config(
+            'request.jwt.claims',
+            json_build_object(
+              'sub', 'e9e9e9e9-e9e9-49e9-89e9-e9e9e9e9e9e9',
+              'role', 'authenticated'
+            )::text,
+            true
+          );
+          insert into public.battle_replies (request_id, responder_id, created_at)
+          select r.id, 'e9e9e9e9-e9e9-49e9-89e9-e9e9e9e9e9e9', now() - interval '2 hours'
+          from (
+            select id from public.battle_requests
+            where author_id = 'c7c7c7c7-c7c7-47c7-87c7-c7c7c7c7c7c7'
+            order by created_at
+            limit 30
+          ) r;
+          commit;
+
+          -- Behaviour checks, as the authenticated role with each user's
+          -- claims. Every failure raises with BAT-CHECK.
+          do $bat$
+          declare
+            bat_a constant uuid := 'a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5';
+            bat_b constant uuid := 'b6b6b6b6-b6b6-46b6-86b6-b6b6b6b6b6b6';
+            bat_c constant uuid := 'c7c7c7c7-c7c7-47c7-87c7-c7c7c7c7c7c7';
+            bat_teen constant uuid := 'd8d8d8d8-d8d8-48d8-88d8-d8d8d8d8d8d8';
+            bat_blocked constant uuid := 'e9e9e9e9-e9e9-49e9-89e9-e9e9e9e9e9e9';
+            bat_dm constant uuid := 'f0f0f0f0-f0f0-40f0-80f0-f0f0f0f0f0f0';
+            bat_mod constant uuid := '5a5a5a5a-5a5a-45a5-85a5-5a5a5a5a5a5a';
+            public_team constant uuid := '62626262-6262-4626-8262-626262626262';
+            private_team constant uuid := '63636363-6363-4636-8363-636363636363';
+            req_main uuid;
+            req_minor uuid;
+            req_fallback uuid;
+            req_blocked uuid;
+            reply_main uuid;
+            reply_fallback uuid;
+            reply_c uuid;
+            reply_teen uuid;
+            reply_blocked uuid;
+            conv uuid;
+            old_request uuid;
+          begin
+            set local role authenticated;
+
+            -- bat_a posts the main request with their public team and a
+            -- window; bat_b can see it.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            -- The inserts look exactly like the client's (the granted
+            -- columns only), so the fixed ids the old draft used are gone;
+            -- later assertions use the captured variables instead.
+            insert into public.battle_requests (author_id, format, rules, note, starts_at, ends_at, timezone, language, team_id)
+            values (bat_a, 'doubles', 'Reg M-C, best of 3', 'looking for a close one', now() + interval '2 hours', now() + interval '6 hours', 'Europe/Oslo', 'en', public_team)
+            returning id into req_main;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            if not exists (select 1 from public.battle_requests where id = req_main and team_id = public_team) then
+              raise exception 'BAT-CHECK: the request with its team is not visible';
+            end if;
+
+            -- A past window, a foreign team and a private team are all
+            -- rejected by the insert trigger.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            begin
+              insert into public.battle_requests (author_id, format, rules, language, ends_at)
+              values (bat_a, 'doubles', 'bad window', 'en', now() - interval '1 hour');
+              raise exception 'BAT-CHECK: a past window was accepted';
+            exception when check_violation then
+              null;
+            end;
+            begin
+              insert into public.battle_requests (author_id, format, rules, language, team_id)
+              values (bat_a, 'doubles', 'foreign team', 'en', '12121212-1212-4121-8121-121212121212');
+              raise exception 'BAT-CHECK: a foreign team was accepted';
+            exception when check_violation then
+              null;
+            end;
+            begin
+              insert into public.battle_requests (author_id, format, rules, language, team_id)
+              values (bat_a, 'doubles', 'private team', 'en', private_team);
+              raise exception 'BAT-CHECK: a private team was accepted';
+            exception when check_violation then
+              null;
+            end;
+
+            -- The blocked user sees nothing of bat_a's requests and their
+            -- offer never lands.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_blocked, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.battle_requests where id = req_main) then
+              raise exception 'BAT-CHECK: a blocked user saw the request';
+            end if;
+            begin
+              insert into public.battle_replies (request_id, responder_id)
+              values (req_main, bat_blocked);
+            exception when others then
+              null;
+            end;
+            if exists (
+              select 1 from public.battle_replies
+              where request_id = req_main and responder_id = bat_blocked
+            ) then
+              raise exception 'BAT-CHECK: a blocked user offered';
+            end if;
+
+            -- The minor sees and answers friends only. bat_teen is not
+            -- friends with bat_a yet: no request in either direction.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_teen, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.battle_requests where id = req_main) then
+              raise exception 'BAT-CHECK: a minor saw a non-friend request';
+            end if;
+            insert into public.battle_requests (author_id, format, rules, language)
+            values (bat_teen, 'singles', 'casual', 'ja')
+            returning id into req_minor;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.battle_requests where id = req_minor) then
+              raise exception 'BAT-CHECK: an adult saw a non-friend minor''s request';
+            end if;
+
+            -- bat_b offers on the main request; the author is notified.
+            -- The notification row belongs to the author, so only postgres
+            -- can read it back (the recipient-only RLS policy).
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_main, bat_b)
+            returning id into reply_main;
+            reset role;
+            if not exists (
+              select 1 from public.notifications
+              where recipient_id = bat_a and actor_id = bat_b
+                and type = 'battle' and battle_request_id = req_main
+            ) then
+              raise exception 'BAT-CHECK: the author was not notified of the offer';
+            end if;
+            set local role authenticated;
+
+            -- Withdraw: the responder takes their pending offer back.
+            update public.battle_replies set status = 'withdrawn' where id = reply_main;
+            if not exists (
+              select 1 from public.battle_replies
+              where id = reply_main and status = 'withdrawn'
+            ) then
+              raise exception 'BAT-CHECK: the responder could not withdraw';
+            end if;
+
+            -- The request rate limit: 5 open per author per 24 hours.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            for i in 1..4 loop
+              insert into public.battle_requests (author_id, format, rules, language)
+              values (bat_a, 'doubles', 'filler ' || i, 'en');
+            end loop;
+            begin
+              insert into public.battle_requests (author_id, format, rules, language)
+              values (bat_a, 'doubles', 'one too many', 'en');
+              raise exception 'BAT-CHECK: the request rate limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many open battle requests%' then
+                raise exception 'BAT-CHECK: request rate limit raised %', sqlerrm;
+              end if;
+            end;
+
+            -- The reply rate limit: 30 replies per responder per 24 hours.
+            -- bat_blocked has 30 back-dated replies; the spare request
+            -- makes the 31st offer fail.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_blocked, 'role', 'authenticated')::text, true);
+            begin
+              insert into public.battle_replies (request_id, responder_id)
+              select r.id, bat_blocked
+              from (
+                select id from public.battle_requests
+                where author_id = bat_c and status = 'open'
+                order by created_at desc
+                limit 1
+              ) r;
+              raise exception 'BAT-CHECK: the reply rate limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many battle offers today%' then
+                raise exception 'BAT-CHECK: reply rate limit raised %', sqlerrm;
+              end if;
+            end;
+
+            -- bat_dm posts and bat_c (who accepts messages from nobody)
+            -- offers; accepting still matches, but the messaging rules
+            -- forbid the thread: the pair falls back to the code field.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_dm, 'role', 'authenticated')::text, true);
+            insert into public.battle_requests (author_id, format, rules, language)
+            values (bat_dm, 'singles', 'Reg M-C', 'en')
+            returning id into req_fallback;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_c, 'role', 'authenticated')::text, true);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_fallback, bat_c)
+            returning id into reply_fallback;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_dm, 'role', 'authenticated')::text, true);
+            select public.accept_battle_reply(reply_fallback) into conv;
+            if conv is not null then
+              raise exception 'BAT-CHECK: a forbidden DM was opened anyway';
+            end if;
+            if not exists (select 1 from public.battle_requests where id = req_fallback and status = 'matched') then
+              raise exception 'BAT-CHECK: the fallback match did not happen';
+            end if;
+
+            -- The main flow: bat_b re-offers (the withdraw freed their
+            -- slot), bat_teen (now friends with bat_a) and bat_c offer too;
+            -- nobody but the author can accept; accepting matches, opens
+            -- the DM, declines the others and notifies the responder.
+            -- bat_b re-offers: the withdrawn row is reactivated in place
+            -- (returning would capture nothing, so no returning here).
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_main, bat_b);
+            if not exists (
+              select 1 from public.battle_replies
+              where id = reply_main and status = 'pending'
+            ) then
+              raise exception 'BAT-CHECK: the withdrawn offer was not reactivated';
+            end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_c, 'role', 'authenticated')::text, true);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_main, bat_c)
+            returning id into reply_c;
+            -- The minor becomes bat_a's friend (as postgres; follows are
+            -- not client-insertable for other users).
+            reset role;
+            insert into public.follows (follower_id, followee_id) values
+              (bat_teen, bat_a),
+              (bat_a, bat_teen);
+            set local role authenticated;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_teen, 'role', 'authenticated')::text, true);
+            if not exists (select 1 from public.battle_requests where id = req_main) then
+              raise exception 'BAT-CHECK: a friend still cannot see the request';
+            end if;
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_main, bat_teen)
+            returning id into reply_teen;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            begin
+              perform public.accept_battle_reply(reply_c);
+              raise exception 'BAT-CHECK: a non-author accepted an offer';
+            exception when others then
+              if sqlerrm not like 'Only the author can accept offers%' then
+                raise exception 'BAT-CHECK: non-author accept raised %', sqlerrm;
+              end if;
+            end;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            select public.accept_battle_reply(reply_main) into conv;
+            if conv is null then
+              raise exception 'BAT-CHECK: the DM thread did not open';
+            end if;
+            if not exists (
+              select 1 from public.battle_replies
+              where id = reply_c and status = 'declined'
+            ) or not exists (
+              select 1 from public.battle_replies
+              where id = reply_teen and status = 'declined'
+            ) then
+              raise exception 'BAT-CHECK: the other offers were not declined';
+            end if;
+            -- The responder's notification belongs to bat_b; read it as
+            -- postgres, then continue as the author.
+            reset role;
+            if not exists (
+              select 1 from public.notifications
+              where recipient_id = bat_b and actor_id = bat_a
+                and type = 'battle' and battle_request_id = req_main
+            ) then
+              raise exception 'BAT-CHECK: the responder was not notified';
+            end if;
+            set local role authenticated;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            -- Re-accepting the accepted offer is refused.
+            begin
+              perform public.accept_battle_reply(reply_main);
+              raise exception 'BAT-CHECK: an already-matched request was re-accepted';
+            exception when others then
+              if sqlerrm not like 'This offer is no longer available%'
+                 and sqlerrm not like 'This battle request is no longer open%' then
+                raise exception 'BAT-CHECK: re-accept raised %', sqlerrm;
+              end if;
+            end;
+
+            -- Matched requests leave the board for everyone else, and the
+            -- declined responders cannot see them either.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_c, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.battle_requests where id = req_main) then
+              raise exception 'BAT-CHECK: an outsider saw a matched request';
+            end if;
+
+            -- The in-game code: only the matched pair reads it. The author
+            -- sets it, bat_b (accepted) reads it, bat_c, the moderator and
+            -- the declined minor cannot.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            insert into public.battle_request_codes (request_id, code)
+            values (req_main, 'ROOM-1234');
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            if not exists (select 1 from public.battle_request_codes where request_id = req_main and code = 'ROOM-1234') then
+              raise exception 'BAT-CHECK: the accepted responder cannot read the code';
+            end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_c, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.battle_request_codes where request_id = req_main) then
+              raise exception 'BAT-CHECK: an outsider read the code';
+            end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_mod, 'role', 'authenticated')::text, true);
+            if exists (select 1 from public.battle_request_codes where request_id = req_main) then
+              raise exception 'BAT-CHECK: a moderator read the code';
+            end if;
+            -- The moderator does see the request itself (the report flow).
+            if not exists (select 1 from public.battle_requests where id = req_main) then
+              raise exception 'BAT-CHECK: a moderator cannot read the request';
+            end if;
+
+            -- Nobody can flip a matched request's status: the update
+            -- grant covers the status column, but the only update policy
+            -- is the author's close policy, whose USING clause requires
+            -- the row to be open or closed (matched rows are invisible to
+            -- it), and the responder fails the author check.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            update public.battle_requests set status = 'open' where id = req_main;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            update public.battle_requests set status = 'closed' where id = req_main;
+            if exists (select 1 from public.battle_requests where id = req_main and status <> 'matched') then
+              raise exception 'BAT-CHECK: a matched request changed status';
+            end if;
+            -- played_at is not client-updatable at all.
+            begin
+              update public.battle_requests set played_at = now() where id = req_main;
+              raise exception 'BAT-CHECK: a client wrote played_at directly';
+            exception when others then
+              if sqlerrm not like 'permission denied%' then
+                raise exception 'BAT-CHECK: a direct played_at write raised %', sqlerrm;
+              end if;
+            end;
+
+            -- Either matched player marks the battle played through the
+            -- RPC, exactly once; nobody else can.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            perform public.mark_battle_played(req_main);
+            if not exists (select 1 from public.battle_requests where id = req_main and played_at is not null) then
+              raise exception 'BAT-CHECK: the responder could not mark the battle played';
+            end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            begin
+              perform public.mark_battle_played(req_main);
+              raise exception 'BAT-CHECK: the battle was marked played twice';
+            exception when others then
+              if sqlerrm not like 'You cannot mark this battle played%' then
+                raise exception 'BAT-CHECK: a second mark-played raised %', sqlerrm;
+              end if;
+            end;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_c, 'role', 'authenticated')::text, true);
+            begin
+              perform public.mark_battle_played(req_main);
+              raise exception 'BAT-CHECK: an outsider marked the battle played';
+            exception when others then
+              if sqlerrm not like 'You cannot mark this battle played%' then
+                raise exception 'BAT-CHECK: an outsider mark-played raised %', sqlerrm;
+              end if;
+            end;
+
+            -- The author closes one of their open requests, can reopen it,
+            -- and cannot forge 'matched' directly.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            select id into old_request from public.battle_requests
+            where author_id = bat_a and status = 'open'
+            limit 1;
+            update public.battle_requests set status = 'closed' where id = old_request;
+            if not exists (select 1 from public.battle_requests where id = old_request and status = 'closed') then
+              raise exception 'BAT-CHECK: the author could not close their request';
+            end if;
+            update public.battle_requests set status = 'open' where id = old_request;
+            begin
+              update public.battle_requests set status = 'matched' where id = old_request;
+            exception when others then
+              null;
+            end;
+            if exists (select 1 from public.battle_requests where id = old_request and status = 'matched') then
+              raise exception 'BAT-CHECK: the author forged a matched status';
+            end if;
+
+            -- Requests are reportable through the existing queue. Only the
+            -- queue reads reports, so the read-back runs as the moderator.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            insert into public.reports (reporter_id, target_type, target_id, reason)
+            values (bat_b, 'battle_request', req_main, 'other');
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_mod, 'role', 'authenticated')::text, true);
+            if not exists (
+              select 1 from public.reports
+              where target_type = 'battle_request' and target_id = req_main
+            ) then
+              raise exception 'BAT-CHECK: the battle request report was not filed';
+            end if;
+
+            -- A block that arises after the offer hides it: accepting
+            -- fails, so the pair is never matched against the rules.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            insert into public.battle_requests (author_id, format, rules, language)
+            values (bat_a, 'doubles', 'block test', 'en')
+            returning id into req_blocked;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_blocked, bat_b)
+            returning id into reply_blocked;
+            reset role;
+            insert into public.blocks (blocker_id, blocked_id) values (bat_a, bat_b);
+            set local role authenticated;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            begin
+              perform public.accept_battle_reply(reply_blocked);
+              raise exception 'BAT-CHECK: a blocked offer was accepted';
+            exception when others then
+              if sqlerrm not like 'You cannot accept this offer%' then
+                raise exception 'BAT-CHECK: a blocked accept raised %', sqlerrm;
+              end if;
+            end;
+
+            -- The moderation queue's Remove: a moderator closes the request
+            -- and the action is recorded against the author; nobody else
+            -- can call it.
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_mod, 'role', 'authenticated')::text, true);
+            perform public.remove_battle_request_with_reason(req_fallback, 'test closing', null);
+            if not exists (
+              select 1 from public.battle_requests
+              where id = req_fallback and status = 'closed'
+            ) then
+              raise exception 'BAT-CHECK: the moderation RPC did not close the request';
+            end if;
+            if not exists (
+              select 1 from public.moderation_actions
+              where target_type = 'battle_request' and target_id = req_fallback
+            ) then
+              raise exception 'BAT-CHECK: the moderation action was not recorded';
+            end if;
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
+            begin
+              perform public.remove_battle_request_with_reason(req_fallback, 'nope', null);
+              raise exception 'BAT-CHECK: a non-moderator closed a request';
+            exception when others then
+              if sqlerrm not like 'Only moderators can remove battle requests%' then
+                raise exception 'BAT-CHECK: a non-moderator remove raised %', sqlerrm;
+              end if;
+            end;
+
+            -- The visibility helpers answer only for the caller:
+            -- battle_visible_between and battle_playable_by are not
+            -- executable by clients at all, and the policy helpers return
+            -- false for any viewer other than the caller — even one who
+            -- could see the row (bat_b is the accepted responder on
+            -- req_main, bat_a asking for them gets no answer).
+            perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
+            begin
+              perform public.battle_visible_between(bat_a, bat_b);
+              raise exception 'BAT-CHECK: a client called battle_visible_between';
+            exception when others then
+              if sqlerrm not like 'permission denied%' then
+                raise exception 'BAT-CHECK: battle_visible_between raised %', sqlerrm;
+              end if;
+            end;
+            begin
+              perform public.battle_playable_by(req_main, bat_a);
+              raise exception 'BAT-CHECK: a client called battle_playable_by';
+            exception when others then
+              if sqlerrm not like 'permission denied%' then
+                raise exception 'BAT-CHECK: battle_playable_by raised %', sqlerrm;
+              end if;
+            end;
+            if public.battle_request_visible(req_main, bat_b) then
+              raise exception 'BAT-CHECK: battle_request_visible answered for another viewer';
+            end if;
+            if public.battle_code_visible(req_main, bat_b) then
+              raise exception 'BAT-CHECK: battle_code_visible answered for another viewer';
+            end if;
+            if not public.battle_request_visible(req_main, bat_a) then
+              raise exception 'BAT-CHECK: battle_request_visible stopped answering for the caller';
+            end if;
+            if not public.battle_code_visible(req_main, bat_a) then
+              raise exception 'BAT-CHECK: battle_code_visible stopped answering for the caller';
+            end if;
+          end;
+          $bat$;
+
+          -- Expiry: day-old open requests expire; matched requests stay.
+          do $exp$
+          declare
+            bat_a constant uuid := 'a5a5a5a5-a5a5-45a5-85a5-a5a5a5a5a5a5';
+          begin
+            update public.battle_requests
+            set created_at = now() - interval '25 hours'
+            where author_id = bat_a and status = 'open';
+            perform public.expire_battle_requests();
+            if exists (
+              select 1 from public.battle_requests
+              where author_id = bat_a and status = 'open'
+            ) then
+              raise exception 'BAT-CHECK: day-old open requests did not expire';
+            end if;
+            if not exists (
+              select 1 from public.battle_requests
+              where author_id = bat_a and status = 'matched'
+            ) then
+              raise exception 'BAT-CHECK: the matched request did not survive expiry';
+            end if;
+          end;
+          $exp$;
+          SQL
+
       - name: Stop
         if: always()
         run: supabase stop --no-backup

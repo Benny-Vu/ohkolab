@@ -197,6 +197,7 @@ export const communityEn = {
   "report.targetPost": "post",
   "report.targetComment": "comment",
   "report.targetProfile": "profile",
+  "battles.targetLabel": "battle request",
   "report.emailSubjectPost": "Report a post",
   "report.emailSubjectComment": "Report a comment",
   "report.emailSubjectProfile": "Report a profile",
