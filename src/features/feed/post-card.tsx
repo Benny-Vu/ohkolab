@@ -647,7 +647,7 @@ export function PostCard({
               {t("common.cancel")}
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
               onClick={handleBlock}
               disabled={toggleBlock.isPending}
             >
