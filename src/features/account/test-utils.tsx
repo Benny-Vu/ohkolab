@@ -7,6 +7,7 @@ import { Providers } from "@/app/providers";
 import { AuthContext } from "@/lib/auth/use-auth";
 import type {
   AuthContextValue,
+  AuthErrorCode,
   Profile,
   Session,
   User,
@@ -55,7 +56,7 @@ export type FakeAuth = AuthContextValue & {
   calls: { name: string; args: unknown[] }[];
 };
 
-type FakeFailure = { code: "invalid_input"; message: string; field?: string };
+type FakeFailure = { code: AuthErrorCode; message: string; field?: string };
 
 /**
  * A fake `useAuth()` value: every action records its call and resolves with

@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 
+import { switchHitClass } from "@/components/touch-targets";
 import {
   Card,
   CardContent,
@@ -60,6 +61,7 @@ function SwitchRow({
       </Label>
       <Switch
         id={id}
+        className={switchHitClass}
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled}
