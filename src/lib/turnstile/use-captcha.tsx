@@ -1,5 +1,8 @@
 import { useState, type ReactNode } from "react";
 
+import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
+import { useT } from "@/lib/i18n/t";
 import { getTurnstileSiteKey } from "@/lib/turnstile/site-key";
 import { TurnstileWidget } from "@/lib/turnstile/turnstile-widget";
 
@@ -11,7 +14,13 @@ export interface CaptchaState {
   token: string | null;
   /** True while the widget is shown and there is no token yet: hold the submit. */
   missing: boolean;
-  /** The widget to render inside the form; null when CAPTCHA is off. */
+  /**
+   * True when the widget cannot produce a token (the script failed to load
+   * or the challenge errored): the message under it explains and offers a
+   * retry. The submit stays held either way — fail-closed.
+   */
+  failed: boolean;
+  /** The widget (plus its failure message) to render inside the form; null when CAPTCHA is off. */
   widget: ReactNode;
   /** Drops the current token and restarts the challenge for a fresh one. */
   retry: () => void;
@@ -24,25 +33,53 @@ export interface CaptchaState {
  */
 export function useCaptcha(): CaptchaState {
   const siteKey = getTurnstileSiteKey();
+  const t = useT();
   const [token, setToken] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const enabled = siteKey !== "";
+
+  function retry(): void {
+    if (!enabled) return;
+    setToken(null);
+    setFailed(false);
+    setResetKey((count) => count + 1);
+  }
 
   return {
     enabled,
     token,
     missing: enabled && token === null,
+    failed,
     widget: enabled ? (
-      <TurnstileWidget
-        siteKey={siteKey}
-        onToken={setToken}
-        resetKey={resetKey}
-      />
+      <div className="grid gap-2">
+        <TurnstileWidget
+          siteKey={siteKey}
+          onToken={setToken}
+          onFailed={setFailed}
+          resetKey={resetKey}
+        />
+        {failed ? (
+          <div
+            role="alert"
+            className="grid gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="text-sm text-muted-foreground">
+              {t("login.captchaFailed")}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={buttonTouchClass}
+              onClick={retry}
+            >
+              {t("common.retry")}
+            </Button>
+          </div>
+        ) : null}
+      </div>
     ) : null,
-    retry: () => {
-      if (!enabled) return;
-      setToken(null);
-      setResetKey((count) => count + 1);
-    },
+    retry,
   };
 }

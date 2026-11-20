@@ -42,10 +42,26 @@ function firstHandle(turnstile: ReturnType<typeof stubTurnstile>) {
   return handle;
 }
 
+/** The (lazily injected) script tag, however the load is going. */
+function turnstileScript(): HTMLScriptElement | null {
+  return document.querySelector("script[data-ohkolab-turnstile]");
+}
+
+/** Makes the pending script load fail, as a blocked network would. */
+function failTheLoad(): void {
+  turnstileScript()?.dispatchEvent(new Event("error"));
+}
+
 describe("TurnstileWidget", () => {
   it("renders explicitly with the site key, app theme and language", async () => {
     const turnstile = stubTurnstile();
-    render(<TurnstileWidget siteKey="site-key-x" onToken={vi.fn()} />);
+    render(
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={vi.fn()}
+        onFailed={vi.fn()}
+      />,
+    );
 
     await waitFor(() => expect(turnstile.handles).toHaveLength(1));
     expect(firstHandle(turnstile)).toMatchObject({
@@ -58,29 +74,51 @@ describe("TurnstileWidget", () => {
   it("delivers the solved token and clears it when it expires", async () => {
     const turnstile = stubTurnstile();
     const onToken = vi.fn();
-    render(<TurnstileWidget siteKey="site-key-x" onToken={onToken} />);
+    const onFailed = vi.fn();
+    render(
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={onToken}
+        onFailed={onFailed}
+      />,
+    );
     await waitFor(() => expect(turnstile.handles).toHaveLength(1));
 
     firstHandle(turnstile).callback?.("token-123");
     expect(onToken).toHaveBeenLastCalledWith("token-123");
+    expect(onFailed).toHaveBeenLastCalledWith(false);
 
     firstHandle(turnstile)["expired-callback"]?.();
     expect(onToken).toHaveBeenLastCalledWith(null);
   });
 
-  it("clears the token when the widget itself fails", async () => {
+  it("clears the token and reports failure when the widget errors", async () => {
     const turnstile = stubTurnstile();
     const onToken = vi.fn();
-    render(<TurnstileWidget siteKey="site-key-x" onToken={onToken} />);
+    const onFailed = vi.fn();
+    render(
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={onToken}
+        onFailed={onFailed}
+      />,
+    );
     await waitFor(() => expect(turnstile.handles).toHaveLength(1));
 
     firstHandle(turnstile)["error-callback"]?.("bad-input");
     expect(onToken).toHaveBeenLastCalledWith(null);
+    expect(onFailed).toHaveBeenLastCalledWith(true);
   });
 
   it("follows the app's theme and language by re-rendering the widget", async () => {
     const turnstile = stubTurnstile();
-    render(<TurnstileWidget siteKey="site-key-x" onToken={vi.fn()} />);
+    render(
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={vi.fn()}
+        onFailed={vi.fn()}
+      />,
+    );
     await waitFor(() => expect(turnstile.handles).toHaveLength(1));
 
     setTheme("light");
@@ -102,14 +140,23 @@ describe("TurnstileWidget", () => {
     const turnstile = stubTurnstile();
     const onToken = vi.fn();
     const view = render(
-      <TurnstileWidget siteKey="site-key-x" onToken={onToken} />,
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={onToken}
+        onFailed={vi.fn()}
+      />,
     );
     await waitFor(() => expect(turnstile.handles).toHaveLength(1));
     firstHandle(turnstile).callback?.("token-123");
     expect(onToken).toHaveBeenLastCalledWith("token-123");
 
     view.rerender(
-      <TurnstileWidget siteKey="site-key-x" onToken={onToken} resetKey={1} />,
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={onToken}
+        onFailed={vi.fn()}
+        resetKey={1}
+      />,
     );
 
     expect(turnstile.reset).toHaveBeenCalledWith("widget-1");
@@ -120,7 +167,11 @@ describe("TurnstileWidget", () => {
     const turnstile = stubTurnstile();
     const onToken = vi.fn();
     const view = render(
-      <TurnstileWidget siteKey="site-key-x" onToken={onToken} />,
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={onToken}
+        onFailed={vi.fn()}
+      />,
     );
     await waitFor(() => expect(turnstile.handles).toHaveLength(1));
 
@@ -130,13 +181,80 @@ describe("TurnstileWidget", () => {
     expect(onToken).toHaveBeenLastCalledWith(null);
   });
 
-  it("reports no token when the script cannot be loaded", async () => {
+  it("reports failure and no token when the script cannot be loaded", async () => {
     const onToken = vi.fn();
-    render(<TurnstileWidget siteKey="site-key-x" onToken={onToken} />);
+    const onFailed = vi.fn();
+    render(
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={onToken}
+        onFailed={onFailed}
+      />,
+    );
 
-    const script = document.querySelector("script[data-ohkolab-turnstile]");
-    script?.dispatchEvent(new Event("error"));
+    failTheLoad();
 
-    await waitFor(() => expect(onToken).toHaveBeenCalledWith(null));
+    await waitFor(() => expect(onFailed).toHaveBeenCalledWith(true));
+    expect(onToken).toHaveBeenLastCalledWith(null);
+  });
+
+  it("re-attempts the whole load when a retry arrives with no widget", async () => {
+    const onFailed = vi.fn();
+    const view = render(
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={vi.fn()}
+        onFailed={onFailed}
+      />,
+    );
+    failTheLoad();
+    await waitFor(() => expect(onFailed).toHaveBeenCalledWith(true));
+    // The broken script tag is gone.
+    expect(turnstileScript()).toBeNull();
+
+    // The network recovers: window.turnstile exists from now on.
+    const turnstile = stubTurnstile();
+    view.rerender(
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={vi.fn()}
+        onFailed={onFailed}
+        resetKey={1}
+      />,
+    );
+
+    await waitFor(() => expect(turnstile.handles).toHaveLength(1));
+    // The failure from the broken load is never repeated: the re-render
+    // says nothing more about it.
+    expect(onFailed).toHaveBeenCalledTimes(1);
+  });
+
+  it("never reports failure once a challenge has solved", async () => {
+    const turnstile = stubTurnstile();
+    const onFailed = vi.fn();
+    render(
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={vi.fn()}
+        onFailed={onFailed}
+      />,
+    );
+    await waitFor(() => expect(turnstile.handles).toHaveLength(1));
+
+    firstHandle(turnstile).callback?.("token-123");
+
+    expect(onFailed).not.toHaveBeenCalledWith(true);
+    expect(onFailed).toHaveBeenLastCalledWith(false);
+  });
+
+  it("keeps the container while the script is still loading", () => {
+    const { container } = render(
+      <TurnstileWidget
+        siteKey="site-key-x"
+        onToken={vi.fn()}
+        onFailed={vi.fn()}
+      />,
+    );
+    expect(container.firstElementChild).not.toBeNull();
   });
 });

@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { AvatarListSkeleton, LoadingArea } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { isDemoMode } from "@/lib/demo-mode";
+import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
@@ -70,15 +71,19 @@ export function BattleBoardPage({
       actions={user ? <BattleRequestDialog client={client} /> : null}
     >
       {user === null ? (
-        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-          <EmptyState
-            title={t("battles.signInToBattle")}
-            action={
-              <Button asChild size="sm" className={buttonSmTouchClass}>
-                <Link to="/login?returnTo=/battles">{t("common.signIn")}</Link>
-              </Button>
-            }
-          />
+        <div className="grid gap-4">
+          {/* Full-width strip: one sentence and the sign-in action, so
+              the board below keeps the whole wide layout for its cards. */}
+          <div className="flex flex-col gap-3 rounded-md border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-medium">{t("battles.signInToBattle")}</p>
+            <Button
+              asChild
+              size="sm"
+              className={cn("sm:self-center", buttonSmTouchClass)}
+            >
+              <Link to="/login?returnTo=/battles">{t("common.signIn")}</Link>
+            </Button>
+          </div>
           {isDemoMode() && <DemoBattleList />}
         </div>
       ) : (
