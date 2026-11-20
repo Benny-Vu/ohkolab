@@ -91,11 +91,6 @@ export function displayName(
   return names[kind][toID(id)] ?? english;
 }
 
-/** Whether the Japanese names are available in this session yet. */
-export function useJapaneseNames(): boolean {
-  return useSyncExternalStore(subscribe, isLoaded, () => false);
-}
-
 /**
  * `displayName` for React: tracks the active locale, loads the Japanese
  * names once it is "ja", and re-renders when the chunk arrives. The

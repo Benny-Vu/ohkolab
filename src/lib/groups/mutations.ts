@@ -703,7 +703,7 @@ export function useDeleteGroup(
 }
 
 /** Invalidates every groups query after a mutation touches shared state. */
-export function invalidateGroupQueries(queryClient: {
+function invalidateGroupQueries(queryClient: {
   invalidateQueries: (options: { queryKey: unknown[] }) => Promise<void> | void;
 }): void {
   for (const key of Object.values(GROUP_QUERY_KEYS)) {

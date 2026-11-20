@@ -16,8 +16,8 @@ export const DISPLAY_NAME_MAX_LENGTH = 40;
 export const BIO_MAX_LENGTH = 300;
 export const AVATAR_SPECIES_MAX_LENGTH = 60;
 export const LOOKING_FOR_MAX_LENGTH = 100;
-export const SHOWDOWN_NAME_MAX_LENGTH = 64;
-export const PROFILE_URL_MAX_LENGTH = 200;
+const SHOWDOWN_NAME_MAX_LENGTH = 64;
+const PROFILE_URL_MAX_LENGTH = 200;
 export const PASSWORD_MIN_LENGTH = 8;
 /** bcrypt, which the auth server uses, ignores everything past 72 bytes. */
 export const PASSWORD_MAX_LENGTH = 72;

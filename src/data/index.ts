@@ -5,17 +5,11 @@
 export { getAbility, listAbilities, type AbilityInfo } from "@/data/abilities";
 export { calculateDamage } from "@/data/damage";
 export {
-  displayDescription,
   displayName,
   loadJapaneseNames,
-  matchesDisplayName,
   normalizeForNameSearch,
   useDisplayName,
   useDisplayDescription,
-  useJapaneseNames,
-  type DescriptionKind,
-  type JapaneseNames,
-  type NameKind,
 } from "@/data/display-names";
 export { getItem, listItems, listItemsFor, type ItemInfo } from "@/data/items";
 export {
@@ -35,17 +29,8 @@ export {
   getSpecies,
   listSpecies,
   resolveBattleForme,
-  type ListSpeciesOptions,
-  type MegaOption,
   type SpeciesInfo,
 } from "@/data/species";
-export {
-  getItemIcon,
-  getPokemonIcon,
-  getSprite,
-  type IconInfo,
-  type SpriteInfo,
-} from "@/data/sprites";
 export {
   calcStat,
   calcStats,

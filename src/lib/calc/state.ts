@@ -20,11 +20,6 @@ import type { PokemonSet } from "@/types/pokemon";
 export const SIDE_IDS = ["p1", "p2"] as const;
 export type SideId = (typeof SIDE_IDS)[number];
 
-export const SIDE_LABELS: Record<SideId, string> = {
-  p1: "Pokémon 1",
-  p2: "Pokémon 2",
-};
-
 export const MOVE_SLOTS = [0, 1, 2, 3] as const;
 export const MIN_STAGE = -6;
 export const MAX_STAGE = 6;

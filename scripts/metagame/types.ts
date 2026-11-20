@@ -39,7 +39,7 @@ export interface PokemonUsage {
   teammates: Share[];
 }
 
-export interface MetagameSource {
+interface MetagameSource {
   id: "showdown-ladder";
   label: string;
   url: string;
@@ -81,7 +81,7 @@ export interface NameResolver {
 
 // --- Smogon chaos file shapes (only the fields the pipeline reads) ---
 
-export interface ChaosInfo {
+interface ChaosInfo {
   metagame: string;
   cutoff: number;
   "number of battles": number;

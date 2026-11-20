@@ -26,7 +26,7 @@ import {
 } from "@/lib/social/suggestions";
 
 /** How many rows each social step lists. */
-export const WELCOME_ROW_LIMIT = 5;
+const WELCOME_ROW_LIMIT = 5;
 
 /** Renders one of the two social steps. */
 export function WelcomeFlowSteps({ step }: { step: 1 | 2 }) {

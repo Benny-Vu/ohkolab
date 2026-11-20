@@ -7,7 +7,7 @@
  */
 
 /** What a `pushNotificationActionPerformed` event carries. */
-export interface PushActionPerformedEvent {
+interface PushActionPerformedEvent {
   notification: {
     /** The FCM `data` payload; `path` holds the in-app route. */
     data?: Record<string, unknown> | null;

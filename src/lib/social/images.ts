@@ -39,17 +39,17 @@ import {
 /** At most 4 images per post (the table enforces positions 0 to 3). */
 export const IMAGE_POSTS_MAX = 4;
 /** The long side of a processed image, in pixels. */
-export const IMAGE_MAX_LONG_SIDE = 1600;
+const IMAGE_MAX_LONG_SIDE = 1600;
 /** Files above this size are rejected before they are decoded. */
 export const IMAGE_MAX_INPUT_BYTES = 15 * 1024 * 1024;
 /** The WebP re-encode quality. */
-export const IMAGE_WEBP_QUALITY = 0.82;
+const IMAGE_WEBP_QUALITY = 0.82;
 /** The optional image description, `post_images.alt`. */
 export const IMAGE_ALT_MAX = 300;
 /** The private bucket author uploads go to. */
-export const PENDING_BUCKET = "post-images-pending";
+const PENDING_BUCKET = "post-images-pending";
 /** Approved images are served from this CDN host (public_path is the rest). */
-export const IMAGE_CDN_BASE = "https://img.ohkolab.com";
+const IMAGE_CDN_BASE = "https://img.ohkolab.com";
 
 /**
  * Whether image posts are switched on for this build. The whole feature hides
@@ -112,14 +112,14 @@ export function clampImageAlt(alt: string | null | undefined): string {
 }
 
 /** A decoded bitmap, minimal for the pipeline (tests inject fakes). */
-export interface ImageBitmapLike {
+interface ImageBitmapLike {
   width: number;
   height: number;
   close?: () => void;
 }
 
 /** The 2D context the pipeline needs (tests inject fakes). */
-export interface DrawContext2D {
+interface DrawContext2D {
   drawImage(
     image: ImageBitmapLike,
     dx: number,
@@ -130,7 +130,7 @@ export interface DrawContext2D {
 }
 
 /** A canvas, minimal for the pipeline (tests inject fakes). */
-export interface CanvasLike {
+interface CanvasLike {
   width: number;
   height: number;
   getContext(type: "2d"): DrawContext2D | null;
@@ -333,7 +333,7 @@ export function usePostImages(
 // ---------------------------------------------------------------------------
 
 /** How long to wait before the automatic retries (2 retries, short backoff). */
-export const SCREEN_RETRY_DELAYS_MS: number[] = [400, 1200];
+const SCREEN_RETRY_DELAYS_MS: number[] = [400, 1200];
 
 /** The wait function, injectable so tests can run without timers. */
 export type Sleep = (ms: number) => Promise<void>;
@@ -419,7 +419,7 @@ export function useFailedScreenings(): ReadonlySet<string> {
 }
 
 /** A pending image older than this counts as stuck. */
-export const PENDING_IMAGE_STALE_MS = 24 * 60 * 60 * 1000;
+const PENDING_IMAGE_STALE_MS = 24 * 60 * 60 * 1000;
 
 /** True when a pending image's upload is more than a day behind us. */
 export function isStalePending(

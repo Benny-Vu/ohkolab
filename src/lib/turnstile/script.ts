@@ -1,5 +1,3 @@
-import type { TurnstileApi } from "@/lib/turnstile/types";
-
 /**
  * Loads the Turnstile script lazily: nothing is fetched until a form that
  * shows the widget mounts, and only one script tag is ever added. The script
@@ -63,5 +61,3 @@ export function loadTurnstile(): Promise<void> {
 export function resetTurnstileLoadForTests(): void {
   loading = null;
 }
-
-export type { TurnstileApi };

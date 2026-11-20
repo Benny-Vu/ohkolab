@@ -218,7 +218,7 @@ export function coverageGaps(members: readonly PokemonSet[]): CoverageGap[] {
  * sentence its own way. `teams.warnSetProblem` embeds the data layer's
  * validation sentence, which stays as-is.
  */
-export type TeamWarningMessage =
+type TeamWarningMessage =
   | {
       key: "teams.warnDuplicateSpecies";
       params: { name: string; count: number };

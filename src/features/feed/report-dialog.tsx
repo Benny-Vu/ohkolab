@@ -27,7 +27,7 @@ import { useCreateReport } from "@/lib/social/mutations";
 import { REPORT_DETAILS_MAX, REPORT_REASONS } from "@/lib/social/validation";
 import type { TranslationKey } from "@/lib/i18n/en";
 
-export type ReportTargetType = "post" | "comment" | "profile";
+type ReportTargetType = "post" | "comment" | "profile";
 
 interface ReportDialogProps {
   open: boolean;

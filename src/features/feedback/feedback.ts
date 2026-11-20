@@ -35,8 +35,7 @@ export const FEEDBACK_MESSAGE_MAX = 2000;
 export const FEEDBACK_KINDS = ["bug", "idea", "other"] as const;
 export type FeedbackKind = (typeof FEEDBACK_KINDS)[number];
 
-export const FEEDBACK_STATUSES = ["new", "seen", "done"] as const;
-export type FeedbackStatus = (typeof FEEDBACK_STATUSES)[number];
+export type FeedbackStatus = "new" | "seen" | "done";
 
 /** Technical details attached to feedback when the user opts in. */
 export interface FeedbackContext {

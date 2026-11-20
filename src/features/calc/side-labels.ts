@@ -3,7 +3,7 @@ import type { TranslationKey } from "@/lib/i18n/en";
 import type { Translate } from "@/components/stat-labels";
 
 /** The calculator's own names for the two sides, as translation keys. */
-export const CALC_SIDE_LABEL_KEYS: Record<SideId, TranslationKey> = {
+const CALC_SIDE_LABEL_KEYS: Record<SideId, TranslationKey> = {
   p1: "calc.attacker",
   p2: "calc.defender",
 };

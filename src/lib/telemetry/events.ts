@@ -33,9 +33,9 @@ export type TelemetryEvent =
   | "theme_changed";
 
 export type SearchKind = "pokemon" | "move" | "item" | "page";
-export type SignUpMethod = "email" | "google" | "discord";
-export type PostAttachment = "none" | "team" | "calc";
-export type FeedbackEventKind = "bug" | "idea" | "other";
+type SignUpMethod = "email" | "google" | "discord";
+type PostAttachment = "none" | "team" | "calc";
+type FeedbackEventKind = "bug" | "idea" | "other";
 /** What was shared, by the link's route — never the link itself. */
 export type SharedLinkKind = "calc" | "team" | "profile" | "post" | "group";
 
@@ -44,7 +44,7 @@ export type SourceName =
   "tiktok" | "shorts" | "reels" | "reddit" | "bluesky" | "note";
 
 /** The properties each catalogue event carries, beyond the shared ones. */
-export interface EventProperties {
+interface EventProperties {
   /** Sent as PostHog's standard $pageview event, never as a custom event. */
   page_viewed: { route: string; format?: BattleFormat };
   calc_result_viewed: {
