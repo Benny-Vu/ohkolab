@@ -1546,20 +1546,23 @@ jobs:
                  '11000000-0000-4000-8000-00000000000a',
                  'wl-token-' || g, now() - interval '30 minutes', now() - interval '30 minutes'
           from generate_series(1, 20) g;
-          -- group_members: 102 groups, each owned by its own throwaway
+          -- group_members: 103 groups, each owned by its own throwaway
           -- account — the owner row the groups trigger inserts carries
           -- created_at = now(), so it counts toward the per-user limit
           -- and no single user can own them all (that is what tripped
           -- the first run of this step). wl_a joined the first 100 in
-          -- the last hour (per-user limit 100/day), group 101 holds its
-          -- owner plus 99 throwaway members (per-group limit 100/day),
-          -- group 102 is spare for the per-user check.
+          -- the last hour (per-user limit 100/day on their own rows),
+          -- group 101 has sent 100 pending invites (per-group invite
+          -- limit 100/day), wl_b has received 100 invites (which must
+          -- never count against them), group 102 is spare for the
+          -- per-user check, and 101 different users joined group 103
+          -- (a popular group keeps accepting members).
           insert into public.groups (id, owner_id, slug, name, visibility, created_at, updated_at)
           select ('50000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
                  ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
                  'wl-group-' || g, 'wl group ' || g, 'public',
                  now() - interval '2 days', now() - interval '2 days'
-          from generate_series(1, 102) g;
+          from generate_series(1, 103) g;
           insert into public.group_members (group_id, user_id, role, status, created_at)
           select ('50000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
                  '11000000-0000-4000-8000-00000000000a',
@@ -1568,8 +1571,18 @@ jobs:
           insert into public.group_members (group_id, user_id, role, status, created_at)
           select ('50000000-0000-4000-8000-000000000101')::uuid,
                  ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 'member', 'invited', now() - interval '30 minutes'
+          from generate_series(1, 100) g;
+          insert into public.group_members (group_id, user_id, role, status, created_at)
+          select ('50000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 '11000000-0000-4000-8000-00000000000b',
+                 'member', 'invited', now() - interval '30 minutes'
+          from generate_series(1, 100) g;
+          insert into public.group_members (group_id, user_id, role, status, created_at)
+          select ('50000000-0000-4000-8000-000000000103')::uuid,
+                 ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
                  'member', 'active', now() - interval '30 minutes'
-          from generate_series(1, 99) g;
+          from generate_series(1, 101) g;
 
           -- The checks, one per limit. Each insert must raise its errcode.
           do $wl$
@@ -1580,6 +1593,11 @@ jobs:
             spare_post constant uuid := '20000000-0000-4000-8000-000000000301';
             spare_group constant uuid := '50000000-0000-4000-8000-000000000102';
             full_group constant uuid := '50000000-0000-4000-8000-000000000101';
+            popular_group constant uuid := '50000000-0000-4000-8000-000000000103';
+            -- Throwaway 101 owns group 101 (the invite sender); 104 has
+            -- no rows yet (the invite the cap must refuse).
+            full_group_owner constant uuid := '10000000-0000-4000-8000-000000000101';
+            fresh_invitee constant uuid := '10000000-0000-4000-8000-000000000104';
           begin
             set local role authenticated;
 
@@ -1627,17 +1645,32 @@ jobs:
                 raise exception 'RATE-CHECK: per-user group limit raised %', sqlerrm;
               end if;
             end;
-            -- The per-group branch: the full group has 100 rows, wl_b has one.
-            perform set_config('request.jwt.claims', json_build_object('sub', wl_b, 'role', 'authenticated')::text, true);
+            -- The invite branch: group 101 has sent 100 invites today;
+            -- its owner cannot send one more.
+            perform set_config('request.jwt.claims', json_build_object('sub', full_group_owner, 'role', 'authenticated')::text, true);
             begin
               insert into public.group_members (group_id, user_id, role, status)
-              values (full_group, wl_b, 'member', 'active');
-              raise exception 'RATE-CHECK: the per-group limit did not fire';
+              values (full_group, fresh_invitee, 'member', 'invited');
+              raise exception 'RATE-CHECK: the group invite limit did not fire';
             exception when others then
               if sqlerrm not like 'Too many group joins and invites%' then
-                raise exception 'RATE-CHECK: per-group limit raised %', sqlerrm;
+                raise exception 'RATE-CHECK: group invite limit raised %', sqlerrm;
               end if;
             end;
+            -- Invites received never count against the invitee: wl_b
+            -- holds 100 pending invites and still joins a public group,
+            -- making the popular group 103 members strong (its owner,
+            -- the 101 seed joins and wl_b).
+            perform set_config('request.jwt.claims', json_build_object('sub', wl_b, 'role', 'authenticated')::text, true);
+            insert into public.group_members (group_id, user_id, role, status)
+            values (popular_group, wl_b, 'member', 'active');
+            if (
+              select count(*) from public.group_members
+              where group_members.group_id = popular_group
+                and group_members.status = 'active'
+            ) <> 103 then
+              raise exception 'RATE-CHECK: the popular group lost members';
+            end if;
           end;
           $wl$;
 

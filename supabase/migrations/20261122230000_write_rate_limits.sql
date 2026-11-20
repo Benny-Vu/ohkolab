@@ -98,10 +98,13 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- group_members: covers joins, join requests and owner invitations. At
--- most 100 new rows per member (or invitee) and per group per 24 hours:
--- the per-user cap bounds one account joining everything, the per-group
--- cap bounds an owner inviting everyone to one group.
+-- group_members: two separate caps, both 100 per 24 hours with errcode
+-- P0A14. Invitations ('invited' rows) are capped per group — an owner
+-- cannot mass-invite into one group — but never count against the
+-- invitee, so nobody can lock a victim out of joining by inviting them.
+-- Self-joins and join requests are capped per user only: one account
+-- cannot join everything, but a popular public group keeps accepting
+-- members no matter how many different users join it in a day.
 -- ---------------------------------------------------------------------------
 
 create or replace function public.enforce_group_member_limits()
@@ -111,18 +114,32 @@ security definer
 set search_path = ''
 as $$
 begin
-  if (
-    select count(*) from public.group_members
-    where group_members.user_id = new.user_id
-      and group_members.created_at > now() - interval '24 hours'
-  ) >= 100
-  or (
-    select count(*) from public.group_members
-    where group_members.group_id = new.group_id
-      and group_members.created_at > now() - interval '24 hours'
-  ) >= 100 then
-    raise exception 'Too many group joins and invites; wait a day'
-      using errcode = 'P0A14';
+  -- Invitations are owner-sent: cap how many one group sends per day.
+  -- Counting them toward the invitee would let anyone lock a victim out
+  -- of joining by inviting them from a few groups.
+  if new.status = 'invited' then
+    if (
+      select count(*) from public.group_members
+      where group_members.group_id = new.group_id
+        and group_members.status = 'invited'
+        and group_members.created_at > now() - interval '24 hours'
+    ) >= 100 then
+      raise exception 'Too many group joins and invites; wait a day'
+        using errcode = 'P0A14';
+    end if;
+  else
+    -- Self-joins and requests: cap only the user's own rows, and never
+    -- the invitations they received. Counting joins per group would stop
+    -- a popular public group from accepting members after 100 a day.
+    if (
+      select count(*) from public.group_members
+      where group_members.user_id = new.user_id
+        and group_members.status <> 'invited'
+        and group_members.created_at > now() - interval '24 hours'
+    ) >= 100 then
+      raise exception 'Too many group joins and invites; wait a day'
+        using errcode = 'P0A14';
+    end if;
   end if;
   return new;
 end;
