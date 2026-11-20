@@ -14,11 +14,14 @@ import { test } from "./smoke";
  * render without a backend. Pages whose data needs Supabase still scan:
  * their loading, empty and not-configured states are part of the page.
  */
-const PAGES: readonly { path: string; name: string }[] = [
+const PAGES: readonly { path: string; name: string; slow?: boolean }[] = [
   { path: "/", name: "home" },
   { path: "/calc", name: "calc" },
   { path: "/teams", name: "teams" },
-  { path: "/meta", name: "metagame" },
+  // The usage table renders ~200 rows at mount, so the scan alone takes
+  // close to the default 30 s on CI runners. Slow until the table is
+  // virtualized.
+  { path: "/meta", name: "metagame", slow: true },
   { path: "/learn", name: "learn" },
   { path: "/changelog", name: "changelog" },
   { path: "/login", name: "login" },
@@ -29,10 +32,11 @@ const PAGES: readonly { path: string; name: string }[] = [
   { path: "/press", name: "press" },
 ];
 
-for (const { path, name } of PAGES) {
+for (const { path, name, slow } of PAGES) {
   test(`accessibility: ${name} has no serious or critical violations`, async ({
     page,
   }) => {
+    test.slow(slow === true, "large table makes the axe scan slow");
     await page.goto(path);
     // The app boots lazily; give the page's content a moment to replace
     // the loading state so axe scans the real page, not the skeletons.
