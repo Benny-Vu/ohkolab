@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_NATURE, getSpecies } from "@/data";
 import type { CommonSet } from "@/lib/metagame/common-sets";
 import {
+  applyRevealedFields,
   assumedInput,
   commonSetToInput,
   customInput,
+  hasRevealedFields,
   opponentsFromText,
   speciesFromLine,
 } from "@/features/battle/opponent-input";
@@ -198,5 +200,103 @@ describe("opponentsFromText", () => {
       inputs: [],
       warnings: expect.any(Array),
     });
+  });
+});
+
+describe("applyRevealedFields", () => {
+  const garchomp = commonSetToInput("Garchomp", commonSet());
+
+  it("returns the input untouched without a note or without content", () => {
+    expect(applyRevealedFields(garchomp, undefined)).toBe(garchomp);
+    expect(
+      applyRevealedFields(garchomp, {
+        item: null,
+        ability: null,
+        moves: [],
+        mega: false,
+      }),
+    ).toBe(garchomp);
+    expect(hasRevealedFields(undefined)).toBe(false);
+  });
+
+  it("overrides revealed fields and labels the slot revealed", () => {
+    const revealed = applyRevealedFields(garchomp, {
+      item: "Leftovers",
+      ability: null,
+      moves: [],
+      mega: false,
+    });
+    expect(revealed.provenance).toBe("revealed");
+    expect(revealed.species).toBe("Garchomp");
+    expect(revealed.set.item).toBe("Leftovers");
+    // Everything unrevealed keeps the guess.
+    expect(revealed.set.ability).toBe("Rough Skin");
+    expect(revealed.set.moves).toEqual([
+      "Earthquake",
+      "Protect",
+      "Rock Slide",
+      "Fire Fang",
+    ]);
+  });
+
+  it("puts revealed moves first and backfills with the guess", () => {
+    const revealed = applyRevealedFields(garchomp, {
+      item: null,
+      ability: null,
+      moves: ["Swords Dance", "Earthquake"],
+      mega: false,
+    });
+    expect(revealed.set.moves).toEqual([
+      "Swords Dance",
+      "Earthquake",
+      "Protect",
+      "Rock Slide",
+    ]);
+  });
+
+  it("turns a Mega flag into the Mega forme the way the calc does", () => {
+    const revealed = applyRevealedFields(garchomp, {
+      item: null,
+      ability: null,
+      moves: [],
+      mega: true,
+    });
+    expect(revealed.set.species).toBe("Garchomp-Mega");
+    expect(revealed.set.item).toBe("Garchompite");
+    expect(revealed.set.ability).toBe(
+      getSpecies("Garchomp-Mega")?.abilities[0] ?? "Sand Force",
+    );
+  });
+
+  it("follows a revealed Mega Stone to its forme", () => {
+    const charizard = assumedInput("Charizard");
+    const revealed = applyRevealedFields(charizard, {
+      item: "Charizardite Y",
+      ability: null,
+      moves: [],
+      mega: false,
+    });
+    expect(revealed.set.species).toBe("Charizard-Mega-Y");
+    expect(revealed.set.item).toBe("Charizardite Y");
+    expect(revealed.set.ability).toBe(
+      getSpecies("Charizard-Mega-Y")?.abilities[0] ?? "Drought",
+    );
+  });
+
+  it("drops unknown names a note should never carry", () => {
+    const revealed = applyRevealedFields(garchomp, {
+      item: "Not an item",
+      ability: "Not an ability",
+      moves: ["Not a move"],
+      mega: false,
+    });
+    expect(revealed.set.item).toBe("Choice Scarf");
+    expect(revealed.set.ability).toBe("Rough Skin");
+    expect(revealed.set.moves).toEqual([
+      "Earthquake",
+      "Protect",
+      "Rock Slide",
+      "Fire Fang",
+    ]);
   });
 });

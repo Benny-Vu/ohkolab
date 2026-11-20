@@ -49,6 +49,7 @@ const PROVENANCE_KEYS: Record<SetProvenance, TranslationKey> = {
   common: "battle.provenanceCommon",
   assumed: "battle.provenanceAssumed",
   custom: "battle.provenanceCustom",
+  revealed: "battle.provenanceRevealed",
 };
 
 const PASTE_PLACEHOLDER =
@@ -58,6 +59,8 @@ interface OpponentPanelProps {
   opponents: OpponentInput[];
   onOpponentsChange: Dispatch<SetStateAction<OpponentInput[]>>;
   format: BattleFormat;
+  /** Species with revealed battle notes: their badge becomes "revealed". */
+  revealedSpecies?: ReadonlySet<string>;
 }
 
 /**
@@ -71,6 +74,7 @@ export function OpponentPanel({
   opponents,
   onOpponentsChange,
   format,
+  revealedSpecies,
 }: OpponentPanelProps) {
   const t = useT();
   const displayName = useDisplayName();
@@ -147,7 +151,11 @@ export function OpponentPanel({
                 variant="secondary"
                 className="mt-0.5 max-sm:scale-90 max-sm:origin-left"
               >
-                {t(PROVENANCE_KEYS[opponent.provenance])}
+                {t(
+                  revealedSpecies?.has(opponent.species)
+                    ? PROVENANCE_KEYS.revealed
+                    : PROVENANCE_KEYS[opponent.provenance],
+                )}
               </Badge>
             </span>
             <Button
