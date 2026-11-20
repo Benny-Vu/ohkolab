@@ -231,11 +231,18 @@ $$;
 revoke execute on function public.enforce_push_token_limits()
   from public, anon, authenticated;
 
+-- The push migration (20261120210000) is not applied everywhere yet: push
+-- ships switched off. Skip the trigger where the table is missing; this
+-- migration is idempotent, so re-running it after the push migration adds
+-- the trigger.
 do $$
 begin
+  if to_regclass('public.push_tokens') is null then
+    return;
+  end if;
   if not exists (
     select 1 from pg_trigger
-    where tgrelid = 'public.push_tokens'::regclass
+    where tgrelid = to_regclass('public.push_tokens')
       and tgname = 'push_tokens_enforce_limits'
   ) then
     create trigger push_tokens_enforce_limits
