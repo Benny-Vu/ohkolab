@@ -1546,14 +1546,17 @@ jobs:
                  '11000000-0000-4000-8000-00000000000a',
                  'wl-token-' || g, now() - interval '30 minutes', now() - interval '30 minutes'
           from generate_series(1, 20) g;
-          -- group_members: 102 groups owned by wl_b (back-dated outside
-          -- the new-groups window), wl_a joined the first 100 in the last
-          -- hour (per-user limit 100/day), group 101 holds 100 throwaway
-          -- members (per-group limit 100/day), group 102 is spare for the
-          -- per-user check.
+          -- group_members: 102 groups, each owned by its own throwaway
+          -- account — the owner row the groups trigger inserts carries
+          -- created_at = now(), so it counts toward the per-user limit
+          -- and no single user can own them all (that is what tripped
+          -- the first run of this step). wl_a joined the first 100 in
+          -- the last hour (per-user limit 100/day), group 101 holds its
+          -- owner plus 99 throwaway members (per-group limit 100/day),
+          -- group 102 is spare for the per-user check.
           insert into public.groups (id, owner_id, slug, name, visibility, created_at, updated_at)
           select ('50000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
-                 '11000000-0000-4000-8000-00000000000b',
+                 ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
                  'wl-group-' || g, 'wl group ' || g, 'public',
                  now() - interval '2 days', now() - interval '2 days'
           from generate_series(1, 102) g;
@@ -1566,7 +1569,7 @@ jobs:
           select ('50000000-0000-4000-8000-000000000101')::uuid,
                  ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
                  'member', 'active', now() - interval '30 minutes'
-          from generate_series(1, 100) g;
+          from generate_series(1, 99) g;
 
           -- The checks, one per limit. Each insert must raise its errcode.
           do $wl$
