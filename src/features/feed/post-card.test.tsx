@@ -427,6 +427,8 @@ describe("PostCard", () => {
           public_path: null,
           screened_at: null,
           alt: "Waiting",
+          // Uploaded just now: a fixed date goes stale after 24 hours.
+          created_at: new Date().toISOString(),
         }),
         postImageRow({ id: "img-2", position: 1, status: "rejected" }),
       ],

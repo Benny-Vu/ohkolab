@@ -349,7 +349,8 @@ describe("PostDetailPage", () => {
           screen_result: null,
           screened_at: null,
           alt: null,
-          created_at: "2026-11-19T10:00:00.000Z",
+          // Uploaded just now: a fixed date goes stale after 24 hours.
+          created_at: new Date().toISOString(),
         },
       ]),
     );
