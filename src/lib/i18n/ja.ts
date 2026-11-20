@@ -7,6 +7,7 @@
  * none of it lands in the entry bundle; English users never download it.
  */
 import { accountJa } from "@/lib/i18n/entries/account-ja";
+import { battlesJa } from "@/lib/i18n/entries/battles-ja";
 import { communityJa } from "@/lib/i18n/entries/community-ja";
 import { shellJa } from "@/lib/i18n/entries/shell-ja";
 import { toolsJa } from "@/lib/i18n/entries/tools-ja";
@@ -17,4 +18,5 @@ export const ja: Partial<Record<TranslationKey, string>> = {
   ...communityJa,
   ...accountJa,
   ...toolsJa,
+  ...battlesJa,
 };

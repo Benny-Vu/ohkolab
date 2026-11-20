@@ -6,9 +6,11 @@ import { Page } from "@/components/page";
 import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DemoConversationList } from "@/components/demo-conversation-list";
 import { ConversationListSkeleton, LoadingArea } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
+import { isDemoMode } from "@/lib/demo-mode";
 import { formatDate } from "@/lib/format-date";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import { useConversations } from "@/lib/messages/queries";
@@ -35,7 +37,13 @@ export function MessagesPage({
       width="narrow"
     >
       {!user ? (
-        <EmptyState title={t("messages.signIn")} />
+        // Recording mode fills the signed-out state with sample
+        // conversations; nothing in demo mode opens or changes data.
+        isDemoMode() ? (
+          <DemoConversationList />
+        ) : (
+          <EmptyState title={t("messages.signIn")} />
+        )
       ) : conversationsQuery.isError ? (
         <ErrorState
           title={t("messages.loadError")}

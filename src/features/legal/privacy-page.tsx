@@ -9,6 +9,7 @@ import {
 } from "@/features/legal/legal-page";
 import { JaPrivacySections } from "@/features/legal/ja-privacy";
 import { CONTACT_EMAIL, LAST_UPDATED } from "@/features/legal/legal-info";
+import { battlesEnabled } from "@/lib/battles/flag";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { directMessagesEnabled } from "@/lib/messages/flag";
@@ -17,9 +18,11 @@ import { imagePostsEnabled } from "@/lib/social";
 // The image-post text (approved by the owner on 2026-11-18) is shown only when
 // the VITE_IMAGE_POSTS flag is on, so the policy never describes processing
 // that isn't happening yet. The direct message text (approved 2026-11-19)
-// follows VITE_DIRECT_MESSAGES the same way.
+// follows VITE_DIRECT_MESSAGES the same way, and the battle request text
+// (approved 2026-11-20) follows VITE_BATTLES.
 const IMAGES = imagePostsEnabled();
 const MESSAGES = directMessagesEnabled();
+const BATTLES = battlesEnabled();
 
 const SECTIONS: Array<{ id: string; heading: string; headingJa: string }> = [
   {
@@ -68,6 +71,15 @@ const SECTIONS: Array<{ id: string; heading: string; headingJa: string }> = [
           id: "direct-messages",
           heading: "Direct messages",
           headingJa: "ダイレクトメッセージ",
+        },
+      ]
+    : []),
+  ...(BATTLES
+    ? [
+        {
+          id: "battle-requests",
+          heading: "Battle requests",
+          headingJa: "対戦募集",
         },
       ]
     : []),
@@ -130,7 +142,11 @@ export function PrivacyPage() {
         description={`最終更新: ${new Intl.DateTimeFormat("ja", { year: "numeric", month: "long", day: "numeric" }).format(new Date(LAST_UPDATED))}`}
         sections={sections}
       >
-        <JaPrivacySections images={IMAGES} messages={MESSAGES} />
+        <JaPrivacySections
+          images={IMAGES}
+          messages={MESSAGES}
+          battles={BATTLES}
+        />
       </LegalPage>
     );
   }
@@ -289,6 +305,35 @@ export function PrivacyPage() {
           </LegalSection>
         )}
 
+        {BATTLES && (
+          <LegalSection id="battle-requests" heading="Battle requests">
+            <LegalText>
+              When you post a battle request, we store its format, rules,
+              optional note, optional time window and time zone, language, any
+              public team you attach, and its status. Open requests are visible
+              to signed-in players, except anyone you have blocked or who has
+              blocked you. When you offer to battle, the request&apos;s author
+              can see your offer. When the author accepts an offer, the request
+              stays visible to the two of you, and you can share an in-game room
+              code that only the two of you can see, not even moderators.
+              Moderators can see requests to handle reports. Requests close when
+              their time window ends or after 24 hours. Closed requests and
+              offers are kept with your account and deleted when you delete it.
+            </LegalText>
+            <LegalText>
+              Players under 18, and players who have not added a birth date, see
+              and answer battle requests only from their friends, and their own
+              requests are shown only to friends.
+            </LegalText>
+            <LegalText>
+              We store and show battle requests and offers to provide the
+              matchmaking you use (performing our agreement with you). We apply
+              the protections for younger players and blocks for our legitimate
+              interest in keeping the service safe.
+            </LegalText>
+          </LegalSection>
+        )}
+
         <LegalSection id="notifications" heading="Notifications">
           <LegalText>
             Notifications store what happened, such as a like, comment, follow
@@ -364,6 +409,8 @@ export function PrivacyPage() {
               " For posts with images, the record also lists the image files that were blocked with the removal."}
             {MESSAGES &&
               " When you report a message, the copy described under Direct messages is stored with the report."}
+            {BATTLES &&
+              " When we remove a battle request, the record keeps a copy of its rules and note."}
           </LegalText>
         </LegalSection>
 

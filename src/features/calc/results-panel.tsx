@@ -106,7 +106,7 @@ function MoveRow({
 
   return (
     <button
-      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-transparent px-2 py-2 text-left transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-muted/50"
+      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-transparent px-2 py-2 text-left transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-surface-sunken"
       onClick={() => dispatch({ type: "selectMove", side, slot: outcome.slot })}
       type="button"
     >
@@ -193,7 +193,7 @@ function ResultBlock({
   };
 
   return (
-    <div className="grid gap-3 rounded-lg border bg-muted/40 p-3">
+    <div className="grid gap-3 rounded-lg border bg-surface-sunken p-3">
       {hasPartner ? (
         <p className="text-xs font-medium text-muted-foreground">
           {defender.name}

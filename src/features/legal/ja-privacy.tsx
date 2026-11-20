@@ -20,9 +20,11 @@ import { t } from "@/lib/i18n/t";
 export function JaPrivacySections({
   images,
   messages = false,
+  battles = false,
 }: {
   images: boolean;
   messages?: boolean;
+  battles?: boolean;
 }) {
   return (
     <div className="space-y-8">
@@ -123,6 +125,20 @@ export function JaPrivacySections({
         </LegalSection>
       )}
 
+      {battles && (
+        <LegalSection id="battle-requests" heading="対戦募集">
+          <LegalText>
+            対戦募集を投稿すると、フォーマット、ルール、任意のメモ、任意の時間帯とタイムゾーン、言語、添付した公開構築、募集の状態が保存されます。受付中の募集は、サインイン中のプレイヤーに表示されます。ただし、あなたがブロックした相手と、あなたをブロックした相手には表示されません。対戦を申し込むと、募集の投稿者があなたの申し込みを確認できます。投稿者が申し込みを承認すると、その募集は2人に引き続き表示され、2人だけが見られるゲーム内のルームコードを共有できます（モデレーターも閲覧できません）。モデレーターは報告に対応するため募集を閲覧できます。募集は設定した時間帯が終わるか、24時間が経過すると締め切られます。締め切られた募集と申し込みはアカウントとともに保存され、アカウントを削除すると削除されます。
+          </LegalText>
+          <LegalText>
+            18歳未満のプレイヤー、および生年月日を未登録のプレイヤーは、友達の対戦募集のみ閲覧・申し込みでき、自分の募集も友達にのみ表示されます。
+          </LegalText>
+          <LegalText>
+            対戦募集と申し込みは、あなたが利用するマッチング機能を提供するため（あなたとの契約の履行）に保存・表示します。若いプレイヤーを守るための制限とブロックは、サービスを安全に保つという正当な利益のために処理します。
+          </LegalText>
+        </LegalSection>
+      )}
+
       <LegalSection id="notifications" heading="通知">
         <LegalText>
           通知には、何が起きたか（いいね・コメント・フォロー・グループ招待など）、誰が・いつ、既読かどうかが保存されます。自分の通知は自分だけが閲覧できます。
@@ -170,6 +186,8 @@ export function JaPrivacySections({
             " 画像つき投稿の場合、記録には削除とともにブロックされた画像ファイルも記載されます。"}
           {messages &&
             " メッセージを報告すると、「ダイレクトメッセージ」に記載のコピーが報告とともに保存されます。"}
+          {battles &&
+            " 対戦募集を削除した場合、その記録にはルールとメモのコピーが保存されます。"}
         </LegalText>
       </LegalSection>
 

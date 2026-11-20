@@ -2,6 +2,7 @@ import {
   CalculatorIcon,
   ChartColumnIcon,
   CircleUserIcon,
+  Gamepad2Icon,
   HouseIcon,
   MessageCircleIcon,
   SwordsIcon,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 
 import type { TranslationKey } from "@/lib/i18n/en";
+import { battlesEnabled } from "@/lib/battles/flag";
 import { directMessagesEnabled } from "@/lib/messages/flag";
 
 export interface NavItem {
@@ -38,6 +40,18 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/calc", labelKey: "nav.calc", icon: CalculatorIcon },
   { to: "/teams", labelKey: "nav.teams", icon: SwordsIcon },
   { to: "/meta", labelKey: "nav.meta", icon: ChartColumnIcon },
+  // The battle finder rides behind VITE_BATTLES the same way direct messages
+  // ride behind VITE_DIRECT_MESSAGES: absent in builds where the feature is
+  // not launched, one object literal plus an icon otherwise.
+  ...(battlesEnabled()
+    ? [
+        {
+          to: "/battles",
+          labelKey: "nav.battles" as TranslationKey,
+          icon: Gamepad2Icon,
+        },
+      ]
+    : []),
   { to: "/profile", labelKey: "nav.profile", icon: CircleUserIcon },
   // Direct messages are built but not launched: the item (and its badge)
   // exists only in builds with VITE_DIRECT_MESSAGES=true. The unread badge

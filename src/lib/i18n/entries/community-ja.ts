@@ -197,6 +197,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "report.targetPost": "投稿",
   "report.targetComment": "コメント",
   "report.targetProfile": "プロフィール",
+  "battles.targetLabel": "対戦リクエスト",
   "report.emailSubjectPost": "投稿の報告",
   "report.emailSubjectComment": "コメントの報告",
   "report.emailSubjectProfile": "プロフィールの報告",

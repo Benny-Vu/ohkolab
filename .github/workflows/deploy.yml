@@ -41,6 +41,9 @@ jobs:
           # Direct messages (and their legal text) are on only when the
           # repository variable VITE_DIRECT_MESSAGES is "true".
           VITE_DIRECT_MESSAGES: ${{ vars.VITE_DIRECT_MESSAGES }}
+          # The battle finder is on only when the repository variable
+          # VITE_BATTLES is "true".
+          VITE_BATTLES: ${{ vars.VITE_BATTLES }}
           # SENTRY_AUTH_TOKEN gates the source-map upload plugin in
           # vite.config.ts; SENTRY_ORG and SENTRY_PROJECT target it.
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

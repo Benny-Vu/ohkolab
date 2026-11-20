@@ -13,6 +13,9 @@ export const shellEn = {
   "nav.meta": "Meta",
   "nav.profile": "Profile",
   "nav.main": "Main",
+  // The battle board's nav label lives here (not the battles domain),
+  // because nav-items.ts and the page titles are part of the entry graph.
+  "nav.battles": "Battles",
   "account.menuAria": "Account menu",
   "account.moderationItem": "Moderation",
 
@@ -289,6 +292,8 @@ export const shellEn = {
   "seo.privacyDescription": "How OHKOLab handles your data and privacy.",
   "seo.creditsDescription":
     "The data sources and libraries OHKOLab is built on, and their licences.",
+  "seo.battlesDescription":
+    "Find an opponent for a Pokémon Champions battle: open requests, offers and matches on OHKOLab.",
   "seo.pressDescription":
     "OHKOLab logos, colours, screenshots and press copy for writers and creators.",
 
