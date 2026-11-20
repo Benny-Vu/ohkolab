@@ -216,7 +216,11 @@ describe("PostCard", () => {
 
     expect(screen.getByText("Champion team")).toBeInTheDocument();
     expect(screen.getByText("doubles")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Garchomp" })).toBeInTheDocument();
+    // The team preview loads lazily (it pulls the Pokémon data layer),
+    // so its sprite arrives on a later tick.
+    expect(
+      await screen.findByRole("img", { name: "Garchomp" }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /copy to my teams/i }));
 
@@ -227,7 +231,7 @@ describe("PostCard", () => {
     expect(stored.teams[0]!.name).toBe("Champion team");
   });
 
-  it("shows the calc result attachment with range, KO label and meter", () => {
+  it("shows the calc result attachment with range, KO label and meter", async () => {
     const attachment = {
       kind: "calc-result",
       attacker: "Garchomp",
@@ -244,7 +248,8 @@ describe("PostCard", () => {
     };
     renderCard(postRow({ attachment }));
 
-    expect(screen.getByText("Garchomp vs Onix")).toBeInTheDocument();
+    // The attachment loads lazily (it pulls the Pokémon data layer).
+    expect(await screen.findByText("Garchomp vs Onix")).toBeInTheDocument();
     expect(screen.getByText("Earthquake")).toBeInTheDocument();
     expect(screen.getByText("48.6 - 57.1%")).toBeInTheDocument();
     expect(screen.getByText("102-120 damage")).toBeInTheDocument();
@@ -254,7 +259,7 @@ describe("PostCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the raw KO text when it is not a plain KO summary", () => {
+  it("shows the raw KO text when it is not a plain KO summary", async () => {
     const attachment = {
       kind: "calc-result",
       attacker: "Garchomp",
@@ -271,7 +276,7 @@ describe("PostCard", () => {
     };
     renderCard(postRow({ attachment }));
 
-    expect(screen.getByText("not a KO")).toBeInTheDocument();
+    expect(await screen.findByText("not a KO")).toBeInTheDocument();
   });
 
   it("edits an own post through the overflow menu", async () => {

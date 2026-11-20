@@ -435,9 +435,12 @@ describe("PublicProfilePage", () => {
     expect(screen.getAllByText("@misty")).toHaveLength(1);
     expect(screen.getByText("Water Pokémon master.")).toBeInTheDocument();
     expect(screen.getByText("Joined March 2024")).toBeInTheDocument();
-    expect(screen.getByAltText("Pikachu")).toBeInTheDocument();
+    expect(await screen.findByAltText("Pikachu")).toBeInTheDocument();
     expect(screen.getByText(/Doubles · 2 Pokémon/)).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Garchomp" })).toBeInTheDocument();
+    // The team-member icons load lazily (they pull the Pokémon data layer).
+    expect(
+      await screen.findByRole("img", { name: "Garchomp" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Incineroar" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View" })).toBeInTheDocument();
   });

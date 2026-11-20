@@ -1,15 +1,20 @@
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ProfileBannerTint } from "@/features/profile/profile-banner-tint";
 
 describe("ProfileBannerTint", () => {
-  it("renders a tint band for a known species", () => {
+  it("renders a tint band for a known species", async () => {
     const { container } = render(<ProfileBannerTint avatarSpecies="Pikachu" />);
 
-    const band = container.querySelector('[data-testid="profile-banner-tint"]');
-    expect(band).not.toBeNull();
-    expect(band?.getAttribute("aria-hidden")).toBe("true");
+    // The species lookup loads the Pokémon data layer lazily.
+    await waitFor(() => {
+      const band = container.querySelector(
+        '[data-testid="profile-banner-tint"]',
+      );
+      expect(band).not.toBeNull();
+      expect(band?.getAttribute("aria-hidden")).toBe("true");
+    });
   });
 
   it("renders nothing without an avatar species", () => {
