@@ -16,6 +16,11 @@ import { Page } from "@/components/page";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { SegmentedControl } from "@/components/segmented-control";
+import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+  linkHitClass,
+} from "@/components/touch-targets";
 import { UserAvatar } from "@/components/user-avatar";
 import {
   GroupMemberListSkeleton,
@@ -107,7 +112,7 @@ export function GroupPage() {
           title={t("groups.notFoundTitle")}
           description={t("groups.notFoundDescription")}
           action={
-            <Button asChild size="sm">
+            <Button asChild size="sm" className={buttonSmTouchClass}>
               <Link to="/groups">{t("groups.browse")}</Link>
             </Button>
           }
@@ -231,7 +236,12 @@ function MembershipActions({
 
   if (!user) {
     return (
-      <Button asChild size="sm" variant="outline">
+      <Button
+        asChild
+        size="sm"
+        variant="outline"
+        className={buttonSmTouchClass}
+      >
         <Link to={`/login?returnTo=/g/${slug}`}>
           <LogInIcon aria-hidden />
           {t("groups.signInToJoin")}
@@ -257,12 +267,13 @@ function MembershipActions({
         </span>
         <Button
           size="sm"
-          className={STATE_CHANGE_ENTRANCE}
+          className={`${STATE_CHANGE_ENTRANCE} ${buttonSmTouchClass}`}
           onClick={async () => {
             const result = await acceptInvite.mutateAsync({ groupId });
             if (result.ok) toast.success(t("groups.joinedToast"));
             else toast.error(result.error.message);
           }}
+          loading={acceptInvite.isPending}
           disabled={acceptInvite.isPending}
         >
           <CheckIcon aria-hidden />
@@ -271,12 +282,13 @@ function MembershipActions({
         <Button
           size="sm"
           variant="outline"
-          className={STATE_CHANGE_ENTRANCE}
+          className={`${STATE_CHANGE_ENTRANCE} ${buttonSmTouchClass}`}
           onClick={async () => {
             const result = await declineInvite.mutateAsync({ groupId });
             if (result.ok) toast(t("groups.declinedToast"));
             else toast.error(result.error.message);
           }}
+          loading={declineInvite.isPending}
           disabled={declineInvite.isPending}
         >
           <XIcon aria-hidden />
@@ -291,12 +303,13 @@ function MembershipActions({
       <Button
         size="sm"
         variant="outline"
-        className={STATE_CHANGE_ENTRANCE}
+        className={`${STATE_CHANGE_ENTRANCE} ${buttonSmTouchClass}`}
         onClick={async () => {
           const result = await leaveGroup.mutateAsync({ groupId });
           if (result.ok) toast(t("groups.leftToast"));
           else toast.error(result.error.message);
         }}
+        loading={leaveGroup.isPending}
         disabled={leaveGroup.isPending}
       >
         <UserMinusIcon aria-hidden />
@@ -312,7 +325,7 @@ function MembershipActions({
   return (
     <Button
       size="sm"
-      className={STATE_CHANGE_ENTRANCE}
+      className={`${STATE_CHANGE_ENTRANCE} ${buttonSmTouchClass}`}
       onClick={async () => {
         const result = await joinGroup.mutateAsync({ groupId });
         if (result.ok) {
@@ -322,6 +335,7 @@ function MembershipActions({
           toast.error(result.error.message);
         }
       }}
+      loading={joinGroup.isPending}
       disabled={joinGroup.isPending}
     >
       <UserPlusIcon aria-hidden />
@@ -394,6 +408,7 @@ function GroupFeedTab({
           <Button
             variant="outline"
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => void feed.refetch()}
           >
             {t("common.retry")}
@@ -424,6 +439,7 @@ function GroupFeedTab({
         {feed.hasNextPage && (
           <Button
             variant="outline"
+            className={buttonTouchClass}
             onClick={() => void feed.fetchNextPage()}
             disabled={feed.isFetchingNextPage}
           >
@@ -489,6 +505,7 @@ function MembersTab({
                 aria-label={t("groups.usernameToInvite")}
                 placeholder="username"
                 value={inviteUsername}
+                className="max-sm:h-11"
                 aria-invalid={inviteError ? true : undefined}
                 aria-describedby={inviteError ? "invite-error" : undefined}
                 onChange={(event) => {
@@ -501,6 +518,7 @@ function MembersTab({
               />
               <Button
                 size="sm"
+                className={buttonSmTouchClass}
                 onClick={submitInvite}
                 disabled={inviteMember.isPending}
               >
@@ -595,11 +613,13 @@ function MemberRow({
           />
           <Link
             to={`/u/${member.profile?.username ?? member.userId}`}
-            className="truncate font-medium hover:underline"
+            className={`min-w-0 font-medium hover:underline ${linkHitClass}`}
           >
-            {member.profile?.displayName ??
-              member.profile?.username ??
-              t("groups.memberFallback")}
+            <span className="block truncate">
+              {member.profile?.displayName ??
+                member.profile?.username ??
+                t("groups.memberFallback")}
+            </span>
           </Link>
           <Badge variant="outline" className="capitalize">
             {t(roleLabels[member.role] ?? "groups.roleMember")}
@@ -615,6 +635,7 @@ function MemberRow({
             <Button
               size="xs"
               variant="outline"
+              className={buttonSmTouchClass}
               onClick={async () => {
                 const result = await onSetRole.mutateAsync({
                   groupId,
@@ -629,6 +650,7 @@ function MemberRow({
                   );
                 else toast.error(result.error.message);
               }}
+              loading={onSetRole.isPending}
               disabled={onSetRole.isPending}
             >
               <ShieldCheckIcon aria-hidden />
@@ -640,6 +662,7 @@ function MemberRow({
               <Button
                 size="xs"
                 variant="destructive"
+                className={buttonSmTouchClass}
                 onClick={async () => {
                   const result = await onRemove.mutateAsync({
                     groupId,
@@ -648,6 +671,7 @@ function MemberRow({
                   if (result.ok) toast(t("groups.memberRemovedToast"));
                   else toast.error(result.error.message);
                 }}
+                loading={onRemove.isPending}
                 disabled={onRemove.isPending}
               >
                 <UserMinusIcon aria-hidden />
@@ -773,14 +797,15 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
               <SelectTrigger
                 id="settings-visibility"
                 aria-label={t("groups.visibilityLabel")}
+                className="w-full max-sm:h-11"
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="public">
+                <SelectItem value="public" className="max-sm:py-3">
                   {t("groups.publicOption")}
                 </SelectItem>
-                <SelectItem value="invite_only">
+                <SelectItem value="invite_only" className="max-sm:py-3">
                   {t("groups.inviteOnlyOption")}
                 </SelectItem>
               </SelectContent>
@@ -797,7 +822,12 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
             </p>
           )}
           <div>
-            <Button size="sm" onClick={save} disabled={!canSave}>
+            <Button
+              size="sm"
+              className={buttonSmTouchClass}
+              onClick={save}
+              disabled={!canSave}
+            >
               {updateGroup.isPending && (
                 <LoaderCircleIcon className="animate-spin" aria-hidden />
               )}
@@ -841,6 +871,7 @@ function SettingsTab({ groupId, slug }: { groupId: string; slug: string }) {
             <Button
               size="sm"
               variant="destructive"
+              className={buttonSmTouchClass}
               onClick={deleteTheGroup}
               disabled={!canDelete}
             >

@@ -7,6 +7,10 @@ import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
 import { SegmentedControl } from "@/components/segmented-control";
 import { statLabel } from "@/components/stat-labels";
 import { Button } from "@/components/ui/button";
+import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+} from "@/components/touch-targets";
 import { Input } from "@/components/ui/input";
 import { usePublicTeam } from "@/features/team-builder/public-team";
 import { useT } from "@/lib/i18n/t";
@@ -126,7 +130,7 @@ export function TeamPrintPage() {
         title={t("teams.notFound")}
         description={t("teams.notFoundDescription")}
       >
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className={buttonTouchClass}>
           <Link to="/teams">
             <ArrowLeftIcon aria-hidden />
             {t("teams.backToTeams")}
@@ -149,7 +153,12 @@ export function TeamPrintPage() {
 
       {/* Everything on the page except the sheet is print-hidden. */}
       <section className="grid gap-3 print:hidden">
-        <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className={`-ml-2 w-fit ${buttonSmTouchClass}`}
+        >
           <Link to={`/teams/${team.id}`}>
             <ArrowLeftIcon aria-hidden />
             {t("common.back")}
@@ -190,7 +199,11 @@ export function TeamPrintPage() {
             {t("teams.printPrivacyHint")}
           </p>
           <div>
-            <Button size="sm" onClick={() => window.print()}>
+            <Button
+              size="sm"
+              className={buttonSmTouchClass}
+              onClick={() => window.print()}
+            >
               <PrinterIcon aria-hidden />
               {t("teams.printAction")}
             </Button>

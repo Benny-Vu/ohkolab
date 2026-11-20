@@ -7,6 +7,7 @@ import { Link } from "react-router";
 import { BellIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { iconHitClass } from "@/components/touch-targets";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { formatUnreadBadge } from "@/lib/notifications/badge";
@@ -19,7 +20,7 @@ export function NotificationBell() {
   const badge = user ? formatUnreadBadge(data ?? 0) : "";
 
   return (
-    <Button variant="ghost" size="icon" asChild>
+    <Button variant="ghost" size="icon" asChild className={iconHitClass}>
       <Link
         to="/notifications"
         aria-label={

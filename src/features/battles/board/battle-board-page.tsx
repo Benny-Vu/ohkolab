@@ -6,6 +6,7 @@ import { Page } from "@/components/page";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { SegmentedControl } from "@/components/segmented-control";
+import { buttonSmTouchClass, switchHitClass } from "@/components/touch-targets";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { UserAvatar } from "@/components/user-avatar";
 import { DemoBattleList } from "@/components/demo-battle-list";
@@ -15,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { AvatarListSkeleton, LoadingArea } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { isDemoMode } from "@/lib/demo-mode";
+import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { supabase, type AppSupabaseClient } from "@/lib/supabase";
@@ -70,14 +72,18 @@ export function BattleBoardPage({
     >
       {user === null ? (
         <div className="grid gap-4">
-          <EmptyState
-            title={t("battles.signInToBattle")}
-            action={
-              <Button asChild size="sm">
-                <Link to="/login?returnTo=/battles">{t("common.signIn")}</Link>
-              </Button>
-            }
-          />
+          {/* Full-width strip: one sentence and the sign-in action, so
+              the board below keeps the whole wide layout for its cards. */}
+          <div className="flex flex-col gap-3 rounded-md border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-medium">{t("battles.signInToBattle")}</p>
+            <Button
+              asChild
+              size="sm"
+              className={cn("sm:self-center", buttonSmTouchClass)}
+            >
+              <Link to="/login?returnTo=/battles">{t("common.signIn")}</Link>
+            </Button>
+          </div>
           {isDemoMode() && <DemoBattleList />}
         </div>
       ) : (
@@ -140,6 +146,7 @@ export function BattleBoardPage({
             />
             <span className="flex items-center gap-2 text-sm font-medium">
               <Switch
+                className={switchHitClass}
                 aria-label={t("battles.startingSoon")}
                 checked={filter.startingSoon}
                 onCheckedChange={(checked) =>
@@ -158,6 +165,7 @@ export function BattleBoardPage({
                   <Button
                     variant="outline"
                     size="sm"
+                    className={buttonSmTouchClass}
                     onClick={() => void board.refetch()}
                   >
                     {t("common.retry")}
@@ -182,7 +190,7 @@ export function BattleBoardPage({
                     }
                   />
                 ) : (
-                  <ul className="grid gap-3">
+                  <ul className="grid gap-3 lg:grid-cols-2">
                     {requests.map((summary) => (
                       <li key={summary.request.id}>
                         <BattleCard summary={summary} client={client} />
@@ -231,6 +239,9 @@ function BattleCard({
   const [offered, setOffered] = useState(false);
 
   const { request, author, team } = summary;
+  // Read before the author ternary narrows the type; the fallback line needs
+  // it even when the author did not resolve.
+  const handle = author?.username ?? "?";
   const isOwn = user?.id === request.author_id;
   const showActions = user !== null && !isOwn;
 
@@ -269,20 +280,27 @@ function BattleCard({
         />
         <div className="min-w-0 flex-1">
           {author ? (
+            // The whole name block is the link, so the tap target covers
+            // both lines (design-rules.md: Touch targets).
             <Link
               to={`/u/${author.username}`}
-              className="block truncate text-sm font-medium hover:underline"
+              className="block truncate text-sm font-medium hover:underline max-sm:py-1"
             >
               {author.display_name ?? author.username}
+              <span className="block truncate text-xs font-normal text-muted-foreground">
+                @{author.username}
+              </span>
             </Link>
           ) : (
-            <p className="truncate text-sm font-medium">
-              {t("battles.unknownAuthor")}
-            </p>
+            <>
+              <p className="truncate text-sm font-medium">
+                {t("battles.unknownAuthor")}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                @{handle}
+              </p>
+            </>
           )}
-          <p className="truncate text-xs text-muted-foreground">
-            @{author?.username ?? "?"}
-          </p>
         </div>
         {showActions && (
           <ReportBattleButton requestId={request.id} client={client} />
@@ -330,7 +348,7 @@ function BattleCard({
       {showActions && (
         <>
           <Button
-            className="mt-3"
+            className={`mt-3 ${buttonSmTouchClass}`}
             size="sm"
             variant="outline"
             onClick={() => void handleOffer()}

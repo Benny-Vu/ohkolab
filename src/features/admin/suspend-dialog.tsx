@@ -3,6 +3,7 @@ import { CalendarClockIcon, LoaderCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import {
   Dialog,
   DialogContent,
@@ -95,6 +96,7 @@ export function SuspendDialog({
         <DialogFooter>
           <Button
             variant="outline"
+            className={buttonTouchClass}
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
@@ -104,6 +106,7 @@ export function SuspendDialog({
             <Button
               key={preset.days}
               variant="destructive"
+              className={buttonTouchClass}
               onClick={() => {
                 void suspend(preset.days);
               }}

@@ -95,6 +95,12 @@ export function socialSucceed<T>(data?: T): SocialResult<T | undefined> {
  * - P0A07: too many post images in 24 hours
  * - P0A08: too many new conversations in a day (direct messages)
  * - P0A09: too many messages in a minute (direct messages)
+ * - P0A12: too many follows in a day
+ * - P0A13: too many likes in an hour
+ * - P0A14: too many group joins or invites in a day
+ * - P0A15: too many new teams in a day
+ * - P0A16: too many push token registrations in a day
+ * - P0A17: too many blocks in a day
  */
 const CODE_MAP: Record<string, SocialErrorCode> = {
   P0A01: "rate_limited",
@@ -106,6 +112,12 @@ const CODE_MAP: Record<string, SocialErrorCode> = {
   P0A07: "rate_limited",
   P0A08: "rate_limited",
   P0A09: "rate_limited",
+  P0A12: "rate_limited",
+  P0A13: "rate_limited",
+  P0A14: "rate_limited",
+  P0A15: "rate_limited",
+  P0A16: "rate_limited",
+  P0A17: "rate_limited",
   "22001": "too_long",
   "23514": "invalid_input",
   "42501": "forbidden",

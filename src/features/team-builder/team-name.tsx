@@ -56,7 +56,10 @@ export function TeamName({ name, onRename, className }: TeamNameProps) {
       type="button"
       onClick={startEditing}
       className={cn(
+        // The 44px hit area comes from an inset pseudo-element, so the card
+        // header's rhythm stays the same (design-rules.md: Touch targets).
         "inline-flex min-w-0 items-center gap-1.5 text-left font-heading text-base font-medium transition-colors hover:text-primary",
+        "relative after:absolute after:-inset-x-1 after:-inset-y-2.5 after:content-['']",
         unnamed && "text-muted-foreground",
         className,
       )}

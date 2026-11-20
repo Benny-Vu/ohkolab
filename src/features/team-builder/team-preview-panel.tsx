@@ -5,6 +5,7 @@ import { ExternalLinkIcon, PrinterIcon } from "lucide-react";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { TeamIdChip } from "@/components/team-id-chip";
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import {
   Sheet,
   SheetContent,
@@ -98,12 +99,13 @@ export function TeamPreviewPanel({
           {team.gameTeamId ? <TeamIdChip id={team.gameTeamId} /> : null}
           <TeamPreview team={team} variant="expanded" />
           <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm">
+            <Button asChild size="sm" className={buttonSmTouchClass}>
               <Link to={`/teams/${team.id}`}>{t("teams.open")}</Link>
             </Button>
             <Button
               size="sm"
               variant="outline"
+              className={buttonSmTouchClass}
               disabled={team.members.length === 0}
               onClick={() =>
                 navigate("/calc", { state: { attacker: team.members[0] } })
@@ -127,6 +129,7 @@ export function TeamPreviewPanel({
             <Button
               size="sm"
               variant="outline"
+              className={buttonSmTouchClass}
               onClick={() => void navigate(`/teams/${team.id}/print`)}
             >
               <PrinterIcon aria-hidden />

@@ -139,7 +139,7 @@ export function AnalysisSection({ members }: AnalysisSectionProps) {
       <Warnings members={members} />
       <WeakSpots members={members} />
       <Tabs defaultValue="defense">
-        <TabsList>
+        <TabsList className="max-sm:h-14">
           <TabsTrigger value="defense">{t("teams.defense")}</TabsTrigger>
           <TabsTrigger value="offense">{t("teams.offense")}</TabsTrigger>
         </TabsList>

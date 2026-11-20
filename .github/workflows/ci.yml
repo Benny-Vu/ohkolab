@@ -22,3 +22,36 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+  # Real-browser smoke tests against `vite preview`, in demo mode: no
+  # Supabase writes, no real accounts. Chromium is installed here only —
+  # `npm ci` does not download browsers.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # The smoke tests cover the launched features, so the preview
+          # build mirrors the deploy flags. Turnstile stays off: without
+          # the site key the auth forms work as today, which is the point.
+          VITE_DIRECT_MESSAGES: ${{ vars.VITE_DIRECT_MESSAGES }}
+          VITE_BATTLES: ${{ vars.VITE_BATTLES }}
+      - run: npm run e2e
+      - name: Upload failure screenshots and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failures
+          path: |
+            e2e-results/
+            playwright-report/
+          if-no-files-found: ignore

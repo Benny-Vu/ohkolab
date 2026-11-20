@@ -7,9 +7,10 @@ import { useT } from "@/lib/i18n/t";
 
 /**
  * Sample battle requests for recording mode (?demo=1), shown under the
- * board's sign-in card. Render-only: no offer or overflow actions and no
- * links — nothing here posts or changes data. The rules and notes come from
- * the battles dictionary, so Japanese recordings show Japanese sample
+ * board's sign-in strip in the same two-column grid the real board uses
+ * from lg:. Render-only: no offer or overflow actions and no links —
+ * nothing here posts or changes data. The rules and notes come from the
+ * battles dictionary, so Japanese recordings show Japanese sample
  * content.
  */
 interface DemoBattleFixture {
@@ -57,7 +58,7 @@ const DEMO_BATTLES: DemoBattleFixture[] = [
 export function DemoBattleList() {
   const t = useT();
   return (
-    <ul className="grid gap-3">
+    <ul className="grid gap-3 lg:grid-cols-2">
       {DEMO_BATTLES.map((battle) => (
         <li
           key={battle.username}

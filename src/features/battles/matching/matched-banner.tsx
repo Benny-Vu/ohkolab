@@ -15,6 +15,7 @@ import { CheckIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
@@ -104,11 +105,13 @@ export function MatchedBanner({
             maxLength={CODE_MAX_LENGTH}
             placeholder={t("battles.roomIdPlaceholder")}
             onChange={(event) => setDraft(event.target.value)}
-            className="font-mono"
+            className="font-mono max-sm:h-11"
           />
           <Button
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => void handleSave()}
+            loading={setCode.isPending}
             disabled={setCode.isPending || value.trim().length === 0}
           >
             {t("battles.save")}
@@ -122,7 +125,12 @@ export function MatchedBanner({
         </p>
       </div>
       {directMessagesEnabled() ? (
-        <Button asChild size="sm" variant="outline" className="mt-3">
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className={`mt-3 ${buttonSmTouchClass}`}
+        >
           <Link to="/messages">{t("battles.openMessages")}</Link>
         </Button>
       ) : null}
@@ -130,8 +138,9 @@ export function MatchedBanner({
         <Button
           variant="outline"
           size="sm"
-          className="mt-3"
+          className={`mt-3 ${buttonSmTouchClass}`}
           onClick={() => void handleMarkPlayed()}
+          loading={markPlayed.isPending}
           disabled={markPlayed.isPending}
         >
           {t("battles.markPlayed")}

@@ -5,6 +5,7 @@ import { Picker, type PickerOption } from "@/components/picker";
 import { SegmentedControl } from "@/components/segmented-control";
 import { useDisplayName, type NameKind } from "@/data/display-names";
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass, switchHitClass } from "@/components/touch-targets";
 import {
   Popover,
   PopoverContent,
@@ -202,6 +203,7 @@ function ConditionRows({
             </span>
             <Switch
               size="sm"
+              className={switchHitClass}
               checked={conditions[flag]}
               disabled={disabled}
               onCheckedChange={(on) =>
@@ -328,6 +330,7 @@ function GravityAndTrickRoom({
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm">{gravity}</span>
         <Switch
+          className={switchHitClass}
           checked={state.gravity}
           onCheckedChange={(on) => dispatch({ type: "setGravity", on })}
           aria-label={gravity}
@@ -336,6 +339,7 @@ function GravityAndTrickRoom({
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm">{trickRoom}</span>
         <Switch
+          className={switchHitClass}
           checked={state.trickRoom}
           onCheckedChange={(on) => dispatch({ type: "setTrickRoom", on })}
           aria-label={trickRoom}
@@ -364,7 +368,12 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
       {SIDE_IDS.map((side) => (
         <Popover key={side}>
           <PopoverTrigger asChild>
-            <Button type="button" variant="outline" size="sm">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={buttonSmTouchClass}
+            >
               {calcSideLabel(t, side)} ·{" "}
               {activeConditionsText(state.fieldSides[side], t, displayName)}
             </Button>
@@ -380,7 +389,12 @@ export function FieldBar({ state, dispatch }: FieldBarProps) {
       ))}
       <Popover>
         <PopoverTrigger asChild>
-          <Button type="button" variant="outline" size="sm">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={buttonSmTouchClass}
+          >
             {t("calc.moreConditions")}
           </Button>
         </PopoverTrigger>

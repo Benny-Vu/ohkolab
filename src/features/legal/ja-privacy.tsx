@@ -33,7 +33,7 @@ export function JaPrivacySections({
           OHKOLab は Vu Forge（Benny Vu）が運営しています。お問い合わせは{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             {CONTACT_EMAIL}
           </a>{" "}
@@ -224,14 +224,14 @@ export function JaPrivacySections({
           内でホスト）に送信されます（上記参照）。それぞれのプライバシーポリシーは{" "}
           <a
             href="https://sentry.io/privacy/"
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             sentry.io/privacy
           </a>{" "}
           と{" "}
           <a
             href="https://posthog.com/privacy/"
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             posthog.com/privacy
           </a>{" "}
@@ -241,7 +241,7 @@ export function JaPrivacySections({
           へのブラウザーのリクエスト（IPアドレスを含む）を処理します（
           <a
             href="https://www.cloudflare.com/privacypolicy/"
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             Cloudflare のプライバシーポリシー
           </a>
@@ -254,7 +254,7 @@ export function JaPrivacySections({
               のプライバシーポリシーは{" "}
               <a
                 href="https://openai.com/policies/row-privacy-policy/"
-                className="text-primary underline underline-offset-4"
+                className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
               >
                 openai.com
               </a>
@@ -274,7 +274,7 @@ export function JaPrivacySections({
           {" "}
           <Link
             to="/profile"
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             プロフィールページ
           </Link>{" "}
@@ -289,7 +289,7 @@ export function JaPrivacySections({
           手順は
           <Link
             to="/delete-account"
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             アカウント削除ページ
           </Link>
@@ -309,14 +309,14 @@ export function JaPrivacySections({
           あなたのデータについてのご質問は{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             {CONTACT_EMAIL}
           </a>{" "}
           まで。{" "}
           <Link
             to="/terms"
-            className="text-primary underline underline-offset-4"
+            className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
           >
             利用規約
           </Link>{" "}

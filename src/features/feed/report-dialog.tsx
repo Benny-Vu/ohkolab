@@ -3,6 +3,7 @@ import { LoaderCircleIcon, MailIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass } from "@/components/touch-targets";
 import {
   Dialog,
   DialogContent,
@@ -139,11 +140,12 @@ export function ReportDialog({
             <Button
               type="button"
               variant="outline"
+              className={buttonTouchClass}
               onClick={() => onOpenChange(false)}
             >
               {t("common.cancel")}
             </Button>
-            <Button type="button" asChild>
+            <Button type="button" asChild className={buttonTouchClass}>
               <a
                 href={`mailto:contact@ohkolab.com?subject=${subject}&body=${body}`}
               >
@@ -179,6 +181,7 @@ export function ReportDialog({
               <SelectTrigger
                 id="report-reason"
                 aria-label={t("report.reasonAria")}
+                className="w-full max-sm:h-11"
               >
                 <SelectValue
                   placeholder={t("report.chooseReasonPlaceholder")}
@@ -186,7 +189,11 @@ export function ReportDialog({
               </SelectTrigger>
               <SelectContent>
                 {REPORT_REASONS.map((candidate) => (
-                  <SelectItem key={candidate} value={candidate}>
+                  <SelectItem
+                    key={candidate}
+                    value={candidate}
+                    className="max-sm:py-3"
+                  >
                     {t(REASON_LABELS[candidate])}
                   </SelectItem>
                 ))}
@@ -220,6 +227,7 @@ export function ReportDialog({
           <Button
             type="button"
             variant="outline"
+            className={buttonTouchClass}
             onClick={() => onOpenChange(false)}
             disabled={createReport.isPending}
           >
@@ -227,6 +235,7 @@ export function ReportDialog({
           </Button>
           <Button
             type="button"
+            className={buttonTouchClass}
             onClick={submit}
             disabled={createReport.isPending}
             aria-describedby={error ? "report-error" : undefined}

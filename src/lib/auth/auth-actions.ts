@@ -48,7 +48,12 @@ import { isNativeApp } from "@/lib/platform";
  * fake client. No action throws: each resolves to an `AuthResult`.
  */
 export interface AuthActions {
-  signInWithPassword(email: string, password: string): Promise<AuthResult>;
+  signInWithPassword(
+    email: string,
+    password: string,
+    /** Turnstile token, when the form shows the widget. */
+    captchaToken?: string,
+  ): Promise<AuthResult>;
   signUp(
     input: SignUpInput & { returnTo?: string },
   ): Promise<AuthResult<SignUpOutcome>>;
@@ -57,7 +62,11 @@ export interface AuthActions {
     returnTo?: string,
   ): Promise<AuthResult>;
   signOut(): Promise<AuthResult>;
-  requestPasswordReset(email: string): Promise<AuthResult>;
+  requestPasswordReset(
+    email: string,
+    /** Turnstile token, when the form shows the widget. */
+    captchaToken?: string,
+  ): Promise<AuthResult>;
   updatePassword(newPassword: string): Promise<AuthResult>;
   /** Resolves to null data when the user has no profile row. */
   fetchProfile(userId: string): Promise<AuthResult<Profile | null>>;
@@ -281,7 +290,7 @@ export function createAuthActions(
   };
 
   return {
-    signInWithPassword: (email, password) =>
+    signInWithPassword: (email, password, captchaToken) =>
       attempt(async () => {
         const cleanEmail = normalizeEmail(email);
         const emailError = validateEmail(cleanEmail);
@@ -294,11 +303,14 @@ export function createAuthActions(
         const { error } = await client.auth.signInWithPassword({
           email: cleanEmail,
           password,
+          // Supabase verifies the token server-side once CAPTCHA is switched
+          // on; without one there is nothing to check and sign-in is unchanged.
+          ...(captchaToken ? { options: { captchaToken } } : {}),
         });
         return error ? { ok: false, error: describeError(error) } : succeed();
       }),
 
-    signUp: ({ email, password, acceptedTerms, returnTo }) =>
+    signUp: ({ email, password, acceptedTerms, captchaToken, returnTo }) =>
       attempt(async () => {
         const cleanEmail = normalizeEmail(email);
         const emailError = validateEmail(cleanEmail);
@@ -322,6 +334,7 @@ export function createAuthActions(
           password,
           options: {
             emailRedirectTo: getAuthCallbackUrl(),
+            ...(captchaToken ? { captchaToken } : {}),
             // A record of what the user confirmed, kept with their account.
             data: {
               age_13_or_older: true,
@@ -396,7 +409,7 @@ export function createAuthActions(
           : { ok: false, error: described };
       }),
 
-    requestPasswordReset: (email) =>
+    requestPasswordReset: (email, captchaToken) =>
       attempt(async () => {
         const cleanEmail = normalizeEmail(email);
         const emailError = validateEmail(cleanEmail);
@@ -405,6 +418,7 @@ export function createAuthActions(
         rememberReturnTo(RESET_PASSWORD_PATH);
         const { error } = await client.auth.resetPasswordForEmail(cleanEmail, {
           redirectTo: getAuthCallbackUrl(),
+          ...(captchaToken ? { captchaToken } : {}),
         });
         return error ? { ok: false, error: describeError(error) } : succeed();
       }),

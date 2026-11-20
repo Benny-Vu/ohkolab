@@ -34,6 +34,8 @@ export const accountJa: { [K in AccountKey]: string } = {
   "login.termsJoin": "と",
   "login.privacyLink": "プライバシーポリシー",
   "login.termsSuffix": "に同意します。",
+  "login.captchaFailed":
+    "セキュリティチェックを読み込めませんでした。接続を確認するか、challenges.cloudflare.com を許可してから、もう一度お試しください。",
 
   // パスワードリセット。
   "reset.title": "新しいパスワードを設定",
