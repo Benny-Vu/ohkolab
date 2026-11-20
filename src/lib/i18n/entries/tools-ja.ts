@@ -227,6 +227,7 @@ export const toolsJa: { [K in ToolsKey]: string } = {
 
   // 環境：使用率ランキング。
   "meta.battles": "{count}バトル",
+  "meta.dataBadge": "レギュ {regulation}・使用率データは{updated}",
   "meta.regulation": "レギュレーション",
   "meta.usageRanking": "使用率ランキング",
   "meta.searchPokemon": "ポケモンを検索",

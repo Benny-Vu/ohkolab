@@ -27,7 +27,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { ROW_ENTRANCE, staggerDelay } from "@/lib/motion/entrance";
 import { useAuth } from "@/lib/auth/use-auth";
 import { isPushAvailable } from "@/lib/push/flag";
-import { formatRelativeTime } from "@/features/feed/relative-time";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { useT } from "@/lib/i18n/t";
 import {
   useNotifications,

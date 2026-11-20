@@ -68,7 +68,7 @@ import { useIsModerator } from "@/lib/social/queries";
 import { usePostImages, visiblePostImages } from "@/lib/social/images";
 import { POST_BODY_MAX } from "@/lib/social/validation";
 import type { FeedPostRow, PostImageRow } from "@/lib/database.types";
-import { formatRelativeTime } from "@/features/feed/relative-time";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { PostImageGrid } from "@/features/feed/post-images";
 import {
   parseCalcResultAttachment,

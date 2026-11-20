@@ -229,6 +229,7 @@ export const toolsEn = {
 
   // Metagame: ranking table.
   "meta.battles": "{count} battles",
+  "meta.dataBadge": "Reg {regulation} · usage updated {updated}",
   "meta.regulation": "Regulation",
   "meta.usageRanking": "Usage ranking",
   "meta.searchPokemon": "Search Pokémon",

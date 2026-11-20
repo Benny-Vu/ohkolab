@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatRelativeTime } from "@/features/feed/relative-time";
+import { formatRelativeTime } from "@/lib/relative-time";
 
 const NOW = new Date("2026-06-15T12:00:00Z");
 

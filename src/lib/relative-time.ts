@@ -6,6 +6,7 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const WEEK = 7 * DAY;
 
+/** "2 hours ago" in the active locale, for timestamps shown to people. */
 export function formatRelativeTime(
   iso: string,
   now: Date = new Date(),
