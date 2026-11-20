@@ -96,7 +96,7 @@ export function AccountMenu({ variant }: AccountMenuProps) {
         }
       >
         <LogInIcon aria-hidden className="size-5" />
-        {t("common.signIn")}
+        <span className="max-w-full truncate px-0.5">{t("common.signIn")}</span>
       </NavLink>
     );
   }
@@ -133,7 +133,7 @@ export function AccountMenu({ variant }: AccountMenuProps) {
           <DropdownMenuTrigger
             aria-label={t("account.menuAria")}
             className={cn(
-              "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 font-medium text-muted-foreground hover:text-foreground aria-expanded:text-primary",
+              "flex h-full w-full min-w-0 flex-col items-center justify-center gap-0.5 font-medium text-muted-foreground hover:text-foreground aria-expanded:text-primary",
               tabLabelSizeClass(locale),
             )}
           >
