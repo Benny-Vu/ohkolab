@@ -18,7 +18,7 @@ import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 export const DISMISSED_KEY = "ohkolab.birth-date-dismissed";
 
 /** The smallest age allowed on the platform; under 18 is a "minor". */
-export const MINIMUM_AGE = 16;
+const MINIMUM_AGE = 16;
 
 export interface BirthDateResult {
   ok: boolean;

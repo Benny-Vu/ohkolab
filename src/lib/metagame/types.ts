@@ -2,7 +2,7 @@ import type { BattleFormat } from "@/types/battle";
 import type { StatsTable } from "@/types/pokemon";
 
 /** Where a metagame snapshot's numbers come from. */
-export interface MetagameSource {
+interface MetagameSource {
   id: "showdown-ladder";
   label: string;
   url: string;

@@ -19,7 +19,7 @@ import {
 } from "@/lib/social/suggestion-dismissals";
 
 /** How many suggestions the RPC returns. */
-export const FOLLOW_SUGGESTION_LIMIT = 10;
+const FOLLOW_SUGGESTION_LIMIT = 10;
 
 /** The query key prefix for follow suggestions; the user id is appended. */
 export const FOLLOW_SUGGESTIONS_QUERY_KEY = [

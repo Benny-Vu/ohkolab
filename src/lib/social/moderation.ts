@@ -47,8 +47,8 @@ import {
 export const APPEAL_MESSAGE_MIN = 1;
 export const APPEAL_MESSAGE_MAX = 1000;
 
-export const APPEAL_DECISIONS = ["upheld", "reversed"] as const;
-export type AppealDecision = (typeof APPEAL_DECISIONS)[number];
+const APPEAL_DECISIONS = ["upheld", "reversed"] as const;
+type AppealDecision = (typeof APPEAL_DECISIONS)[number];
 
 /** 100 years: the "permanent" suspension duration. */
 export const PERMANENT_SUSPENSION_DAYS = 36_500;
@@ -99,7 +99,7 @@ export interface SuspendUserInput {
  * A moderation reason: trimmed, 1 to 500 characters. The database records it
  * in moderation_actions and the affected user sees it with a link to appeal.
  */
-export type ModerationReason = string;
+type ModerationReason = string;
 
 /** Sets a report to "actioned" or "dismissed". Moderators only. */
 export function useHandleReport(

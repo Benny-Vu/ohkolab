@@ -8,7 +8,7 @@ import { NotFoundPage } from "@/features/system/not-found-page";
 import type { AuthContextValue, Profile, User } from "@/lib/auth/types";
 import { AuthContext, GUEST_AUTH } from "@/lib/auth/use-auth";
 
-export const TEST_USER = {
+const TEST_USER = {
   id: "user-1",
   email: "ash@example.com",
   app_metadata: {},
@@ -17,7 +17,7 @@ export const TEST_USER = {
   created_at: "2024-01-01T00:00:00Z",
 } as unknown as User;
 
-export const TEST_PROFILE: Profile = {
+const TEST_PROFILE: Profile = {
   id: "user-1",
   username: "ashketchum",
   displayName: "Ash",

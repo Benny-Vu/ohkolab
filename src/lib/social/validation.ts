@@ -6,15 +6,15 @@ import { t } from "@/lib/i18n/t";
  * Keep in sync with supabase/migrations/20261117100000_social_foundation.sql.
  */
 
-export const POST_BODY_MIN = 1;
+const POST_BODY_MIN = 1;
 export const POST_BODY_MAX = 2000;
 
-export const COMMENT_BODY_MIN = 1;
+const COMMENT_BODY_MIN = 1;
 export const COMMENT_BODY_MAX = 1000;
 
 export const REPORT_DETAILS_MAX = 500;
 
-export const SUSPENSION_REASON_MIN = 1;
+const SUSPENSION_REASON_MIN = 1;
 export const SUSPENSION_REASON_MAX = 500;
 
 export const MODERATION_REASON_MIN = 1;
@@ -23,7 +23,7 @@ export const MODERATION_REASON_MAX = 500;
 /** Maximum size of a post attachment, in bytes, measured on its JSON text. */
 export const ATTACHMENT_MAX_BYTES = 8192;
 
-export const REPORT_TARGET_TYPES = ["post", "comment", "profile"] as const;
+const REPORT_TARGET_TYPES = ["post", "comment", "profile"] as const;
 export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 
 export const REPORT_REASONS = [
@@ -34,15 +34,13 @@ export const REPORT_REASONS = [
 ] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];
 
-export const REPORT_STATUSES = ["open", "actioned", "dismissed"] as const;
-export type ReportStatus = (typeof REPORT_STATUSES)[number];
+export type ReportStatus = "open" | "actioned" | "dismissed";
 
 /**
  * The languages a post can be tagged with, mirroring the posts check
  * constraint. Null means untagged (pre-tag posts).
  */
-export const POST_LANGUAGES = ["en", "ja"] as const;
-export type PostLanguage = (typeof POST_LANGUAGES)[number];
+export type PostLanguage = "en" | "ja";
 
 /** Narrows an unknown value to a PostLanguage; anything else is untagged. */
 export function asPostLanguage(

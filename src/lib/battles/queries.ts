@@ -146,35 +146,6 @@ export function useMyBattleRequests(
   });
 }
 
-/** One request by id, with its author and attached team. */
-export function useBattleRequest(
-  requestId: string,
-  client: AppSupabaseClient | null = supabase,
-) {
-  return useQuery<BattleRequestSummary | null>({
-    queryKey: ["battles", "request", requestId],
-    enabled: battlesEnabled() && client !== null && requestId !== "",
-    retry: false,
-    queryFn: async () => {
-      const { data, error } = await client!
-        .from("battle_requests")
-        .select(REQUEST_COLUMNS)
-        .eq("id", requestId)
-        .maybeSingle();
-      if (error) {
-        return softEmpty(error, null);
-      }
-      const row = (data ?? null) as unknown as BattleRequestLite | null;
-      if (row === null) {
-        return null;
-      }
-      const authors = await fetchAuthors(client!, [row]);
-      const teams = await fetchTeams(client!, [row]);
-      return summarizeBattleRequests([row], authors, teams)[0] ?? null;
-    },
-  });
-}
-
 /** The offers on one request, with each responder's profile (author view). */
 export function useBattleReplies(
   requestId: string,

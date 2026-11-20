@@ -4,11 +4,7 @@
  * surface mapped SocialFailure errors for anything else.
  */
 
-import {
-  useQuery,
-  type QueryKey,
-  type UseQueryResult,
-} from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 
 import { useAuth } from "@/lib/auth/use-auth";
 import type { GroupMemberRow, GroupRow } from "@/lib/database.types";
@@ -49,13 +45,13 @@ export const GROUP_QUERY_KEYS = {
 };
 
 /** How many groups the Discover tab loads per search. */
-export const GROUPS_PAGE_SIZE = 50;
+const GROUPS_PAGE_SIZE = 50;
 
 /**
  * Group lists change slowly and every membership mutation invalidates
  * the prefixes anyway, so ten minutes of staleTime costs nothing.
  */
-export const GROUPS_STALE_TIME = 10 * 60 * 1000;
+const GROUPS_STALE_TIME = 10 * 60 * 1000;
 
 /** A group as the screens show it, with the viewer's own membership resolved. */
 export interface GroupSummary {
@@ -142,7 +138,7 @@ export function usePublicGroups(
 }
 
 /** Loads the Discover directory: public groups with their member counts. */
-export async function fetchDiscoverGroups(
+async function fetchDiscoverGroups(
   client: AppSupabaseClient,
 ): Promise<DiscoverGroup[]> {
   const { data: groupRows, error: groupError } = await client
@@ -440,5 +436,3 @@ export function useGroupMemberCount(
     retry: false,
   });
 }
-
-export type GroupQueryKey = QueryKey;

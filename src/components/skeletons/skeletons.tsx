@@ -34,7 +34,7 @@ export function TextLinesSkeleton({ lines = 2 }: { lines?: number }) {
 }
 
 /** One avatar plus two text lines, for follower/member lists (`p-2` rows). */
-export function AvatarRowSkeleton() {
+function AvatarRowSkeleton() {
   return (
     <div className="flex items-center gap-3 p-2" aria-hidden="true">
       <Skeleton className="size-7 shrink-0 rounded-full" />
@@ -100,7 +100,7 @@ export function PostListSkeleton({
 }
 
 /** One comment row, mirroring the comment list items on a post's page. */
-export function CommentRowSkeleton() {
+function CommentRowSkeleton() {
   return (
     <div className="rounded-md border bg-card p-3" aria-hidden="true">
       <div className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export function CommentListSkeleton({ count = 2 }: { count?: number }) {
 }
 
 /** One group card, mirroring `GroupCard` on the groups page. */
-export function GroupCardSkeleton() {
+function GroupCardSkeleton() {
   return (
     <div className="rounded-md border bg-card p-4" aria-hidden="true">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -150,7 +150,7 @@ export function GroupListSkeleton({ count = 3 }: { count?: number }) {
 }
 
 /** One group member row, mirroring the members tab rows. */
-export function GroupMemberRowSkeleton() {
+function GroupMemberRowSkeleton() {
   return (
     <div className="flex items-center gap-3 p-2" aria-hidden="true">
       <Skeleton className="size-9 shrink-0 rounded-full" />
@@ -191,7 +191,7 @@ export function GroupPageSkeleton() {
 }
 
 /** The profile header card, mirroring `ProfileHeader`. */
-export function ProfileHeaderSkeleton() {
+function ProfileHeaderSkeleton() {
   return (
     <Card size="sm" aria-hidden="true">
       <CardContent className="grid gap-4">
@@ -226,7 +226,7 @@ export function ProfilePageSkeleton() {
 }
 
 /** One team card, mirroring the cards on the teams page. */
-export function TeamCardSkeleton({ slots = 6 }: { slots?: number }) {
+function TeamCardSkeleton({ slots = 6 }: { slots?: number }) {
   return (
     <Card size="sm" className="flex flex-col" aria-hidden="true">
       <CardHeader>
@@ -288,7 +288,7 @@ export function TeamMemberRowSkeleton() {
 }
 
 /** One notification row, mirroring `NotificationRowCard`. */
-export function NotificationRowSkeleton() {
+function NotificationRowSkeleton() {
   return (
     <div
       className="flex items-start gap-3 rounded-md border bg-card p-4"
@@ -316,7 +316,7 @@ export function NotificationListSkeleton({ count = 3 }: { count?: number }) {
 }
 
 /** One conversation row, mirroring `ConversationRow` on the messages page. */
-export function ConversationRowSkeleton() {
+function ConversationRowSkeleton() {
   return (
     <div
       className="flex items-center gap-3 rounded-md border bg-card p-3"

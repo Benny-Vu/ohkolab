@@ -2,7 +2,7 @@ import { calcStat } from "@/data";
 import { resolveUsageSpecies } from "@/lib/metagame/species";
 import type { PokemonUsage } from "@/lib/metagame/types";
 
-export interface SpeedTierEntry {
+interface SpeedTierEntry {
   nature: string;
   speedStatPoints: number;
   share: number;

@@ -18,12 +18,6 @@ export interface DiscoverFilters {
   language: GroupLanguage | null;
 }
 
-export const NO_DISCOVER_FILTERS: DiscoverFilters = {
-  search: "",
-  category: null,
-  language: null,
-};
-
 /**
  * Keeps the groups whose name or address contains the search term
  * (case-insensitive) and that match the category and language filters.

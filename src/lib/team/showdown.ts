@@ -130,7 +130,7 @@ export function exportTeam(
 const GAME_TEAM_ID_PREFIX = "// Champions team ID:";
 
 /** Reads the `// Champions team ID: XXXXXXXXXX` comment out of export text. */
-export function readGameTeamIdFromText(text: string): string | null {
+function readGameTeamIdFromText(text: string): string | null {
   for (const line of text.split("\n")) {
     const trimmed = line.trim();
     if (trimmed.startsWith(GAME_TEAM_ID_PREFIX)) {

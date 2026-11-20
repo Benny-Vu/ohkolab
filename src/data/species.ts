@@ -1,7 +1,7 @@
 import { Dex, gen, toID } from "@/data/gen";
 import type { StatsTable, TypeName } from "@/types/pokemon";
 
-export interface MegaOption {
+interface MegaOption {
   /** The Mega Stone that triggers the evolution, e.g. "Garchompite". */
   stone: string;
   /** The resulting forme, e.g. "Garchomp-Mega". */

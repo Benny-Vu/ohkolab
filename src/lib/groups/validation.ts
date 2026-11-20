@@ -13,7 +13,7 @@ export const GROUP_SLUG_MAX = 40;
 export const GROUP_NAME_MAX = 60;
 export const GROUP_DESCRIPTION_MAX = 500;
 
-export const GROUP_VISIBILITIES = ["public", "invite_only"] as const;
+const GROUP_VISIBILITIES = ["public", "invite_only"] as const;
 export type GroupVisibility = (typeof GROUP_VISIBILITIES)[number];
 
 /** Group categories for discovery, mirroring the groups.category check. */
@@ -29,15 +29,9 @@ export type GroupCategory = (typeof GROUP_CATEGORIES)[number];
 export const GROUP_LANGUAGES = ["en", "ja"] as const;
 export type GroupLanguage = (typeof GROUP_LANGUAGES)[number];
 
-export const GROUP_ROLES = ["owner", "moderator", "member"] as const;
-export type GroupRole = (typeof GROUP_ROLES)[number];
+export type GroupRole = "owner" | "moderator" | "member";
 
-export const GROUP_MEMBER_STATUSES = [
-  "active",
-  "invited",
-  "requested",
-] as const;
-export type GroupMemberStatus = (typeof GROUP_MEMBER_STATUSES)[number];
+export type GroupMemberStatus = "active" | "invited" | "requested";
 
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
 

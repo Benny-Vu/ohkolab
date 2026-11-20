@@ -4,7 +4,7 @@
  * unless VITE_TELEMETRY_IN_DEV=true.
  */
 
-export interface TelemetryEnv {
+interface TelemetryEnv {
   MODE?: string;
   VITE_SENTRY_DSN?: string;
   VITE_POSTHOG_KEY?: string;
@@ -41,7 +41,7 @@ function readKey(value: string | undefined): string | null {
   return trimmed ? trimmed : null;
 }
 
-export function readTelemetryConfig(env: TelemetryEnv): TelemetryConfig {
+function readTelemetryConfig(env: TelemetryEnv): TelemetryConfig {
   if (env.MODE === "test") {
     return DISABLED;
   }
@@ -69,7 +69,7 @@ export function readTelemetryConfig(env: TelemetryEnv): TelemetryConfig {
   };
 }
 
-export const telemetryConfig = readTelemetryConfig(import.meta.env);
+const telemetryConfig = readTelemetryConfig(import.meta.env);
 
 let override: TelemetryConfig | null = null;
 

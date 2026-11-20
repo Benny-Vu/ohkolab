@@ -17,7 +17,7 @@
 export type ShareCardFormat = "1080x1920" | "1200x630";
 
 /** Which surface the card was saved from. */
-export type ShareCardKind = "team" | "calc" | "post";
+type ShareCardKind = "team" | "calc" | "post";
 
 /** What the card shows. Localized by the call site; this module never translates. */
 export interface ShareCardContent {
@@ -35,7 +35,7 @@ export interface ShareCardContent {
 }
 
 /** An embedded font, as a `data:` URI; null keeps the family's fallbacks. */
-export type EmbeddedFont = string | null;
+type EmbeddedFont = string | null;
 
 /** The fonts a card can embed (fetched once and cached by `assets.ts`). */
 export interface ShareCardFonts {
@@ -143,7 +143,7 @@ const LANDSCAPE: CardLayout = {
 };
 
 /** The layout of one output format. */
-export function cardLayout(format: ShareCardFormat): CardLayout {
+function cardLayout(format: ShareCardFormat): CardLayout {
   return format === "1080x1920" ? TALL : LANDSCAPE;
 }
 

@@ -18,7 +18,7 @@ import type { MoveCategory, TypeName } from "@/types/pokemon";
  * - "status": a status move; there is nothing to calculate.
  * - "error": the move or a Pokémon is unknown to the calc.
  */
-export type MoveOutcomeKind = "damage" | "none" | "status" | "error";
+type MoveOutcomeKind = "damage" | "none" | "status" | "error";
 
 export interface MoveOutcome {
   /** Index of the move in the attacker's four slots. */
@@ -154,15 +154,6 @@ export interface RemainingHp {
 
 function percentOf(amount: number, max: number): number {
   return max > 0 ? Math.round((amount / max) * 1000) / 10 : 0;
-}
-
-/**
- * Current HP of a Pokémon at `hpPercent` of `maxHp`, rounded the way the
- * damage function rounds it: never below 1.
- */
-export function currentHp(maxHp: number, hpPercent: number): number {
-  const percent = Math.min(MAX_HP_PERCENT, Math.max(MIN_HP_PERCENT, hpPercent));
-  return Math.max(1, Math.round((maxHp * percent) / 100));
 }
 
 /** The HP range a defender at `hpPercent` is left with after taking a hit. */
