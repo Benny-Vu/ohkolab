@@ -14,7 +14,7 @@ const INDEX_PATH = "/data/metagame/index.json";
  * The committed JSON is regenerated at most monthly and never changes
  * in place, so the browser cache and a day of staleTime carry it.
  */
-export const METAGAME_STALE_TIME = 24 * 60 * 60 * 1000;
+const METAGAME_STALE_TIME = 24 * 60 * 60 * 1000;
 
 async function fetchJson(path: string): Promise<unknown> {
   const response = await fetch(path);

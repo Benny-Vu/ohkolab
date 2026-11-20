@@ -7,7 +7,7 @@ import type { PokemonSet } from "@/types/pokemon";
 import { MAX_TEAM_SIZE } from "@/types/team";
 
 /** The team shape the preview needs: just the members, in team order. */
-export interface TeamPreviewTeam {
+interface TeamPreviewTeam {
   members: PokemonSet[];
 }
 

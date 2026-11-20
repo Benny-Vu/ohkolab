@@ -12,7 +12,7 @@ export type Translate = (
  * Stat labels as translation keys. `STAT_LABELS` in `@/types/pokemon` stays
  * English (other features use it); the tools features display these instead.
  */
-export const STAT_LABEL_KEYS: Record<StatId, TranslationKey> = {
+const STAT_LABEL_KEYS: Record<StatId, TranslationKey> = {
   hp: "calc.statHp",
   atk: "calc.statAtk",
   def: "calc.statDef",
