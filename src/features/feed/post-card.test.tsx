@@ -339,7 +339,7 @@ describe("PostCard", () => {
     await user.click(screen.getByRole("combobox", { name: "Report reason" }));
     await user.click(await screen.findByRole("option", { name: "Spam" }));
     await user.click(
-      await screen.findByRole("button", { name: /submit report/i }),
+      await screen.findByRole("button", { name: /send report/i }),
     );
 
     await waitFor(() =>

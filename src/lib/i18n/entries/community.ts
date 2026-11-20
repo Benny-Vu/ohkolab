@@ -188,7 +188,7 @@ export const communityEn = {
   "report.detailsLabel": "Details (optional)",
   "report.detailsPlaceholder":
     "Anything that helps moderators understand the report.",
-  "report.submit": "Submit report",
+  "report.submit": "Send report",
   "report.sent": "Report sent. Our moderators will take a look.",
   "report.reasonSpam": "Spam",
   "report.reasonHarassment": "Harassment or bullying",
@@ -504,7 +504,7 @@ export const communityEn = {
     "Explain why you think this action was wrong. A moderator will review your appeal.",
   "moderation.appealAria": "Appeal message",
   "moderation.appealPlaceholder": "Why should this decision be reconsidered?",
-  "moderation.submitAppeal": "Submit appeal",
+  "moderation.submitAppeal": "Send appeal",
   "moderation.reasonLabel": "Reason:",
   "moderation.removedContent": "Removed content",
   "moderation.suspension": "Suspension",

@@ -293,7 +293,7 @@ describe("BattleBoardPage", () => {
 
     await user.click(screen.getByRole("combobox", { name: /reason/i }));
     await user.click(await screen.findByRole("option", { name: "Spam" }));
-    await user.click(screen.getByRole("button", { name: /submit report/i }));
+    await user.click(screen.getByRole("button", { name: /send report/i }));
 
     await waitFor(() => {
       const insert = fake.records.find(

@@ -59,7 +59,7 @@ describe("ReportDialog", () => {
 
     await user.click(screen.getByRole("combobox", { name: /report reason/i }));
     await user.click(screen.getByRole("option", { name: /spam/i }));
-    await user.click(screen.getByRole("button", { name: /submit report/i }));
+    await user.click(screen.getByRole("button", { name: /send report/i }));
 
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
