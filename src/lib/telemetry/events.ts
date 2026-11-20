@@ -28,6 +28,7 @@ export type TelemetryEvent =
   | "group_joined"
   | "feedback_sent"
   | "link_shared"
+  | "share_card_saved"
   | "theme_changed";
 
 export type SearchKind = "pokemon" | "move" | "item" | "page";
@@ -69,6 +70,12 @@ export interface EventProperties {
   group_joined: { visibility: string };
   feedback_sent: { kind: FeedbackEventKind };
   link_shared: { kind: SharedLinkKind };
+  /** What was rendered to PNG, and in which format and language. */
+  share_card_saved: {
+    kind: "team" | "calc" | "post";
+    format: "1080x1920" | "1200x630";
+    language: "en" | "ja";
+  };
   theme_changed: { theme: "dark" | "light" };
 }
 
