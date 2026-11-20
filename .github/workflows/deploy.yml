@@ -44,6 +44,10 @@ jobs:
           # The battle finder is on only when the repository variable
           # VITE_BATTLES is "true".
           VITE_BATTLES: ${{ vars.VITE_BATTLES }}
+          # Cloudflare Turnstile: sign-up, sign-in and password reset show
+          # the widget only when the repository variable
+          # VITE_TURNSTILE_SITE_KEY is set.
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
           # SENTRY_AUTH_TOKEN gates the source-map upload plugin in
           # vite.config.ts; SENTRY_ORG and SENTRY_PROJECT target it.
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

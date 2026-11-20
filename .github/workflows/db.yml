@@ -1482,6 +1482,181 @@ jobs:
           $exp$;
           SQL
 
+      # Exercises the write rate limits migration (20261122230000): every
+      # table is seeded exactly at its limit inside the counting window,
+      # so one more insert must raise its errcode. wl_a and wl_b are the
+      # two real users; 120 throwaway accounts serve as followees, block
+      # targets and group filler. Every failure raises with RATE-CHECK.
+      - name: Write rate limits
+        env:
+          DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          -- Setup, as postgres. The accounts are 4 days old with confirmed
+          -- emails; profiles are created by the usual trigger.
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+          values
+            ('11000000-0000-4000-8000-00000000000a', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'wl-a@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()),
+            ('11000000-0000-4000-8000-00000000000b', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'wl-b@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now());
+          insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
+          select ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+                 'wl-x-' || g || '@example.com', 'x', now() - interval '4 days', now() - interval '4 days', now()
+          from generate_series(1, 120) g;
+          insert into public.profile_birth_dates (user_id, birth_date)
+          values
+            ('11000000-0000-4000-8000-00000000000a', '1990-01-01'),
+            ('11000000-0000-4000-8000-00000000000b', '1990-01-01');
+
+          -- Each seed sits exactly at its limit inside the window.
+          -- follows: 100 in the last hour (limit 100/day).
+          insert into public.follows (follower_id, followee_id, created_at)
+          select '11000000-0000-4000-8000-00000000000a',
+                 ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 now() - interval '30 minutes'
+          from generate_series(1, 100) g;
+          -- blocks: 100 in the last hour (limit 100/day).
+          insert into public.blocks (blocker_id, blocked_id, created_at)
+          select '11000000-0000-4000-8000-00000000000a',
+                 ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 now() - interval '30 minutes'
+          from generate_series(1, 100) g;
+          -- post_likes: 301 back-dated posts (author wl_a, outside the
+          -- posts-per-10-minutes window) and 300 likes in the last hour
+          -- (limit 300/hour), leaving one post for the failing like.
+          insert into public.posts (id, author_id, body, created_at, updated_at)
+          select ('20000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 '11000000-0000-4000-8000-00000000000a',
+                 'like bait ' || g, now() - interval '2 days', now() - interval '2 days'
+          from generate_series(1, 301) g;
+          insert into public.post_likes (post_id, user_id, created_at)
+          select ('20000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 '11000000-0000-4000-8000-00000000000a',
+                 now() - interval '30 minutes'
+          from generate_series(1, 300) g;
+          -- teams: 30 in the last hour (limit 30/day).
+          insert into public.teams (id, user_id, name, data, created_at, updated_at)
+          select ('30000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 '11000000-0000-4000-8000-00000000000a',
+                 'team ' || g, '[]'::jsonb, now() - interval '30 minutes', now() - interval '30 minutes'
+          from generate_series(1, 30) g;
+          -- push_tokens: 20 in the last hour (limit 20/day).
+          insert into public.push_tokens (id, user_id, token, created_at, last_seen_at)
+          select ('40000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 '11000000-0000-4000-8000-00000000000a',
+                 'wl-token-' || g, now() - interval '30 minutes', now() - interval '30 minutes'
+          from generate_series(1, 20) g;
+          -- group_members: 102 groups owned by wl_b (back-dated outside
+          -- the new-groups window), wl_a joined the first 100 in the last
+          -- hour (per-user limit 100/day), group 101 holds 100 throwaway
+          -- members (per-group limit 100/day), group 102 is spare for the
+          -- per-user check.
+          insert into public.groups (id, owner_id, slug, name, visibility, created_at, updated_at)
+          select ('50000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 '11000000-0000-4000-8000-00000000000b',
+                 'wl-group-' || g, 'wl group ' || g, 'public',
+                 now() - interval '2 days', now() - interval '2 days'
+          from generate_series(1, 102) g;
+          insert into public.group_members (group_id, user_id, role, status, created_at)
+          select ('50000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 '11000000-0000-4000-8000-00000000000a',
+                 'member', 'active', now() - interval '30 minutes'
+          from generate_series(1, 100) g;
+          insert into public.group_members (group_id, user_id, role, status, created_at)
+          select ('50000000-0000-4000-8000-000000000101')::uuid,
+                 ('10000000-0000-4000-8000-' || lpad(g::text, 12, '0'))::uuid,
+                 'member', 'active', now() - interval '30 minutes'
+          from generate_series(1, 100) g;
+
+          -- The checks, one per limit. Each insert must raise its errcode.
+          do $wl$
+          declare
+            wl_a constant uuid := '11000000-0000-4000-8000-00000000000a';
+            wl_b constant uuid := '11000000-0000-4000-8000-00000000000b';
+            spare_profile constant uuid := '10000000-0000-4000-8000-000000000121';
+            spare_post constant uuid := '20000000-0000-4000-8000-000000000301';
+            spare_group constant uuid := '50000000-0000-4000-8000-000000000102';
+            full_group constant uuid := '50000000-0000-4000-8000-000000000101';
+          begin
+            set local role authenticated;
+
+            perform set_config('request.jwt.claims', json_build_object('sub', wl_a, 'role', 'authenticated')::text, true);
+            begin
+              insert into public.follows (follower_id, followee_id) values (wl_a, spare_profile);
+              raise exception 'RATE-CHECK: the follow limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many follows%' then
+                raise exception 'RATE-CHECK: follow limit raised %', sqlerrm;
+              end if;
+            end;
+            begin
+              insert into public.post_likes (post_id, user_id) values (spare_post, wl_a);
+              raise exception 'RATE-CHECK: the like limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many likes%' then
+                raise exception 'RATE-CHECK: like limit raised %', sqlerrm;
+              end if;
+            end;
+            begin
+              insert into public.teams (user_id, name, data) values (wl_a, 'one too many', '[]'::jsonb);
+              raise exception 'RATE-CHECK: the team limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many new teams%' then
+                raise exception 'RATE-CHECK: team limit raised %', sqlerrm;
+              end if;
+            end;
+            begin
+              insert into public.blocks (blocker_id, blocked_id)
+              values (wl_a, '10000000-0000-4000-8000-000000000122');
+              raise exception 'RATE-CHECK: the block limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many blocks%' then
+                raise exception 'RATE-CHECK: block limit raised %', sqlerrm;
+              end if;
+            end;
+            -- The per-user branch of the group limit: wl_a has 100 rows.
+            begin
+              insert into public.group_members (group_id, user_id, role, status)
+              values (spare_group, wl_a, 'member', 'active');
+              raise exception 'RATE-CHECK: the per-user group limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many group joins and invites%' then
+                raise exception 'RATE-CHECK: per-user group limit raised %', sqlerrm;
+              end if;
+            end;
+            -- The per-group branch: the full group has 100 rows, wl_b has one.
+            perform set_config('request.jwt.claims', json_build_object('sub', wl_b, 'role', 'authenticated')::text, true);
+            begin
+              insert into public.group_members (group_id, user_id, role, status)
+              values (full_group, wl_b, 'member', 'active');
+              raise exception 'RATE-CHECK: the per-group limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many group joins and invites%' then
+                raise exception 'RATE-CHECK: per-group limit raised %', sqlerrm;
+              end if;
+            end;
+          end;
+          $wl$;
+
+          -- push_tokens has no client insert path (the register RPC owns
+          -- it), so the check runs as postgres; the trigger is the same.
+          do $pt$
+          declare
+            wl_a constant uuid := '11000000-0000-4000-8000-00000000000a';
+          begin
+            begin
+              insert into public.push_tokens (user_id, token)
+              values (wl_a, 'wl-token-21');
+              raise exception 'RATE-CHECK: the push token limit did not fire';
+            exception when others then
+              if sqlerrm not like 'Too many push token registrations%' then
+                raise exception 'RATE-CHECK: push token limit raised %', sqlerrm;
+              end if;
+            end;
+          end;
+          $pt$;
+          SQL
+
       - name: Stop
         if: always()
         run: supabase stop --no-backup
