@@ -135,7 +135,7 @@ export function spreadShares(
     });
 }
 
-export function buildPokemonUsage(
+function buildPokemonUsage(
   species: string,
   entry: ChaosEntry,
   rank: number,
