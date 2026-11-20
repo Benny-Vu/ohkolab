@@ -26,7 +26,7 @@ export interface NotificationGroupRow {
 }
 
 /** One notification on its own row. */
-export interface NotificationSingleRow {
+interface NotificationSingleRow {
   kind: "single";
   item: NotificationItem;
 }

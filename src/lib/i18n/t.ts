@@ -10,10 +10,7 @@ export type TranslationParams = Record<string, string | number>;
 const PLACEHOLDER_RE = /\{(\w+)\}/g;
 
 /** Replaces every `{name}` placeholder that has a value. */
-export function interpolate(
-  template: string,
-  params?: TranslationParams,
-): string {
+function interpolate(template: string, params?: TranslationParams): string {
   if (!params) return template;
   return template.replace(PLACEHOLDER_RE, (match, name: string) =>
     Object.prototype.hasOwnProperty.call(params, name)
@@ -27,7 +24,7 @@ export function interpolate(
  * from their own chunks: until they arrive the fallback chain runs (Japanese
  * falls back to English, English to the raw key, never blank).
  */
-export function translate(
+function translate(
   locale: Locale,
   key: TranslationKey,
   params?: TranslationParams,

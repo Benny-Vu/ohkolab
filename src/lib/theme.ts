@@ -28,7 +28,7 @@ function applyTheme(theme: Theme): void {
   document.documentElement.classList.toggle("dark", theme === "dark");
 }
 
-export function getTheme(): Theme {
+function getTheme(): Theme {
   if (!currentTheme) {
     currentTheme = readTheme();
     applyTheme(currentTheme);

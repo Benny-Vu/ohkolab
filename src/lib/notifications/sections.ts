@@ -14,7 +14,7 @@ import {
 export type NotificationSectionName = "today" | "thisWeek" | "earlier";
 
 /** Display order of the sections. */
-export const NOTIFICATION_SECTION_ORDER: readonly NotificationSectionName[] = [
+const NOTIFICATION_SECTION_ORDER: readonly NotificationSectionName[] = [
   "today",
   "thisWeek",
   "earlier",
