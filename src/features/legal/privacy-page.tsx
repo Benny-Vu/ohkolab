@@ -224,17 +224,17 @@ export function PrivacyPage() {
           </LegalText>
           <LegalText>
             Your public profile can also carry community details you choose to
-            add: a favourite Pokémon, your main format, a short &quot;looking
-            for&quot; line, and optional links — a YouTube or Twitch channel and
-            a Showdown name. Posts and groups can be tagged with a language
-            (English or Japanese) so players can find content in their own
-            language. Like everything on your public profile, these details are
-            public; together with who you follow and your public group
-            memberships they also feed the &quot;People to follow&quot;
-            suggestions. Only adult players are ever suggested: players under
-            18, and players who haven&apos;t added a birth date, never appear in
-            suggestions. You can change or clear them at any time on your
-            profile, and deleting your account removes them.
+            add: your main format, a short &quot;looking for&quot; line, and
+            optional links — a YouTube or Twitch channel and a Showdown name.
+            Posts and groups can be tagged with a language (English or Japanese)
+            so players can find content in their own language. Like everything
+            on your public profile, these details are public; together with who
+            you follow and your public group memberships they also feed the
+            &quot;People to follow&quot; suggestions. Only adult players are
+            ever suggested: players under 18, and players who haven&apos;t added
+            a birth date, never appear in suggestions. You can change or clear
+            them at any time on your profile, and deleting your account removes
+            them.
           </LegalText>
         </LegalSection>
 

@@ -32,7 +32,6 @@ import {
   validateCurrentPassword,
   validateDisplayName,
   validateEmail,
-  validateFavouriteSpecies,
   validateLookingFor,
   validateNewPassword,
   validateProfileUrl,
@@ -100,7 +99,6 @@ export function toProfile(row: ProfileRow): Profile {
     displayName: row.display_name,
     avatarSpecies: row.avatar_species,
     bio: row.bio,
-    favouriteSpecies: row.favourite_species,
     mainFormat: (row.main_format as Profile["mainFormat"]) ?? null,
     lookingFor: row.looking_for,
     youtubeUrl: row.youtube_url,
@@ -149,12 +147,6 @@ function toProfileUpdate(changes: ProfileChanges): AuthResult<ProfileUpdate> {
     const error = validateAvatarSpecies(avatarSpecies);
     if (error) return fail("invalid_input", error, "avatarSpecies");
     update.avatar_species = avatarSpecies;
-  }
-  if (changes.favouriteSpecies !== undefined) {
-    const favouriteSpecies = normalizeOptionalText(changes.favouriteSpecies);
-    const error = validateFavouriteSpecies(favouriteSpecies);
-    if (error) return fail("invalid_input", error, "favouriteSpecies");
-    update.favourite_species = favouriteSpecies;
   }
   if (changes.mainFormat !== undefined) {
     update.main_format = changes.mainFormat;

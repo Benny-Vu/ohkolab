@@ -1,7 +1,7 @@
 /**
  * The welcome flow: three skippable steps shown after the first sign-up
  * (once the onboarding dialog is done, because it owns the username step):
- * pick a main format and favourite PokÃ©mon, follow a few people, join a
+ * pick a main format, follow a few people, join a
  * group. Every step can be skipped, and finishing or skipping remembers
  * the choice per account in localStorage. The two social steps live in a
  * lazy chunk (welcome-flow-steps.tsx) so the entry bundle stays lean.
@@ -19,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { SegmentedControl } from "@/components/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MainFormat, Profile } from "@/lib/auth/types";
@@ -30,12 +29,6 @@ import { track } from "@/lib/telemetry/analytics";
 
 import { needsOnboarding } from "@/features/account/onboarding";
 
-// The species picker pulls the full dex; load it only when the dialog opens.
-const SpeciesPicker = lazy(() =>
-  import("@/components/pokemon-editor/species-picker").then((m) => ({
-    default: m.SpeciesPicker,
-  })),
-);
 // The follow and join steps pull the social and groups modules.
 const WelcomeFlowSteps = lazy(() =>
   import("@/features/account/welcome-flow-steps").then((m) => ({
@@ -87,7 +80,7 @@ export function WelcomeFlow() {
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed || auth.loading || !profile) return null;
-  // The onboarding dialog owns the trainer_â€¦ username step; the welcome
+  // The onboarding dialog owns the trainer_… username step; the welcome
   // flow starts right after it. (The id is read before the predicate call:
   // needsOnboarding's false-branch narrows Profile to never.)
   const profileId = profile.id;
@@ -118,9 +111,6 @@ function WelcomeFlowDialog({
   const [mainFormat, setMainFormat] = useState<MainFormat | null>(
     profile.mainFormat,
   );
-  const [favouriteSpecies, setFavouriteSpecies] = useState<string | null>(
-    profile.favouriteSpecies,
-  );
 
   const lastStep = step === 2;
 
@@ -132,14 +122,11 @@ function WelcomeFlowDialog({
 
   async function next() {
     if (step === 0) {
-      // Save the picked profile bits before moving on; both are optional,
-      // so an untouched step just moves on.
-      if (mainFormat !== profile.mainFormat || favouriteSpecies !== null) {
+      // Save the picked format before moving on; it is optional, so an
+      // untouched step just moves on.
+      if (mainFormat !== profile.mainFormat) {
         setSaving(true);
-        const result = await auth.updateProfile({
-          mainFormat,
-          favouriteSpecies,
-        });
+        const result = await auth.updateProfile({ mainFormat });
         setSaving(false);
         if (!result.ok) {
           toast.error(result.error.message);
@@ -199,19 +186,6 @@ function WelcomeFlowDialog({
                   label: t(option.labelKey),
                 }))}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="welcome-favourite">
-                {t("profile.favouriteSpecies")}
-              </Label>
-              <Suspense fallback={<Skeleton className="h-8 w-full" />}>
-                <SpeciesPicker
-                  id="welcome-favourite"
-                  value={favouriteSpecies}
-                  onChange={(species) => setFavouriteSpecies(species)}
-                  placeholder={t("pokemonEditor.chooseSpecies")}
-                />
-              </Suspense>
             </div>
           </div>
         ) : (

@@ -203,8 +203,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   // すべてのステップはスキップ可能）。
   "welcome.title": "OHKOLabへようこそ",
   "welcome.stepOf": "ステップ {n} / {total}",
-  "welcome.profileDescription":
-    "よく遊ぶルールとお気に入りのポケモンを選びましょう。どちらも任意です。",
+  "welcome.profileDescription": "よく遊ぶルールを選びましょう。任意です。",
   "welcome.followDescription": "何人かフォローして、フィードを始めましょう。",
   "welcome.joinDescription":
     "グループに参加して、一緒に遊ぶ仲間を見つけましょう。",
@@ -216,7 +215,6 @@ export const shellJa: { [K in ShellKey]: string } = {
   "profile.usernameLabel": "ユーザー名",
   "profile.displayNameLabel": "表示名",
   "profile.displayNameHint": "任意。{max}文字以内。",
-  "profile.favouriteSpecies": "好きなポケモン",
   "profile.mainFormatLabel": "メインフォーマット",
   "profile.mainFormatSingles": "シングル",
   "profile.mainFormatDoubles": "ダブル",

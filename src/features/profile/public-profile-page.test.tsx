@@ -147,7 +147,6 @@ function profileRow(overrides: Partial<ProfileRow> = {}): ProfileRow {
     display_name: "Ash",
     avatar_species: "Pikachu",
     bio: "Pallet Town",
-    favourite_species: null,
     main_format: null,
     looking_for: null,
     youtube_url: null,
@@ -446,7 +445,6 @@ describe("PublicProfilePage", () => {
   it("shows the profile's community fields", async () => {
     const client = createFakeClient({
       profile: profileRow({
-        favourite_species: "Garchomp",
         main_format: "both",
         looking_for: "team feedback",
         youtube_url: "https://youtube.com/@ash",
@@ -457,7 +455,6 @@ describe("PublicProfilePage", () => {
 
     expect(await screen.findByText("Singles and doubles")).toBeInTheDocument();
     expect(screen.getByText("team feedback")).toBeInTheDocument();
-    expect(screen.getByAltText("Garchomp")).toBeInTheDocument();
     const youtube = screen.getByRole("link", { name: /YouTube/ });
     expect(youtube).toHaveAttribute("href", "https://youtube.com/@ash");
     expect(screen.getByText("ashketchum")).toBeInTheDocument();

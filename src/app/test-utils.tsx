@@ -23,7 +23,6 @@ const TEST_PROFILE: Profile = {
   displayName: "Ash",
   avatarSpecies: "Pikachu",
   bio: "Pallet Town",
-  favouriteSpecies: null,
   mainFormat: null,
   lookingFor: null,
   youtubeUrl: null,

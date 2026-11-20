@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { Page } from "@/components/page";
-import { PokemonIcon, PokemonSprite } from "@/components/pokemon-sprite";
+import { PokemonIcon } from "@/components/pokemon-sprite";
 import { TeamIdChip } from "@/components/team-id-chip";
 import { UserAvatar } from "@/components/user-avatar";
 import { EmptyState } from "@/components/empty-state";
@@ -782,12 +782,11 @@ function ProfileFollowCounts({
   );
 }
 
-/** The community fields of a profile: favourite Pokémon, main format,
- * "looking for", and links. Only the rows the profile filled in. */
+/** The community fields of a profile: main format, "looking for", and
+ * links. Only the rows the profile filled in. */
 function ProfileCommunityFields({ profile }: { profile: Profile }) {
   const t = useT();
   const hasAny =
-    profile.favouriteSpecies !== null ||
     profile.mainFormat !== null ||
     profile.lookingFor !== null ||
     profile.youtubeUrl !== null ||
@@ -806,14 +805,6 @@ function ProfileCommunityFields({ profile }: { profile: Profile }) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-      {profile.favouriteSpecies ? (
-        <span className="flex items-center gap-1.5">
-          <PokemonSprite species={profile.favouriteSpecies} size={24} />
-          <span className="text-muted-foreground">
-            {t("publicProfile.favouriteLabel")}
-          </span>
-        </span>
-      ) : null}
       {mainFormat ? (
         <span className="flex items-center gap-1.5">
           <span className="text-muted-foreground">

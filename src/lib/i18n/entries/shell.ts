@@ -203,8 +203,7 @@ export const shellEn = {
   // onboarding; every step is skippable).
   "welcome.title": "Welcome to OHKOLab",
   "welcome.stepOf": "Step {n} of {total}",
-  "welcome.profileDescription":
-    "Pick your main format and a favourite Pokémon — both optional.",
+  "welcome.profileDescription": "Pick your main format — it's optional.",
   "welcome.followDescription": "Follow a few people to get your feed started.",
   "welcome.joinDescription": "Join a group to meet people to play with.",
   "welcome.next": "Next",
@@ -216,7 +215,6 @@ export const shellEn = {
   "profile.usernameLabel": "Username",
   "profile.displayNameLabel": "Display name",
   "profile.displayNameHint": "Optional. At most {max} characters.",
-  "profile.favouriteSpecies": "Favourite Pokémon",
   "profile.mainFormatLabel": "Main format",
   "profile.mainFormatSingles": "Singles",
   "profile.mainFormatDoubles": "Doubles",
