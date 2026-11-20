@@ -135,6 +135,7 @@ export const accountJa: { [K in AccountKey]: string } = {
   "publicProfile.following": "フォロー中",
   "publicProfile.notFollowing": "まだ誰もフォローしていません",
   "publicProfile.followersLabel": "フォロワー",
+  "publicProfile.followerLabel": "フォロワー",
   "publicProfile.followingLabel": "フォロー中",
   "publicProfile.unfollowedToast": "@{name}のフォローを解除しました。",
   "publicProfile.followingToast": "@{name}をフォローしました。",

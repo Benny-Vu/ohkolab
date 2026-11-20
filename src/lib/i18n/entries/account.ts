@@ -133,6 +133,7 @@ export const accountEn = {
   "publicProfile.following": "Following",
   "publicProfile.notFollowing": "Not following anyone yet",
   "publicProfile.followersLabel": "followers",
+  "publicProfile.followerLabel": "follower",
   "publicProfile.followingLabel": "following",
   "publicProfile.unfollowedToast": "Unfollowed @{name}.",
   "publicProfile.followingToast": "Following @{name}.",
