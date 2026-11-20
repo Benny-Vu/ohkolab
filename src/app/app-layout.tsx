@@ -134,6 +134,20 @@ export function AppLayout() {
         <p className="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
           <Link
             className="underline-offset-4 hover:underline"
+            to="/learn"
+            viewTransition
+          >
+            {t("footer.learn")}
+          </Link>
+          <Link
+            className="underline-offset-4 hover:underline"
+            to="/changelog"
+            viewTransition
+          >
+            {t("footer.whatsNew")}
+          </Link>
+          <Link
+            className="underline-offset-4 hover:underline"
             to="/terms"
             viewTransition
           >

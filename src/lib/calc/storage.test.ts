@@ -224,3 +224,45 @@ describe("loadCalcState and saveCalcState", () => {
     expect(loadCalcState()).toEqual(defaults);
   });
 });
+
+describe("set origins in storage", () => {
+  it("round-trips each origin kind", () => {
+    const state = reduce(
+      createDefaultCalcState(),
+      {
+        type: "setSet",
+        side: "p1",
+        set: createDefaultSet("Dragonite"),
+      },
+      {
+        type: "setSet",
+        side: "p2",
+        set: createDefaultSet("Dragonite"),
+        origin: { kind: "common", index: 2, speciesUsage: 0.125 },
+      },
+    );
+    saveCalcState(state);
+    expect(loadCalcState().origins).toEqual({
+      p1: { kind: "assumed" },
+      p2: { kind: "common", index: 2, speciesUsage: 0.125 },
+    });
+  });
+
+  it("falls back to custom for malformed or missing origins", () => {
+    expect(parseCalcState({}).origins).toEqual({
+      p1: { kind: "custom" },
+      p2: { kind: "custom" },
+    });
+    expect(
+      parseCalcState({ origins: { p1: "nonsense", p2: { kind: "nope" } } })
+        .origins,
+    ).toEqual({ p1: { kind: "custom" }, p2: { kind: "custom" } });
+    // A common origin with a broken index or usage still fills in safely:
+    // the index clamps into the chooser's range, the usage is dropped.
+    expect(
+      parseCalcState({
+        origins: { p1: { kind: "common", index: 99, speciesUsage: -2 } },
+      }).origins.p1,
+    ).toEqual({ kind: "common", index: 3, speciesUsage: null });
+  });
+});

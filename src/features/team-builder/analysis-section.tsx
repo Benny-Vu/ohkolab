@@ -1,5 +1,6 @@
 import { TriangleAlertIcon } from "lucide-react";
 
+import { DataBadge } from "@/components/data-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -136,6 +137,7 @@ export function AnalysisSection({ members }: AnalysisSectionProps) {
   const t = useT();
   return (
     <CardContent className="flex flex-col gap-4">
+      <DataBadge />
       <Warnings members={members} />
       <WeakSpots members={members} />
       <Tabs defaultValue="defense">

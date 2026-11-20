@@ -205,8 +205,11 @@ describe("Composer", () => {
       await screen.findByRole("option", { name: "Champion team" }),
     );
 
-    // The selected team shows as a preview: its Pokémon and its empty slots.
-    expect(screen.getByRole("img", { name: "Garchomp" })).toBeInTheDocument();
+    // The selected team shows as a preview: its Pokémon and its empty
+    // slots. The preview loads lazily (it pulls the Pokémon data layer).
+    expect(
+      await screen.findByRole("img", { name: "Garchomp" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("list", {
         name: 'Team "Champion team" will be attached to this post.',

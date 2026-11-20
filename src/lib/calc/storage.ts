@@ -10,6 +10,7 @@ import {
 import {
   createDefaultCalcState,
   MAX_HP_PERCENT,
+  MAX_COMMON_SETS,
   MAX_SPIKES,
   MAX_STAGE,
   megaFormeOf,
@@ -21,6 +22,7 @@ import {
   type CalcState,
   type CritFlags,
   type MoveSelection,
+  type SetOrigin,
   type SideId,
 } from "@/lib/calc/state";
 import {
@@ -170,6 +172,33 @@ function parseFieldSide(raw: unknown): SideState {
   };
 }
 
+/**
+ * A set origin from unknown data. Anything malformed falls back to
+ * "custom": a stored or shared set without provenance is one the user (or
+ * the app's defaults) authored, so it is never auto-refilled later.
+ */
+function parseSetOrigin(raw: unknown): SetOrigin {
+  if (!isRecord(raw) || typeof raw.kind !== "string") {
+    return { kind: "custom" };
+  }
+  if (raw.kind === "custom" || raw.kind === "assumed") {
+    return { kind: raw.kind };
+  }
+  if (raw.kind === "common") {
+    const index = intInRange(raw.index, 1, MAX_COMMON_SETS, 1);
+    const usage = raw.speciesUsage;
+    return {
+      kind: "common",
+      index,
+      speciesUsage:
+        typeof usage === "number" && Number.isFinite(usage) && usage >= 0
+          ? Math.min(1, usage)
+          : null,
+    };
+  }
+  return { kind: "custom" };
+}
+
 function parseSelection(raw: unknown, fallback: MoveSelection): MoveSelection {
   if (!isRecord(raw)) return fallback;
   const side = oneOf(raw.side, SIDE_IDS);
@@ -186,10 +215,15 @@ export function parseCalcState(raw: unknown): CalcState {
 
   const sides = isRecord(raw.sides) ? raw.sides : {};
   const fieldSides = isRecord(raw.fieldSides) ? raw.fieldSides : {};
+  const origins = isRecord(raw.origins) ? raw.origins : {};
   return {
     sides: {
       p1: parseSide(sides.p1, defaults.sides.p1),
       p2: parseSide(sides.p2, defaults.sides.p2),
+    },
+    origins: {
+      p1: parseSetOrigin(origins.p1),
+      p2: parseSetOrigin(origins.p2),
     },
     fieldSides: {
       p1: parseFieldSide(fieldSides.p1),

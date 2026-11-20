@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { DataBadge } from "@/components/data-badge";
 import { Page } from "@/components/page";
 import { Picker } from "@/components/picker";
 import {
@@ -588,6 +589,7 @@ export function MetagamePage() {
       }
       actions={
         <>
+          <DataBadge period={period} />
           <FormatToggle />
           <Picker
             options={monthOptions.map((option) => ({

@@ -22,8 +22,6 @@ export interface Profile {
   /** Species name from the Champions roster, or null for no avatar. */
   avatarSpecies: string | null;
   bio: string | null;
-  /** The favourite Pokémon shown on the profile, or null for none. */
-  favouriteSpecies: string | null;
   /** The player's main format, or null when unset. */
   mainFormat: MainFormat | null;
   /** The short "looking for" line, or null for none. */
@@ -43,7 +41,6 @@ export interface ProfileChanges {
   displayName?: string | null;
   avatarSpecies?: string | null;
   bio?: string | null;
-  favouriteSpecies?: string | null;
   mainFormat?: MainFormat | null;
   lookingFor?: string | null;
   youtubeUrl?: string | null;

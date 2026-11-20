@@ -53,6 +53,12 @@ const PAGE_ENTRIES: {
   },
   {
     kind: "page",
+    labelKey: "footer.learn",
+    keywords: "learn basics guide ohko stat points speed tie",
+    to: "/learn",
+  },
+  {
+    kind: "page",
     labelKey: "nav.profile",
     keywords: "profile account",
     to: "/profile",
@@ -160,7 +166,9 @@ export function SearchPalette() {
       <button
         type="button"
         onClick={openPalette}
-        aria-label={t("search.openAria")}
+        // No aria-label here on purpose: the accessible name comes from
+        // the visible content ("Search Ctrl K"), so the two always match
+        // (axe's label-content-name-mismatch rule).
         className="hidden h-9 w-64 items-center gap-2 rounded-md bg-surface-sunken px-3 text-sm text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 md:flex"
       >
         <SearchIcon className="size-4" aria-hidden />

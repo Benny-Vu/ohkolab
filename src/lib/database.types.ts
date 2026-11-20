@@ -32,8 +32,6 @@ export type Database = {
           avatar_species: string | null;
           /** Up to 300 characters. */
           bio: string | null;
-          /** The profile's favourite Pokémon, as a roster species name. */
-          favourite_species: string | null;
           /** One of "singles", "doubles", "both"; null when unset. */
           main_format: string | null;
           /** Up to 100 characters, e.g. "practice partners". */
@@ -55,7 +53,6 @@ export type Database = {
           display_name?: string | null;
           avatar_species?: string | null;
           bio?: string | null;
-          favourite_species?: string | null;
           main_format?: string | null;
           looking_for?: string | null;
           youtube_url?: string | null;
@@ -69,7 +66,6 @@ export type Database = {
           display_name?: string | null;
           avatar_species?: string | null;
           bio?: string | null;
-          favourite_species?: string | null;
           main_format?: string | null;
           looking_for?: string | null;
           youtube_url?: string | null;

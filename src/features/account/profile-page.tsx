@@ -76,7 +76,6 @@ type ProfileFieldErrors = Partial<
     | "displayName"
     | "bio"
     | "avatarSpecies"
-    | "favouriteSpecies"
     | "lookingFor"
     | "youtubeUrl"
     | "twitchUrl"
@@ -168,9 +167,6 @@ function ProfileEditor({ profile }: { profile: Profile }) {
   const [displayName, setDisplayName] = useState(profile.displayName ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [avatarSpecies, setAvatarSpecies] = useState(profile.avatarSpecies);
-  const [favouriteSpecies, setFavouriteSpecies] = useState(
-    profile.favouriteSpecies,
-  );
   const [mainFormat, setMainFormat] = useState<MainFormat | null>(
     profile.mainFormat,
   );
@@ -222,7 +218,6 @@ function ProfileEditor({ profile }: { profile: Profile }) {
       displayName: nextDisplayName,
       avatarSpecies,
       bio: nextBio,
-      favouriteSpecies,
       mainFormat,
       lookingFor: nextLookingFor,
       youtubeUrl: nextYoutube,
@@ -369,22 +364,6 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                 ) : null}
                 <p className="text-xs text-muted-foreground">
                   {t("profile.bioHint", { max: BIO_MAX_LENGTH })}
-                </p>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="favourite-species">
-                  {t("profile.favouriteSpecies")}
-                </Label>
-                <Suspense fallback={<Skeleton className="h-8 w-full" />}>
-                  <SpeciesPicker
-                    id="favourite-species"
-                    value={favouriteSpecies}
-                    onChange={(species) => setFavouriteSpecies(species)}
-                    placeholder={t("pokemonEditor.chooseSpecies")}
-                  />
-                </Suspense>
-                <p className="text-xs text-muted-foreground">
-                  {t("profile.favouriteHint")}
                 </p>
               </div>
               <div className="grid gap-2">
@@ -549,7 +528,6 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                     setDisplayName(profile.displayName ?? "");
                     setBio(profile.bio ?? "");
                     setAvatarSpecies(profile.avatarSpecies);
-                    setFavouriteSpecies(profile.favouriteSpecies);
                     setMainFormat(profile.mainFormat);
                     setLookingFor(profile.lookingFor ?? "");
                     setYoutubeUrl(profile.youtubeUrl ?? "");

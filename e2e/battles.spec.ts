@@ -35,6 +35,12 @@ test("battle board renders demo requests", async ({ page }) => {
   await expect(boardTitle).toBeVisible();
   await expect(page.getByText("Sign in to find an opponent.")).toBeVisible();
 
+  // The one-tap "Practise now" action posts as the signed-in user, so a
+  // signed-out visit must not render it.
+  await expect(page.getByRole("button", { name: "Practise now" })).toHaveCount(
+    0,
+  );
+
   // Demo mode: the sample requests, marked as examples.
   await expect(page.getByText("Rika").first()).toBeVisible();
   await expect(

@@ -9,9 +9,10 @@
 import type { AccountKey } from "@/lib/i18n/entries/account";
 import type { BattlesKey } from "@/lib/i18n/entries/battles";
 import type { CommunityKey } from "@/lib/i18n/entries/community";
+import type { LearnKey } from "@/lib/i18n/entries/learn";
 import type { ShellKey } from "@/lib/i18n/entries/shell";
 import type { ToolsKey } from "@/lib/i18n/entries/tools";
 
 /** Every translation key the app knows. */
 export type TranslationKey =
-  ShellKey | CommunityKey | AccountKey | ToolsKey | BattlesKey;
+  ShellKey | CommunityKey | AccountKey | ToolsKey | BattlesKey | LearnKey;

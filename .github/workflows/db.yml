@@ -663,7 +663,6 @@ jobs:
             -- gives its viewer 'doubles', and a shared main_format would
             -- leak this user into that step's exact-ranking assertion.
             update public.profiles set
-              favourite_species = 'Garchomp',
               main_format = 'singles',
               looking_for = 'practice partners',
               youtube_url = 'https://youtube.com/@example',
@@ -673,7 +672,6 @@ jobs:
             if not exists (
               select 1 from public.profiles
               where id = comm_a
-                and favourite_species = 'Garchomp'
                 and main_format = 'singles'
                 and looking_for = 'practice partners'
                 and youtube_url = 'https://youtube.com/@example'

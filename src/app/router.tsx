@@ -5,11 +5,14 @@ import { PageLoading } from "@/app/route-pages";
 import { accountRoutes } from "@/features/account/routes";
 import { adminRoutes } from "@/features/admin/routes";
 import { battleRoutes } from "@/features/battles/routes";
+import { battleModeRoutes } from "@/features/battle/routes";
 import { calcRoutes } from "@/features/calc/routes";
+import { changelogRoutes } from "@/features/changelog/routes";
 import { creditsRoutes } from "@/features/credits/routes";
 import { feedbackRoutes } from "@/features/feedback/routes";
 import { groupsRoutes } from "@/features/groups/routes";
 import { homeRoutes } from "@/features/home/routes";
+import { learnRoutes } from "@/features/learn/routes";
 import { legalRoutes } from "@/features/legal/routes";
 import { messagesRoutes } from "@/features/messages/routes";
 import { metagameRoutes } from "@/features/metagame/routes";
@@ -40,10 +43,13 @@ export const router = createBrowserRouter([
         errorElement: <RouteErrorPage />,
         children: [
           ...homeRoutes,
+          ...learnRoutes,
+          ...changelogRoutes,
           ...legalRoutes,
           ...creditsRoutes,
           ...pressRoutes,
           ...calcRoutes,
+          ...battleModeRoutes,
           ...teamBuilderRoutes,
           ...metagameRoutes,
           ...battleRoutes,

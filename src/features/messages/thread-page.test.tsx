@@ -412,7 +412,7 @@ describe("ThreadPage with the flag on", () => {
     expect(await screen.findByText("Report message")).toBeInTheDocument();
     await user.click(screen.getByRole("combobox", { name: "Report reason" }));
     await user.click(await screen.findByRole("option", { name: "Spam" }));
-    await user.click(screen.getByRole("button", { name: "Submit report" }));
+    await user.click(screen.getByRole("button", { name: "Send report" }));
     await waitFor(() => {
       expect(fake.rpcCalls).toContainEqual({
         fn: "report_message",

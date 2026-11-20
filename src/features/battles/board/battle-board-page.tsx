@@ -23,6 +23,7 @@ import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import {
   formatBattleTime,
   NO_BATTLE_FILTER,
+  wantsToPlayNow,
   type BattleFilter,
   type BattleRequestSummary,
 } from "@/lib/battles/logic";
@@ -33,6 +34,7 @@ import {
 } from "@/lib/battles/queries";
 import { useOfferToBattle } from "@/lib/battles/mutations";
 import { BattleRequestDialog } from "@/features/battles/board/battle-request-dialog";
+import { PractiseNowButton } from "@/features/battles/board/practise-now-button";
 import { ReportBattleButton } from "@/features/battles/board/report-battle-dialog";
 import { MatchedBanner } from "@/features/battles/matching/matched-banner";
 import { MyBattleRequestsPanel } from "@/features/battles/matching/my-battle-requests-panel";
@@ -68,7 +70,14 @@ export function BattleBoardPage({
       title={t("battles.title")}
       description={t("battles.description")}
       width="wide"
-      actions={user ? <BattleRequestDialog client={client} /> : null}
+      actions={
+        user ? (
+          <>
+            <PractiseNowButton client={client} />
+            <BattleRequestDialog client={client} />
+          </>
+        ) : null
+      }
     >
       {user === null ? (
         <div className="grid gap-4">
@@ -322,6 +331,9 @@ function BattleCard({
               : "language.english",
           )}
         </Badge>
+        {wantsToPlayNow(request, new Date()) && (
+          <Badge variant="outline">{t("battles.nowBadge")}</Badge>
+        )}
       </div>
 
       <p className="mt-2 font-heading text-sm font-semibold">{request.rules}</p>

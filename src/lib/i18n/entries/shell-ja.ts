@@ -29,6 +29,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   // フッター。
   "footer.disclaimer":
     "OHKOLabは非公式のファンプロジェクトであり、任天堂・ゲームフリーク・クリーチャーズ・ポケモンとは一切関係ありません。",
+  "footer.learn": "はじめに",
+  "footer.whatsNew": "更新情報",
   "footer.terms": "利用規約",
   "footer.privacy": "プライバシー",
   "footer.credits": "クレジット",
@@ -203,8 +205,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   // すべてのステップはスキップ可能）。
   "welcome.title": "OHKOLabへようこそ",
   "welcome.stepOf": "ステップ {n} / {total}",
-  "welcome.profileDescription":
-    "よく遊ぶルールとお気に入りのポケモンを選びましょう。どちらも任意です。",
+  "welcome.profileDescription": "よく遊ぶルールを選びましょう。任意です。",
   "welcome.followDescription": "何人かフォローして、フィードを始めましょう。",
   "welcome.joinDescription":
     "グループに参加して、一緒に遊ぶ仲間を見つけましょう。",
@@ -216,7 +217,6 @@ export const shellJa: { [K in ShellKey]: string } = {
   "profile.usernameLabel": "ユーザー名",
   "profile.displayNameLabel": "表示名",
   "profile.displayNameHint": "任意。{max}文字以内。",
-  "profile.favouriteSpecies": "好きなポケモン",
   "profile.mainFormatLabel": "メインフォーマット",
   "profile.mainFormatSingles": "シングル",
   "profile.mainFormatDoubles": "ダブル",
@@ -294,6 +294,10 @@ export const shellJa: { [K in ShellKey]: string } = {
     "OHKOLabで使っているデータソースとライブラリ、そのライセンス。",
   "seo.battlesDescription":
     "ポケモンチャンピオンズの対戦相手をOHKOLabで見つける。募集、申し込み、マッチング。",
+  "seo.learnDescription":
+    "ポケモンチャンピオンズのダメージ乱数、1発・2発、ステータスポイント（SP）、同速をやさしく解説。",
+  "seo.changelogDescription":
+    "OHKOLabの更新情報。最新のリリースと改善点を新しい順に紹介します。",
   "seo.pressDescription":
     "OHKOLabのロゴ、カラー、スクリーンショット、紹介文。記事や動画にご利用ください。",
 

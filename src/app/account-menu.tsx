@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router";
 import { LogInIcon, LogOutIcon, MessageSquareIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -35,6 +35,18 @@ export function AccountMenu({ variant }: AccountMenuProps) {
   const [locale] = useLocale();
   const moderator = useIsModerator();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // The "New" dot needs the changelog entries, which are too heavy for the
+  // entry chunk: they load lazily, so the dot appears once they have.
+  const [newRelease, setNewRelease] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void import("@/features/changelog/use-new-entries").then((module) => {
+      if (alive) setNewRelease(module.hasUnseenChangelog());
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function handleSignOut() {
     const result = await auth.signOut();
@@ -90,6 +102,11 @@ export function AccountMenu({ variant }: AccountMenuProps) {
   }
 
   const profile = auth.profile;
+  // The "New" dot shows while there are releases this player hasn't seen;
+  // opening the changelog clears it (device-only localStorage).
+  const newDot = newRelease ? (
+    <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-primary" />
+  ) : null;
 
   return (
     <>
@@ -148,6 +165,14 @@ export function AccountMenu({ variant }: AccountMenuProps) {
           )}
           <DropdownMenuItem asChild className={menuItemClass}>
             <Link to="/profile">{t("nav.profile")}</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className={menuItemClass}>
+            {/* The dot marks releases the player hasn't seen; opening the
+                changelog clears it (device-only localStorage). */}
+            <Link to="/changelog" className="flex items-center gap-2">
+              {newDot}
+              {t("footer.whatsNew")}
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className={menuItemClass}>
             <Link to="/groups">{t("groups.homeTitle")}</Link>

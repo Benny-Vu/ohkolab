@@ -66,7 +66,6 @@ export function profileRow(
     display_name: "Trainer",
     avatar_species: "Garchomp",
     bio: null,
-    favourite_species: null,
     main_format: null,
     looking_for: null,
     youtube_url: null,
