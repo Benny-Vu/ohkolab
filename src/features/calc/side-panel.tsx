@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import { calcSideLabel } from "@/features/calc/side-labels";
+import { SetSourceRow } from "@/features/calc/set-source";
 import { statLabel } from "@/components/stat-labels";
 import {
   MAX_HP_PERCENT,
@@ -23,6 +24,7 @@ import {
   megaFormeOf,
   type CalcAction,
   type CalcSide,
+  type SetOrigin,
   type SideId,
 } from "@/lib/calc/state";
 import { useT } from "@/lib/i18n/t";
@@ -211,11 +213,18 @@ export function BattleStateEditor({
 interface SidePanelProps {
   side: SideId;
   calcSide: CalcSide;
+  /** Where this side's set came from (usage data, custom or assumed). */
+  origin: SetOrigin;
   dispatch: Dispatch<CalcAction>;
 }
 
 /** One side of the calculator: its set plus its state in battle. */
-export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
+export function SidePanel({
+  side,
+  calcSide,
+  origin,
+  dispatch,
+}: SidePanelProps) {
   const t = useT();
   const displayName = useDisplayName();
   const titleId = useId();
@@ -238,6 +247,13 @@ export function SidePanel({ side, calcSide, dispatch }: SidePanelProps) {
   return (
     <Panel labelledBy={titleId}>
       <PanelTitle id={titleId}>{label}</PanelTitle>
+      <SetSourceRow
+        dispatch={dispatch}
+        origin={origin}
+        side={side}
+        sideLabel={label}
+        species={calcSide.set.species}
+      />
       <PokemonEditor
         value={calcSide.set}
         onChange={handlers.onSetChange}

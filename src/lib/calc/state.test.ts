@@ -346,3 +346,88 @@ describe("calcReducer: actions", () => {
     expect(both.sides.p2.mega).toBe(true);
   });
 });
+
+describe("calcReducer: set origins", () => {
+  it("starts both sides as custom, the app's own curated sets", () => {
+    expect(createDefaultCalcState().origins).toEqual({
+      p1: { kind: "custom" },
+      p2: { kind: "custom" },
+    });
+  });
+
+  it("marks a freshly picked species as assumed", () => {
+    const next = calcReducer(createDefaultCalcState(), {
+      type: "setSet",
+      side: "p2",
+      set: createDefaultSet("Dragonite"),
+    });
+    expect(next.origins.p2).toEqual({ kind: "assumed" });
+  });
+
+  it("marks an edit of the same species as custom", () => {
+    const picked = reduce(createDefaultCalcState(), {
+      type: "setSet",
+      side: "p2",
+      set: createDefaultSet("Dragonite"),
+    });
+    const edited = calcReducer(picked, {
+      type: "setSet",
+      side: "p2",
+      set: { ...picked.sides.p2.set, nature: "Adamant" },
+    });
+    expect(edited.origins.p2).toEqual({ kind: "custom" });
+  });
+
+  it("keeps the origin a smart-set fill or the chooser passes along", () => {
+    const origin = { kind: "common", index: 2, speciesUsage: 0.5 } as const;
+    const next = calcReducer(createDefaultCalcState(), {
+      type: "setSet",
+      side: "p1",
+      set: createDefaultSet("Dragonite"),
+      origin,
+    });
+    expect(next.origins.p1).toEqual(origin);
+  });
+
+  it("sets the origin alone, keeping the set untouched", () => {
+    const start = createDefaultCalcState();
+    const next = calcReducer(start, {
+      type: "setOrigin",
+      side: "p1",
+      origin: { kind: "assumed" },
+    });
+    expect(next.origins.p1).toEqual({ kind: "assumed" });
+    expect(next.sides).toBe(start.sides);
+  });
+
+  it("swaps origins with the sides", () => {
+    const start = reduce(createDefaultCalcState(), {
+      type: "setSet",
+      side: "p2",
+      set: createDefaultSet("Dragonite"),
+    });
+    const swapped = calcReducer(start, { type: "swapSides" });
+    expect(swapped.origins.p1).toEqual({ kind: "assumed" });
+    expect(swapped.origins.p2).toEqual({ kind: "custom" });
+  });
+
+  it("loads handed-over sets as custom, never to be refilled", () => {
+    const loaded = calcReducer(createDefaultCalcState(), {
+      type: "loadSets",
+      sets: { p1: createDefaultSet("Dragonite") },
+    });
+    expect(loaded.origins.p1).toEqual({ kind: "custom" });
+  });
+
+  it("resets the origins with everything else", () => {
+    const changed = reduce(createDefaultCalcState(), {
+      type: "setSet",
+      side: "p1",
+      set: createDefaultSet("Dragonite"),
+    });
+    expect(changed.origins.p1).toEqual({ kind: "assumed" });
+    expect(calcReducer(changed, { type: "reset" })).toEqual(
+      createDefaultCalcState(),
+    );
+  });
+});

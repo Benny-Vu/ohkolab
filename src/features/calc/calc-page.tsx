@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { BigNumber } from "@/components/big-number";
 import { BattleModeLink } from "@/features/battle/battle-link";
 import { DamageMeter } from "@/components/damage-meter";
+import { DataBadge } from "@/components/data-badge";
 import { KoLabel } from "@/components/ko-label";
 import { Page } from "@/components/page";
 import { PokemonIcon } from "@/components/pokemon-sprite";
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/sheet";
 import { FieldBar, FieldPanel } from "@/features/calc/field-panel";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
+import { KnownLimitations } from "@/features/calc/known-limitations";
 import { ResultsPanel } from "@/features/calc/results-panel";
 import { SecondDefenderPanel } from "@/features/calc/second-defender-panel";
 import {
@@ -251,6 +253,7 @@ export function CalcPage() {
       <Page
         actions={
           <>
+            <DataBadge />
             <BattleModeLink />
             <Button
               onClick={() => dispatch({ type: "swapSides" })}
@@ -273,6 +276,7 @@ export function CalcPage() {
             <SidePanel
               calcSide={state.sides.p1}
               dispatch={dispatch}
+              origin={state.origins.p1}
               side="p1"
             />
             <div className="lg:sticky lg:top-16 lg:max-h-[calc(100dvh_-_5rem)] lg:overflow-y-auto">
@@ -288,11 +292,13 @@ export function CalcPage() {
               <SidePanel
                 calcSide={state.sides.p2}
                 dispatch={dispatch}
+                origin={state.origins.p2}
                 side="p2"
               />
               {secondDefenderSection}
             </div>
           </div>
+          <KnownLimitations />
         </div>
       </Page>
     );
@@ -302,6 +308,7 @@ export function CalcPage() {
     <Page
       actions={
         <>
+          <DataBadge />
           <BattleModeLink />
           <Button
             onClick={handleReset}
@@ -343,13 +350,19 @@ export function CalcPage() {
           value={section}
         />
         {section === "p1" ? (
-          <SidePanel calcSide={state.sides.p1} dispatch={dispatch} side="p1" />
+          <SidePanel
+            calcSide={state.sides.p1}
+            dispatch={dispatch}
+            origin={state.origins.p1}
+            side="p1"
+          />
         ) : null}
         {section === "p2" ? (
           <div className="grid gap-4">
             <SidePanel
               calcSide={state.sides.p2}
               dispatch={dispatch}
+              origin={state.origins.p2}
               side="p2"
             />
             {secondDefenderSection}
@@ -358,6 +371,7 @@ export function CalcPage() {
         {section === "field" ? (
           <FieldPanel dispatch={dispatch} state={state} />
         ) : null}
+        <KnownLimitations />
       </div>
       <StickyResultBar
         dispatch={dispatch}
