@@ -15,6 +15,7 @@ import { metagameRoutes } from "@/features/metagame/routes";
 import { moderationRoutes } from "@/features/moderation/routes";
 import { notificationRoutes } from "@/features/notifications/routes";
 import { postRoutes } from "@/features/post/routes";
+import { pressRoutes } from "@/features/press/routes";
 import { profileRoutes } from "@/features/profile/routes";
 import { sourceRoutes } from "@/features/source-links/routes";
 import { styleguideRoutes } from "@/features/styleguide/routes";
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
           ...homeRoutes,
           ...legalRoutes,
           ...creditsRoutes,
+          ...pressRoutes,
           ...calcRoutes,
           ...teamBuilderRoutes,
           ...metagameRoutes,

@@ -31,6 +31,7 @@ export const shellEn = {
   "footer.terms": "Terms",
   "footer.privacy": "Privacy",
   "footer.credits": "Credits",
+  "footer.press": "Press kit",
   "footer.sendFeedback": "Send feedback",
   "footer.madeBy": "OHKOLab is made by",
 
@@ -288,6 +289,8 @@ export const shellEn = {
   "seo.privacyDescription": "How OHKOLab handles your data and privacy.",
   "seo.creditsDescription":
     "The data sources and libraries OHKOLab is built on, and their licences.",
+  "seo.pressDescription":
+    "OHKOLab logos, colours, screenshots and press copy for writers and creators.",
 
   // The feedback dialog and the crash screen (both mount from the app
   // frame; the telemetry switch strings stay with the community domain).
