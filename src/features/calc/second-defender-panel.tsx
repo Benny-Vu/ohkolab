@@ -3,6 +3,7 @@ import { XIcon } from "lucide-react";
 
 import { PokemonEditor } from "@/components/pokemon-editor";
 import { Button } from "@/components/ui/button";
+import { rowHitXsClass } from "@/components/touch-targets";
 import { Panel, PanelTitle } from "@/features/calc/panel";
 import {
   BattleStateEditor,
@@ -42,6 +43,7 @@ export function SecondDefenderPanel({
           onClick={onRemove}
           size="xs"
           variant="ghost"
+          className={rowHitXsClass}
         >
           <XIcon aria-hidden />
           {t("calc.remove")}

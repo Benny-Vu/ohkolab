@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass, rowHitClass } from "@/components/touch-targets";
 import { EmptyState } from "@/components/empty-state";
 import { LoadingArea, TextLinesSkeleton } from "@/components/skeletons";
 import { UserAvatar } from "@/components/user-avatar";
@@ -115,7 +116,9 @@ function MyRequestCard({ summary, client }: RequestCardProps) {
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               onClick={() => void handleSetOpen(false)}
+              loading={setOpen.isPending}
               disabled={setOpen.isPending}
             >
               {t("battles.closeRequest")}
@@ -131,7 +134,9 @@ function MyRequestCard({ summary, client }: RequestCardProps) {
           <Button
             variant="outline"
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => void handleSetOpen(true)}
+            loading={setOpen.isPending}
             disabled={setOpen.isPending}
           >
             {t("battles.reopenRequest")}
@@ -261,10 +266,12 @@ function OfferRow({
         <span className="flex shrink-0 items-center gap-1.5">
           <Button
             size="sm"
+            className={rowHitClass}
             aria-label={
               nameParams ? t("battles.acceptFrom", nameParams) : undefined
             }
             onClick={onAccept}
+            loading={acceptPending}
             disabled={acceptPending}
           >
             {t("battles.accept")}
@@ -272,10 +279,12 @@ function OfferRow({
           <Button
             size="sm"
             variant="outline"
+            className={rowHitClass}
             aria-label={
               nameParams ? t("battles.declineFrom", nameParams) : undefined
             }
             onClick={onDecline}
+            loading={declinePending}
             disabled={declinePending}
           >
             {t("battles.decline")}

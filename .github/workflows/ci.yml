@@ -40,6 +40,11 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # The smoke tests cover the launched features, so the preview
+          # build mirrors the deploy flags. Turnstile stays off: without
+          # the site key the auth forms work as today, which is the point.
+          VITE_DIRECT_MESSAGES: ${{ vars.VITE_DIRECT_MESSAGES }}
+          VITE_BATTLES: ${{ vars.VITE_BATTLES }}
       - run: npm run e2e
       - name: Upload failure screenshots and traces
         if: failure()

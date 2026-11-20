@@ -17,6 +17,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import {
   Card,
   CardContent,
@@ -260,6 +261,7 @@ function FeedbackCard({
               <Button
                 variant="outline"
                 size="sm"
+                className={buttonSmTouchClass}
                 disabled={setStatus.isPending}
                 onClick={() => {
                   void mark("seen");
@@ -272,6 +274,7 @@ function FeedbackCard({
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               disabled={setStatus.isPending}
               onClick={() => {
                 void mark("done");
@@ -347,7 +350,10 @@ function FeedbackList({ client }: { client: AppSupabaseClient | null }) {
         value={status}
         onValueChange={(value) => setStatus(value as FeedbackStatus)}
       >
-        <TabsList aria-label={t("admin.feedbackStatusAria")}>
+        <TabsList
+          aria-label={t("admin.feedbackStatusAria")}
+          className="max-sm:h-14"
+        >
           {TAB_STATUSES.map((tab) => (
             <TabsTrigger key={tab.status} value={tab.status}>
               {t(tab.labelKey)}

@@ -7,6 +7,7 @@ import { DamageMeter } from "@/components/damage-meter";
 import { KoLabel } from "@/components/ko-label";
 import { TypeBadge } from "@/components/type-badge";
 import { Button } from "@/components/ui/button";
+import { iconHitXsClass, rowHitXsClass } from "@/components/touch-targets";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMove, useDisplayName } from "@/data";
 import { koResultOf, summaryText } from "@/features/calc/ko-result";
@@ -289,14 +290,21 @@ function ResultBlock({
             url={shareUrl}
             size="xs"
             variant="ghost"
+            className={rowHitXsClass}
           />
           <SaveImageButton
             content={cardContent}
             iconOnly
             size="xs"
             variant="ghost"
+            className={iconHitXsClass}
           />
-          <Button onClick={handleCopy} size="xs" variant="ghost">
+          <Button
+            onClick={handleCopy}
+            size="xs"
+            variant="ghost"
+            className={rowHitXsClass}
+          >
             <CopyIcon />
             {t("calc.copy")}
           </Button>
@@ -468,7 +476,7 @@ export function ResultsPanel({
         }
         value={state.selected.side}
       >
-        <TabsList className="w-full" variant="line">
+        <TabsList className="w-full max-sm:h-14" variant="line">
           <TabsTrigger className="text-xs sm:text-sm" value="p1">
             {names.p1} {DIRECTION_ARROW} {names.p2}
           </TabsTrigger>

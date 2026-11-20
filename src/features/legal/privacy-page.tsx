@@ -163,7 +163,7 @@ export function PrivacyPage() {
             OHKOLab is run by Vu Forge (Benny Vu). You can reach us at{" "}
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               {CONTACT_EMAIL}
             </a>
@@ -454,14 +454,14 @@ export function PrivacyPage() {
             hosted in the EU, as described above; see Sentry's{" "}
             <a
               href="https://sentry.io/privacy/"
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               privacy policy
             </a>{" "}
             and PostHog's{" "}
             <a
               href="https://posthog.com/privacy/"
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               privacy policy
             </a>
@@ -470,7 +470,7 @@ export function PrivacyPage() {
             (including your IP address), as any web host does; see Cloudflare's{" "}
             <a
               href="https://www.cloudflare.com/privacypolicy/"
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               privacy policy
             </a>
@@ -483,7 +483,7 @@ export function PrivacyPage() {
                 OpenAI's{" "}
                 <a
                   href="https://openai.com/policies/row-privacy-policy/"
-                  className="text-primary underline underline-offset-4"
+                  className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
                 >
                   privacy policy
                 </a>
@@ -492,7 +492,7 @@ export function PrivacyPage() {
                 Cloudflare's{" "}
                 <a
                   href="https://www.cloudflare.com/privacypolicy/"
-                  className="text-primary underline underline-offset-4"
+                  className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
                 >
                   privacy policy
                 </a>
@@ -510,7 +510,7 @@ export function PrivacyPage() {
             You can delete your account from your{" "}
             <Link
               to="/profile"
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               profile page
             </Link>
@@ -536,7 +536,7 @@ export function PrivacyPage() {
             Step-by-step instructions are on the{" "}
             <Link
               to="/delete-account"
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               account deletion page
             </Link>
@@ -556,14 +556,14 @@ export function PrivacyPage() {
             Questions about your data? Email{" "}
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               {CONTACT_EMAIL}
             </a>
             . See also our{" "}
             <Link
               to="/terms"
-              className="text-primary underline underline-offset-4"
+              className="text-primary underline underline-offset-4 relative after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']"
             >
               terms of service
             </Link>

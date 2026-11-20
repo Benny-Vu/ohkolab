@@ -13,6 +13,11 @@ import {
 } from "@/components/skeletons";
 import { displayTeamName } from "@/lib/team/display";
 import { Page } from "@/components/page";
+import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+  iconHitSmClass,
+} from "@/components/touch-targets";
 import { ItemIcon, PokemonSprite } from "@/components/pokemon-sprite";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -130,6 +135,7 @@ function TeamCard({
         <Button
           variant="ghost"
           size="icon-sm"
+          className={iconHitSmClass}
           aria-label={t("teams.duplicateNamed", {
             name: displayTeamName(team.name),
           })}
@@ -140,6 +146,7 @@ function TeamCard({
         <Button
           variant="ghost"
           size="icon-sm"
+          className={iconHitSmClass}
           aria-label={t("teams.deleteNamed", {
             name: displayTeamName(team.name),
           })}
@@ -148,7 +155,12 @@ function TeamCard({
           <Trash2Icon aria-hidden />
         </Button>
         <span className="flex-1" />
-        <Button variant="outline" size="sm" asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className={buttonSmTouchClass}
+        >
           <Link to={`/teams/${team.id}`}>{t("teams.open")}</Link>
         </Button>
       </CardFooter>
@@ -230,7 +242,11 @@ export function TeamsPage() {
         <>
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                className={buttonSmTouchClass}
+              >
                 <DownloadIcon aria-hidden />
                 {t("teams.import")}
               </Button>
@@ -251,15 +267,22 @@ export function TeamsPage() {
                 placeholder="Garchomp @ Life Orb&#10;Ability: Rough Skin&#10;Jolly Nature&#10;- Earthquake"
               />
               <DialogFooter>
-                <Button variant="outline" onClick={() => setImportOpen(false)}>
+                <Button
+                  variant="outline"
+                  className={buttonTouchClass}
+                  onClick={() => setImportOpen(false)}
+                >
                   {t("common.cancel")}
                 </Button>
-                <Button onClick={handleImport}>{t("teams.importTeam")}</Button>
+                <Button className={buttonTouchClass} onClick={handleImport}>
+                  {t("teams.importTeam")}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
           <Button
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => {
               track("team_created", { format: preferredFormat, size: 0 });
               navigate(`/teams/${create({ format: preferredFormat }).id}`);
@@ -282,7 +305,12 @@ export function TeamsPage() {
           title={t("teams.loadError")}
           description={sync.error}
           action={
-            <Button variant="outline" size="sm" onClick={() => sync.retry()}>
+            <Button
+              variant="outline"
+              size="sm"
+              className={buttonSmTouchClass}
+              onClick={() => sync.retry()}
+            >
               {t("teams.retry")}
             </Button>
           }

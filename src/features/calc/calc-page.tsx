@@ -10,6 +10,7 @@ import { PokemonIcon } from "@/components/pokemon-sprite";
 import { SegmentedControl } from "@/components/segmented-control";
 import { useDisplayName } from "@/data/display-names";
 import { Button } from "@/components/ui/button";
+import { buttonTouchClass, iconHitSmClass } from "@/components/touch-targets";
 import {
   Sheet,
   SheetContent,
@@ -234,7 +235,7 @@ export function CalcPage() {
         />
       ) : (
         <Button
-          className="md:justify-start"
+          className={`md:justify-start ${buttonTouchClass}`}
           onClick={handleAddSecondDefender}
           variant="outline"
         >
@@ -298,7 +299,11 @@ export function CalcPage() {
   return (
     <Page
       actions={
-        <Button onClick={handleReset} variant="outline">
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className={buttonTouchClass}
+        >
           <RotateCcwIcon aria-hidden />
           {t("calc.reset")}
         </Button>
@@ -316,6 +321,7 @@ export function CalcPage() {
             onClick={() => dispatch({ type: "swapSides" })}
             size="icon-sm"
             variant="outline"
+            className={iconHitSmClass}
           >
             <ArrowLeftRightIcon aria-hidden />
           </Button>

@@ -10,6 +10,11 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+  linkHitClass,
+} from "@/components/touch-targets";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { Logo } from "@/components/logo";
@@ -189,7 +194,12 @@ function FeedHome() {
               }}
               className="w-auto max-w-44"
             />
-            <Button asChild variant="outline" size="sm">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className={buttonSmTouchClass}
+            >
               <Link
                 to="/groups"
                 onMouseEnter={prefetchGroups}
@@ -220,7 +230,7 @@ function FeedHome() {
             <EmptyState
               title={t("home.signInToFollow")}
               action={
-                <Button asChild size="sm">
+                <Button asChild size="sm" className={buttonSmTouchClass}>
                   <Link to="/login?returnTo=/">{t("common.signIn")}</Link>
                 </Button>
               }
@@ -250,10 +260,20 @@ function SignedOutIntro() {
         {t("home.signedOutIntro")}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="accent">
+        <Button
+          asChild
+          size="sm"
+          variant="accent"
+          className={buttonSmTouchClass}
+        >
           <Link to="/login?tab=signup&returnTo=/">{t("common.signUp")}</Link>
         </Button>
-        <Button asChild size="sm" variant="outline">
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className={buttonSmTouchClass}
+        >
           <Link to="/login?returnTo=/">{t("common.signIn")}</Link>
         </Button>
       </div>
@@ -286,7 +306,12 @@ function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
         <p className="mt-2 text-sm text-muted-foreground">
           {t("home.signInToJoinGroups")}
         </p>
-        <Button asChild size="sm" variant="outline" className="mt-3">
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className={`mt-3 ${buttonSmTouchClass}`}
+        >
           <Link to="/login?returnTo=/">{t("common.signIn")}</Link>
         </Button>
       </section>
@@ -316,6 +341,7 @@ function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               onClick={() => void myGroups.refetch()}
             >
               {t("common.retry")}
@@ -329,9 +355,9 @@ function MyGroupsRail({ signedIn }: { signedIn: boolean }) {
             <li key={group.id} className="min-w-0">
               <Link
                 to={`/g/${group.slug}`}
-                className="block truncate text-sm hover:underline"
+                className={`min-w-0 text-sm hover:underline ${linkHitClass}`}
               >
-                {group.name}
+                <span className="block truncate">{group.name}</span>
               </Link>
             </li>
           ))}
@@ -370,6 +396,7 @@ function FeedTabContent({
           <Button
             variant="outline"
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => void feed.refetch()}
           >
             {t("common.retry")}
@@ -402,6 +429,7 @@ function FeedTabContent({
         {feed.hasNextPage && (
           <Button
             variant="outline"
+            className={buttonTouchClass}
             onClick={() => void feed.fetchNextPage()}
             disabled={feed.isFetchingNextPage}
           >

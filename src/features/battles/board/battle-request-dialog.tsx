@@ -15,6 +15,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SegmentedControl } from "@/components/segmented-control";
+import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+} from "@/components/touch-targets";
 import { Picker } from "@/components/picker";
 import { Textarea } from "@/components/ui/textarea";
 import { useBattleFormat } from "@/lib/preferences";
@@ -128,7 +132,7 @@ export function BattleRequestDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm" variant="accent">
+        <Button size="sm" variant="accent" className={buttonSmTouchClass}>
           <PlusIcon aria-hidden />
           {t("battles.newRequest")}
         </Button>
@@ -175,6 +179,7 @@ export function BattleRequestDialog({
                   type="button"
                   size="xs"
                   variant="outline"
+                  className={buttonSmTouchClass}
                   onClick={() => setRules(t(pick))}
                 >
                   {t(pick)}
@@ -286,6 +291,7 @@ export function BattleRequestDialog({
           <Button
             type="button"
             variant="outline"
+            className={buttonTouchClass}
             onClick={() => setOpen(false)}
             disabled={createRequest.isPending}
           >
@@ -293,6 +299,7 @@ export function BattleRequestDialog({
           </Button>
           <Button
             type="button"
+            className={buttonTouchClass}
             onClick={() => void submit()}
             loading={createRequest.isPending}
             disabled={createRequest.isPending}

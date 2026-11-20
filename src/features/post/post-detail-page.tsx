@@ -4,6 +4,11 @@ import { ArrowLeftIcon, LoaderCircleIcon, SendIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  buttonSmTouchClass,
+  linkHitClass,
+  rowHitXsClass,
+} from "@/components/touch-targets";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorState } from "@/components/error-state";
 import {
@@ -71,6 +76,7 @@ export function PostDetailPage() {
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               onClick={() => void postQuery.refetch()}
             >
               {t("common.retry")}
@@ -128,7 +134,7 @@ export function PostDetailPage() {
       <Button
         variant="ghost"
         size="sm"
-        className="-ml-2"
+        className={`-ml-2 ${buttonSmTouchClass}`}
         onClick={() => navigate(-1)}
       >
         <ArrowLeftIcon aria-hidden />
@@ -173,6 +179,7 @@ export function PostDetailPage() {
                 </span>
                 <Button
                   size="sm"
+                  className={buttonSmTouchClass}
                   onClick={submitComment}
                   disabled={!canComment}
                 >
@@ -189,7 +196,7 @@ export function PostDetailPage() {
             <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
               <Link
                 to={`/login?returnTo=/post/${post.id}`}
-                className="text-primary underline-offset-4 hover:underline"
+                className={`text-primary underline-offset-4 hover:underline ${linkHitClass}`}
               >
                 {t("common.signIn")}
               </Link>{" "}
@@ -213,6 +220,7 @@ export function PostDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className={buttonSmTouchClass}
                   onClick={() => void commentsQuery.refetch()}
                 >
                   {t("common.retry")}
@@ -249,11 +257,13 @@ export function PostDetailPage() {
                       />
                       <Link
                         to={`/u/${comment.author?.username ?? ""}`}
-                        className="min-w-0 truncate font-medium hover:underline"
+                        className={`min-w-0 font-medium hover:underline ${linkHitClass}`}
                       >
-                        {comment.author?.displayName ??
-                          comment.author?.username ??
-                          t("postDetail.deletedUser")}
+                        <span className="block truncate">
+                          {comment.author?.displayName ??
+                            comment.author?.username ??
+                            t("postDetail.deletedUser")}
+                        </span>
                       </Link>
                       {pending ? (
                         <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
@@ -272,7 +282,7 @@ export function PostDetailPage() {
                         <Button
                           size="xs"
                           variant="ghost"
-                          className="ml-auto"
+                          className={`ml-auto ${rowHitXsClass}`}
                           onClick={() => handleDeleteComment(comment.id)}
                           disabled={deleteComment.isPending}
                         >
@@ -283,7 +293,7 @@ export function PostDetailPage() {
                         <Button
                           size="xs"
                           variant="ghost"
-                          className="ml-auto"
+                          className={`ml-auto ${rowHitXsClass}`}
                           onClick={() => setReportedCommentId(comment.id)}
                         >
                           {t("postDetail.report")}

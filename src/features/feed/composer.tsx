@@ -11,6 +11,10 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  adjacentIconHitXsClass,
+  buttonSmTouchClass,
+} from "@/components/touch-targets";
 import { Picker } from "@/components/picker";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { Textarea } from "@/components/ui/textarea";
@@ -242,7 +246,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
           size="sm"
           onClick={submit}
           disabled={!canPost}
-          className="mt-0.5 shrink-0"
+          className={`mt-0.5 shrink-0 ${buttonSmTouchClass}`}
         >
           {posting ? (
             <LoaderCircleIcon className="animate-spin" aria-hidden />
@@ -300,6 +304,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                 type="button"
                 size="sm"
                 variant="outline"
+                className={buttonSmTouchClass}
                 onClick={() => fileInputRef.current?.click()}
                 disabled={
                   imageDrafts.length >= IMAGE_POSTS_MAX || processingImages
@@ -360,6 +365,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                   aria-label={t("composer.moveLeft", { n: index + 1 })}
                   disabled={index === 0}
                   onClick={() => moveDraft(draft.key, -1)}
+                  className={adjacentIconHitXsClass}
                 >
                   <ArrowLeftIcon aria-hidden />
                 </Button>
@@ -369,6 +375,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                   aria-label={t("composer.moveRight", { n: index + 1 })}
                   disabled={index === imageDrafts.length - 1}
                   onClick={() => moveDraft(draft.key, 1)}
+                  className={adjacentIconHitXsClass}
                 >
                   <ArrowRightIcon aria-hidden />
                 </Button>
@@ -377,6 +384,7 @@ export function Composer({ groupId }: { groupId?: string | null }) {
                   variant="ghost"
                   aria-label={t("composer.removeImage", { n: index + 1 })}
                   onClick={() => removeDraft(draft.key)}
+                  className={adjacentIconHitXsClass}
                 >
                   <XIcon aria-hidden />
                 </Button>

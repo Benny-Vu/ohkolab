@@ -23,6 +23,12 @@ import { Badge } from "@/components/ui/badge";
 import { formatJoined } from "@/lib/format-date";
 import { Button } from "@/components/ui/button";
 import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+  iconHitSmClass,
+  linkHitClass,
+} from "@/components/touch-targets";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -161,7 +167,7 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className={buttonSmTouchClass}>
           {t("publicProfile.view")}
         </Button>
       </DialogTrigger>
@@ -191,10 +197,14 @@ function TeamDialog({ team, username }: { team: Team; username: string }) {
           <TeamPreview team={team} variant="expanded" />
         </Suspense>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button
+            variant="outline"
+            className={buttonTouchClass}
+            onClick={() => setOpen(false)}
+          >
             {t("common.cancel")}
           </Button>
-          <Button onClick={copyToMyTeams}>
+          <Button className={buttonTouchClass} onClick={copyToMyTeams}>
             <CopyIcon aria-hidden />
             {t("postCard.copyTeam")}
           </Button>
@@ -268,6 +278,7 @@ function TeamsSection({
           <Button
             variant="outline"
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => void teamsQuery.refetch()}
           >
             {t("common.retry")}
@@ -440,6 +451,7 @@ function FollowListDialog({
               <Button
                 variant="outline"
                 size="sm"
+                className={buttonSmTouchClass}
                 onClick={() => void query.refetch()}
               >
                 {t("common.retry")}
@@ -460,7 +472,11 @@ function FollowListDialog({
           </ul>
         )}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            variant="outline"
+            className={buttonTouchClass}
+            onClick={onClose}
+          >
             {t("common.cancel")}
           </Button>
         </DialogFooter>
@@ -561,7 +577,12 @@ function ProfileSocialActions({
       <div className="flex flex-wrap items-center gap-2">
         {!auth.user ? (
           <>
-            <Button variant="outline" size="sm" asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className={buttonSmTouchClass}
+            >
               <Link to={signInTo}>
                 <LogInIcon aria-hidden />
                 {t("publicProfile.signInToFollow")}
@@ -572,6 +593,7 @@ function ProfileSocialActions({
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  className={iconHitSmClass}
                   aria-label={t("publicProfile.moreOptions")}
                 >
                   <EllipsisIcon aria-hidden />
@@ -597,6 +619,7 @@ function ProfileSocialActions({
             <Button
               variant={following ? "outline" : "default"}
               size="sm"
+              className={buttonSmTouchClass}
               disabled={toggleFollow.isPending}
               onClick={() => void handleToggleFollow()}
             >
@@ -618,6 +641,7 @@ function ProfileSocialActions({
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  className={iconHitSmClass}
                   aria-label={t("publicProfile.moreOptions")}
                 >
                   <EllipsisIcon aria-hidden />
@@ -668,6 +692,7 @@ function ProfileSocialActions({
           <DialogFooter>
             <Button
               variant="outline"
+              className={buttonTouchClass}
               onClick={() => setBlockOpen(false)}
               disabled={toggleBlock.isPending}
             >
@@ -675,6 +700,7 @@ function ProfileSocialActions({
             </Button>
             <Button
               variant="destructive"
+              className={buttonTouchClass}
               onClick={() => void handleBlock()}
               disabled={toggleBlock.isPending}
             >
@@ -725,14 +751,14 @@ function ProfileFollowCounts({
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm tabular-nums">
         <button
           type="button"
-          className="text-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline"
+          className={`text-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline ${linkHitClass}`}
           onClick={() => setListOpen("followers")}
         >
           {counts ? counts.followers : "…"} {t("publicProfile.followersLabel")}
         </button>
         <button
           type="button"
-          className="text-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline"
+          className={`text-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline ${linkHitClass}`}
           onClick={() => setListOpen("following")}
         >
           {counts ? counts.following : "…"} {t("publicProfile.followingLabel")}
@@ -809,7 +835,7 @@ function ProfileCommunityFields({ profile }: { profile: Profile }) {
           href={profile.youtubeUrl}
           target="_blank"
           rel="noreferrer noopener"
-          className="flex items-center gap-1.5 underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline"
+          className={`flex items-center gap-1.5 underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline ${linkHitClass}`}
         >
           <ExternalLinkIcon className="size-4" aria-hidden />
           {t("publicProfile.youtubeLabel")}
@@ -820,7 +846,7 @@ function ProfileCommunityFields({ profile }: { profile: Profile }) {
           href={profile.twitchUrl}
           target="_blank"
           rel="noreferrer noopener"
-          className="flex items-center gap-1.5 underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline"
+          className={`flex items-center gap-1.5 underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline ${linkHitClass}`}
         >
           <ExternalLinkIcon className="size-4" aria-hidden />
           {t("publicProfile.twitchLabel")}
@@ -915,6 +941,7 @@ function PostsSection({
           <Button
             variant="outline"
             size="sm"
+            className={buttonSmTouchClass}
             onClick={() => void postsQuery.refetch()}
           >
             {t("common.retry")}
@@ -939,6 +966,7 @@ function PostsSection({
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               onClick={() => void postsQuery.fetchNextPage()}
               disabled={postsQuery.isFetchingNextPage}
             >
@@ -990,6 +1018,7 @@ export function PublicProfilePage({
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               onClick={() => void profileQuery.refetch()}
             >
               {t("common.retry")}
@@ -1005,7 +1034,12 @@ export function PublicProfilePage({
             })}
           />
           <div>
-            <Button variant="ghost" size="sm" asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className={buttonSmTouchClass}
+            >
               <Link to="/">
                 <ExternalLinkIcon aria-hidden />
                 {t("authCallback.backHome")}

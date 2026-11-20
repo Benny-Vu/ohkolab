@@ -5,6 +5,11 @@ import { XIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  buttonSmTouchClass,
+  iconHitSmClass,
+  rowHitClass,
+} from "@/components/touch-targets";
 import { ErrorState } from "@/components/error-state";
 import { LoadingArea, TextLinesSkeleton } from "@/components/skeletons";
 import { UserAvatar } from "@/components/user-avatar";
@@ -72,6 +77,7 @@ export function PeopleToFollow() {
             <Button
               variant="outline"
               size="sm"
+              className={buttonSmTouchClass}
               onClick={() => void suggestions.refetch()}
             >
               {t("common.retry")}
@@ -174,7 +180,7 @@ function SuggestionRow({
     <div className="flex items-center gap-2">
       <Link
         to={`/u/${suggestion.username}`}
-        className="flex min-w-0 flex-1 items-center gap-2 rounded-md focus-visible:outline-2"
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-md focus-visible:outline-2 relative after:absolute after:-inset-1 after:content-['']"
       >
         <UserAvatar
           username={suggestion.username}
@@ -194,6 +200,7 @@ function SuggestionRow({
       <Button
         size="sm"
         variant="outline"
+        className={rowHitClass}
         loading={toggleFollow.isPending}
         disabled={toggleFollow.isPending}
         onClick={() => void follow()}
@@ -203,6 +210,7 @@ function SuggestionRow({
       <Button
         size="icon-sm"
         variant="ghost"
+        className={iconHitSmClass}
         aria-label={t("followSuggest.dismiss", { name: suggestion.username })}
         onClick={onDismissed}
       >

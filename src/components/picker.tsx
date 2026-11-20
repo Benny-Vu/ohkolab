@@ -63,7 +63,7 @@ function Picker({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "w-full justify-between font-normal",
+            "w-full justify-between font-normal max-sm:h-11",
             !selected && "text-muted-foreground",
             className,
           )}
@@ -88,6 +88,7 @@ function Picker({
                 <CommandItem
                   key={option.value}
                   value={`${option.label} ${option.value}`}
+                  className="max-sm:py-3"
                   data-checked={
                     selected?.value === option.value ? true : undefined
                   }
