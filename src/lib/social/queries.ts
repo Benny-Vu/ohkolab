@@ -23,7 +23,7 @@ import type { SocialFailure } from "@/lib/social/errors";
 import type { PostLanguage, ReportStatus } from "@/lib/social/validation";
 
 /** Page size for the keyset-paginated feeds. */
-export const FEED_PAGE_SIZE = 20;
+const FEED_PAGE_SIZE = 20;
 
 /** What the feed is filtered by: one tagged language, or everything. */
 export type FeedLanguage = "all" | PostLanguage;

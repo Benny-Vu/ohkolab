@@ -64,7 +64,7 @@ async function fetchParticipants(
 }
 
 /** The unread messages across my conversations, in one `or` query. */
-export async function fetchUnreadMessages(
+async function fetchUnreadMessages(
   client: AppSupabaseClient,
   me: string,
   participants: ParticipantRowLite[],

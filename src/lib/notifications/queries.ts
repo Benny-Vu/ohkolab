@@ -32,7 +32,7 @@ import type {
 export const NOTIFICATIONS_PAGE_SIZE = 20;
 
 /** How often the unread count refreshes, in milliseconds. */
-export const UNREAD_REFRESH_MS = 60_000;
+const UNREAD_REFRESH_MS = 60_000;
 
 /** Keyset cursor: the (created_at, id) pair of the last notification of a page. */
 export interface NotificationCursor {
@@ -120,7 +120,7 @@ async function fetchModerationActions(
  * queries. Missing related rows (deleted accounts, removed groups) become
  * null and the sentence builders fall back.
  */
-export async function hydrateNotifications(
+async function hydrateNotifications(
   client: AppSupabaseClient,
   rows: NotificationRow[],
 ): Promise<NotificationItem[]> {

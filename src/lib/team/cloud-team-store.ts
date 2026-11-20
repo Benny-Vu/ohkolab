@@ -8,7 +8,7 @@ import { sanitizeTeam, type TeamStore } from "@/lib/team/team-store";
 import type { Team } from "@/types/team";
 
 /** Where the cloud sync is at. */
-export type CloudSyncStatus = "loading" | "ready" | "error";
+type CloudSyncStatus = "loading" | "ready" | "error";
 
 export interface CloudSyncState {
   status: CloudSyncStatus;
@@ -43,7 +43,7 @@ export function rowToTeam(row: TeamRow): Team | null {
 }
 
 /** Maps a `Team` to the row upserted into the `teams` table. */
-export function teamToUpsert(team: Team): TeamInsert {
+function teamToUpsert(team: Team): TeamInsert {
   return {
     id: team.id,
     name: team.name,

@@ -98,7 +98,7 @@ export function createTeamActions(store: TeamStore): TeamActions {
 }
 
 /** Where the sync of the active store is at, for pages that show it. */
-export interface TeamSync {
+interface TeamSync {
   loading: boolean;
   /** Friendly text when the teams could not be loaded. */
   error: string | null;
