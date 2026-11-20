@@ -997,6 +997,9 @@ jobs:
             req_minor uuid;
             req_fallback uuid;
             reply_main uuid;
+            reply_fallback uuid;
+            reply_c uuid;
+            reply_teen uuid;
             conv uuid;
             old_request uuid;
           begin
@@ -1005,8 +1008,11 @@ jobs:
             -- bat_a posts the main request with their public team and a
             -- window; bat_b can see it.
             perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
-            insert into public.battle_requests (id, author_id, format, rules, note, starts_at, ends_at, timezone, language, team_id)
-            values ('71717171-7171-4717-8717-717171717171', bat_a, 'doubles', 'Reg M-C, best of 3', 'looking for a close one', now() + interval '2 hours', now() + interval '6 hours', 'Europe/Oslo', 'en', public_team)
+            -- The inserts look exactly like the client's (the granted
+            -- columns only), so the fixed ids the old draft used are gone;
+            -- later assertions use the captured variables instead.
+            insert into public.battle_requests (author_id, format, rules, note, starts_at, ends_at, timezone, language, team_id)
+            values (bat_a, 'doubles', 'Reg M-C, best of 3', 'looking for a close one', now() + interval '2 hours', now() + interval '6 hours', 'Europe/Oslo', 'en', public_team)
             returning id into req_main;
             perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
             if not exists (select 1 from public.battle_requests where id = req_main and team_id = public_team) then
@@ -1063,8 +1069,8 @@ jobs:
             if exists (select 1 from public.battle_requests where id = req_main) then
               raise exception 'BAT-CHECK: a minor saw a non-friend request';
             end if;
-            insert into public.battle_requests (id, author_id, format, rules, language)
-            values ('82828282-8282-4828-8828-828282828282', bat_teen, 'singles', 'casual', 'ja')
+            insert into public.battle_requests (author_id, format, rules, language)
+            values (bat_teen, 'singles', 'casual', 'ja')
             returning id into req_minor;
             perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
             if exists (select 1 from public.battle_requests where id = req_minor) then
@@ -1073,8 +1079,8 @@ jobs:
 
             -- bat_b offers on the main request; the author is notified.
             perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
-            insert into public.battle_replies (id, request_id, responder_id)
-            values ('93939393-9393-4939-8939-939393939393', req_main, bat_b)
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_main, bat_b)
             returning id into reply_main;
             if not exists (
               select 1 from public.notifications
@@ -1132,14 +1138,15 @@ jobs:
             -- bat_dm (who accepts messages from nobody) posts and gets an
             -- offer; accepting it still matches, but no DM thread opens.
             perform set_config('request.jwt.claims', json_build_object('sub', bat_dm, 'role', 'authenticated')::text, true);
-            insert into public.battle_requests (id, author_id, format, rules, language)
-            values ('74747474-7474-4747-8747-747474747474', bat_dm, 'singles', 'Reg M-C', 'en')
+            insert into public.battle_requests (author_id, format, rules, language)
+            values (bat_dm, 'singles', 'Reg M-C', 'en')
             returning id into req_fallback;
             perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
-            insert into public.battle_replies (id, request_id, responder_id)
-            values ('75757575-7575-4757-8757-757575757575', req_fallback, bat_b);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_fallback, bat_b)
+            returning id into reply_fallback;
             perform set_config('request.jwt.claims', json_build_object('sub', bat_dm, 'role', 'authenticated')::text, true);
-            select public.accept_battle_reply('75757575-7575-4757-8757-757575757575') into conv;
+            select public.accept_battle_reply(reply_fallback) into conv;
             if conv is not null then
               raise exception 'BAT-CHECK: a forbidden DM was opened anyway';
             end if;
@@ -1151,12 +1158,21 @@ jobs:
             -- slot), bat_teen (now friends with bat_a) and bat_c offer too;
             -- nobody but the author can accept; accepting matches, opens
             -- the DM, declines the others and notifies the responder.
+            -- bat_b re-offers: the withdrawn row is reactivated in place
+            -- (returning would capture nothing, so no returning here).
             perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
-            insert into public.battle_replies (id, request_id, responder_id)
-            values ('85858585-8585-4858-8858-858585858585', req_main, bat_b);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_main, bat_b);
+            if not exists (
+              select 1 from public.battle_replies
+              where id = reply_main and status = 'pending'
+            ) then
+              raise exception 'BAT-CHECK: the withdrawn offer was not reactivated';
+            end if;
             perform set_config('request.jwt.claims', json_build_object('sub', bat_c, 'role', 'authenticated')::text, true);
-            insert into public.battle_replies (id, request_id, responder_id)
-            values ('86868686-8686-4868-8868-868686868686', req_main, bat_c);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_main, bat_c)
+            returning id into reply_c;
             -- The minor becomes bat_a's friend (as postgres; follows are
             -- not client-insertable for other users).
             reset role;
@@ -1168,11 +1184,12 @@ jobs:
             if not exists (select 1 from public.battle_requests where id = req_main) then
               raise exception 'BAT-CHECK: a friend still cannot see the request';
             end if;
-            insert into public.battle_replies (id, request_id, responder_id)
-            values ('87878787-8787-4878-8878-878787878787', req_main, bat_teen);
+            insert into public.battle_replies (request_id, responder_id)
+            values (req_main, bat_teen)
+            returning id into reply_teen;
             perform set_config('request.jwt.claims', json_build_object('sub', bat_b, 'role', 'authenticated')::text, true);
             begin
-              perform public.accept_battle_reply('86868686-8686-4868-8868-868686868686');
+              perform public.accept_battle_reply(reply_c);
               raise exception 'BAT-CHECK: a non-author accepted an offer';
             exception when others then
               if sqlerrm not like 'Only the author can accept offers%' then
@@ -1180,16 +1197,16 @@ jobs:
               end if;
             end;
             perform set_config('request.jwt.claims', json_build_object('sub', bat_a, 'role', 'authenticated')::text, true);
-            select public.accept_battle_reply('85858585-8585-4858-8858-858585858585') into conv;
+            select public.accept_battle_reply(reply_main) into conv;
             if conv is null then
               raise exception 'BAT-CHECK: the DM thread did not open';
             end if;
             if not exists (
               select 1 from public.battle_replies
-              where id = '86868686-8686-4868-8868-868686868686' and status = 'declined'
+              where id = reply_c and status = 'declined'
             ) or not exists (
               select 1 from public.battle_replies
-              where id = '87878787-8787-4878-8878-878787878787' and status = 'declined'
+              where id = reply_teen and status = 'declined'
             ) then
               raise exception 'BAT-CHECK: the other offers were not declined';
             end if;
@@ -1202,7 +1219,7 @@ jobs:
             end if;
             -- Re-accepting the accepted offer is refused.
             begin
-              perform public.accept_battle_reply('85858585-8585-4858-8858-858585858585');
+              perform public.accept_battle_reply(reply_main);
               raise exception 'BAT-CHECK: an already-matched request was re-accepted';
             exception when others then
               if sqlerrm not like 'This offer is no longer available%'
@@ -1308,7 +1325,7 @@ jobs:
             end if;
             if not exists (
               select 1 from public.battle_requests
-              where id = '71717171-7171-4717-8717-717171717171' and status = 'matched'
+              where author_id = bat_a and status = 'matched'
             ) then
               raise exception 'BAT-CHECK: the matched request did not survive expiry';
             end if;

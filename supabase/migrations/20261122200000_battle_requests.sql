@@ -532,13 +532,19 @@ $$;
 
 -- A reply re-checks the block and minor rules (they can change between the
 -- request becoming visible and the reply insert) and limits replies to 30
--- per responder per 24 hours.
+-- per responder per 24 hours. A withdrawn offer can be made again: the
+-- trigger reactivates the original row (one row per pair stays true) and
+-- notifies the author again; any other existing offer — pending, accepted
+-- or declined — is final, with the unique constraint as the backstop.
 create or replace function public.enforce_battle_reply_rules()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  existing record;
+  request_author uuid;
 begin
   if not public.battle_request_answerable(new.request_id, new.responder_id) then
     raise exception 'You cannot answer this battle request'
@@ -552,6 +558,26 @@ begin
   ) >= 30 then
     raise exception 'Too many battle offers today'
       using errcode = 'P0A11';
+  end if;
+
+  select * into existing from public.battle_replies
+  where request_id = new.request_id
+    and responder_id = new.responder_id;
+  if existing is not null then
+    if existing.status <> 'withdrawn' then
+      raise exception 'You already offered on this battle request'
+        using errcode = '23505';
+    end if;
+    -- Reactivation: the offer counts against the daily limit again
+    -- (created_at moves to now, which the rate-limit window reads).
+    update public.battle_replies
+    set status = 'pending', created_at = now()
+    where id = existing.id;
+    select author_id into request_author from public.battle_requests
+    where id = new.request_id;
+    insert into public.notifications (recipient_id, actor_id, type, battle_request_id)
+    values (request_author, new.responder_id, 'battle', new.request_id);
+    return null;
   end if;
 
   return new;
