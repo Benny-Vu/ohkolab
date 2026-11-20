@@ -34,7 +34,7 @@ export const TEST_PROFILE: Profile = {
   updatedAt: "2024-01-01T00:00:00Z",
 };
 
-export const TEST_USER = {
+const TEST_USER = {
   id: "user-1",
   email: "ash@example.com",
   app_metadata: {},
@@ -43,7 +43,7 @@ export const TEST_USER = {
   created_at: "2024-01-01T00:00:00Z",
 } as unknown as User;
 
-export const TEST_SESSION = {
+const TEST_SESSION = {
   access_token: "token",
   token_type: "bearer",
   expires_in: 3600,
