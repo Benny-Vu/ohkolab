@@ -10,6 +10,7 @@ import { creditsRoutes } from "@/features/credits/routes";
 import { feedbackRoutes } from "@/features/feedback/routes";
 import { groupsRoutes } from "@/features/groups/routes";
 import { homeRoutes } from "@/features/home/routes";
+import { learnRoutes } from "@/features/learn/routes";
 import { legalRoutes } from "@/features/legal/routes";
 import { messagesRoutes } from "@/features/messages/routes";
 import { metagameRoutes } from "@/features/metagame/routes";
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
         errorElement: <RouteErrorPage />,
         children: [
           ...homeRoutes,
+          ...learnRoutes,
           ...legalRoutes,
           ...creditsRoutes,
           ...pressRoutes,

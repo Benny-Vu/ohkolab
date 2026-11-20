@@ -90,6 +90,36 @@ export function startsSoon(request: BattleRequestLite, now: Date): boolean {
   );
 }
 
+/**
+ * True when the requester wants to play right now — the board's "Now"
+ * badge. The honest rule: the request is live and open, and its window has
+ * begun (a request without a start time falls back to when it was posted).
+ * The window then has to be about this moment, not just any open request:
+ * it began less than an hour ago, or it ends within the hour. A request
+ * whose window began hours ago and runs for days is not "now"; one that
+ * is closing within the hour still is.
+ */
+export function wantsToPlayNow(request: BattleRequestLite, now: Date): boolean {
+  if (!isLiveOpenRequest(request, now)) {
+    return false;
+  }
+  const HOUR_MS = 60 * 60 * 1000;
+  const nowMs = now.getTime();
+  const beginsAtMs =
+    request.starts_at !== null
+      ? new Date(request.starts_at).getTime()
+      : new Date(request.created_at).getTime();
+  if (beginsAtMs > nowMs) {
+    // The window has not begun yet: "starting soon", not "now".
+    return false;
+  }
+  const beganRecently = nowMs - beginsAtMs <= HOUR_MS;
+  const endsSoon =
+    request.ends_at !== null &&
+    new Date(request.ends_at).getTime() - nowMs <= HOUR_MS;
+  return beganRecently || endsSoon;
+}
+
 /** Applies the board filters to live-open requests, newest first. */
 export function applyBattleFilter(
   requests: BattleRequestLite[],

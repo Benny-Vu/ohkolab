@@ -53,6 +53,12 @@ const PAGE_ENTRIES: {
   },
   {
     kind: "page",
+    labelKey: "footer.learn",
+    keywords: "learn basics guide ohko stat points speed tie",
+    to: "/learn",
+  },
+  {
+    kind: "page",
     labelKey: "nav.profile",
     keywords: "profile account",
     to: "/profile",
