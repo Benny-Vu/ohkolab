@@ -91,7 +91,8 @@ describe("buildShareCardSvg", () => {
   it("carries the identity: dark tokens, logo, wordmark and the site footer", () => {
     const svg = buildShareCardSvg(teamCard, "1080x1920", noAssets);
     expect(svg).toContain('fill="#0B0D10"');
-    expect(svg).toContain('fill="#C8F031"');
+    // The split-O mark strokes in the lime accent (the card's dark theme).
+    expect(svg).toContain('stroke="#C8F031"');
     expect(svg).toContain(">OHKO<");
     expect(svg).toContain(">Lab<");
     expect(svg).toContain("ohkolab.com");

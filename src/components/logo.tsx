@@ -6,36 +6,28 @@ interface LogoMarkProps {
 }
 
 /**
- * Logo mark: a struck target on the accent tile — one hit, knocked out.
- * Geometric only, no Pokémon shapes or trademarks, token-coloured so it
- * follows the theme. `public/favicon.svg` is the standalone twin with the
- * same geometry in fixed colours.
+ * Logo mark: the split O — a ring split by a diagonal bar, drawn on its own,
+ * no tile (owner's pick, 2026-11-20). Geometric only, no Pokémon shapes or
+ * trademarks. The stroke follows the theme through the accent-text token:
+ * lime on dark, olive on light. `public/favicon.svg` is the standalone twin
+ * in fixed colours (ink mark on a lime tile).
  */
 export function LogoMark({ className }: LogoMarkProps) {
   return (
     <svg
-      viewBox="0 0 32 32"
-      className={cn("size-6 shrink-0", className)}
+      viewBox="0 0 100 100"
+      className={cn("size-6 shrink-0 text-accent-brand-text", className)}
       aria-hidden="true"
     >
-      <rect width="32" height="32" rx="7" className="fill-accent-brand" />
-      <circle
-        cx="16"
-        cy="16"
-        r="7"
+      <g
         fill="none"
-        strokeWidth="3.2"
-        className="stroke-accent-brand-foreground"
-      />
-      <line
-        x1="8.8"
-        y1="23.2"
-        x2="23.2"
-        y2="8.8"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-        className="stroke-accent-brand-foreground"
-      />
+        stroke="currentColor"
+        strokeWidth="12"
+        strokeLinecap="butt"
+      >
+        <path d="M77 37A31 31 0 0 1 37 77M23 63A31 31 0 0 1 63 23" />
+        <path d="M69 31 31 69" />
+      </g>
     </svg>
   );
 }

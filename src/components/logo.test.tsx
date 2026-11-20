@@ -4,16 +4,17 @@ import { describe, expect, it } from "vitest";
 import { Logo, LogoMark } from "@/components/logo";
 
 describe("LogoMark", () => {
-  it("renders the struck-target mark, hidden from assistive tech", () => {
+  it("renders the split-O mark, hidden from assistive tech", () => {
     const { container } = render(<LogoMark />);
     const svg = container.querySelector("svg");
     expect(svg).not.toBeNull();
-    expect(svg).toHaveAttribute("viewBox", "0 0 32 32");
+    expect(svg).toHaveAttribute("viewBox", "0 0 100 100");
     expect(svg).toHaveAttribute("aria-hidden", "true");
-    // Tile, ring and strike are all present.
-    expect(container.querySelector("rect")).not.toBeNull();
-    expect(container.querySelector("circle")).not.toBeNull();
-    expect(container.querySelector("line")).not.toBeNull();
+    // The mark is two paths — the split ring's arcs and the diagonal bar —
+    // with no tile behind them, themed through the accent-text colour.
+    expect(container.querySelectorAll("path")).toHaveLength(2);
+    expect(container.querySelector("rect")).toBeNull();
+    expect(svg).toHaveClass("text-accent-brand-text");
   });
 });
 

@@ -69,7 +69,6 @@ const COLORS = {
   foreground: "#F2F4F7",
   muted: "#98A1AD",
   accent: "#C8F031",
-  tileInk: "#0B0D10",
 } as const;
 
 const HEADING_STACK =
@@ -87,9 +86,9 @@ interface CardLayout {
   height: number;
   /** Outer padding on every side. */
   padding: number;
-  /** The logo tile's side. */
-  tile: number;
-  /** The wordmark's font size next to the tile. */
+  /** The logo mark's side. */
+  mark: number;
+  /** The wordmark's font size next to the mark. */
   wordmark: number;
   /** Eyebrow (uppercase, muted). */
   eyebrow: number;
@@ -113,7 +112,7 @@ const TALL: CardLayout = {
   width: 1080,
   height: 1920,
   padding: 96,
-  tile: 56,
+  mark: 56,
   wordmark: 48,
   eyebrow: 30,
   heading: 84,
@@ -130,7 +129,7 @@ const LANDSCAPE: CardLayout = {
   width: 1200,
   height: 630,
   padding: 72,
-  tile: 44,
+  mark: 44,
   wordmark: 40,
   eyebrow: 26,
   heading: 64,
@@ -290,17 +289,19 @@ function fontFace(
   );
 }
 
-/** The logo mark: the struck target on the accent tile (`public/favicon.svg`). */
+/**
+ * The logo mark: the split O — a ring split by a diagonal bar, on its own,
+ * no tile (`src/components/logo.tsx` is the in-app twin). The card is always
+ * the dark identity theme, so the mark strokes in the lime accent.
+ */
 function logoMark(x: number, y: number, size: number): string {
-  const unit = size / 32;
+  const unit = size / 100;
   return (
-    `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="${7 * unit}" ` +
-    `fill="${COLORS.accent}"/>` +
-    `<circle cx="${x + 16 * unit}" cy="${y + 16 * unit}" r="${7 * unit}" fill="none" ` +
-    `stroke="${COLORS.tileInk}" stroke-width="${3.2 * unit}"/>` +
-    `<line x1="${x + 8.8 * unit}" y1="${y + 23.2 * unit}" ` +
-    `x2="${x + 23.2 * unit}" y2="${y + 8.8 * unit}" ` +
-    `stroke="${COLORS.tileInk}" stroke-width="${3.2 * unit}" stroke-linecap="round"/>`
+    `<g transform="translate(${x},${y}) scale(${unit})" fill="none" ` +
+    `stroke="${COLORS.accent}" stroke-width="12" stroke-linecap="butt">` +
+    `<path d="M77 37A31 31 0 0 1 37 77M23 63A31 31 0 0 1 63 23"/>` +
+    `<path d="M69 31 31 69"/>` +
+    `</g>`
   );
 }
 
@@ -336,16 +337,16 @@ export function buildShareCardSvg(
 
   // Header: logo mark + wordmark, the app's own geometry in fixed colours.
   const header =
-    logoMark(padding, padding, layout.tile) +
+    logoMark(padding, padding, layout.mark) +
     wordmark(
-      padding + layout.tile + 16,
-      padding + layout.tile / 2,
+      padding + layout.mark + 16,
+      padding + layout.mark / 2,
       layout.wordmark,
     );
 
   // The stacked content, tracked as the baseline of the next block.
   const blocks: string[] = [];
-  let baseline = padding + layout.tile + layout.gap * 2;
+  let baseline = padding + layout.mark + layout.gap * 2;
 
   if (content.eyebrow) {
     const text = fit(
