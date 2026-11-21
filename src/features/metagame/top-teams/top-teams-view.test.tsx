@@ -280,10 +280,10 @@ describe("TopTeamsView", () => {
     await screen.findAllByRole("button", { name: /Naosaki Regionals/ });
     // Default: M-C only, so the M-B event is not listed yet.
     expect(screen.queryByText("Kanto Special")).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "All" }));
+    await user.click(screen.getByRole("radio", { name: "All" }));
     expect(await screen.findByText("Kanto Special")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /Naosaki/ })).toHaveLength(2);
-    await user.click(screen.getByRole("button", { name: "M-B" }));
+    await user.click(screen.getByRole("radio", { name: "M-B" }));
     expect(await screen.findByText("Kanto Special")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Naosaki Regionals/ }),

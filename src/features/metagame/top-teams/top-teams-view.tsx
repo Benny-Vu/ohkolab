@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { SegmentedControl } from "@/components/segmented-control";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,31 +67,16 @@ function FormatFilter({
     { value: ALL_FORMATS, label: t("meta.allFormats") },
     ...formats.map((format) => ({ value: format, label: format })),
   ];
+  // The shared one-row switch (as Singles/Doubles in the calc): a hand-made
+  // grid here wrapped 2 + 1 on phones and shrank to a sliver on desktop.
   return (
-    <div
-      role="group"
+    <SegmentedControl
+      options={options}
+      value={value}
+      onValueChange={onChange}
       aria-label={t("meta.formatFilter")}
-      className="grid w-full grid-cols-2 gap-1 rounded-md bg-surface-sunken p-1 sm:w-fit sm:grid-flow-col"
-    >
-      {options.map((option) => {
-        const active = option.value === value;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={active}
-            onClick={() => onChange(option.value)}
-            className={
-              active
-                ? "h-8 rounded-sm bg-card text-sm font-medium text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                : "h-8 rounded-sm text-sm text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
-            }
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
+      className="self-start"
+    />
   );
 }
 

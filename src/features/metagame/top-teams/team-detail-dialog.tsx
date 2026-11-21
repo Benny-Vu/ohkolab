@@ -157,9 +157,12 @@ export function TeamDetailDialog({
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {/* The sprite row, then each set in full below. The expanded
+                  two-column preview cut names and items mid-word at 360px
+                  and repeated what the list already says. */}
               <TeamPreview
                 team={{ members: sets }}
-                variant="expanded"
+                variant="compact"
                 ariaLabel={team.event}
               />
               <ul className="space-y-1.5">
