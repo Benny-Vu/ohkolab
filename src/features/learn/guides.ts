@@ -45,6 +45,12 @@ export interface LearnEntry {
   example?: "damage-rolls";
   /** Where the "Try it in the calc" link goes, when it applies. */
   calcLink?: "/calc" | "/calc/battle";
+  /**
+   * Vocabulary terms only: the slug of the entry this term links to. A
+   * long target links to its page; a short one to its anchor on its
+   * section page.
+   */
+  guide?: string;
 }
 
 /** Section chrome for the hub cards, tabs and the title provider. */

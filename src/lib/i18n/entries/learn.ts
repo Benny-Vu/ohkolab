@@ -23,6 +23,7 @@ export const learnEn = {
 
   // Section and guide page chrome.
   "learn.read": "Read",
+  "learn.readGuide": "Read the {title} guide",
   "learn.inThisSection": "In this section",
   "learn.searchTerms": "Search terms",
   "learn.searchPlaceholder": "Search terms",

@@ -185,6 +185,17 @@ describe("the vocabulary page", () => {
     }
   });
 
+  it("links a term to its guide page", async () => {
+    renderLearn("/learn/vocabulary#tailwind-term");
+
+    const row = await screen.findByRole("button", { name: "Tailwind" });
+    expect(row).toHaveAttribute("aria-expanded", "true");
+    // The term's guide link: Tailwind is a long entry with its own page.
+    expect(
+      screen.getByRole("link", { name: /Read the Tailwind guide/ }),
+    ).toHaveAttribute("href", "/learn/tailwind");
+  });
+
   it("filters the terms as you type", async () => {
     const user = userEvent.setup();
     renderLearn("/learn/vocabulary");

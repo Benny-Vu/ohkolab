@@ -3,10 +3,12 @@ import { Link } from "react-router";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 
 import {
+  findLearnEntry,
   localized,
   localizedBody,
   type LearnEntry,
 } from "@/features/learn/guides";
+import { linkHitClass } from "@/components/touch-targets";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
@@ -18,6 +20,29 @@ import { cn } from "@/lib/utils";
  * entry opens in place on phones — a toggle row — and shows as a full
  * card on desktop, where the owner found toggles too cluttered.
  */
+
+/**
+ * The link a vocabulary term carries to its guide: a long target goes to
+ * its page, a short one to its anchor on its section page.
+ */
+function GuideLink({ slug }: { slug: string }) {
+  const [locale] = useLocale();
+  const t = useT();
+  const target = findLearnEntry(slug);
+  if (!target) return null;
+  return (
+    <Link
+      to={
+        target.long
+          ? `/learn/${target.slug}`
+          : `/learn/${target.section}#${target.slug}`
+      }
+      className={`justify-self-start text-foreground underline decoration-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:decoration-foreground focus-visible:ring-3 focus-visible:ring-ring/50 ${linkHitClass}`}
+    >
+      {t("learn.readGuide", { title: localized(target.title, locale) })} →
+    </Link>
+  );
+}
 
 /** Body paragraphs of an entry, capped at prose measure. */
 function EntryBody({ entry }: { entry: LearnEntry }) {
@@ -77,6 +102,7 @@ function ToggleRow({
       {open ? (
         <div className="grid gap-2 p-4 pt-0">
           <EntryBody entry={entry} />
+          {entry.guide ? <GuideLink slug={entry.guide} /> : null}
         </div>
       ) : null}
     </div>
@@ -95,6 +121,7 @@ function FullCard({ entry }: { entry: LearnEntry }) {
         {localized(entry.title, locale)}
       </h2>
       <EntryBody entry={entry} />
+      {entry.guide ? <GuideLink slug={entry.guide} /> : null}
     </section>
   );
 }

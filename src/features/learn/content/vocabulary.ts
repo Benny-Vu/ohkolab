@@ -178,6 +178,7 @@ export const vocabularyEntries: readonly LearnEntry[] = [
   },
   {
     slug: "intimidate-term",
+    guide: "intimidate",
     section: "vocabulary",
     long: false,
     title: { en: "Intimidate", ja: "威嚇" },
@@ -214,6 +215,7 @@ export const vocabularyEntries: readonly LearnEntry[] = [
   },
   {
     slug: "mega-evolution-term",
+    guide: "mega-evolution",
     section: "vocabulary",
     long: false,
     title: { en: "Mega Evolution", ja: "メガシンカ" },
@@ -250,6 +252,7 @@ export const vocabularyEntries: readonly LearnEntry[] = [
   },
   {
     slug: "ohko-term",
+    guide: "ohko",
     section: "vocabulary",
     long: false,
     title: { en: "OHKO", ja: "1発" },
@@ -372,6 +375,7 @@ export const vocabularyEntries: readonly LearnEntry[] = [
   },
   {
     slug: "speed-control-term",
+    guide: "speed-control",
     section: "vocabulary",
     long: false,
     title: { en: "Speed control", ja: "素早さ操作" },
@@ -460,6 +464,7 @@ export const vocabularyEntries: readonly LearnEntry[] = [
   },
   {
     slug: "tailwind-term",
+    guide: "tailwind",
     section: "vocabulary",
     long: false,
     title: { en: "Tailwind", ja: "追い風" },
@@ -478,6 +483,7 @@ export const vocabularyEntries: readonly LearnEntry[] = [
   },
   {
     slug: "team-preview-term",
+    guide: "team-preview",
     section: "vocabulary",
     long: false,
     title: { en: "Team preview", ja: "チームプレビュー" },
@@ -496,6 +502,7 @@ export const vocabularyEntries: readonly LearnEntry[] = [
   },
   {
     slug: "trick-room-term",
+    guide: "trick-room",
     section: "vocabulary",
     long: false,
     title: { en: "Trick Room", ja: "トリックルーム" },

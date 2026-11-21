@@ -22,6 +22,7 @@ export const learnJa: { [K in LearnKey]: string } = {
 
   // セクション・ガイドページの枠。
   "learn.read": "詳しく読む",
+  "learn.readGuide": "「{title}」の解説を読む",
   "learn.inThisSection": "このセクションの内容",
   "learn.searchTerms": "用語を検索",
   "learn.searchPlaceholder": "用語を検索",
