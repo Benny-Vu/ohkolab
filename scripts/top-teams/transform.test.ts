@@ -100,8 +100,8 @@ describe("the event window and size filters", () => {
   });
 
   it("keeps events with at least 32 players", () => {
-    expect(hasEnoughPlayers(tournament({ players: 32 }))).toBe(true);
-    expect(hasEnoughPlayers(tournament({ players: 31 }))).toBe(false);
+    expect(hasEnoughPlayers(tournament({ players: 64 }))).toBe(true);
+    expect(hasEnoughPlayers(tournament({ players: 63 }))).toBe(false);
     expect(hasEnoughPlayers(tournament({ players: 88.5 }))).toBe(false);
   });
 

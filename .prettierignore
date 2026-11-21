@@ -7,3 +7,5 @@ android/build
 android/.gradle
 # Local-only Firebase config (kept out of git via .git/info/exclude).
 android/app/google-services.json
+# The top-teams snapshot is written minified (fetched by phones at runtime).
+public/data/top-teams/

@@ -14,7 +14,7 @@ export const CHAMPIONS_FORMATS = ["M-A", "M-B", "M-C"] as const;
 export const WINDOW_DAYS = 60;
 
 /** Keep events with at least this many players. */
-export const MIN_PLAYERS = 32;
+export const MIN_PLAYERS = 64;
 
 /** Keep placings 1 through this number. */
 export const TOP_PLACINGS = 8;

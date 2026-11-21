@@ -3,11 +3,12 @@
 //   node scripts/top-teams/ingest.ts
 //
 // For each Champions regulation (M-A, M-B, M-C) it pages the tournament list
-// (newest first), keeps events from the last 60 days with >= 32 players,
+// (newest first), keeps events from the last 60 days with >= 64 players,
 // fetches each qualifying event's standings once, keeps placings 1-8 with a
 // six-Pokémon team sheet, resolves every set against the Pokémon data and
 // DROPS (never fudges) whatever does not resolve. Player names and countries
-// are read for nothing and never stored.
+// are read for nothing and never stored. The snapshot is written minified
+// (the app's parser does not care, and the file ships to phones).
 //
 // All-or-nothing: the file is written once at the end, so any failure —
 // including a 429 — leaves the committed snapshot untouched and exits
@@ -137,7 +138,10 @@ async function main(): Promise<void> {
   const snapshot = buildSnapshot(teams, now.toISOString());
 
   await mkdir(dirname(snapshotPath), { recursive: true });
-  await writeFile(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`);
+  // Minified on purpose: the file is fetched by phones at runtime, and the
+  // app's parser never reads it as prose. The trailing newline keeps git
+  // and text tooling happy.
+  await writeFile(snapshotPath, `${JSON.stringify(snapshot)}\n`);
   console.log(`  wrote ${snapshotPath}`);
 
   console.log(
