@@ -172,14 +172,39 @@ describe("the move and ability facts (@pkmn/dex, and in Champions)", () => {
   });
 });
 
+describe("the type immunities (main-series rules; the calc models damage only)", () => {
+  // Champions changed status chances and durations, not these immunities.
+  // What can be checked here: every move a trait line names is a Champions
+  // move, so no card cites a move the game doesn't have.
+  it("every move the immunity lines name exists in Champions", () => {
+    for (const move of [
+      "Spore",
+      "Sleep Powder",
+      "Rage Powder",
+      "Leech Seed",
+      "Thunder Wave",
+      "Block",
+      "Mean Look",
+    ]) {
+      expect(getMove(move), move).toBeDefined();
+    }
+  });
+});
+
 describe("the traits data follows the verification", () => {
-  it("only the five types with verified traits have entries", () => {
+  it("only the types with traits have entries", () => {
     expect(Object.keys(TYPE_TRAITS).sort()).toEqual([
       "Dark",
+      "Electric",
+      "Fire",
       "Flying",
+      "Ghost",
+      "Grass",
+      "Ground",
       "Ice",
       "Poison",
       "Rock",
+      "Steel",
     ]);
     // Everything the chart shows stays in the cards' matchup rows; the
     // trait lines never restate matchup multipliers.

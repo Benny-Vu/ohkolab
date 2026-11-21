@@ -60,7 +60,10 @@ export function LearnHubPage() {
       description={t("learn.description")}
       width="narrow"
     >
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Equal-size cards (auto-rows-fr), one row each: icon tile, then
+          title, a description that wraps to two lines (never cut mid-line)
+          and the count, then a chevron — the owner-approved sketch. */}
+      <div className="grid auto-rows-fr gap-3 md:grid-cols-2 md:gap-4">
         {LEARN_SECTIONS.map((section) => {
           const Icon = SECTION_ICONS[section.id];
           const count = sectionEntryCount(section.id);
@@ -68,28 +71,28 @@ export function LearnHubPage() {
             <Link
               key={section.id}
               to={`/learn/${section.id}`}
-              className="flex min-h-32 flex-col rounded-md border bg-card p-4 outline-none transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-surface-sunken focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="flex items-center gap-3 rounded-md border bg-card p-4 outline-none transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-surface-sunken focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              <span className="grid size-10 place-items-center rounded-md bg-surface-sunken text-foreground">
+              <span className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-sunken text-accent-brand-text">
                 <Icon aria-hidden className="size-5" />
               </span>
-              <span className="mt-3 font-heading text-base font-semibold tracking-tight">
-                {localized(section.title, locale)}
-              </span>
-              <span className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-                {localized(section.description, locale)}
-              </span>
-              <span className="mt-auto flex items-center justify-between pt-3">
-                <span className="text-xs font-medium text-muted-foreground tabular-nums">
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="font-heading text-lg font-semibold tracking-tight">
+                  {localized(section.title, locale)}
+                </span>
+                <span className="line-clamp-2 text-sm text-muted-foreground">
+                  {localized(section.description, locale)}
+                </span>
+                <span className="mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
                   {count === 1
                     ? t("learn.countOne")
                     : t("learn.countMany", { count })}
                 </span>
-                <ChevronRightIcon
-                  aria-hidden
-                  className="size-4 text-muted-foreground"
-                />
               </span>
+              <ChevronRightIcon
+                aria-hidden
+                className="size-4 shrink-0 text-muted-foreground"
+              />
             </Link>
           );
         })}

@@ -26,7 +26,7 @@ function TypesSidebar() {
     "block rounded-sm px-2 py-1 text-sm text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:bg-surface-sunken hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50";
   return (
     <nav aria-label={t("learn.inThisSection")}>
-      <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <p className="mb-2 text-xs font-semibold text-muted-foreground">
         {t("learn.inThisSection")}
       </p>
       <ul className="grid gap-1.5">

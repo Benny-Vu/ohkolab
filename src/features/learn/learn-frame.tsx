@@ -65,7 +65,7 @@ export function SectionSidebar({
   const t = useT();
   return (
     <nav aria-label={t("learn.inThisSection")}>
-      <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <p className="mb-2 text-xs font-semibold text-muted-foreground">
         {t("learn.inThisSection")}
       </p>
       <ul className="grid gap-1.5">

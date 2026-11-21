@@ -78,7 +78,7 @@ export const LEARN_SECTIONS: readonly LearnSectionInfo[] = [
     id: "concepts",
     title: { en: "Concepts", ja: "バトルの仕組み" },
     description: {
-      en: "How Champions battles work, from team preview to damage rolls.",
+      en: "How battles work, from team preview to damage rolls.",
       ja: "チームプレビューから乱数まで、チャンピオンズのバトルの仕組み。",
     },
   },

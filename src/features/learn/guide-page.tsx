@@ -1,4 +1,8 @@
 import { Link, useParams } from "react-router";
+import { ArrowRightIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 
 import {
   findLearnEntry,
@@ -9,7 +13,6 @@ import {
 import { GuidePager, LearnFrame } from "@/features/learn/learn-frame";
 import { LearnExample } from "@/features/learn/learn-example";
 import { NotFoundPage } from "@/features/system/not-found-page";
-import { linkHitClass } from "@/components/touch-targets";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 
@@ -79,12 +82,17 @@ export function GuidePage() {
         {entry.example ? <LearnExample kind={entry.example} /> : null}
 
         {entry.calcLink ? (
-          <Link
-            to={entry.calcLink}
-            className={`mt-1 justify-self-start text-foreground underline decoration-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:decoration-foreground focus-visible:ring-3 focus-visible:ring-ring/50 ${linkHitClass}`}
+          // The one call to action on a guide: a real button (owner sketch),
+          // full width on phones, hugging its label from sm up.
+          <Button
+            asChild
+            className={`mt-1 w-full sm:w-auto sm:justify-self-start ${buttonSmTouchClass}`}
           >
-            {calcLabel}
-          </Link>
+            <Link to={entry.calcLink}>
+              {calcLabel}
+              <ArrowRightIcon aria-hidden />
+            </Link>
+          </Button>
         ) : null}
 
         <GuidePager section={entry.section} slug={entry.slug} />
