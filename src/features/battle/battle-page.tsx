@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 
 import { DataBadge } from "@/components/data-badge";
@@ -45,24 +45,16 @@ export function BattlePage() {
   const [format] = useBattleFormat();
   const location = useLocation();
   const { teams } = useTeams();
-  const [mySets, setMySets] = useState<PokemonSet[]>([]);
+  // A team sent here from its detail arrives with the saved team's id in
+  // router state; preselect it on the first render. The store is sync, so
+  // the team the dialog just saved is already listable here.
+  const [mySets, setMySets] = useState<PokemonSet[]>(() => {
+    const teamId = (location.state as BattleLocationState | null)?.teamId;
+    if (!teamId) return [];
+    return teams.find((entry) => entry.id === teamId)?.members ?? [];
+  });
   const [opponents, setOpponents] = useState<OpponentInput[]>([]);
   const { current: currentNotes } = useBattleNotesState();
-
-  // A team sent here from its detail arrives with the saved team's id in
-  // router state; preselect it once. The guard keeps a store refresh from
-  // re-picking over a choice the player made after arriving.
-  const requestedTeamId = (location.state as BattleLocationState | null)
-    ?.teamId;
-  const preselected = useRef(false);
-  useEffect(() => {
-    if (!requestedTeamId || preselected.current) return;
-    const team = teams.find((entry) => entry.id === requestedTeamId);
-    if (team) {
-      preselected.current = true;
-      setMySets(team.members);
-    }
-  }, [requestedTeamId, teams]);
 
   // My six (with each one's Speed) sync into the notes store, so speed
   // relations there can name my Pokémon. Emptying the team clears it, and
