@@ -266,6 +266,14 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "meta.placing": "#{placing}位",
   "meta.record": "{wins}勝 {losses}敗",
   "meta.recordWithTies": "{wins}勝 {losses}敗 {ties}分",
+  "meta.eventPlayersOne": "1人参加",
+  "meta.eventPlayersMany": "{count}人参加",
+  "meta.copyAsPaste": "ポケモンShowdown形式でコピー",
+  "meta.saveTeam": "マイ構築に保存",
+  "meta.sendToBattleMode": "バトルモードへ送る",
+  "meta.teamSaved": "構築を保存しました。",
+  "meta.pasteCopied": "構築をShowdown形式でコピーしました。",
+  "meta.teamLoadFailed": "この構築の型を作成できませんでした。",
 
   // 環境：素早さライン。
   "meta.speedTiers": "素早さライン",

@@ -267,6 +267,14 @@ export const toolsEn = {
   "meta.placing": "#{placing}",
   "meta.record": "{wins}W {losses}L",
   "meta.recordWithTies": "{wins}W {losses}L {ties}T",
+  "meta.eventPlayersOne": "1 player",
+  "meta.eventPlayersMany": "{count} players",
+  "meta.copyAsPaste": "Copy as Showdown paste",
+  "meta.saveTeam": "Save to my teams",
+  "meta.sendToBattleMode": "Send to battle mode",
+  "meta.teamSaved": "Team saved.",
+  "meta.pasteCopied": "Team copied as a Showdown paste.",
+  "meta.teamLoadFailed": "Could not build this team's sets.",
 
   // Metagame: speed tiers.
   "meta.speedTiers": "Speed tiers",
