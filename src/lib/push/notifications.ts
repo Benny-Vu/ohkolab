@@ -29,7 +29,10 @@ import { supabase, type AppSupabaseClient } from "@/lib/supabase";
  */
 
 export interface PushGlueOptions {
-  /** The Supabase client for token writes. Null skips every write. */
+  /**
+   * The Supabase client for token writes. Left out, it is the app's own
+   * client; an explicit null skips every write.
+   */
   client?: AppSupabaseClient | null;
   /** Navigates in-app, from React Router. */
   navigate: (path: string) => void;
@@ -107,7 +110,9 @@ export async function setupPushNotifications(
 ): Promise<() => void> {
   if (!isPushAvailable()) return () => {};
   const plugin = options.plugin ?? (await getPushPlugin());
-  const client = options.client ?? null;
+  // `undefined` (the app shell passes no client) means the app's client;
+  // only an explicit null turns the writes off.
+  const client = options.client === undefined ? supabase : options.client;
   const getUserId = options.getUserId ?? sessionUserId;
   const subscribeToAuth = options.subscribeToAuth ?? subscribeToSupabaseAuth;
 

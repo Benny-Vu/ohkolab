@@ -876,7 +876,8 @@ describe("PublicProfilePage social section", () => {
     renderSignedIn(client, "brock");
 
     await user.click(
-      await screen.findByRole("button", { name: /1 followers/i }),
+      // One follower reads "1 follower", not "1 followers".
+      await screen.findByRole("button", { name: /^1 follower$/i }),
     );
 
     expect(await screen.findByText(/could not load this list/i)).toBeVisible();

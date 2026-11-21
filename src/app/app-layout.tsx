@@ -195,15 +195,12 @@ export function AppLayout() {
         aria-label={t("nav.main")}
         className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-safe backdrop-blur md:hidden"
       >
-        <ul
-          className={cn(
-            "mx-auto grid h-14 max-w-md",
-            // One more tab while the direct messages flag is on.
-            directMessagesEnabled() ? "grid-cols-6" : "grid-cols-5",
-          )}
-        >
+        {/* One row of equal columns, however many tabs the flags switch
+            on (battles, messages): a fixed grid-cols-N wrapped the last
+            tab off-screen when a flag added one more. */}
+        <ul className="mx-auto grid h-14 max-w-md auto-cols-fr grid-flow-col">
           {NAV_ITEMS.filter((item) => item.to !== "/profile").map((item) => (
-            <li key={item.to}>
+            <li key={item.to} className="min-w-0">
               <NavLink
                 to={item.to}
                 end={item.end}
@@ -223,7 +220,9 @@ export function AppLayout() {
                 }
               >
                 <item.icon className="size-5" aria-hidden />
-                {t(item.labelKey)}
+                <span className="max-w-full truncate px-0.5">
+                  {t(item.labelKey)}
+                </span>
                 {item.badge === "messages" &&
                 directMessagesEnabled() &&
                 !demo ? (
@@ -235,7 +234,7 @@ export function AppLayout() {
             </li>
           ))}
           {demo ? null : (
-            <li>
+            <li className="min-w-0">
               <AccountMenu variant="tab" />
             </li>
           )}

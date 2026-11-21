@@ -771,7 +771,12 @@ function ProfileFollowCounts({
           className={`text-muted-foreground underline-offset-4 transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:text-foreground hover:underline ${linkHitClass}`}
           onClick={() => setListOpen("followers")}
         >
-          {counts ? counts.followers : "…"} {t("publicProfile.followersLabel")}
+          {counts ? counts.followers : "…"}{" "}
+          {t(
+            counts?.followers === 1
+              ? "publicProfile.followerLabel"
+              : "publicProfile.followersLabel",
+          )}
         </button>
         <button
           type="button"
