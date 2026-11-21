@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import { createMemoryRouter, RouterProvider } from "react-router";
@@ -290,6 +290,31 @@ describe("MetagamePage", () => {
     await user.click(screen.getByRole("button", { name: /Sneasler/ }));
     await user.click(screen.getByRole("button", { name: "Add to a team" }));
     expect(await screen.findByTestId("team-stub")).toBeInTheDocument();
+  });
+
+  it("switches between the usage and top-teams views", async () => {
+    const user = userEvent.setup();
+    mockFetch();
+    renderMetagame();
+    await screen.findByText(/rating 1630\+/);
+
+    const tabs = screen.getByRole("tablist", { name: "Metagame" });
+    expect(
+      within(tabs).getByRole("tab", { name: "Usage", selected: true }),
+    ).toBeInTheDocument();
+
+    // The month picker belongs to the usage view only.
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    await user.click(within(tabs).getByRole("tab", { name: "Top teams" }));
+    expect(
+      within(tabs).getByRole("tab", { name: "Top teams", selected: true }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    // The top-teams view replaces the ranking.
+    expect(screen.queryByText("Usage ranking")).not.toBeInTheDocument();
+
+    await user.click(within(tabs).getByRole("tab", { name: "Usage" }));
+    expect(await screen.findByText("Usage ranking")).toBeInTheDocument();
   });
 });
 

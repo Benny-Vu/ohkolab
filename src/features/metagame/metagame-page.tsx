@@ -74,6 +74,13 @@ const SpeedTiersSection = lazy(() =>
   })),
 );
 
+// The tournament teams view loads lazily with its own data needs.
+const TopTeamsView = lazy(() =>
+  import("@/features/metagame/top-teams/top-teams-view").then((m) => ({
+    default: m.TopTeamsView,
+  })),
+);
+
 type SortKey = "rank" | "name" | "usage";
 type SortDir = "asc" | "desc";
 
@@ -272,6 +279,51 @@ function PokemonDetail({
   );
 }
 
+/** The two views of /meta: the usage ranking and the tournament teams. */
+type MetaView = "usage" | "top-teams";
+
+/** The segmented switch between the two views. */
+function ViewSwitch({
+  view,
+  onChange,
+}: {
+  view: MetaView;
+  onChange: (view: MetaView) => void;
+}) {
+  const t = useT();
+  const views: { id: MetaView; label: string }[] = [
+    { id: "usage", label: t("meta.viewUsage") },
+    { id: "top-teams", label: t("meta.viewTopTeams") },
+  ];
+  return (
+    <div
+      role="tablist"
+      aria-label={t("meta.title")}
+      className="grid w-full grid-cols-2 gap-1 rounded-md bg-surface-sunken p-1 sm:w-72"
+    >
+      {views.map((entry) => {
+        const active = entry.id === view;
+        return (
+          <button
+            key={entry.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(entry.id)}
+            className={
+              active
+                ? "h-8 rounded-sm bg-card text-sm font-medium text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                : "h-8 rounded-sm text-sm text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+            }
+          >
+            {entry.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function MetagamePage() {
   const [format] = useBattleFormat();
   const t = useT();
@@ -280,6 +332,7 @@ export function MetagamePage() {
   const navigate = useNavigate();
   const index = useMetagameIndex();
   const { create } = useTeams();
+  const [view, setView] = useState<MetaView>("usage");
   const [period, setPeriod] = useState<string | null>(null);
   const [selected, setSelected] = useState<PokemonUsage | null>(null);
   const [search, setSearch] = useState("");
@@ -587,31 +640,50 @@ export function MetagamePage() {
     <Page
       title={t("meta.title")}
       description={
-        snapshot.data ? formatPeriod(snapshot.data.period) : undefined
+        view === "usage" && snapshot.data
+          ? formatPeriod(snapshot.data.period)
+          : undefined
       }
       actions={
-        <>
-          <DataBadge period={period} />
-          <FormatToggle />
-          <Picker
-            options={monthOptions.map((option) => ({
-              value: option.period,
-              label: formatPeriod(option.period),
-              description: option.regulation,
-            }))}
-            value={snapshot.data?.period ?? monthOptions[0]?.period ?? ""}
-            onValueChange={(value) => {
-              if (value) setPeriod(value);
-            }}
-            placeholder={t("meta.month")}
-            aria-label={t("meta.month")}
-            className="w-36"
-            disabled={monthOptions.length === 0}
-          />
-        </>
+        view === "usage" ? (
+          <>
+            <DataBadge period={period} />
+            <FormatToggle />
+            <Picker
+              options={monthOptions.map((option) => ({
+                value: option.period,
+                label: formatPeriod(option.period),
+                description: option.regulation,
+              }))}
+              value={snapshot.data?.period ?? monthOptions[0]?.period ?? ""}
+              onValueChange={(value) => {
+                if (value) setPeriod(value);
+              }}
+              placeholder={t("meta.month")}
+              aria-label={t("meta.month")}
+              className="w-36"
+              disabled={monthOptions.length === 0}
+            />
+          </>
+        ) : undefined
       }
     >
-      {content}
+      <ViewSwitch view={view} onChange={setView} />
+      {view === "top-teams" ? (
+        <Suspense
+          fallback={
+            <LoadingArea
+              pending={true}
+              label={t("meta.topTeamsLoading")}
+              skeleton={<Skeleton className="h-40 w-full" />}
+            />
+          }
+        >
+          <TopTeamsView />
+        </Suspense>
+      ) : (
+        content
+      )}
       <Dialog
         open={selected !== null}
         onOpenChange={(open) => {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router";
 
 import { DataBadge } from "@/components/data-badge";
 import { EmptyState } from "@/components/empty-state";
@@ -22,6 +23,7 @@ import { speedRange, type SpeedRange } from "@/features/battle/speed-note";
 import { calcStats } from "@/data";
 import { useBattleFormat } from "@/lib/preferences";
 import { useT } from "@/lib/i18n/t";
+import { useTeams } from "@/lib/team/use-teams";
 import type { PokemonSet } from "@/types/pokemon";
 import type { OpponentInput } from "@/features/battle/opponent-input";
 
@@ -33,10 +35,24 @@ import type { OpponentInput } from "@/features/battle/opponent-input";
  * most common usage set, labelled by where the set came from — and the
  * battle notes overlay what was revealed in the match on top of that.
  */
+/** Router state "Send to battle mode" passes: the saved team to preselect. */
+interface BattleLocationState {
+  teamId?: string;
+}
+
 export function BattlePage() {
   const t = useT();
   const [format] = useBattleFormat();
-  const [mySets, setMySets] = useState<PokemonSet[]>([]);
+  const location = useLocation();
+  const { teams } = useTeams();
+  // A team sent here from its detail arrives with the saved team's id in
+  // router state; preselect it on the first render. The store is sync, so
+  // the team the dialog just saved is already listable here.
+  const [mySets, setMySets] = useState<PokemonSet[]>(() => {
+    const teamId = (location.state as BattleLocationState | null)?.teamId;
+    if (!teamId) return [];
+    return teams.find((entry) => entry.id === teamId)?.members ?? [];
+  });
   const [opponents, setOpponents] = useState<OpponentInput[]>([]);
   const { current: currentNotes } = useBattleNotesState();
 
