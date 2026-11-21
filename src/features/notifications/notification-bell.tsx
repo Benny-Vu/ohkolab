@@ -1,9 +1,12 @@
 /**
- * The header bell: links to /notifications with a badge for the unread count.
- * The lead mounts it in the app layout header.
+ * The header bell: opens the notifications as a panel on the current page
+ * (/notifications stays a route for deep links and pushes, but nothing in
+ * the app's own UI navigates there any more). The panel — the Radix
+ * primitives and the notification list — lazy-loads on first open, so the
+ * entry chunk carries only this button and its badge.
  */
 
-import { Link } from "react-router";
+import { lazy, Suspense, useRef, useState, type RefObject } from "react";
 import { BellIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,22 +16,34 @@ import { useT } from "@/lib/i18n/t";
 import { formatUnreadBadge } from "@/lib/notifications/badge";
 import { useUnreadNotificationCount } from "@/lib/notifications/queries";
 
+const NotificationsPanel = lazy(() =>
+  import("@/features/notifications/notification-panel").then((m) => ({
+    default: m.NotificationsPanel,
+  })),
+);
+
 export function NotificationBell() {
   const { user } = useAuth();
   const t = useT();
   const { data } = useUnreadNotificationCount();
+  const [open, setOpen] = useState(false);
+  const bellRef = useRef<HTMLButtonElement>(null);
   const badge = user ? formatUnreadBadge(data ?? 0) : "";
+  const ariaLabel = badge
+    ? t("notifications.bellAriaUnread", { badge })
+    : t("notifications.title");
 
   return (
-    <Button variant="ghost" size="icon" asChild className={iconHitClass}>
-      <Link
-        to="/notifications"
-        aria-label={
-          badge
-            ? t("notifications.bellAriaUnread", { badge })
-            : t("notifications.title")
-        }
-        className="relative"
+    <>
+      <Button
+        ref={bellRef}
+        variant="ghost"
+        size="icon"
+        className={`${iconHitClass} relative`}
+        aria-label={ariaLabel}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
       >
         <BellIcon aria-hidden />
         {badge && (
@@ -42,7 +57,20 @@ export function NotificationBell() {
             className="absolute right-1 top-1 size-1.5 rounded-full bg-accent-brand-text"
           />
         )}
-      </Link>
-    </Button>
+      </Button>
+      {open ? (
+        <Suspense fallback={null}>
+          <NotificationsPanel
+            open={open}
+            onOpenChange={setOpen}
+            signedIn={Boolean(user)}
+            anchorRef={bellRef}
+          />
+        </Suspense>
+      ) : null}
+    </>
   );
 }
+
+/** The bell button's ref, as the panel's popover anchor and focus return. */
+export type NotificationBellRef = RefObject<HTMLButtonElement | null>;

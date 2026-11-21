@@ -11,6 +11,7 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
+  PrinterIcon,
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -72,6 +73,7 @@ import { createDefaultSet, useDisplayName, validateSet } from "@/data";
 import { MemberCard } from "@/features/team-builder/member-card";
 import { PublicTeamView } from "@/features/team-builder/public-team-view";
 import { ShareButton } from "@/features/share/share-button";
+import { TeamIdChip } from "@/components/team-id-chip";
 import { useAuth } from "@/lib/auth/use-auth";
 import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
@@ -131,7 +133,11 @@ function GameTeamIdField({
 
   return (
     <div className="grid max-w-sm gap-1.5">
-      <Label htmlFor="team-game-id">{t("teams.gameIdFieldLabel")}</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor="team-game-id">{t("teams.gameIdFieldLabel")}</Label>
+        {/* One-tap copy of the set ID (the list's preview panel did this). */}
+        {team.gameTeamId ? <TeamIdChip id={team.gameTeamId} compact /> : null}
+      </div>
       <Input
         id="team-game-id"
         aria-invalid={error ? true : undefined}
@@ -478,6 +484,13 @@ export function TeamDetailPage() {
               >
                 <PencilIcon aria-hidden />
                 {t("teams.rename")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className={menuItemClass}
+                onSelect={() => void navigate(`/teams/${team.id}/print`)}
+              >
+                <PrinterIcon aria-hidden />
+                {t("teams.printTeamSheet")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"

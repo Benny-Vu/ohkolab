@@ -6,13 +6,12 @@ import { Page } from "@/components/page";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { SegmentedControl } from "@/components/segmented-control";
-import { buttonSmTouchClass, switchHitClass } from "@/components/touch-targets";
+import { buttonSmTouchClass } from "@/components/touch-targets";
 import { TeamPreview } from "@/components/team-preview/team-preview";
 import { UserAvatar } from "@/components/user-avatar";
 import { DemoBattleList } from "@/components/demo-battle-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { AvatarListSkeleton, LoadingArea } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth/use-auth";
 import { isDemoMode } from "@/lib/demo-mode";
@@ -23,7 +22,6 @@ import { supabase, type AppSupabaseClient } from "@/lib/supabase";
 import {
   formatBattleTime,
   NO_BATTLE_FILTER,
-  wantsToPlayNow,
   type BattleFilter,
   type BattleRequestSummary,
 } from "@/lib/battles/logic";
@@ -34,7 +32,6 @@ import {
 } from "@/lib/battles/queries";
 import { useOfferToBattle } from "@/lib/battles/mutations";
 import { BattleRequestDialog } from "@/features/battles/board/battle-request-dialog";
-import { PractiseNowButton } from "@/features/battles/board/practise-now-button";
 import { ReportBattleButton } from "@/features/battles/board/report-battle-dialog";
 import { MatchedBanner } from "@/features/battles/matching/matched-banner";
 import { MyBattleRequestsPanel } from "@/features/battles/matching/my-battle-requests-panel";
@@ -42,10 +39,10 @@ import { OfferStatus } from "@/features/battles/matching/offer-status";
 
 /**
  * /battles: the battle board. Open requests for a Champions match, filtered
- * by format, language and "starting soon", each with an offer button and a
- * report route through the moderation queue. The times are always the
- * viewer's own clock. Signed-out visitors see the sign-in card (and, in
- * recording mode, the sample requests below it).
+ * by format and language, each with an offer button and a report route
+ * through the moderation queue. The times are always the viewer's own
+ * clock. Signed-out visitors see the sign-in card (and, in recording mode,
+ * the sample requests below it).
  */
 export function BattleBoardPage({
   client = supabase,
@@ -62,22 +59,14 @@ export function BattleBoardPage({
   const mine = useMyBattleRequests(client);
 
   const requests = board.data ?? [];
-  const filtersActive =
-    filter.format !== "all" || filter.language !== "all" || filter.startingSoon;
+  const filtersActive = filter.format !== "all" || filter.language !== "all";
 
   return (
     <Page
       title={t("battles.title")}
       description={t("battles.description")}
       width="wide"
-      actions={
-        user ? (
-          <>
-            <PractiseNowButton client={client} />
-            <BattleRequestDialog client={client} />
-          </>
-        ) : null
-      }
+      actions={user ? <BattleRequestDialog client={client} /> : null}
     >
       {user === null ? (
         <div className="grid gap-4">
@@ -153,17 +142,6 @@ export function BattleBoardPage({
                 { value: "ja", label: t("language.japanese") },
               ]}
             />
-            <span className="flex items-center gap-2 text-sm font-medium">
-              <Switch
-                className={switchHitClass}
-                aria-label={t("battles.startingSoon")}
-                checked={filter.startingSoon}
-                onCheckedChange={(checked) =>
-                  setFilter({ ...filter, startingSoon: checked })
-                }
-              />
-              {t("battles.startingSoon")}
-            </span>
           </div>
 
           <div className="mt-4">
@@ -331,9 +309,6 @@ function BattleCard({
               : "language.english",
           )}
         </Badge>
-        {wantsToPlayNow(request, new Date()) && (
-          <Badge variant="outline">{t("battles.nowBadge")}</Badge>
-        )}
       </div>
 
       <p className="mt-2 font-heading text-sm font-semibold">{request.rules}</p>
