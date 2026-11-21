@@ -4,7 +4,6 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { learnRoutes } from "@/features/learn/routes";
-import { PageLoading } from "@/app/route-pages";
 import { registerEnglishDomain } from "@/lib/i18n/en-loader";
 import { learnEn } from "@/lib/i18n/entries/learn";
 import { setLocale } from "@/lib/i18n/locale";
@@ -22,10 +21,7 @@ registerEnglishDomain("learn", learnEn);
 function renderLearn(initialEntry = "/learn") {
   const router = createMemoryRouter(
     [{ path: "/", children: [...learnRoutes] }],
-    {
-      initialEntries: [initialEntry],
-      hydrateFallbackElement: <PageLoading />,
-    },
+    { initialEntries: [initialEntry] },
   );
   return render(<RouterProvider router={router} />);
 }
