@@ -252,6 +252,22 @@ export const toolsEn = {
   "meta.setBuildFailed": "Could not build a set from this usage entry.",
   "meta.rankUsage": "Rank #{rank} · {usage} usage",
 
+  // Metagame: the Top teams view.
+  "meta.viewUsage": "Usage",
+  "meta.viewTopTeams": "Top teams",
+  "meta.topTeamsLoading": "Loading top teams",
+  "meta.topTeamsEmpty": "No tournament teams in the snapshot yet.",
+  "meta.topTeamsError": "Could not load the top teams.",
+  "meta.topTeamsRetry": "Try again",
+  "meta.topTeamsAttribution": "Tournament data from Limitless.",
+  "meta.topTeamsSource": "View on Limitless",
+  "meta.spAssumed": "SP not published, common spread assumed.",
+  "meta.formatFilter": "Regulation",
+  "meta.allFormats": "All",
+  "meta.placing": "#{placing}",
+  "meta.record": "{wins}W {losses}L",
+  "meta.recordWithTies": "{wins}W {losses}L {ties}T",
+
   // Metagame: speed tiers.
   "meta.speedTiers": "Speed tiers",
   "meta.maxMinSpeed": "Max {max} · Min {min}",

@@ -250,6 +250,23 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "meta.setBuildFailed": "この使用率データからは型を作成できませんでした。",
   "meta.rankUsage": "順位#{rank} · 使用率{usage}",
 
+  // 環境：上位構築ビュー。
+  "meta.viewUsage": "使用率",
+  "meta.viewTopTeams": "上位構築",
+  "meta.topTeamsLoading": "上位構築を読み込み中",
+  "meta.topTeamsEmpty": "スナップショットに大会データがまだありません。",
+  "meta.topTeamsError": "上位構築を読み込めませんでした。",
+  "meta.topTeamsRetry": "再試行",
+  "meta.topTeamsAttribution": "大会データはLimitless提供。",
+  "meta.topTeamsSource": "Limitlessで見る",
+  "meta.spAssumed":
+    "ステータスポイント（SP）は未公開。よく使われる配分で補っています。",
+  "meta.formatFilter": "レギュレーション",
+  "meta.allFormats": "すべて",
+  "meta.placing": "#{placing}位",
+  "meta.record": "{wins}勝 {losses}敗",
+  "meta.recordWithTies": "{wins}勝 {losses}敗 {ties}分",
+
   // 環境：素早さライン。
   "meta.speedTiers": "素早さライン",
   "meta.maxMinSpeed": "最高{max} · 最低{min}",
