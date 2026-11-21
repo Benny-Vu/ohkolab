@@ -74,3 +74,24 @@ test("the glossary search filters the terms", async ({ page }) => {
 
   await expectNoHorizontalOverflow(page);
 });
+
+test("the type chart renders every cell inside its own scroll", async ({
+  page,
+}) => {
+  await page.goto("/learn/types");
+
+  await expect(
+    page.getByRole("heading", { name: "Types", exact: true }),
+  ).toBeVisible();
+
+  // The chart: 18 attacking rows by 18 defending columns, all from
+  // @/data. The grid scrolls sideways inside its card; the page must not.
+  const chart = page.locator("#type-chart table");
+  await expect(chart.locator("tbody tr")).toHaveCount(18);
+  await expect(chart.locator("tbody tr").first().locator("td")).toHaveCount(18);
+  await expect(chart.getByText("2", { exact: true })).toBeVisible();
+  await expect(chart.getByText("½", { exact: true })).toBeVisible();
+  await expect(chart.getByText("0", { exact: true })).toBeVisible();
+
+  await expectNoHorizontalOverflow(page);
+});
