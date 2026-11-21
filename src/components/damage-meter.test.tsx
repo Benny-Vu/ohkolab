@@ -52,4 +52,23 @@ describe("DamageMeter", () => {
     // widths still state the roll range and the guaranteed damage.
     expect(segmentWidths()).toEqual(["0%", "30%", "90%"]);
   });
+
+  it("colours the HP left like the games: green, yellow, red", () => {
+    const colour = () =>
+      screen
+        .getByRole("img")
+        .querySelector<HTMLDivElement>(":scope > div")!
+        .getAttribute("data-hp-color");
+
+    const { rerender } = render(
+      <DamageMeter minPercent={30} maxPercent={40} hpPercent={100} />,
+    );
+    expect(colour()).toBe("bg-success"); // 60% left
+    rerender(
+      <DamageMeter minPercent={68.3} maxPercent={81.2} hpPercent={100} />,
+    );
+    expect(colour()).toBe("bg-destructive"); // 18.8% left
+    rerender(<DamageMeter minPercent={50} maxPercent={65} hpPercent={100} />);
+    expect(colour()).toBe("bg-warning"); // 35% left
+  });
 });
