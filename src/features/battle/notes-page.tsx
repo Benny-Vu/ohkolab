@@ -26,7 +26,7 @@ export function NotesPage() {
         </Button>
       }
     >
-      <NotesPanel addable />
+      <NotesPanel addable embeddedInPage />
     </Page>
   );
 }

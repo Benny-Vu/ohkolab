@@ -62,6 +62,12 @@ interface NotesPanelProps {
   addable?: boolean;
   /** Link to the standalone notes page (battle mode only). */
   standaloneLink?: boolean;
+  /**
+   * The /notes page already shows the title and the device-only line in its
+   * page header; there the panel keeps its heading for screen readers only
+   * instead of repeating both on screen.
+   */
+  embeddedInPage?: boolean;
 }
 
 const GAMES = [1, 2, 3] as const;
@@ -81,6 +87,7 @@ export function NotesPanel({
   opponents,
   addable = false,
   standaloneLink = false,
+  embeddedInPage = false,
 }: NotesPanelProps) {
   const t = useT();
   const displayName = useDisplayName();
@@ -108,10 +115,18 @@ export function NotesPanel({
 
   return (
     <Panel labelledBy={titleId}>
-      <PanelTitle id={titleId}>{t("battle.notesTitle")}</PanelTitle>
-      <p className="text-sm text-muted-foreground">
-        {t("battle.notesLocalOnly")}
-      </p>
+      {embeddedInPage ? (
+        <span id={titleId} className="sr-only">
+          {t("battle.notesTitle")}
+        </span>
+      ) : (
+        <>
+          <PanelTitle id={titleId}>{t("battle.notesTitle")}</PanelTitle>
+          <p className="text-sm text-muted-foreground">
+            {t("battle.notesLocalOnly")}
+          </p>
+        </>
+      )}
 
       <div className="grid gap-2">
         {/* The game counter: notes carry across games of the set. */}

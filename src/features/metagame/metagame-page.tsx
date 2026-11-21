@@ -536,7 +536,9 @@ export function MetagamePage() {
                               className="size-6"
                             />
                           </span>
-                          <span className="min-w-0 truncate font-medium">
+                          {/* Wraps instead of truncating: at 360px a cut name
+                              loses the suffix that tells Mega X from Mega Y. */}
+                          <span className="line-clamp-2 min-w-0 text-left leading-tight font-medium break-words whitespace-normal">
                             {displayName("species", pokemon.species)}
                           </span>
                         </Button>

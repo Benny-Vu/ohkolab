@@ -401,7 +401,7 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "battle.notesTurnUp": "ターンを進める",
   "battle.notesTurnLine": "T{turn}：{move} → {species}",
   "battle.notesLogMove": "{species}の{move}を記録",
-  "battle.notesLinePlaceholder": "自由入力",
+  "battle.notesLinePlaceholder": "メモを入力…",
   "battle.notesAddLine": "追加",
   "battle.notesRemoveLine": "行を削除",
   "battle.notesAddMove": "技を追加",

@@ -88,9 +88,7 @@ describe("LearnPage", () => {
     try {
       renderLearn();
 
-      expect(
-        screen.getByRole("heading", { name: "はじめに" }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "解説" })).toBeInTheDocument();
       expect(
         screen.getByRole("heading", { name: "ダメージの乱数" }),
       ).toBeInTheDocument();

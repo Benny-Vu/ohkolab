@@ -403,7 +403,7 @@ export const toolsEn = {
   "battle.notesTurnUp": "Later turn",
   "battle.notesTurnLine": "T{turn}: {move} → {species}",
   "battle.notesLogMove": "Log {move} for {species}",
-  "battle.notesLinePlaceholder": "Free text",
+  "battle.notesLinePlaceholder": "Add a note…",
   "battle.notesAddLine": "Add line",
   "battle.notesRemoveLine": "Remove line",
   "battle.notesAddMove": "Add move",
