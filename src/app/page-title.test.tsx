@@ -39,6 +39,21 @@ describe("titleForPath", () => {
     expect(titleForPath("/privacy")).toBe("Privacy · OHKOLab");
     expect(titleForPath("/nope")).toBe("Page not found · OHKOLab");
   });
+
+  it("titles the learn routes through the registry provider", async () => {
+    // Importing the registry registers its route-metadata provider.
+    await import("@/features/learn/guides");
+
+    expect(titleForPath("/learn/concepts")).toBe("Concepts · OHKOLab");
+    expect(titleForPath("/learn/vocabulary")).toBe("Vocabulary · OHKOLab");
+    expect(titleForPath("/learn/damage-rolls")).toBe("Damage rolls · OHKOLab");
+    expect(descriptionForPath("/learn/damage-rolls")).toBe(
+      "Why the same move does different damage every time.",
+    );
+    // Unrelated paths still fall through to the static tables.
+    expect(titleForPath("/calc")).toBe("Damage calculator · OHKOLab");
+    expect(titleForPath("/nope")).toBe("Page not found · OHKOLab");
+  });
 });
 
 describe("usePageTitle", () => {

@@ -349,10 +349,10 @@ describe("CalcPage", () => {
 
     expect(
       dialog.getByRole("link", { name: "GUARANTEED 2HKO" }),
-    ).toHaveAttribute("href", "/learn#ohko");
+    ).toHaveAttribute("href", "/learn/ohko");
     expect(dialog.getByRole("link", { name: /^Damage:/ })).toHaveAttribute(
       "href",
-      "/learn#damage-rolls",
+      "/learn/damage-rolls",
     );
   });
 
