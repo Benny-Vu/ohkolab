@@ -10,12 +10,42 @@ import type { TranslationKey } from "@/lib/i18n/en";
 const SITE_NAME = "OHKOLab";
 const SITE_URL = "https://ohkolab.com";
 
+/** Title and description a feature computes for its own routes. */
+export interface RouteMeta {
+  title: string;
+  description?: string;
+}
+
+/**
+ * Providers turn a pathname into localized route metadata. Feature chunks
+ * register one when they load (the learn routes do), so titles live with
+ * the content instead of being copied into shell dictionary keys.
+ */
+type RouteMetaProvider = (pathname: string) => RouteMeta | undefined;
+const routeMetaProviders: RouteMetaProvider[] = [];
+
+/** Registers a route-metadata provider; the first match wins. */
+export function registerRouteMetaProvider(provider: RouteMetaProvider): void {
+  routeMetaProviders.push(provider);
+}
+
+/** The metadata a registered provider has for a path, if any. */
+function providerMeta(pathname: string): RouteMeta | undefined {
+  for (const provider of routeMetaProviders) {
+    const meta = provider(pathname);
+    if (meta) return meta;
+  }
+  return undefined;
+}
+
 /** Page titles for routes without parameters, keyed by exact path. */
 const EXACT_TITLES: Record<string, TranslationKey> = {
   "/admin/appeals": "pageTitle.appeals",
   "/admin/feedback": "pageTitle.feedback",
   "/admin/reports": "pageTitle.reports",
   "/calc": "calc.title",
+  "/calc/battle": "battle.title",
+  "/notes": "battle.notesTitle",
   "/dev/styleguide": "pageTitle.styleguide",
   "/groups": "groups.homeTitle",
   "/groups/new": "groups.newTitle",
@@ -23,6 +53,7 @@ const EXACT_TITLES: Record<string, TranslationKey> = {
   "/teams": "teams.title",
   "/meta": "meta.title",
   "/battles": "nav.battles",
+  "/messages": "nav.messages",
   "/learn": "footer.learn",
   "/changelog": "footer.whatsNew",
   "/profile": "nav.profile",
@@ -41,6 +72,7 @@ const PREFIX_TITLES: [prefix: string, key: TranslationKey][] = [
   ["/teams/", "pageTitle.team"],
   ["/post/", "pageTitle.post"],
   ["/g/", "pageTitle.group"],
+  ["/messages/", "nav.messages"],
   ["/moderation/", "moderation.noticeTitle"],
 ];
 
@@ -50,10 +82,13 @@ const HOME_DESCRIPTION: TranslationKey = "seo.homeDescription";
 /** Meta descriptions for routes without parameters, keyed by exact path. */
 const EXACT_DESCRIPTIONS: Record<string, TranslationKey> = {
   "/calc": "seo.calcDescription",
+  "/calc/battle": "battle.description",
+  "/notes": "battle.notesDescription",
   "/teams": "teams.description",
   "/meta": "seo.metaDescription",
   "/groups": "seo.groupsDescription",
   "/battles": "seo.battlesDescription",
+  "/messages": "seo.messagesDescription",
   "/learn": "seo.learnDescription",
   "/changelog": "seo.changelogDescription",
   "/terms": "seo.termsDescription",
@@ -68,6 +103,7 @@ const PREFIX_DESCRIPTIONS: [prefix: string, key: TranslationKey][] = [
   ["/post/", "seo.postDescription"],
   ["/u/", "seo.profileDescription"],
   ["/g/", "seo.groupDescription"],
+  ["/messages/", "seo.messagesDescription"],
 ];
 
 function withSite(title: string): string {
@@ -86,6 +122,10 @@ function decodeSegment(segment: string): string {
 export function titleForPath(pathname: string): string {
   if (pathname === "/") {
     return SITE_NAME;
+  }
+  const provided = providerMeta(pathname);
+  if (provided) {
+    return withSite(provided.title);
   }
   const exact = EXACT_TITLES[pathname];
   if (exact) {
@@ -106,6 +146,10 @@ export function titleForPath(pathname: string): string {
 /** The meta description for a route path, in the active locale. */
 export function descriptionForPath(pathname: string): string {
   if (pathname !== "/") {
+    const provided = providerMeta(pathname);
+    if (provided?.description) {
+      return provided.description;
+    }
     const exact = EXACT_DESCRIPTIONS[pathname];
     if (exact) {
       return t(exact);

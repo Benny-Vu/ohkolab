@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 
 import { DamageMeter } from "@/components/damage-meter";
 
+/** The three segment widths, in order: solid, striped, muted. */
+function segmentWidths(): string[] {
+  const meter = screen.getByRole("img");
+  const segments = meter.querySelectorAll<HTMLDivElement>(":scope > div");
+  expect(segments).toHaveLength(3);
+  return [...segments].map((segment) => segment.style.width);
+}
+
 describe("DamageMeter", () => {
   it("shows the HP left after the maximum roll in the accessible label", () => {
     render(<DamageMeter minPercent={30} maxPercent={46} hpPercent={100} />);
@@ -24,13 +32,43 @@ describe("DamageMeter", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders three segments sized by percentage", () => {
+  it("draws solid as the HP after the max roll, striped as the roll range, muted as the min", () => {
     render(<DamageMeter minPercent={20} maxPercent={40} hpPercent={100} />);
 
-    const meter = screen.getByRole("img");
-    const segments = meter.querySelectorAll(":scope > div");
-    expect(segments).toHaveLength(3);
-    expect(segments[0]).toHaveStyle({ width: "60%" });
-    expect(segments[1]).toHaveStyle({ width: "40%" });
+    expect(segmentWidths()).toEqual(["60%", "20%", "20%"]);
+  });
+
+  it("draws the learn-page example (68.3–81.2% at full HP) exactly", () => {
+    render(<DamageMeter minPercent={68.3} maxPercent={81.2} hpPercent={100} />);
+
+    // 100 − 81.2 HP left, the 12.9-point roll range, the guaranteed 68.3.
+    expect(segmentWidths()).toEqual(["18.8%", "12.9%", "68.3%"]);
+  });
+
+  it("draws an OHKO with no solid segment", () => {
+    render(<DamageMeter minPercent={90} maxPercent={120} hpPercent={100} />);
+
+    // Even the minimum roll KOs, so nothing of the HP bar survives; the
+    // widths still state the roll range and the guaranteed damage.
+    expect(segmentWidths()).toEqual(["0%", "30%", "90%"]);
+  });
+
+  it("colours the HP left like the games: green, yellow, red", () => {
+    const colour = () =>
+      screen
+        .getByRole("img")
+        .querySelector<HTMLDivElement>(":scope > div")!
+        .getAttribute("data-hp-color");
+
+    const { rerender } = render(
+      <DamageMeter minPercent={30} maxPercent={40} hpPercent={100} />,
+    );
+    expect(colour()).toBe("bg-success"); // 60% left
+    rerender(
+      <DamageMeter minPercent={68.3} maxPercent={81.2} hpPercent={100} />,
+    );
+    expect(colour()).toBe("bg-destructive"); // 18.8% left
+    rerender(<DamageMeter minPercent={50} maxPercent={65} hpPercent={100} />);
+    expect(colour()).toBe("bg-warning"); // 35% left
   });
 });

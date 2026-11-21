@@ -22,7 +22,9 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "calc.results": "計算結果",
   "calc.noMovesYet": "まだ技がありません",
   "calc.noMoves": "技なし",
-  "calc.none": "なし",
+  "calc.noWeather": "天候なし",
+  "calc.noTerrain": "フィールドなし",
+  "calc.noStatus": "状態異常なし",
 
   // ダメージ計算：片側のバトル状態。
   "calc.statBoosts": "ランク補正",
@@ -104,7 +106,7 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "teams.emptyDescription":
     "新規作成するか、Showdownのテキストをインポートして始めましょう。",
   "teams.newTeam": "新規構築",
-  "teams.open": "開く",
+  "teams.openNamed": "{name}を開く",
   "teams.duplicate": "複製",
   "teams.duplicateNamed": "{name}を複製",
   "teams.deleteNamed": "{name}を削除",
@@ -130,11 +132,9 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "teams.exportDescription":
     "Showdown形式のテキストをコピーして構築を共有できます。",
 
-  // 構築：チームプレビューと一覧のパネル。
+  // 構築：チームプレビュー。
   "teams.previewAria": "チームプレビュー",
-  "teams.previewNamed": "{name}をプレビュー",
   "teams.previewNatureSr": "せいかく：{nature}",
-  "teams.sendToCalc": "計算機に送る",
 
   // 構築：印刷用チームシート。
   "teams.printTeamSheet": "チームシートを印刷",
@@ -250,6 +250,32 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "meta.setBuildFailed": "この使用率データからは型を作成できませんでした。",
   "meta.rankUsage": "順位#{rank} · 使用率{usage}",
 
+  // 環境：上位構築ビュー。
+  "meta.viewUsage": "使用率",
+  "meta.viewTopTeams": "上位構築",
+  "meta.topTeamsLoading": "上位構築を読み込み中",
+  "meta.topTeamsEmpty": "スナップショットに大会データがまだありません。",
+  "meta.topTeamsError": "上位構築を読み込めませんでした。",
+  "meta.topTeamsRetry": "再試行",
+  "meta.topTeamsAttribution": "大会データはLimitless提供。",
+  "meta.topTeamsSource": "Limitlessで見る",
+  "meta.spAssumed":
+    "ステータスポイント（SP）は未公開。よく使われる配分で補っています。",
+  "meta.formatFilter": "レギュレーション",
+  "meta.allFormats": "すべて",
+  "meta.placing": "#{placing}位",
+  "meta.record": "{wins}勝 {losses}敗",
+  "meta.recordWithTies": "{wins}勝 {losses}敗 {ties}分",
+  "meta.eventPlayersOne": "1人参加",
+  "meta.eventPlayersMany": "{count}人参加",
+  "meta.copyAsPaste": "ポケモンShowdown形式でコピー",
+  "meta.saveTeam": "マイ構築に保存",
+  "meta.sendToBattleMode": "バトルモードへ送る",
+  "meta.showMore": "さらに表示",
+  "meta.teamSaved": "構築を保存しました。",
+  "meta.pasteCopied": "構築をShowdown形式でコピーしました。",
+  "meta.teamLoadFailed": "この構築の型を作成できませんでした。",
+
   // 環境：素早さライン。
   "meta.speedTiers": "素早さライン",
   "meta.maxMinSpeed": "最高{max} · 最低{min}",
@@ -294,8 +320,6 @@ export const toolsJa: { [K in ToolsKey]: string } = {
     "トリックルーム中は遅いポケモンから行動します。先制技は先に動き、同じ素早さなら順番は入れ替わりません。",
 
   // バトルモード（/calc/battle）。チームプレビュー画面の相性確認。
-  "battle.title": "バトルモード",
-  "battle.description": "先発を決める前に、6体対6体の相性を確認。",
   "battle.link": "バトルモード",
   "battle.mySide": "自分のチーム",
   "battle.savedTeam": "保存済みチーム",
@@ -337,14 +361,13 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "battle.sideOpponent": "相手",
   "battle.speedValueSr": "{name}：補正前の素早さは{base}、補正後は{final}",
 
-  // バトルモード：バトルメモ（/calc/battle/notes とバトルモード内）。
+  // バトルモード：バトルメモ（/notes とバトルモード内）。ページの
+  // タイトルと説明はシェルドメインに置く。
   "battle.provenanceRevealed": "判明",
-  "battle.notesTitle": "バトルメモ",
-  "battle.notesDescription": "対戦中に見た内容を、この端末にだけ保存します。",
   "battle.notesLocalOnly":
     "メモはこの端末にだけ保存され、どこにも送信されません。",
   "battle.notesOpenStandalone": "単独ページで開く",
-  "battle.notesBackToBattle": "バトルモードへ戻る",
+  "battle.notesOpenBattle": "バトルモードを開く",
   "battle.notesGame": "ゲーム",
   "battle.notesBrought": "このゲームの選出",
   "battle.notesEmpty": "ポケモンを追加するとメモを始められます。",
@@ -402,9 +425,11 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "battle.notesTurnValue": "ターン{n}",
   "battle.notesTurnDown": "ターンを戻す",
   "battle.notesTurnUp": "ターンを進める",
-  "battle.notesTurnLine": "T{turn}：{move} → {species}",
+  "battle.notesTurnLine": "{species}の{move}",
+  "battle.notesTurnChip": "{turn}ターン",
+  "battle.notesTurnAria": "{turn}ターン目",
   "battle.notesLogMove": "{species}の{move}を記録",
-  "battle.notesLinePlaceholder": "自由入力",
+  "battle.notesLinePlaceholder": "メモを入力…",
   "battle.notesAddLine": "追加",
   "battle.notesRemoveLine": "行を削除",
   "battle.notesAddMove": "技を追加",

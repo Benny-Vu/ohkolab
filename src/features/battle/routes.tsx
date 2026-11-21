@@ -1,8 +1,24 @@
-import type { RouteObject } from "react-router";
+import { redirect, type RouteObject } from "react-router";
 
 import { ensureEnglishDomain } from "@/lib/i18n/en-loader";
 
+/**
+ * Battle notes live at `/notes` (they are their own thing, not a child of
+ * battle mode); the old `/calc/battle/notes` link redirects there so
+ * bookmarks and shared links keep working.
+ */
 export const battleModeRoutes: RouteObject[] = [
+  {
+    path: "notes",
+    lazy: async () => ({
+      Component: (
+        await Promise.all([
+          import("@/features/battle/notes-page"),
+          ensureEnglishDomain("tools"),
+        ]).then(([module]) => module)
+      ).NotesPage,
+    }),
+  },
   {
     path: "calc/battle",
     lazy: async () => ({
@@ -19,13 +35,6 @@ export const battleModeRoutes: RouteObject[] = [
   },
   {
     path: "calc/battle/notes",
-    lazy: async () => ({
-      Component: (
-        await Promise.all([
-          import("@/features/battle/notes-page"),
-          ensureEnglishDomain("tools"),
-        ]).then(([module]) => module)
-      ).NotesPage,
-    }),
+    loader: () => redirect("/notes"),
   },
 ];

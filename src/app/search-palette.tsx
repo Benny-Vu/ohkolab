@@ -63,6 +63,12 @@ const PAGE_ENTRIES: {
     keywords: "profile account",
     to: "/profile",
   },
+  {
+    kind: "page",
+    labelKey: "nav.notes",
+    keywords: "notes battle notes match",
+    to: "/notes",
+  },
 ];
 
 /** Data entries plus the locale they were built for; rebuilt per locale. */
@@ -102,6 +108,36 @@ async function loadDataEntries(locale: string): Promise<SearchEntry[]> {
   dataEntries = [...species, ...moves, ...items];
   dataEntriesLocale = locale;
   return dataEntries;
+}
+
+/**
+ * The learn hub's sections and guides, from the registry, lazily so the
+ * content stays out of the entry chunk. Rebuilt per locale like the data
+ * entries; the hub itself is a static page entry.
+ */
+let learnGuideEntries: SearchEntry[] | undefined;
+let learnGuideLocale: string | undefined;
+
+async function loadLearnGuideEntries(locale: string): Promise<SearchEntry[]> {
+  if (learnGuideEntries && learnGuideLocale === locale)
+    return learnGuideEntries;
+  const { LEARN_SECTIONS, LEARN_ENTRIES, localized } =
+    await import("@/features/learn/guides");
+  const sections = LEARN_SECTIONS.map((section) => ({
+    kind: "page" as const,
+    label: localized(section.title, locale),
+    keywords: `learn ${section.id}`,
+    to: `/learn/${section.id}`,
+  }));
+  const guides = LEARN_ENTRIES.filter((entry) => entry.long).map((entry) => ({
+    kind: "page" as const,
+    label: localized(entry.title, locale),
+    keywords: `learn ${entry.title.en} ${entry.title.ja}`,
+    to: `/learn/${entry.slug}`,
+  }));
+  learnGuideEntries = [...sections, ...guides];
+  learnGuideLocale = locale;
+  return learnGuideEntries;
 }
 
 const KIND_LABEL_KEYS: Record<SearchKind, TranslationKey> = {
@@ -149,8 +185,11 @@ export function SearchPalette() {
   const openPalette = async () => {
     setOpen(true);
     void track("search_opened", { kind: "page" });
-    const loaded = await loadDataEntries(getLocale());
-    setEntries(loaded);
+    const [loaded, learnGuides] = await Promise.all([
+      loadDataEntries(getLocale()),
+      loadLearnGuideEntries(getLocale()),
+    ]);
+    setEntries([...learnGuides, ...loaded]);
   };
 
   const choose = (entry: SearchEntry) => {

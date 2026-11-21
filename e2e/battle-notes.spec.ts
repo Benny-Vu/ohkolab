@@ -3,12 +3,13 @@ import { expect } from "@playwright/test";
 import { expectNoHorizontalOverflow, test } from "./smoke";
 
 /**
- * Battle notes (/calc/battle/notes, and inline in battle mode): notes taken
- * on the phone survive a reload, and the revealed fields reach the KO
- * matrix — the provenance badge turns "Revealed" and a revealed Mega Stone
- * turns the opponent's column into its Mega forme. Speed relations name one
- * of my Pokémon, narrow the opponent into a Speed range with a plain hint,
+ * Battle notes (/notes, and inline in battle mode): notes taken on the
+ * phone survive a reload, and the revealed fields reach the KO matrix —
+ * the provenance badge turns "Revealed" and a revealed Mega Stone turns
+ * the opponent's column into its Mega forme. Speed relations name one of
+ * my Pokémon, narrow the opponent into a Speed range with a plain hint,
  * and the speed order carries that band labelled as coming from the notes.
+ * The old /calc/battle/notes address redirects to /notes.
  */
 
 const MY_PASTE = [
@@ -39,7 +40,11 @@ async function addSpecies(
 test("battle notes persist across a reload and reach the matrix", async ({
   page,
 }) => {
+  // The old address still works: it redirects to /notes.
   await page.goto("/calc/battle/notes");
+  await expect(page).toHaveURL(/\/notes$/);
+
+  await page.goto("/notes");
   await expect(
     page.getByRole("heading", { name: "Battle notes", level: 1 }),
   ).toBeVisible();

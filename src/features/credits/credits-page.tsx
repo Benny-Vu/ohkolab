@@ -49,6 +49,12 @@ const EN_SOURCES: Source[] = [
     href: "https://www.smogon.com/stats/",
   },
   {
+    name: "Limitless",
+    what: "Tournament results and team sheets for the Top teams view.",
+    licence: "Public API; tournament data is attributed and linked per team.",
+    href: "https://play.limitlesstcg.com",
+  },
+  {
     name: "Barlow Semi Condensed, IBM Plex Sans and IBM Plex Mono",
     what: "Typefaces, served through Fontsource.",
     licence: "SIL Open Font License 1.1",
@@ -95,6 +101,12 @@ const JA_SOURCES: Source[] = [
     what: "Pokémon Showdownのレーダーから集めた使用率データ。",
     licence: "Smogon Universityが公開しているデータ。",
     href: "https://www.smogon.com/stats/",
+  },
+  {
+    name: "Limitless",
+    what: "上位構築ビューの大会結果と公開チームシート。",
+    licence: "公開API。大会データは出典明記とリンク付きで表示しています。",
+    href: "https://play.limitlesstcg.com",
   },
   {
     name: "Barlow Semi Condensed、IBM Plex Sans、IBM Plex Mono",

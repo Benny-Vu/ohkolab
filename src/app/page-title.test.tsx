@@ -29,12 +29,29 @@ describe("titleForPath", () => {
     expect(titleForPath("/admin/reports")).toBe("Reports · OHKOLab");
     expect(titleForPath("/admin/appeals")).toBe("Appeals · OHKOLab");
     expect(titleForPath("/moderation/abc")).toBe("Moderation notice · OHKOLab");
+    expect(titleForPath("/messages")).toBe("Messages · OHKOLab");
+    expect(titleForPath("/messages/abc123")).toBe("Messages · OHKOLab");
     expect(titleForPath("/login")).toBe("Sign in · OHKOLab");
     expect(titleForPath("/auth/callback")).toBe("Signing in · OHKOLab");
     expect(titleForPath("/reset-password")).toBe("Reset password · OHKOLab");
     expect(titleForPath("/u/ashketchum")).toBe("ashketchum · OHKOLab");
     expect(titleForPath("/terms")).toBe("Terms · OHKOLab");
     expect(titleForPath("/privacy")).toBe("Privacy · OHKOLab");
+    expect(titleForPath("/nope")).toBe("Page not found · OHKOLab");
+  });
+
+  it("titles the learn routes through the registry provider", async () => {
+    // Importing the registry registers its route-metadata provider.
+    await import("@/features/learn/guides");
+
+    expect(titleForPath("/learn/concepts")).toBe("Concepts · OHKOLab");
+    expect(titleForPath("/learn/vocabulary")).toBe("Vocabulary · OHKOLab");
+    expect(titleForPath("/learn/damage-rolls")).toBe("Damage rolls · OHKOLab");
+    expect(descriptionForPath("/learn/damage-rolls")).toBe(
+      "Why the same move does different damage every time.",
+    );
+    // Unrelated paths still fall through to the static tables.
+    expect(titleForPath("/calc")).toBe("Damage calculator · OHKOLab");
     expect(titleForPath("/nope")).toBe("Page not found · OHKOLab");
   });
 });
@@ -82,6 +99,8 @@ describe("descriptionForPath", () => {
     expect(descriptionForPath("/groups")).toContain("groups");
     expect(descriptionForPath("/g/slug")).toContain("group");
     expect(descriptionForPath("/terms")).toContain("terms of use");
+    expect(descriptionForPath("/messages")).toContain("Direct messages");
+    expect(descriptionForPath("/messages/abc")).toContain("Direct messages");
     expect(descriptionForPath("/privacy")).toContain("privacy");
     // Routes without their own description keep the site default.
     expect(descriptionForPath("/login")).toBe(descriptionForPath("/"));

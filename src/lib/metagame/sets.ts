@@ -4,34 +4,11 @@ import {
   getItem,
   getNature,
   getSpecies,
-  MAX_SP_TOTAL,
-  totalStatPoints,
 } from "@/data";
+import { clampStatPoints } from "@/lib/metagame/clamp";
 import { resolveUsageSpecies } from "@/lib/metagame/species";
-import {
-  emptyStatsTable,
-  STAT_IDS,
-  type PokemonSet,
-  type StatId,
-  type StatsTable,
-} from "@/types/pokemon";
+import { emptyStatsTable, type PokemonSet } from "@/types/pokemon";
 import type { PokemonUsage } from "@/lib/metagame/types";
-
-/** Trim excess Stat Points from the fullest stats until the total is legal. */
-function clampStatPoints(statPoints: StatsTable): StatsTable {
-  const clamped = { ...statPoints };
-  let total = totalStatPoints(clamped);
-  while (total > MAX_SP_TOTAL) {
-    let target: StatId = STAT_IDS[0];
-    for (const id of STAT_IDS) {
-      if (clamped[id] > clamped[target]) target = id;
-    }
-    if (clamped[target] <= 0) break;
-    clamped[target] -= 1;
-    total -= 1;
-  }
-  return clamped;
-}
 
 /**
  * Build the most common set from usage data: top spread, item, ability and

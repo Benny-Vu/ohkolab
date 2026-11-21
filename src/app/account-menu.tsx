@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router";
-import { LogInIcon, LogOutIcon, MessageSquareIcon } from "lucide-react";
+import { LogInIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { UserAvatar } from "@/components/user-avatar";
@@ -181,7 +181,6 @@ export function AccountMenu({ variant }: AccountMenuProps) {
             className={menuItemClass}
             onSelect={() => setFeedbackOpen(true)}
           >
-            <MessageSquareIcon aria-hidden />
             {t("footer.sendFeedback")}
           </DropdownMenuItem>
           {moderator.data === true && (
@@ -204,7 +203,6 @@ export function AccountMenu({ variant }: AccountMenuProps) {
               void handleSignOut();
             }}
           >
-            <LogOutIcon aria-hidden />
             {t("common.signOut")}
           </DropdownMenuItem>
         </DropdownMenuContent>

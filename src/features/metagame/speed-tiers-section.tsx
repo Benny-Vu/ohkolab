@@ -33,7 +33,7 @@ function SpeedTierRow({ tier }: { tier: SpeedTier }) {
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 items-center gap-2">
           <PokemonIcon species={tier.species} className="size-6 shrink-0" />
-          <span className="min-w-0 truncate font-medium">
+          <span className="line-clamp-2 min-w-0 leading-tight font-medium break-words">
             {displayName("species", tier.species)}
           </span>
         </div>

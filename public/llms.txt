@@ -27,7 +27,12 @@ Key facts:
 
 ## Learn
 
-- [Learn](https://ohkolab.com/learn): short plain-language explainers of the numbers — damage rolls (`/learn#damage-rolls`), OHKO and 2HKO (`/learn#ohko`), Stat Points (`/learn#stat-points`) and speed ties (`/learn#speed-ties`)
+- [Learn](https://ohkolab.com/learn): the hub — Vocabulary, Concepts, Types and Field conditions
+- [Vocabulary](https://ohkolab.com/learn/vocabulary): a searchable A–Z glossary of VGC terms
+- [Concepts](https://ohkolab.com/learn/concepts): how Champions battles work, from team preview to damage
+- [Types](https://ohkolab.com/learn/types): the 18 type cards and the full type chart
+- [Field conditions](https://ohkolab.com/learn/field): weather, terrain, screens and the other field effects
+- Guides: every Concepts entry has its own page, e.g. [Damage rolls](https://ohkolab.com/learn/damage-rolls), [OHKO and 2HKO](https://ohkolab.com/learn/ohko), [Team preview](https://ohkolab.com/learn/team-preview), [Speed control](https://ohkolab.com/learn/speed-control), [Redirection](https://ohkolab.com/learn/redirection), [Mega Evolution](https://ohkolab.com/learn/mega-evolution); field guides include [Tailwind](https://ohkolab.com/learn/tailwind) and [Trick Room](https://ohkolab.com/learn/trick-room) — every mechanic number is checked against the damage calculator's own model of Pokémon Champions
 
 ## About
 

@@ -50,14 +50,11 @@ export interface BattleReplySummary {
 export interface BattleFilter {
   format: "all" | BattleFormat;
   language: "all" | "en" | "ja";
-  /** Only requests whose time window starts within the next hour. */
-  startingSoon: boolean;
 }
 
 export const NO_BATTLE_FILTER: BattleFilter = {
   format: "all",
   language: "all",
-  startingSoon: false,
 };
 
 /**
@@ -75,51 +72,6 @@ export function isLiveOpenRequest(
   return request.ends_at === null || new Date(request.ends_at) > now;
 }
 
-/**
- * True when the request's window starts within the next hour ("starting
- * soon"). Requests without a start time are never "starting soon"; ones
- * whose window already ended are not live at all.
- */
-export function startsSoon(request: BattleRequestLite, now: Date): boolean {
-  if (request.starts_at === null) {
-    return false;
-  }
-  const starts = new Date(request.starts_at).getTime();
-  return (
-    starts <= now.getTime() + 60 * 60 * 1000 && isLiveOpenRequest(request, now)
-  );
-}
-
-/**
- * True when the requester wants to play right now — the board's "Now"
- * badge. The honest rule: the request is live and open, and its window has
- * begun (a request without a start time falls back to when it was posted).
- * The window then has to be about this moment, not just any open request:
- * it began less than an hour ago, or it ends within the hour. A request
- * whose window began hours ago and runs for days is not "now"; one that
- * is closing within the hour still is.
- */
-export function wantsToPlayNow(request: BattleRequestLite, now: Date): boolean {
-  if (!isLiveOpenRequest(request, now)) {
-    return false;
-  }
-  const HOUR_MS = 60 * 60 * 1000;
-  const nowMs = now.getTime();
-  const beginsAtMs =
-    request.starts_at !== null
-      ? new Date(request.starts_at).getTime()
-      : new Date(request.created_at).getTime();
-  if (beginsAtMs > nowMs) {
-    // The window has not begun yet: "starting soon", not "now".
-    return false;
-  }
-  const beganRecently = nowMs - beginsAtMs <= HOUR_MS;
-  const endsSoon =
-    request.ends_at !== null &&
-    new Date(request.ends_at).getTime() - nowMs <= HOUR_MS;
-  return beganRecently || endsSoon;
-}
-
 /** Applies the board filters to live-open requests, newest first. */
 export function applyBattleFilter(
   requests: BattleRequestLite[],
@@ -135,7 +87,6 @@ export function applyBattleFilter(
       (request) =>
         filter.language === "all" || request.language === filter.language,
     )
-    .filter((request) => !filter.startingSoon || startsSoon(request, now))
     .sort(
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),

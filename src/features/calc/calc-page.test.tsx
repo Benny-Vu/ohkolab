@@ -349,10 +349,10 @@ describe("CalcPage", () => {
 
     expect(
       dialog.getByRole("link", { name: "GUARANTEED 2HKO" }),
-    ).toHaveAttribute("href", "/learn#ohko");
+    ).toHaveAttribute("href", "/learn/ohko");
     expect(dialog.getByRole("link", { name: /^Damage:/ })).toHaveAttribute(
       "href",
-      "/learn#damage-rolls",
+      "/learn/damage-rolls",
     );
   });
 
@@ -622,7 +622,7 @@ describe("CalcPage in Japanese", () => {
     const dialog = await openResults(user, /じしん/);
     expect(dialog.getByText("ガブリアスが先に動きます")).toBeInTheDocument();
 
-    await user.click(dialog.getByRole("button", { name: "Close" }));
+    await user.click(dialog.getByRole("button", { name: "閉じる" }));
     await user.click(screen.getByRole("radio", { name: "フィールド" }));
     await user.click(screen.getByRole("switch", { name: "攻撃側 おいかぜ" }));
     await user.click(screen.getByRole("button", { name: "その他の条件" }));
@@ -655,7 +655,7 @@ describe("CalcPage in Japanese", () => {
     await user.click(dialog.getByRole("button", { name: /ドラゴンクロー/ }));
     expect(dialog.getAllByText("使用ごとに1体だけが対象")).toHaveLength(2);
 
-    await user.click(dialog.getByRole("button", { name: "Close" }));
+    await user.click(dialog.getByRole("button", { name: "閉じる" }));
     await user.click(
       screen.getByRole("button", { name: "2体目の防御側を削除" }),
     );
