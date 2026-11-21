@@ -13,9 +13,18 @@ export const shellEn = {
   "nav.meta": "Meta",
   "nav.profile": "Profile",
   "nav.main": "Main",
+  "nav.more": "More",
+  "nav.notes": "Notes",
   // The battle board's nav label lives here (not the battles domain),
   // because nav-items.ts and the page titles are part of the entry graph.
   "nav.battles": "Battles",
+  // The battle-mode and notes page titles and descriptions, for the same
+  // reason: the entry's page-title map renders them on every route.
+  "battle.title": "Battle mode",
+  "battle.description": "Your six against their six, before you pick a lead.",
+  "battle.notesTitle": "Battle notes",
+  "battle.notesDescription":
+    "What you saw in the match, kept on this device only.",
   "account.menuAria": "Account menu",
   "account.moderationItem": "Moderation",
 
@@ -93,7 +102,7 @@ export const shellEn = {
   "pokemonEditor.searchItems": "Search items",
   "pokemonEditor.searchItemsPlaceholder": "Search items or effects…",
   "pokemonEditor.noItem": "No item found.",
-  "pokemonEditor.none": "None",
+  "pokemonEditor.noHeldItem": "No item",
   "pokemonEditor.megaStones": "Mega Stones",
   "pokemonEditor.items": "Items",
   "pokemonEditor.ability": "Ability",
@@ -221,6 +230,7 @@ export const shellEn = {
   "profile.mainFormatSingles": "Singles",
   "profile.mainFormatDoubles": "Doubles",
   "profile.mainFormatBoth": "Both",
+  "profile.notSet": "Not set",
   "profile.savedToast": "Profile saved.",
   "profile.accountSection": "Account",
   "profile.signedOutToast": "Signed out.",
@@ -294,6 +304,8 @@ export const shellEn = {
     "The data sources and libraries OHKOLab is built on, and their licences.",
   "seo.battlesDescription":
     "Find an opponent for a Pokémon Champions battle: open requests, offers and matches on OHKOLab.",
+  "seo.messagesDescription":
+    "Direct messages on OHKOLab: talk teams and battles with other Pokémon Champions players.",
   "seo.learnDescription":
     "Plain-language guides to Pokémon Champions damage rolls, OHKO and 2HKO, Stat Points and Speed ties.",
   "seo.changelogDescription":

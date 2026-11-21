@@ -5,6 +5,8 @@ import { cn } from "cn";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
 import { Button } from "@/components/ui/button";
+import { CloseLabel } from "@/components/close-label";
+import { useT } from "@/lib/i18n/t";
 import { XIcon } from "lucide-react";
 
 function Dialog({
@@ -75,7 +77,7 @@ function DialogContent({
               size="icon-sm"
             >
               <XIcon />
-              <span className="sr-only">Close</span>
+              <CloseLabel />
             </Button>
           </DialogPrimitive.Close>
         )}
@@ -102,6 +104,8 @@ function DialogFooter({
 }: React.ComponentProps<"div"> & {
   showCloseButton?: boolean;
 }) {
+  // Hoisted above the conditional: the label hook must run on every render.
+  const t = useT();
   return (
     <div
       data-slot="dialog-footer"
@@ -114,7 +118,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
+          <Button variant="outline">{t("common.close")}</Button>
         </DialogPrimitive.Close>
       )}
     </div>

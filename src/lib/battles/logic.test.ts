@@ -5,10 +5,8 @@ import {
   formatBattleTime,
   isLiveOpenRequest,
   NO_BATTLE_FILTER,
-  startsSoon,
   summarizeBattleReplies,
   summarizeBattleRequests,
-  wantsToPlayNow,
   type BattleRequestLite,
 } from "@/lib/battles/logic";
 import type { BattleRequestRow } from "@/lib/database.types";
@@ -64,117 +62,6 @@ describe("isLiveOpenRequest", () => {
   });
 });
 
-describe("startsSoon", () => {
-  it("is true within the hour before the window starts", () => {
-    expect(
-      startsSoon(requestRow({ starts_at: "2026-11-22T12:30:00Z" }), NOW),
-    ).toBe(true);
-  });
-
-  it("is false more than an hour out, without a start, or past the window", () => {
-    expect(
-      startsSoon(requestRow({ starts_at: "2026-11-22T14:00:00Z" }), NOW),
-    ).toBe(false);
-    expect(startsSoon(requestRow({}), NOW)).toBe(false);
-    expect(
-      startsSoon(
-        requestRow({
-          starts_at: "2026-11-22T12:30:00Z",
-          ends_at: "2026-11-22T11:00:00Z",
-        }),
-        NOW,
-      ),
-    ).toBe(false);
-  });
-});
-
-describe("wantsToPlayNow", () => {
-  it("is true for a practise-now shaped window (now, plus one hour)", () => {
-    expect(
-      wantsToPlayNow(
-        requestRow({
-          starts_at: "2026-11-22T11:55:00Z",
-          ends_at: "2026-11-22T12:55:00Z",
-          created_at: "2026-11-22T11:55:00Z",
-        }),
-        NOW,
-      ),
-    ).toBe(true);
-  });
-
-  it("falls back to the posted time when the request has no start", () => {
-    // Posted half an hour ago, no window at all: fresh enough to be "now".
-    expect(
-      wantsToPlayNow(requestRow({ created_at: "2026-11-22T11:30:00Z" }), NOW),
-    ).toBe(true);
-    // Posted two hours ago: no longer "now".
-    expect(
-      wantsToPlayNow(requestRow({ created_at: "2026-11-22T10:00:00Z" }), NOW),
-    ).toBe(false);
-  });
-
-  it("is false before the window starts, however soon", () => {
-    expect(
-      wantsToPlayNow(requestRow({ starts_at: "2026-11-22T12:30:00Z" }), NOW),
-    ).toBe(false);
-  });
-
-  it("is true while an older window ends within the hour", () => {
-    expect(
-      wantsToPlayNow(
-        requestRow({
-          starts_at: "2026-11-22T09:00:00Z",
-          ends_at: "2026-11-22T12:30:00Z",
-          created_at: "2026-11-22T09:00:00Z",
-        }),
-        NOW,
-      ),
-    ).toBe(true);
-  });
-
-  it("is false for a window that began hours ago and keeps running", () => {
-    expect(
-      wantsToPlayNow(
-        requestRow({
-          starts_at: "2026-11-22T09:00:00Z",
-          ends_at: "2026-11-23T09:00:00Z",
-          created_at: "2026-11-22T09:00:00Z",
-        }),
-        NOW,
-      ),
-    ).toBe(false);
-  });
-
-  it("is false for closed, matched and expired requests", () => {
-    const practise = {
-      starts_at: "2026-11-22T11:55:00Z" as string | null,
-      ends_at: "2026-11-22T12:55:00Z" as string | null,
-    };
-    expect(
-      wantsToPlayNow(requestRow({ status: "closed", ...practise }), NOW),
-    ).toBe(false);
-    expect(
-      wantsToPlayNow(requestRow({ status: "matched", ...practise }), NOW),
-    ).toBe(false);
-    expect(
-      wantsToPlayNow(requestRow({ status: "expired", ...practise }), NOW),
-    ).toBe(false);
-  });
-
-  it("is false once the window has ended", () => {
-    expect(
-      wantsToPlayNow(
-        requestRow({
-          starts_at: "2026-11-22T10:00:00Z",
-          ends_at: "2026-11-22T11:00:00Z",
-          created_at: "2026-11-22T10:00:00Z",
-        }),
-        NOW,
-      ),
-    ).toBe(false);
-  });
-});
-
 describe("applyBattleFilter", () => {
   const singles = requestRow({
     id: "s",
@@ -191,25 +78,15 @@ describe("applyBattleFilter", () => {
     language: "ja",
     created_at: "2026-11-22T10:45:00Z",
   });
-  const soon = requestRow({
-    id: "soon",
-    starts_at: "2026-11-22T12:30:00Z",
-    created_at: "2026-11-22T10:50:00Z",
-  });
   const matched = requestRow({ id: "m", status: "matched" });
 
   it("shows every live-open request, newest first", () => {
     const visible = applyBattleFilter(
-      [matched, singles, doubles, japanese, soon],
+      [matched, singles, doubles, japanese],
       NO_BATTLE_FILTER,
       NOW,
     );
-    expect(visible.map((request) => request.id)).toEqual([
-      "soon",
-      "j",
-      "d",
-      "s",
-    ]);
+    expect(visible.map((request) => request.id)).toEqual(["j", "d", "s"]);
   });
 
   it("narrows by format and language", () => {
@@ -227,16 +104,6 @@ describe("applyBattleFilter", () => {
         NOW,
       ).map((request) => request.id),
     ).toEqual(["j"]);
-  });
-
-  it("narrows to requests starting soon", () => {
-    expect(
-      applyBattleFilter(
-        [singles, soon],
-        { ...NO_BATTLE_FILTER, startingSoon: true },
-        NOW,
-      ).map((request) => request.id),
-    ).toEqual(["soon"]);
   });
 });
 

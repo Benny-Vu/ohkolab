@@ -377,7 +377,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
                   onValueChange={(value) =>
                     setMainFormat(value === "" ? null : (value as MainFormat))
                   }
-                  placeholder="â€”"
+                  placeholder={t("profile.notSet")}
                   searchPlaceholder={t("common.search")}
                   emptyMessage={t("common.noResults")}
                   options={[

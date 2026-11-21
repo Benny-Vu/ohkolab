@@ -29,6 +29,8 @@ describe("titleForPath", () => {
     expect(titleForPath("/admin/reports")).toBe("Reports · OHKOLab");
     expect(titleForPath("/admin/appeals")).toBe("Appeals · OHKOLab");
     expect(titleForPath("/moderation/abc")).toBe("Moderation notice · OHKOLab");
+    expect(titleForPath("/messages")).toBe("Messages · OHKOLab");
+    expect(titleForPath("/messages/abc123")).toBe("Messages · OHKOLab");
     expect(titleForPath("/login")).toBe("Sign in · OHKOLab");
     expect(titleForPath("/auth/callback")).toBe("Signing in · OHKOLab");
     expect(titleForPath("/reset-password")).toBe("Reset password · OHKOLab");
@@ -82,6 +84,8 @@ describe("descriptionForPath", () => {
     expect(descriptionForPath("/groups")).toContain("groups");
     expect(descriptionForPath("/g/slug")).toContain("group");
     expect(descriptionForPath("/terms")).toContain("terms of use");
+    expect(descriptionForPath("/messages")).toContain("Direct messages");
+    expect(descriptionForPath("/messages/abc")).toContain("Direct messages");
     expect(descriptionForPath("/privacy")).toContain("privacy");
     // Routes without their own description keep the site default.
     expect(descriptionForPath("/login")).toBe(descriptionForPath("/"));

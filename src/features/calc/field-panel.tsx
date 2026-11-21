@@ -40,10 +40,10 @@ import {
   type SideState,
 } from "@/types/battle";
 
-/** Weather choices for the picker, with None first. */
+/** Weather choices for the picker, with "No weather" first. */
 function weatherOptions(t: Translate): PickerOption[] {
   return [
-    { value: "", label: t("calc.none") },
+    { value: "", label: t("calc.noWeather") },
     ...WEATHERS.map((weather) => ({
       value: weather,
       label: t(WEATHER_LABEL_KEYS[weather]),
@@ -51,10 +51,10 @@ function weatherOptions(t: Translate): PickerOption[] {
   ];
 }
 
-/** Terrain choices for the picker, with None first. */
+/** Terrain choices for the picker, with "No terrain" first. */
 function terrainOptions(t: Translate): PickerOption[] {
   return [
-    { value: "", label: t("calc.none") },
+    { value: "", label: t("calc.noTerrain") },
     ...TERRAINS.map((terrain) => ({
       value: terrain,
       label: t(TERRAIN_LABEL_KEYS[terrain]),

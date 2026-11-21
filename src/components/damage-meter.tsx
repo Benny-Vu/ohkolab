@@ -19,11 +19,19 @@ interface DamageMeterProps {
   className?: string;
 }
 
+/** Clamps a segment width into 0–100, at a hundredth of a percent. */
+function clampPercent(value: number): number {
+  return Math.round(Math.max(0, Math.min(100, value)) * 100) / 100;
+}
+
 /**
- * HP bar for a damage result: the HP left after the maximum roll in the
- * foreground colour, the damage range in orange diagonal stripes, the rest
- * of the track muted. The segments glide from result to result (width-only
- * transitions); the first paint shows the final state.
+ * HP bar for a damage result, left to right: the HP left after the maximum
+ * roll in the foreground colour, the roll range (max − min) in orange
+ * diagonal stripes, and the damage every roll does (min) muted. The widths
+ * are explicit (no flex-1, nothing shrinks), so the three segments always
+ * show their true share; an OHKO's overflow clips at the bar's end. The
+ * segments glide from result to result (width-only transitions); the first
+ * paint shows the final state.
  */
 export function DamageMeter({
   minPercent,
@@ -33,15 +41,21 @@ export function DamageMeter({
   className,
 }: DamageMeterProps) {
   const t = useT();
-  const damage = Math.max(0, Math.min(100, maxPercent));
-  const remaining = Math.max(0, Math.min(hpPercent - damage, 100));
-  const track = Math.max(0, 100 - remaining - damage);
+  // The HP after the max roll, the roll range, and the guaranteed damage.
+  const solid = clampPercent(hpPercent - maxPercent);
+  const striped = clampPercent(maxPercent - minPercent);
+  const muted = clampPercent(minPercent);
+  // The HP left reads as an HP bar, coloured like the games' (owner: the
+  // foreground colour didn't read as "HP left"): green above half, yellow
+  // down to a fifth, red below.
+  const hpColor =
+    solid > 50 ? "bg-success" : solid > 20 ? "bg-warning" : "bg-destructive";
 
   return (
     <div
       role="img"
       aria-label={t("calc.damageMeterAria", {
-        min: Math.max(0, Math.round(hpPercent - damage)),
+        min: Math.max(0, Math.round(hpPercent - maxPercent)),
         max: Math.max(0, Math.round(hpPercent - minPercent)),
       })}
       className={cn(
@@ -51,20 +65,24 @@ export function DamageMeter({
       )}
     >
       <div
-        className="h-full bg-foreground transition-[width] duration-(--motion-base) ease-(--motion-ease-out)"
-        style={{ width: `${remaining}%` }}
+        className={cn(
+          "h-full shrink-0 transition-[width,background-color] duration-(--motion-base) ease-(--motion-ease-out)",
+          hpColor,
+        )}
+        data-hp-color={hpColor}
+        style={{ width: `${solid}%` }}
       />
       <div
-        className="h-full flex-1 transition-[width] duration-(--motion-base) ease-(--motion-ease-out)"
+        className="h-full shrink-0 transition-[width] duration-(--motion-base) ease-(--motion-ease-out)"
         style={{
-          width: `${damage}%`,
+          width: `${striped}%`,
           backgroundImage:
             "repeating-linear-gradient(135deg, var(--damage-2hko) 0 4px, transparent 4px 8px)",
         }}
       />
       <div
-        className="h-full flex-1 transition-[width] duration-(--motion-base) ease-(--motion-ease-out)"
-        style={{ width: `${track}%` }}
+        className="h-full shrink-0 transition-[width] duration-(--motion-base) ease-(--motion-ease-out)"
+        style={{ width: `${muted}%` }}
       />
     </div>
   );

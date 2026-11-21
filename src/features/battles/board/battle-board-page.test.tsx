@@ -163,7 +163,7 @@ describe("BattleBoardPage", () => {
     expect(screen.getByText("Ladder prep")).toBeInTheDocument();
   });
 
-  it("filters the list by format, language and starting soon", async () => {
+  it("filters the list by format and language", async () => {
     const user = userEvent.setup();
     renderBoard();
     await screen.findByText("Reg M-C, best of 3");
@@ -196,13 +196,6 @@ describe("BattleBoardPage", () => {
       ).getByRole("radio", { name: "All" }),
     );
     await screen.findByText("Ladder prep");
-
-    await user.click(screen.getByRole("switch", { name: "Starting soon" }));
-
-    await waitFor(() => {
-      expect(screen.getByText("Ladder prep")).toBeInTheDocument();
-      expect(screen.queryByText("Reg M-C, best of 3")).not.toBeInTheDocument();
-    });
   });
 
   it("offers to battle on someone else's request", async () => {
@@ -377,10 +370,6 @@ describe("BattleBoardPage", () => {
 
     const signIn = screen.getByRole("link", { name: /sign in/i });
     expect(signIn).toHaveAttribute("href", "/login?returnTo=/battles");
-    // The one-tap practise action is for signed-in players only.
-    expect(
-      screen.queryByRole("button", { name: "Practise now" }),
-    ).not.toBeInTheDocument();
     // No sample content without demo mode.
     expect(screen.queryByText("@rikachu")).not.toBeInTheDocument();
 
@@ -397,75 +386,6 @@ describe("BattleBoardPage", () => {
     expect(
       screen.queryByRole("button", { name: "Offer to battle" }),
     ).not.toBeInTheDocument();
-  });
-
-  it("marks a request that wants to play right now with the Now badge", async () => {
-    // A practise-now shaped window: began minutes ago, closes within the
-    // hour — relative to the test run's real clock.
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const requestNow: BattleRequestRow = {
-      ...REQUEST_DOUBLES,
-      id: "req-now",
-      author_id: "author-3",
-      rules: "Casual · now",
-      note: null,
-      team_id: null,
-      starts_at: fiveMinutesAgo.toISOString(),
-      ends_at: new Date(Date.now() + 55 * 60 * 1000).toISOString(),
-      created_at: fiveMinutesAgo.toISOString(),
-    };
-    const fake = createFakeClient(
-      boardConfig({
-        resolve: (record): FakeResult => {
-          if (record.table === "battle_requests") {
-            if (record.insertValues !== null) {
-              return { data: [{ id: "new-1" }], error: null };
-            }
-            return { data: filterRows([requestNow], record), error: null };
-          }
-          return boardConfig().resolve!(record);
-        },
-      }),
-    );
-    renderBoardPage(<BattleBoardPage client={fake.client} />, SIGNED_IN_AUTH);
-
-    await screen.findByText("Casual · now");
-    expect(screen.getByText("Now", { exact: true })).toBeInTheDocument();
-  });
-
-  it("keeps the Now badge off requests that are not about right now", async () => {
-    // A request posted hours ago with no window, and one whose window is
-    // still in the future: neither is "now".
-    const stale: BattleRequestRow = {
-      ...REQUEST_DOUBLES,
-      id: "req-stale",
-      author_id: "author-3",
-      rules: "Any time this week",
-      created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    };
-    const later: BattleRequestRow = {
-      ...REQUEST_SINGLES,
-      starts_at: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
-      ends_at: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
-      created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    };
-    const fake = createFakeClient(
-      boardConfig({
-        resolve: (record): FakeResult => {
-          if (record.table === "battle_requests") {
-            if (record.insertValues !== null) {
-              return { data: [{ id: "new-1" }], error: null };
-            }
-            return { data: filterRows([stale, later], record), error: null };
-          }
-          return boardConfig().resolve!(record);
-        },
-      }),
-    );
-    renderBoardPage(<BattleBoardPage client={fake.client} />, SIGNED_IN_AUTH);
-
-    await screen.findByText("Any time this week");
-    expect(screen.queryByText("Now", { exact: true })).not.toBeInTheDocument();
   });
 
   it("renders in Japanese", async () => {

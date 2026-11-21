@@ -21,11 +21,12 @@ describe("AppLayout", () => {
     expect(
       within(header).queryByRole("link", { name: "Profile" }),
     ).not.toBeInTheDocument();
+    // The bell opens its panel in place; it is no longer a link.
     expect(
-      within(screen.getByRole("banner")).getByRole("link", {
+      within(screen.getByRole("banner")).getByRole("button", {
         name: "Notifications",
       }),
-    ).toHaveAttribute("href", "/notifications");
+    ).toBeInTheDocument();
     expect(within(header).getByRole("link", { name: "Calc" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -54,6 +55,27 @@ describe("AppLayout", () => {
       "aria-current",
       "page",
     );
+  });
+
+  it("keeps the More destinations behind the More menu, not in the rows", () => {
+    renderAt("/calc");
+
+    // The More menu renders in the header and as a phone tab (the name is
+    // a regex: an unread badge would ride along in the accessible name).
+    const triggers = screen.getAllByRole("button", { name: /More/ });
+    expect(triggers).toHaveLength(2);
+    // Its destinations are menu items, not header or tab links.
+    for (const nav of screen.getAllByRole("navigation", { name: "Main" })) {
+      expect(
+        within(nav).queryByRole("link", { name: "Messages" }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(nav).queryByRole("link", { name: "Battles" }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(nav).queryByRole("link", { name: "Notes" }),
+      ).not.toBeInTheDocument();
+    }
   });
 
   it("labels the profile tab 'Profile' and shows the user's avatar when signed in", async () => {
@@ -120,7 +142,7 @@ describe("AppLayout", () => {
         screen.queryByRole("button", { name: "Account menu" }),
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("link", { name: "Notifications" }),
+        screen.queryByRole("button", { name: "Notifications" }),
       ).not.toBeInTheDocument();
       expect(
         screen.queryByRole("link", { name: "Sign in" }),

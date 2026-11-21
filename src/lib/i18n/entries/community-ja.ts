@@ -303,6 +303,7 @@ export const communityJa: { [K in CommunityKey]: string } = {
   "groups.inviteDescription":
     "招待制・公開グループのどちらもユーザー名で招待します。",
   "groups.usernameToInvite": "招待するユーザー名",
+  "groups.usernamePlaceholder": "ユーザー名",
   "groups.invite": "招待",
   "groups.loadingMembers": "メンバーを読み込み中",
   "groups.noMembers": "まだメンバーがいません",

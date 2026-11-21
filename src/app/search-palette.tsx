@@ -63,6 +63,12 @@ const PAGE_ENTRIES: {
     keywords: "profile account",
     to: "/profile",
   },
+  {
+    kind: "page",
+    labelKey: "nav.notes",
+    keywords: "notes battle notes match",
+    to: "/notes",
+  },
 ];
 
 /** Data entries plus the locale they were built for; rebuilt per locale. */

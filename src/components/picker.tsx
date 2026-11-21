@@ -75,8 +75,10 @@ function Picker({
           <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
         </Button>
       </PopoverTrigger>
+      {/* The dropdown sizes to its longest option — matching the trigger
+          exactly clipped "No weather" by a few pixels on the desktop calc. */}
       <PopoverContent
-        className="w-(--radix-popover-trigger-width) p-0"
+        className="w-auto min-w-(--radix-popover-trigger-width) p-0"
         align="start"
       >
         <Command>
