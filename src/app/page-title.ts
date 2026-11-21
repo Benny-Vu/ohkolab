@@ -10,6 +10,34 @@ import type { TranslationKey } from "@/lib/i18n/en";
 const SITE_NAME = "OHKOLab";
 const SITE_URL = "https://ohkolab.com";
 
+/** Title and description a feature computes for its own routes. */
+export interface RouteMeta {
+  title: string;
+  description?: string;
+}
+
+/**
+ * Providers turn a pathname into localized route metadata. Feature chunks
+ * register one when they load (the learn routes do), so titles live with
+ * the content instead of being copied into shell dictionary keys.
+ */
+type RouteMetaProvider = (pathname: string) => RouteMeta | undefined;
+const routeMetaProviders: RouteMetaProvider[] = [];
+
+/** Registers a route-metadata provider; the first match wins. */
+export function registerRouteMetaProvider(provider: RouteMetaProvider): void {
+  routeMetaProviders.push(provider);
+}
+
+/** The metadata a registered provider has for a path, if any. */
+function providerMeta(pathname: string): RouteMeta | undefined {
+  for (const provider of routeMetaProviders) {
+    const meta = provider(pathname);
+    if (meta) return meta;
+  }
+  return undefined;
+}
+
 /** Page titles for routes without parameters, keyed by exact path. */
 const EXACT_TITLES: Record<string, TranslationKey> = {
   "/admin/appeals": "pageTitle.appeals",
@@ -95,6 +123,10 @@ export function titleForPath(pathname: string): string {
   if (pathname === "/") {
     return SITE_NAME;
   }
+  const provided = providerMeta(pathname);
+  if (provided) {
+    return withSite(provided.title);
+  }
   const exact = EXACT_TITLES[pathname];
   if (exact) {
     return withSite(t(exact));
@@ -114,6 +146,10 @@ export function titleForPath(pathname: string): string {
 /** The meta description for a route path, in the active locale. */
 export function descriptionForPath(pathname: string): string {
   if (pathname !== "/") {
+    const provided = providerMeta(pathname);
+    if (provided?.description) {
+      return provided.description;
+    }
     const exact = EXACT_DESCRIPTIONS[pathname];
     if (exact) {
       return t(exact);

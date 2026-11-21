@@ -1,50 +1,54 @@
 /**
- * The learn dictionary: the /learn explainers (damage rolls, OHKO and 2HKO,
- * Stat Points, speed ties). Only `learn.title` and the SEO description sit
- * in the shell domain, because the footer link and the browser tab render
- * before this overlay loads. Owned by the quality wave's learn stream; the
- * Japanese side must keep exactly the same keys (the parity test enforces
- * it).
+ * The learn dictionary: the page chrome for /learn and its section and
+ * guide pages. The explainer content itself lives in the registry
+ * (`@/features/learn/guides`), EN and JA inline; only `learn.title` and
+ * the SEO description sit in the shell domain, because the footer link
+ * and the browser tab render before this overlay loads. Owned by the
+ * learn wave; the Japanese side must keep exactly the same keys (the
+ * parity test enforces it).
  */
 
 export const learnEn = {
-  // The page frame. The footer link and browser-tab title use the shell's
+  // The hub. The footer link and browser-tab title use the shell's
   // "footer.learn" twin of this label.
   "learn.title": "Learn",
   "learn.description": "Short guides to the numbers behind Champions battles.",
 
-  // Damage rolls.
-  "learn.damageRolls.title": "Damage rolls",
-  "learn.damageRolls.body1":
-    "The same move does not do the same damage every time. Once the game has added up attack, defence and every field effect, it multiplies the total by a random factor between 85% and 100% — one of sixteen rolls. That is why the calculator shows a range instead of a single number.",
-  "learn.damageRolls.body2":
-    "The range is always about 15% of the damage, so it matters most when the defender's HP sits inside it: the low roll leaves it standing, the high roll does not.",
+  // The live damage-rolls example.
   "learn.exampleTitle": "Example",
   "learn.exampleLine":
     "{move} from {attacker} into {defender}: {min}–{max} damage ({minPercent}–{maxPercent}% of its max HP).",
   "learn.exampleNote":
     "The striped band is the roll range: the same move into the same Pokémon, rolled sixteen ways.",
 
-  // OHKO and 2HKO.
-  "learn.ohko.title": "OHKO and 2HKO",
-  "learn.ohko.body1":
-    "OHKO means one-hit KO: the defender loses all of its HP to a single hit. A 2HKO takes two hits, a 3HKO three. Know which one a move is and you know how many turns you have.",
-  "learn.ohko.body2":
-    "A KO is guaranteed when even the lowest roll finishes the job; it is only a chance when just the high rolls do. The calculator labels every result — OHKO, 2HKO, guaranteed 2HKO — so check the label before you count turns.",
+  // Section and guide page chrome.
+  "learn.read": "Read",
+  "learn.readGuide": "Read the {title} guide",
+  "learn.inThisSection": "In this section",
+  "learn.searchTerms": "Search terms",
+  "learn.searchPlaceholder": "Search terms",
+  "learn.tryInCalc": "Try it in the calc",
+  "learn.openBattleMode": "Open battle mode",
+  "learn.prevAria": "Previous guide: {title}",
+  "learn.nextAria": "Next guide: {title}",
+  "learn.countOne": "1 entry",
+  "learn.countMany": "{count} entries",
+  "learn.typeChart": "Type chart",
 
-  // Stat Points.
-  "learn.statPoints.title": "Stat Points (SP)",
-  "learn.statPoints.body1":
-    "In Champions every Pokémon is level 50, and Stat Points — SP — replace the EVs and IVs of the main games. Each Pokémon gets 66 points, and one stat can take at most 32.",
-  "learn.statPoints.body2":
-    "66 points do not go far across six stats, so where they go is the heart of a build: two stats near the cap, or a thinner spread over more of them. The team builder and the calculator both show the budget while you spend it.",
-
-  // Speed ties.
-  "learn.speedTies.title": "Speed ties",
-  "learn.speedTies.body1":
-    "When both Pokémon have the same Speed stat, the game picks who moves first at random: a 50/50 coin flip, rolled again every turn. The calculator marks these matchups as a speed tie.",
-  "learn.speedTies.body2":
-    "Ties matter most when each side can knock the other out first — whoever wins the flip usually wins the trade. Anything that changes Speed (stat boosts, effects like Tailwind) breaks a tie, in either direction.",
+  // The Types page.
+  "learn.types.attacking": "Attacking",
+  "learn.types.defending": "Defending",
+  "learn.types.superEffective": "Super effective against",
+  "learn.types.notVeryEffective": "Not very effective against",
+  "learn.types.noEffect": "No effect on",
+  "learn.types.weakTo": "Weak to",
+  "learn.types.resists": "Resists",
+  "learn.types.immuneTo": "Immune to",
+  "learn.types.traits": "Traits",
+  "learn.types.chartGuide": "Rows attack, columns defend.",
+  "learn.types.legendSuper": "Super effective",
+  "learn.types.legendResist": "Not very effective",
+  "learn.types.legendNoEffect": "No effect",
 } as const;
 
 export type LearnKey = keyof typeof learnEn;

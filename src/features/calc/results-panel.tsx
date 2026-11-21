@@ -53,10 +53,10 @@ const DIRECTION_ARROW = "→";
 /** The damage multiplier a spread move takes in doubles. */
 const SPREAD_FACTOR = "0.75";
 
-/** The /learn explainer anchors behind the results area's labels. */
-const LEARN_DAMAGE_ROLLS = "/learn#damage-rolls";
-const LEARN_OHKO = "/learn#ohko";
-const LEARN_SPEED_TIES = "/learn#speed-ties";
+/** The /learn guide pages behind the results area's labels. */
+const LEARN_DAMAGE_ROLLS = "/learn/damage-rolls";
+const LEARN_OHKO = "/learn/ohko";
+const LEARN_SPEED_TIES = "/learn/speed-ties";
 
 /**
  * A quiet link into the /learn explainers: underlined so it reads as a
