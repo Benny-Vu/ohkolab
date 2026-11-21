@@ -9,7 +9,7 @@ import type { LearnKey } from "@/lib/i18n/entries/learn";
  */
 export const learnJa: { [K in LearnKey]: string } = {
   // ページ枠（フッターのリンクとタブタイトルはシェルの「footer.learn」）。
-  "learn.title": "はじめに",
+  "learn.title": "解説",
   "learn.description":
     "チャンピオンズのバトル数字を、ひとつずつやさしく解説します。",
 

@@ -36,7 +36,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   // フッター。
   "footer.disclaimer":
     "OHKOLabは非公式のファンプロジェクトであり、任天堂・ゲームフリーク・クリーチャーズ・ポケモンとは一切関係ありません。",
-  "footer.learn": "はじめに",
+  "footer.learn": "解説",
   "footer.whatsNew": "更新情報",
   "footer.terms": "利用規約",
   "footer.privacy": "プライバシー",

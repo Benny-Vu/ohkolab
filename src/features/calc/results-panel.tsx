@@ -25,6 +25,7 @@ import type { ShareCardContent } from "@/lib/share-cards/svg";
 import { calcShareUrl } from "@/lib/calc/share-url";
 import type { Translate } from "@/components/stat-labels";
 import { useT } from "@/lib/i18n/t";
+import { useLocale } from "@/lib/i18n/locale";
 import type { TranslationKey } from "@/lib/i18n/en";
 import { battleName } from "@/lib/calc/battle";
 import {
@@ -182,6 +183,7 @@ function ResultBlock({
   origin,
 }: ResultBlockProps) {
   const t = useT();
+  const [locale] = useLocale();
   const displayName = useDisplayName();
   const result = outcome.result;
   const move = getMove(outcome.move);
@@ -317,7 +319,14 @@ function ResultBlock({
         </p>
       ) : null}
       <div className="flex items-start justify-between gap-2">
-        <p className="min-w-0 text-sm font-medium">{description}</p>
+        {/* @smogon/calc's sentence is English only. In Japanese the line
+            shows the translated summary (the numbers are already above);
+            Copy still copies the standard English sentence players share. */}
+        <p className="min-w-0 text-sm font-medium">
+          {locale === "ja"
+            ? `${attackerName} — ${summaryText(summary, t)}${outcome.crit ? t("calc.criticalHit") : ""}`
+            : description}
+        </p>
         <div className="flex shrink-0 items-center gap-1">
           <ShareButton
             title={`${t("calc.title")} · ${displayName("move", outcome.move)}`}
