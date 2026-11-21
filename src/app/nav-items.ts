@@ -5,6 +5,7 @@ import {
   Gamepad2Icon,
   HouseIcon,
   MessageCircleIcon,
+  NotebookPenIcon,
   SwordsIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -34,15 +35,27 @@ export function tabLabelSizeClass(locale: "en" | "ja"): string {
   return locale === "ja" ? "text-xs" : "text-[11px]";
 }
 
-/** The destinations shown in the header on desktop and the tab bar on phones. */
+/**
+ * The main destinations: the header row on desktop and the tab bar on
+ * phones. Everything else lives in the "More" menu (MORE_ITEMS), so the
+ * phone tab bar stays at Home, Calc, Teams, Meta, More and the account tab.
+ */
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", labelKey: "nav.home", icon: HouseIcon, end: true },
   { to: "/calc", labelKey: "nav.calc", icon: CalculatorIcon },
   { to: "/teams", labelKey: "nav.teams", icon: SwordsIcon },
   { to: "/meta", labelKey: "nav.meta", icon: ChartColumnIcon },
-  // The battle finder rides behind VITE_BATTLES the same way direct messages
-  // ride behind VITE_DIRECT_MESSAGES: absent in builds where the feature is
-  // not launched, one object literal plus an icon otherwise.
+  { to: "/profile", labelKey: "nav.profile", icon: CircleUserIcon },
+];
+
+/**
+ * The "More" menu: battle notes always; the battle finder and direct
+ * messages only in builds whose flags launch them (VITE_BATTLES,
+ * VITE_DIRECT_MESSAGES). The messages unread badge mounts lazily in the app
+ * layout, keeping the entry cost at an object literal plus an icon.
+ */
+export const MORE_ITEMS: NavItem[] = [
+  { to: "/notes", labelKey: "nav.notes", icon: NotebookPenIcon },
   ...(battlesEnabled()
     ? [
         {
@@ -52,11 +65,6 @@ export const NAV_ITEMS: NavItem[] = [
         },
       ]
     : []),
-  { to: "/profile", labelKey: "nav.profile", icon: CircleUserIcon },
-  // Direct messages are built but not launched: the item (and its badge)
-  // exists only in builds with VITE_DIRECT_MESSAGES=true. The unread badge
-  // itself mounts lazily in the app layout, keeping the entry cost at an
-  // object literal plus an icon.
   ...(directMessagesEnabled()
     ? [
         {

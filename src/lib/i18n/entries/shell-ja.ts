@@ -14,6 +14,8 @@ export const shellJa: { [K in ShellKey]: string } = {
   "nav.meta": "環境",
   "nav.profile": "プロフィール",
   "nav.main": "メイン",
+  "nav.more": "その他",
+  "nav.notes": "メモ",
   // 対戦ボードのナビラベルはエントリグラフで描画されるため、ここに置く。
   "nav.battles": "対戦",
   "account.menuAria": "アカウントメニュー",

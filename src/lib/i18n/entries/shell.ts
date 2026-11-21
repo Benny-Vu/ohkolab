@@ -13,6 +13,8 @@ export const shellEn = {
   "nav.meta": "Meta",
   "nav.profile": "Profile",
   "nav.main": "Main",
+  "nav.more": "More",
+  "nav.notes": "Notes",
   // The battle board's nav label lives here (not the battles domain),
   // because nav-items.ts and the page titles are part of the entry graph.
   "nav.battles": "Battles",

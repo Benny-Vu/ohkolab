@@ -16,13 +16,7 @@ const BirthDatePrompt = lazy(() =>
     default: m.BirthDatePrompt,
   })),
 );
-// The Messages nav unread badge: same lazy, flag-gated mount. The nav item
-// itself is a plain entry in NAV_ITEMS; this is the only live part.
-const MessagesNavBadge = lazy(() =>
-  import("@/features/messages/nav-unread-badge").then((m) => ({
-    default: m.MessagesNavBadge,
-  })),
-);
+import { MoreMenu } from "@/app/more-menu";
 import { OnboardingDialog } from "@/features/account/onboarding-dialog";
 import { WelcomeFlow } from "@/features/account/welcome-flow";
 import { FeedbackDialog } from "@/features/feedback/feedback-dialog";
@@ -98,15 +92,9 @@ export function AppLayout() {
                 }
               >
                 {t(item.labelKey)}
-                {item.badge === "messages" &&
-                directMessagesEnabled() &&
-                !demo ? (
-                  <Suspense fallback={null}>
-                    <MessagesNavBadge />
-                  </Suspense>
-                ) : null}
               </NavLink>
             ))}
+            <MoreMenu variant="header" demo={demo} />
           </nav>
           <div className="ml-auto flex items-center gap-1">
             <SearchPalette />
@@ -195,9 +183,9 @@ export function AppLayout() {
         aria-label={t("nav.main")}
         className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-safe backdrop-blur md:hidden"
       >
-        {/* One row of equal columns, however many tabs the flags switch
-            on (battles, messages): a fixed grid-cols-N wrapped the last
-            tab off-screen when a flag added one more. */}
+        {/* One row of equal columns: the main tabs, More and the account
+            tab. Feature-flagged destinations live in the More menu, so the
+            row never grows past six. */}
         <ul className="mx-auto grid h-14 max-w-md auto-cols-fr grid-flow-col">
           {NAV_ITEMS.filter((item) => item.to !== "/profile").map((item) => (
             <li key={item.to} className="min-w-0">
@@ -223,16 +211,12 @@ export function AppLayout() {
                 <span className="max-w-full truncate px-0.5">
                   {t(item.labelKey)}
                 </span>
-                {item.badge === "messages" &&
-                directMessagesEnabled() &&
-                !demo ? (
-                  <Suspense fallback={null}>
-                    <MessagesNavBadge />
-                  </Suspense>
-                ) : null}
               </NavLink>
             </li>
           ))}
+          <li className="min-w-0">
+            <MoreMenu variant="tab" demo={demo} />
+          </li>
           {demo ? null : (
             <li className="min-w-0">
               <AccountMenu variant="tab" />
