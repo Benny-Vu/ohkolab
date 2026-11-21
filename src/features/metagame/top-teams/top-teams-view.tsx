@@ -6,7 +6,10 @@ import { TeamPreview } from "@/components/team-preview/team-preview";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CONTENT_FADE_IN, LoadingArea } from "@/components/skeletons";
-import { buttonSmTouchClass } from "@/components/touch-targets";
+import {
+  buttonSmTouchClass,
+  buttonTouchClass,
+} from "@/components/touch-targets";
 import { useMetagameSnapshot } from "@/features/metagame/use-metagame";
 import { formatDate } from "@/lib/format-date";
 import { useT } from "@/lib/i18n/t";
@@ -36,6 +39,10 @@ const FORMAT_ORDER = ["M-C", "M-B", "M-A"] as const;
 
 /** The filter's "every format" value. */
 const ALL_FORMATS = "all";
+
+/** How many team cards render at a time. The real snapshot holds
+ * thousands of teams, so the grid grows on demand instead of at once. */
+const PAGE_SIZE = 12;
 
 /** Newest event first, and by placing within an event. */
 function sortTeams(teams: readonly TopTeam[]): TopTeam[] {
@@ -134,6 +141,7 @@ export function TopTeamsView() {
   // with the neutral default and the `meta.spAssumed` line.
   const usageSnapshot = useMetagameSnapshot("doubles", null);
   const [requestedFormat, setRequestedFormat] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [selected, setSelected] = useState<TopTeam | null>(null);
 
   const usageBySpecies = useMemo(
@@ -182,16 +190,21 @@ export function TopTeamsView() {
   const visible = sortTeams(
     teams.filter((team) => filter === ALL_FORMATS || team.format === filter),
   );
+  // Only the first `visibleCount` render; the button below grows it.
+  const shown = visible.slice(0, visibleCount);
 
   return (
     <div className={cn("space-y-6", CONTENT_FADE_IN)}>
       <FormatFilter
         formats={formats}
         value={filter}
-        onChange={setRequestedFormat}
+        onChange={(value) => {
+          setRequestedFormat(value);
+          setVisibleCount(PAGE_SIZE);
+        }}
       />
       <div className="grid gap-3 sm:grid-cols-2">
-        {visible.map((team) => (
+        {shown.map((team) => (
           <TeamCard
             key={`${team.eventId}-${team.placing}`}
             team={team}
@@ -202,6 +215,15 @@ export function TopTeamsView() {
           />
         ))}
       </div>
+      {visible.length > shown.length ? (
+        <Button
+          variant="outline"
+          className={buttonTouchClass}
+          onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+        >
+          {t("meta.showMore")}
+        </Button>
+      ) : null}
       <footer>
         <p className="text-xs text-muted-foreground">
           {t("meta.topTeamsAttribution")}

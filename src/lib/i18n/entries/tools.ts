@@ -272,6 +272,7 @@ export const toolsEn = {
   "meta.copyAsPaste": "Copy as Showdown paste",
   "meta.saveTeam": "Save to my teams",
   "meta.sendToBattleMode": "Send to battle mode",
+  "meta.showMore": "Show more",
   "meta.teamSaved": "Team saved.",
   "meta.pasteCopied": "Team copied as a Showdown paste.",
   "meta.teamLoadFailed": "Could not build this team's sets.",

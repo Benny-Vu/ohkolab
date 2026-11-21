@@ -224,6 +224,30 @@ describe("TopTeamsView", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders the cards in pages and grows on demand", async () => {
+    const user = userEvent.setup();
+    mockFetch();
+    // Fifteen M-C teams: page one shows twelve, the button reveals the rest.
+    fetchHandlers.set("/data/top-teams/teams.json", {
+      ...topTeamsFixture,
+      teams: Array.from({ length: 15 }, (_, index) =>
+        team({ eventId: `bulk-${index}` }),
+      ),
+    });
+    renderView();
+    expect(
+      await screen.findAllByRole("button", { name: /Naosaki Regionals/ }),
+    ).toHaveLength(12);
+    await user.click(screen.getByRole("button", { name: "Show more" }));
+    expect(
+      await screen.findAllByRole("button", { name: /Naosaki Regionals/ }),
+    ).toHaveLength(15);
+    // Everything visible: the button is gone.
+    expect(
+      screen.queryByRole("button", { name: "Show more" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders the cards with event, placing, date, record and players", async () => {
     mockFetch();
     renderView();

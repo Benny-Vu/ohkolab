@@ -271,6 +271,7 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "meta.copyAsPaste": "ポケモンShowdown形式でコピー",
   "meta.saveTeam": "マイ構築に保存",
   "meta.sendToBattleMode": "バトルモードへ送る",
+  "meta.showMore": "さらに表示",
   "meta.teamSaved": "構築を保存しました。",
   "meta.pasteCopied": "構築をShowdown形式でコピーしました。",
   "meta.teamLoadFailed": "この構築の型を作成できませんでした。",
