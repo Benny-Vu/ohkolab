@@ -5,6 +5,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { Providers } from "@/app/providers";
 import { BattlePage } from "@/features/battle/battle-page";
+import { createTeamActions } from "@/lib/team/use-teams";
+import { localTeamStore } from "@/lib/team/team-store";
+import type { PokemonSet } from "@/types/pokemon";
 
 const MY_PASTE = [
   "Garchomp @ Life Orb",
@@ -16,6 +19,15 @@ const MY_PASTE = [
 ].join("\n");
 
 const THEIR_PASTE = ["Incineroar", "Whimsicott"].join("\n");
+
+const SENT_SET: PokemonSet = {
+  species: "Incineroar",
+  item: "Sitrus Berry",
+  ability: "Intimidate",
+  nature: "Careful",
+  statPoints: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+  moves: ["Fake Out", "Flare Blitz", "Parting Shot", "Knock Off"],
+};
 
 function renderBattle() {
   const router = createMemoryRouter(
@@ -108,5 +120,31 @@ describe("BattlePage", () => {
       const sheet = await screen.findByRole("dialog");
       expect(within(sheet).getByText("Earthquake")).toBeInTheDocument();
     }
+  });
+
+  it("preselects the team a team detail sent via router state", async () => {
+    const team = createTeamActions(localTeamStore).create({
+      name: "Naosaki Regionals #1",
+      format: "doubles",
+      members: [SENT_SET],
+    });
+    const router = createMemoryRouter(
+      [{ path: "/calc/battle", element: <BattlePage /> }],
+      {
+        initialEntries: [
+          { pathname: "/calc/battle", state: { teamId: team.id } },
+        ],
+      },
+    );
+    render(
+      <Providers>
+        <RouterProvider router={router} />
+      </Providers>,
+    );
+
+    // The sent team's Pokémon is already on my side, no picking needed.
+    await waitFor(() =>
+      expect(screen.getAllByText("Incineroar").length).toBeGreaterThan(0),
+    );
   });
 });

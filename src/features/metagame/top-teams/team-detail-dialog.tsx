@@ -38,9 +38,10 @@ import {
  * actions — the Showdown paste, battle mode, saving to my teams (signed
  * in) and the Limitless source page where the players' names live.
  *
- * Battle mode keeps its own-side input in local page state and reads no
- * router state, so "Send to battle mode" is save-then-navigate: the team
- * lands in the same store battle mode's team picker reads.
+ * Battle mode keeps its own-side input in local page state, so "Send to
+ * battle mode" is save-then-navigate: the team is saved into the store its
+ * picker reads, and the id rides along as router state so the page
+ * preselects it.
  */
 
 /** The name a saved copy gets: the event and the placing. */
@@ -106,15 +107,20 @@ export function TeamDetailDialog({
   };
 
   // Battle mode reads its own-side input from the saved-team store (its
-  // page state takes no router state), so the team is saved first.
+  // page state is local), so the team is saved first and its id passed as
+  // router state for the page to preselect.
   const handleSendToBattle = () => {
     if (sets.length === 0 || !team) {
       toast.error(t("meta.teamLoadFailed"));
       return;
     }
-    create({ name: teamName(team), format: "doubles", members: sets });
+    const saved = create({
+      name: teamName(team),
+      format: "doubles",
+      members: sets,
+    });
     toast.success(t("meta.teamSaved"));
-    navigate("/battle");
+    navigate("/calc/battle", { state: { teamId: saved.id } });
   };
 
   const handleSaveTeam = () => {

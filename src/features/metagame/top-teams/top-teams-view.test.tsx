@@ -139,7 +139,7 @@ function renderView(auth: AuthContextValue = GUEST_AUTH) {
   const router = createMemoryRouter(
     [
       { path: "/", element: <TopTeamsView /> },
-      { path: "/battle", element: <div data-testid="battle-stub" /> },
+      { path: "/calc/battle", element: <div data-testid="battle-stub" /> },
       { path: "/teams/:teamId", element: <div data-testid="team-stub" /> },
     ],
     { initialEntries: ["/"] },
