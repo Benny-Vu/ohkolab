@@ -45,6 +45,11 @@ export function DamageMeter({
   const solid = clampPercent(hpPercent - maxPercent);
   const striped = clampPercent(maxPercent - minPercent);
   const muted = clampPercent(minPercent);
+  // The HP left reads as an HP bar, coloured like the games' (owner: the
+  // foreground colour didn't read as "HP left"): green above half, yellow
+  // down to a fifth, red below.
+  const hpColor =
+    solid > 50 ? "bg-success" : solid > 20 ? "bg-warning" : "bg-destructive";
 
   return (
     <div
@@ -60,7 +65,11 @@ export function DamageMeter({
       )}
     >
       <div
-        className="h-full shrink-0 bg-foreground transition-[width] duration-(--motion-base) ease-(--motion-ease-out)"
+        className={cn(
+          "h-full shrink-0 transition-[width,background-color] duration-(--motion-base) ease-(--motion-ease-out)",
+          hpColor,
+        )}
+        data-hp-color={hpColor}
         style={{ width: `${solid}%` }}
       />
       <div

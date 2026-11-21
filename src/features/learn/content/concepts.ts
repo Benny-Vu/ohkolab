@@ -19,7 +19,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "team-preview",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Team preview and bring 4", ja: "チームプレビューと選出" },
     summary: {
       en: "You see all six of the opponent's Pokémon and choose what to bring.",
@@ -40,7 +40,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "switching",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Switching and positioning", ja: "交代と盤面" },
     summary: {
       en: "Who is on the field decides what you can threaten and what you risk.",
@@ -61,7 +61,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "double-targeting",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Double targeting", ja: "集中攻撃" },
     summary: {
       en: "Both of your Pokémon attack the same target in one turn.",
@@ -81,7 +81,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "protect-scouting",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Protect and scouting", ja: "まもると情報" },
     summary: {
       en: "One safe turn to see what the opponent does.",
@@ -101,7 +101,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "fake-out-play",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Fake Out", ja: "ねこだまし" },
     summary: {
       en: "Priority +3 and a guaranteed flinch — once, on the way in.",
@@ -122,7 +122,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "redirection",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Redirection", ja: "この指と怒りの粉" },
     summary: {
       en: "Follow Me and Rage Powder pull attacks onto one Pokémon.",
@@ -143,7 +143,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "helping-hand",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Helping Hand", ja: "てだすけ" },
     summary: {
       en: "Priority +5: an ally's move does 1.5× damage that turn.",
@@ -163,7 +163,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "intimidate",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Intimidate", ja: "威嚇" },
     summary: {
       en: "Lowers both foes' Attack by one stage, every time it enters.",
@@ -184,7 +184,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "speed-control",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Speed control", ja: "素早さ操作" },
     summary: {
       en: "Tailwind, Trick Room, Speed drops and paralysis rewrite turn order.",
@@ -205,7 +205,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "priority-moves",
     section: "concepts",
-    long: false,
+    long: true,
     title: {
       en: "Priority moves and Psychic Terrain",
       ja: "先制技とサイコフィールド",
@@ -228,7 +228,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "spread-moves",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Spread moves", ja: "全体技" },
     summary: {
       en: "Hitting both foes at once, at 0.75× the damage.",
@@ -249,7 +249,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "stat-stages",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Stat stages", ja: "ランク補正" },
     summary: {
       en: "In-battle boosts: each stage up multiplies a stat by 1.5, then 2, and so on.",
@@ -354,7 +354,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "critical-hits",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Critical hits", ja: "急所" },
     summary: {
       en: "1.5× damage that ignores boosts and screens.",
@@ -375,7 +375,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "damage-abilities",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Abilities that change damage", ja: "ダメージを変える特性" },
     summary: {
       en: "Thick Fat, Levitate, Huge Power — the abilities to calc around.",
@@ -396,7 +396,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "weather-wars",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Weather and terrain wars", ja: "天候・フィールドの奪い合い" },
     summary: {
       en: "Only one weather and one terrain fit on the field — the last one set wins.",
@@ -417,7 +417,7 @@ export const conceptEntries: readonly LearnEntry[] = [
   {
     slug: "mega-evolution",
     section: "concepts",
-    long: false,
+    long: true,
     title: { en: "Mega Evolution", ja: "メガシンカ" },
     summary: {
       en: "One Pokémon per battle transforms through its held Mega Stone.",

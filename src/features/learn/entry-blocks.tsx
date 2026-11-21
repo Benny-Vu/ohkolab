@@ -159,8 +159,9 @@ export function LongEntryRow({ entry }: { entry: LearnEntry }) {
   const t = useT();
   return (
     <Link
+      id={entry.slug}
       to={`/learn/${entry.slug}`}
-      className="group flex items-start justify-between gap-3 rounded-md border bg-card p-4 outline-none transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-surface-sunken focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="group flex scroll-mt-24 items-start justify-between gap-3 rounded-md border bg-card p-4 outline-none transition-colors duration-(--motion-fast) ease-(--motion-ease-out) hover:bg-surface-sunken focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <span className="min-w-0">
         <span className="block font-heading text-sm font-semibold">
