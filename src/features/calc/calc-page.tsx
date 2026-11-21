@@ -3,7 +3,7 @@ import { ArrowLeftRightIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { BigNumber } from "@/components/big-number";
-import { BattleModeLink } from "@/features/battle/battle-link";
+import { BattleModeLink, NotesLink } from "@/features/battle/battle-link";
 import { DamageMeter } from "@/components/damage-meter";
 import { DataBadge } from "@/components/data-badge";
 import { KoLabel } from "@/components/ko-label";
@@ -255,6 +255,7 @@ export function CalcPage() {
           <>
             <DataBadge />
             <BattleModeLink />
+            <NotesLink />
             <Button
               onClick={() => dispatch({ type: "swapSides" })}
               variant="outline"
@@ -310,6 +311,7 @@ export function CalcPage() {
         <>
           <DataBadge />
           <BattleModeLink />
+          <NotesLink />
           <Button
             onClick={handleReset}
             variant="outline"

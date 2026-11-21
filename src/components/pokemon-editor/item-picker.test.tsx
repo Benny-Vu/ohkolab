@@ -17,7 +17,7 @@ describe("ItemPicker", () => {
     render(<ItemPicker value="Life Orb" onChange={onChange} />);
 
     await user.click(screen.getByRole("combobox", { name: "Item" }));
-    await user.click(screen.getByRole("option", { name: /^None$/ }));
+    await user.click(screen.getByRole("option", { name: "No item" }));
 
     expect(onChange).toHaveBeenLastCalledWith(null);
   });

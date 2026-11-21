@@ -3,6 +3,7 @@ import {
   ChartColumnIcon,
   CircleUserIcon,
   Gamepad2Icon,
+  GraduationCapIcon,
   HouseIcon,
   MessageCircleIcon,
   NotebookPenIcon,
@@ -49,13 +50,15 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 /**
- * The "More" menu: battle notes always; the battle finder and direct
- * messages only in builds whose flags launch them (VITE_BATTLES,
- * VITE_DIRECT_MESSAGES). The messages unread badge mounts lazily in the app
- * layout, keeping the entry cost at an object literal plus an icon.
+ * The "More" menu: battle notes and the learn explainers always; the battle
+ * finder and direct messages only in builds whose flags launch them
+ * (VITE_BATTLES, VITE_DIRECT_MESSAGES). The messages unread badge mounts
+ * lazily in the app layout, keeping the entry cost at an object literal
+ * plus an icon.
  */
 export const MORE_ITEMS: NavItem[] = [
   { to: "/notes", labelKey: "nav.notes", icon: NotebookPenIcon },
+  { to: "/learn", labelKey: "footer.learn", icon: GraduationCapIcon },
   ...(battlesEnabled()
     ? [
         {

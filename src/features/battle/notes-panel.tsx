@@ -200,9 +200,7 @@ export function NotesPanel({
             size="sm"
             className={`${buttonSmTouchClass} justify-self-start`}
           >
-            <Link to="/calc/battle/notes">
-              {t("battle.notesOpenStandalone")}
-            </Link>
+            <Link to="/notes">{t("battle.notesOpenStandalone")}</Link>
           </Button>
         ) : null}
       </div>

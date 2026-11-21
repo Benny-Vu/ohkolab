@@ -503,7 +503,7 @@ function MembersTab({
             <div className="flex gap-2">
               <Input
                 aria-label={t("groups.usernameToInvite")}
-                placeholder="username"
+                placeholder={t("groups.usernamePlaceholder")}
                 value={inviteUsername}
                 className="max-sm:h-11"
                 aria-invalid={inviteError ? true : undefined}

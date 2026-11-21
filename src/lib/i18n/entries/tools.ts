@@ -26,7 +26,9 @@ export const toolsEn = {
   "calc.results": "Results",
   "calc.noMovesYet": "No moves yet",
   "calc.noMoves": "No moves",
-  "calc.none": "None",
+  "calc.noWeather": "No weather",
+  "calc.noTerrain": "No terrain",
+  "calc.noStatus": "No status",
 
   // Damage calculator: one side's battle state.
   "calc.statBoosts": "Stat boosts",
@@ -109,7 +111,7 @@ export const toolsEn = {
   "teams.emptyDescription":
     "Create one or import a Showdown paste to get started.",
   "teams.newTeam": "New team",
-  "teams.open": "Open",
+  "teams.openNamed": "Open {name}",
   "teams.duplicate": "Duplicate",
   "teams.duplicateNamed": "Duplicate {name}",
   "teams.deleteNamed": "Delete {name}",
@@ -134,11 +136,9 @@ export const toolsEn = {
   "teams.exportTitle": "Export team",
   "teams.exportDescription": "Copy this Showdown export to share the team.",
 
-  // Team builder: the team preview and its panel on the teams list.
+  // Team builder: the team preview.
   "teams.previewAria": "Team preview",
-  "teams.previewNamed": "Preview {name}",
   "teams.previewNatureSr": "Nature: {nature}",
-  "teams.sendToCalc": "Send to calc",
 
   // Team builder: the printable team sheet.
   "teams.printTeamSheet": "Print team sheet",
@@ -297,9 +297,8 @@ export const toolsEn = {
   "teams.trickRoomNote":
     "Trick Room reverses the order: the slowest Pokémon moves first. Priority moves still go first, and equal Speeds still tie.",
 
-  // Battle mode (/calc/battle): the team-preview matchup screen.
-  "battle.title": "Battle mode",
-  "battle.description": "Your six against their six, before you pick a lead.",
+  // Battle mode (/calc/battle): the team-preview matchup screen. The page
+  // title and description live in the shell domain (the entry renders them).
   "battle.link": "Battle mode",
   "battle.mySide": "Your team",
   "battle.savedTeam": "Saved team",
@@ -341,15 +340,13 @@ export const toolsEn = {
   "battle.sideOpponent": "Opponent",
   "battle.speedValueSr": "{name}: Speed {base} before modifiers, {final} after",
 
-  // Battle mode: the notes panel (/calc/battle/notes and inline).
+  // Battle mode: the notes panel (/notes and inline in battle mode). The
+  // page title and description live in the shell domain.
   "battle.provenanceRevealed": "Revealed",
-  "battle.notesTitle": "Battle notes",
-  "battle.notesDescription":
-    "What you saw in the match, kept on this device only.",
   "battle.notesLocalOnly":
     "Notes stay on this device. Nothing is sent anywhere.",
   "battle.notesOpenStandalone": "Open on its own page",
-  "battle.notesBackToBattle": "Back to battle mode",
+  "battle.notesOpenBattle": "Open battle mode",
   "battle.notesGame": "Game",
   "battle.notesBrought": "Brought this game",
   "battle.notesEmpty": "Add a Pokémon to start noting.",

@@ -13,19 +13,19 @@ import {
 } from "@/features/battle/notes-store";
 
 /**
- * The notes page (/calc/battle/notes): cards per previewed Pokémon, the
- * revealed pickers, the game counter with the brought chips, the turn log
- * and the archive — all autosaved, so a fresh page load (a reset store)
- * still shows what was noted.
+ * The notes page (/notes): cards per previewed Pokémon, the revealed
+ * pickers, the game counter with the brought chips, the turn log and the
+ * archive — all autosaved, so a fresh page load (a reset store) still shows
+ * what was noted.
  */
 
 function renderNotes() {
   const router = createMemoryRouter(
     [
-      { path: "/calc/battle/notes", element: <NotesPage /> },
+      { path: "/notes", element: <NotesPage /> },
       { path: "/calc/battle", element: <div /> },
     ],
-    { initialEntries: ["/calc/battle/notes"] },
+    { initialEntries: ["/notes"] },
   );
   return render(
     <Providers>

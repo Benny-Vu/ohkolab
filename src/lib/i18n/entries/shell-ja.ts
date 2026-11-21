@@ -18,6 +18,11 @@ export const shellJa: { [K in ShellKey]: string } = {
   "nav.notes": "メモ",
   // 対戦ボードのナビラベルはエントリグラフで描画されるため、ここに置く。
   "nav.battles": "対戦",
+  // バトルモードとメモページのタイトルと説明も同じ理由でここに置く。
+  "battle.title": "バトルモード",
+  "battle.description": "先発を決める前に、6体対6体の相性を確認。",
+  "battle.notesTitle": "バトルメモ",
+  "battle.notesDescription": "対戦中に見た内容を、この端末にだけ保存します。",
   "account.menuAria": "アカウントメニュー",
   "account.moderationItem": "モデレーション",
 
@@ -94,7 +99,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "pokemonEditor.searchItems": "もちものを検索",
   "pokemonEditor.searchItemsPlaceholder": "名前や効果で検索…",
   "pokemonEditor.noItem": "該当するもちものはありません。",
-  "pokemonEditor.none": "なし",
+  "pokemonEditor.noHeldItem": "持ち物なし",
   "pokemonEditor.megaStones": "メガストーン",
   "pokemonEditor.items": "もちもの",
   "pokemonEditor.ability": "特性",
@@ -223,6 +228,7 @@ export const shellJa: { [K in ShellKey]: string } = {
   "profile.mainFormatSingles": "シングル",
   "profile.mainFormatDoubles": "ダブル",
   "profile.mainFormatBoth": "どちらも",
+  "profile.notSet": "未設定",
   "profile.savedToast": "プロフィールを保存しました。",
   "profile.accountSection": "アカウント",
   "profile.signedOutToast": "サインアウトしました。",

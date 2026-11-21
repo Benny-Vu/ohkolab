@@ -85,7 +85,7 @@ export function BattleStateEditor({
   const megaForme = megaFormeOf(side.set);
 
   const statusPickerOptions: PickerOption[] = [
-    { value: "", label: t("calc.none") },
+    { value: "", label: t("calc.noStatus") },
     ...STATUS_NAMES.map((status) => ({
       value: status,
       label: t(STATUS_LABEL_KEYS[status]),
