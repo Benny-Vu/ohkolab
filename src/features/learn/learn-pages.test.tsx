@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { entriesForSection } from "@/features/learn/guides";
 import { learnRoutes } from "@/features/learn/routes";
 import { registerEnglishDomain } from "@/lib/i18n/en-loader";
 import { learnEn } from "@/lib/i18n/entries/learn";
@@ -151,9 +152,11 @@ describe("the concepts section page", () => {
       .getAllByRole("link", { name: /Damage rolls/ })
       .map((link) => link.getAttribute("href"));
     expect(damageRollsLinks).toContain("/learn/damage-rolls");
-    // The summary rows say "Read" (one per long entry), the sidebar
-    // links do not.
-    expect(screen.getAllByText("Read")).toHaveLength(4);
+    // Every concept has its own page (owner, 2026-11-22), so every row says
+    // "Read" — one per concept; the sidebar links do not.
+    const concepts = entriesForSection("concepts");
+    expect(concepts.every((entry) => entry.long)).toBe(true);
+    expect(screen.getAllByText("Read")).toHaveLength(concepts.length);
   });
 });
 

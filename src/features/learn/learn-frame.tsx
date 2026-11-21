@@ -10,6 +10,7 @@ import {
   type LearnSectionId,
 } from "@/features/learn/guides";
 import { linkHitClass } from "@/components/touch-targets";
+import { useActiveAnchor } from "@/features/learn/use-active-anchor";
 import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
@@ -63,14 +64,21 @@ export function SectionSidebar({
 }) {
   const [locale] = useLocale();
   const t = useT();
+  const entries = entriesForSection(section);
+  // On the section page the highlight follows the entry being read; on a
+  // guide page it marks the open guide.
+  const inView = useActiveAnchor(
+    currentSlug ? [] : entries.map((entry) => entry.slug),
+  );
   return (
     <nav aria-label={t("learn.inThisSection")}>
       <p className="mb-2 text-xs font-semibold text-muted-foreground">
         {t("learn.inThisSection")}
       </p>
       <ul className="grid gap-1.5">
-        {entriesForSection(section).map((entry) => {
+        {entries.map((entry) => {
           const isCurrent = entry.slug === currentSlug;
+          const isInView = !currentSlug && entry.slug === inView;
           return (
             <li key={entry.slug}>
               <Link
@@ -79,10 +87,13 @@ export function SectionSidebar({
                     ? `/learn/${entry.slug}`
                     : `/learn/${section}#${entry.slug}`
                 }
-                aria-current={isCurrent ? "page" : undefined}
+                aria-current={
+                  isCurrent ? "page" : isInView ? "location" : undefined
+                }
                 className={cn(
                   "block rounded-sm px-2 py-1 text-sm text-muted-foreground transition-colors duration-(--motion-fast) ease-(--motion-ease-out) outline-none hover:bg-surface-sunken hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
-                  isCurrent && "bg-surface-sunken font-medium text-foreground",
+                  (isCurrent || isInView) &&
+                    "bg-surface-sunken font-medium text-foreground",
                 )}
               >
                 {localized(entry.title, locale)}
@@ -113,11 +124,14 @@ export function LearnFrame({
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-4 sm:px-6 sm:py-6">
       <SectionTabs active={section} />
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_220px]">
-        <div className="min-w-0">{children}</div>
-        <aside className="hidden md:block">
+      {/* The "In this section" list sits on the left (owner, matching the
+          approved sketch) and follows the scroll: sticky under the header,
+          scrolling on its own when it is taller than the screen. */}
+      <div className="grid gap-8 md:grid-cols-[200px_minmax(0,1fr)]">
+        <aside className="hidden self-start overscroll-contain md:sticky md:top-20 md:block md:max-h-[calc(100dvh-6rem)] md:overflow-y-auto md:pr-1">
           {sidebar ?? <SectionSidebar section={section} />}
         </aside>
+        <div className="min-w-0">{children}</div>
       </div>
     </div>
   );
