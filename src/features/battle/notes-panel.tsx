@@ -345,10 +345,17 @@ function TurnLogSection({
               key={line.id}
               className="flex min-h-11 items-center gap-2 rounded-md bg-muted/40 px-2"
             >
+              {/* Every line says which turn it belongs to, quick move lines
+                  and free text alike. */}
+              <span
+                className="min-w-8 shrink-0 font-mono text-xs text-muted-foreground tabular-nums"
+                aria-label={t("battle.notesTurnAria", { turn: line.turn })}
+              >
+                {t("battle.notesTurnChip", { turn: line.turn })}
+              </span>
               <span className="min-w-0 flex-1 break-words text-sm">
                 {line.move && line.species
                   ? t("battle.notesTurnLine", {
-                      turn: line.turn,
                       move: displayName("move", line.move),
                       species: displayName("species", line.species),
                     })

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -120,7 +120,10 @@ describe("NotesPage", () => {
       screen.getByRole("button", { name: "Log Fake Out for Incineroar" }),
     );
 
-    expect(screen.getByText("T1: Fake Out → Incineroar")).toBeVisible();
+    // The line carries its turn as a chip, then the move line.
+    const line = screen.getByText("Fake Out → Incineroar").closest("li")!;
+    expect(line).toBeVisible();
+    expect(within(line).getByLabelText("Turn 1")).toHaveTextContent("T1");
     expect(getBattleNotesState().current.turn).toBe(2);
   });
 });
