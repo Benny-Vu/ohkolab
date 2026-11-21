@@ -87,7 +87,7 @@ export function TypeChartGrid() {
       <p className="text-sm text-muted-foreground">
         {t("learn.types.chartGuide")}
       </p>
-      <div className="relative">
+      <div className="relative min-w-0">
         <div className="overflow-x-auto">
           <table className="border-separate border-spacing-0 tabular-nums">
             <thead>
