@@ -123,7 +123,13 @@ describe("the types page", () => {
     const fire = screen.getByRole("button", { name: "Fire" });
     await user.click(fire);
     const fireCard = within(document.getElementById("fire")!);
-    expect(fireCard.queryByText("Traits")).not.toBeInTheDocument();
+    expect(fireCard.getByText("Can't be burned.")).toBeInTheDocument();
+
+    // A type with no traits renders no Traits section at all.
+    const water = screen.getByRole("button", { name: "Water" });
+    await user.click(water);
+    const waterCard = within(document.getElementById("water")!);
+    expect(waterCard.queryByText("Traits")).not.toBeInTheDocument();
   });
 
   it("renders the chart: 18 attackers, 18 defenders, every cell from @/data", async () => {
