@@ -303,6 +303,7 @@ export const communityEn = {
   "groups.inviteDescription":
     "Invite-only and public groups both invite by username.",
   "groups.usernameToInvite": "Username to invite",
+  "groups.usernamePlaceholder": "username",
   "groups.invite": "Invite",
   "groups.loadingMembers": "Loading members",
   "groups.noMembers": "No members yet",

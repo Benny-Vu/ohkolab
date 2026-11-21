@@ -22,7 +22,9 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "calc.results": "計算結果",
   "calc.noMovesYet": "まだ技がありません",
   "calc.noMoves": "技なし",
-  "calc.none": "なし",
+  "calc.noWeather": "天候なし",
+  "calc.noTerrain": "フィールドなし",
+  "calc.noStatus": "状態異常なし",
 
   // ダメージ計算：片側のバトル状態。
   "calc.statBoosts": "ランク補正",
@@ -344,7 +346,7 @@ export const toolsJa: { [K in ToolsKey]: string } = {
   "battle.notesLocalOnly":
     "メモはこの端末にだけ保存され、どこにも送信されません。",
   "battle.notesOpenStandalone": "単独ページで開く",
-  "battle.notesBackToBattle": "バトルモードへ戻る",
+  "battle.notesOpenBattle": "バトルモードを開く",
   "battle.notesGame": "ゲーム",
   "battle.notesBrought": "このゲームの選出",
   "battle.notesEmpty": "ポケモンを追加するとメモを始められます。",

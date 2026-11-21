@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { SwordsIcon } from "lucide-react";
+import { NotebookPenIcon, SwordsIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { buttonSmTouchClass } from "@/components/touch-targets";
@@ -17,6 +17,22 @@ export function BattleModeLink() {
       <Link to="/calc/battle">
         <SwordsIcon aria-hidden />
         {t("battle.link")}
+      </Link>
+    </Button>
+  );
+}
+
+/**
+ * The entry-point link to the battle notes page, in the same style as the
+ * battle mode link it sits next to.
+ */
+export function NotesLink() {
+  const t = useT();
+  return (
+    <Button asChild variant="outline" size="sm" className={buttonSmTouchClass}>
+      <Link to="/notes">
+        <NotebookPenIcon aria-hidden />
+        {t("nav.notes")}
       </Link>
     </Button>
   );

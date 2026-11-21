@@ -16,6 +16,8 @@ const EXACT_TITLES: Record<string, TranslationKey> = {
   "/admin/feedback": "pageTitle.feedback",
   "/admin/reports": "pageTitle.reports",
   "/calc": "calc.title",
+  "/calc/battle": "battle.title",
+  "/notes": "battle.notesTitle",
   "/dev/styleguide": "pageTitle.styleguide",
   "/groups": "groups.homeTitle",
   "/groups/new": "groups.newTitle",
@@ -50,6 +52,8 @@ const HOME_DESCRIPTION: TranslationKey = "seo.homeDescription";
 /** Meta descriptions for routes without parameters, keyed by exact path. */
 const EXACT_DESCRIPTIONS: Record<string, TranslationKey> = {
   "/calc": "seo.calcDescription",
+  "/calc/battle": "battle.description",
+  "/notes": "battle.notesDescription",
   "/teams": "teams.description",
   "/meta": "seo.metaDescription",
   "/groups": "seo.groupsDescription",

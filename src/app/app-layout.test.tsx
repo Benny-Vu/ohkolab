@@ -56,6 +56,27 @@ describe("AppLayout", () => {
     );
   });
 
+  it("keeps the More destinations behind the More menu, not in the rows", () => {
+    renderAt("/calc");
+
+    // The More menu renders in the header and as a phone tab (the name is
+    // a regex: an unread badge would ride along in the accessible name).
+    const triggers = screen.getAllByRole("button", { name: /More/ });
+    expect(triggers).toHaveLength(2);
+    // Its destinations are menu items, not header or tab links.
+    for (const nav of screen.getAllByRole("navigation", { name: "Main" })) {
+      expect(
+        within(nav).queryByRole("link", { name: "Messages" }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(nav).queryByRole("link", { name: "Battles" }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(nav).queryByRole("link", { name: "Notes" }),
+      ).not.toBeInTheDocument();
+    }
+  });
+
   it("labels the profile tab 'Profile' and shows the user's avatar when signed in", async () => {
     renderAt("/calc", createSignedInAuth());
 

@@ -99,7 +99,7 @@ function ItemOptions({
       renderOption={renderItem}
       selected={selected}
       onSelect={onSelect}
-      noneLabel={t("pokemonEditor.none")}
+      noneLabel={t("pokemonEditor.noHeldItem")}
       onSelectNone={() => onSelect(null)}
       emptyText={t("pokemonEditor.noItem")}
     />
@@ -120,7 +120,7 @@ export function ItemPicker({
   const display = useDisplayName();
   const known = value ? getItem(value) : undefined;
   const chosenLabel = label ?? t("pokemonEditor.item");
-  const chosenPlaceholder = placeholder ?? t("pokemonEditor.none");
+  const chosenPlaceholder = placeholder ?? t("pokemonEditor.noHeldItem");
 
   return (
     <Combobox
