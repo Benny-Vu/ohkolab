@@ -302,6 +302,8 @@ export const shellJa: { [K in ShellKey]: string } = {
     "OHKOLabで使っているデータソースとライブラリ、そのライセンス。",
   "seo.battlesDescription":
     "ポケモンチャンピオンズの対戦相手をOHKOLabで見つける。募集、申し込み、マッチング。",
+  "seo.messagesDescription":
+    "OHKOLabのダイレクトメッセージ。ポケモンチャンピオンズの仲間とチームやバトルを話そう。",
   "seo.learnDescription":
     "ポケモンチャンピオンズのダメージ乱数、1発・2発、ステータスポイント（SP）、同速をやさしく解説。",
   "seo.changelogDescription":

@@ -25,6 +25,7 @@ const EXACT_TITLES: Record<string, TranslationKey> = {
   "/teams": "teams.title",
   "/meta": "meta.title",
   "/battles": "nav.battles",
+  "/messages": "nav.messages",
   "/learn": "footer.learn",
   "/changelog": "footer.whatsNew",
   "/profile": "nav.profile",
@@ -43,6 +44,7 @@ const PREFIX_TITLES: [prefix: string, key: TranslationKey][] = [
   ["/teams/", "pageTitle.team"],
   ["/post/", "pageTitle.post"],
   ["/g/", "pageTitle.group"],
+  ["/messages/", "nav.messages"],
   ["/moderation/", "moderation.noticeTitle"],
 ];
 
@@ -58,6 +60,7 @@ const EXACT_DESCRIPTIONS: Record<string, TranslationKey> = {
   "/meta": "seo.metaDescription",
   "/groups": "seo.groupsDescription",
   "/battles": "seo.battlesDescription",
+  "/messages": "seo.messagesDescription",
   "/learn": "seo.learnDescription",
   "/changelog": "seo.changelogDescription",
   "/terms": "seo.termsDescription",
@@ -72,6 +75,7 @@ const PREFIX_DESCRIPTIONS: [prefix: string, key: TranslationKey][] = [
   ["/post/", "seo.postDescription"],
   ["/u/", "seo.profileDescription"],
   ["/g/", "seo.groupDescription"],
+  ["/messages/", "seo.messagesDescription"],
 ];
 
 function withSite(title: string): string {
