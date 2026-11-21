@@ -32,4 +32,19 @@ export const learnJa: { [K in LearnKey]: string } = {
   "learn.countOne": "1項目",
   "learn.countMany": "{count}項目",
   "learn.typeChart": "タイプ相性表",
+
+  // タイプページ。
+  "learn.types.attacking": "攻撃側",
+  "learn.types.defending": "防御側",
+  "learn.types.superEffective": "効果抜群",
+  "learn.types.notVeryEffective": "効果いまひとつ",
+  "learn.types.noEffect": "効かない",
+  "learn.types.weakTo": "弱点",
+  "learn.types.resists": "軽減",
+  "learn.types.immuneTo": "無効",
+  "learn.types.traits": "特徴",
+  "learn.types.chartGuide": "行は攻撃側、列は防御側。",
+  "learn.types.legendSuper": "効果抜群",
+  "learn.types.legendResist": "効果いまひとつ",
+  "learn.types.legendNoEffect": "効かない",
 };

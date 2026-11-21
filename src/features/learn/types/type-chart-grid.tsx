@@ -1,7 +1,5 @@
 import { typeEffectiveness } from "@/data/type-chart";
-import { typesChrome } from "@/features/learn/types/chrome";
 import { typeHeaderCode } from "@/features/learn/types/type-ids";
-import { useLocale } from "@/lib/i18n/locale";
 import { useT } from "@/lib/i18n/t";
 import { TYPE_COLORS } from "@/lib/type-colors";
 import { cn } from "@/lib/utils";
@@ -73,7 +71,6 @@ function LegendItem({
 
 /** The full type chart with its legend, inside one card. */
 export function TypeChartGrid() {
-  const [locale] = useLocale();
   const t = useT();
   return (
     <section
@@ -88,7 +85,7 @@ export function TypeChartGrid() {
         {t("learn.typeChart")}
       </h2>
       <p className="text-sm text-muted-foreground">
-        {typesChrome("learn.types.chartGuide", locale)}
+        {t("learn.types.chartGuide")}
       </p>
       <div className="relative">
         <div className="overflow-x-auto">
@@ -128,18 +125,9 @@ export function TypeChartGrid() {
         />
       </div>
       <ul className="flex flex-wrap gap-x-4 gap-y-1.5">
-        <LegendItem
-          multiplier={2}
-          label={typesChrome("learn.types.legendSuper", locale)}
-        />
-        <LegendItem
-          multiplier={0.5}
-          label={typesChrome("learn.types.legendResist", locale)}
-        />
-        <LegendItem
-          multiplier={0}
-          label={typesChrome("learn.types.legendNoEffect", locale)}
-        />
+        <LegendItem multiplier={2} label={t("learn.types.legendSuper")} />
+        <LegendItem multiplier={0.5} label={t("learn.types.legendResist")} />
+        <LegendItem multiplier={0} label={t("learn.types.legendNoEffect")} />
       </ul>
     </section>
   );

@@ -33,6 +33,21 @@ export const learnEn = {
   "learn.countOne": "1 entry",
   "learn.countMany": "{count} entries",
   "learn.typeChart": "Type chart",
+
+  // The Types page.
+  "learn.types.attacking": "Attacking",
+  "learn.types.defending": "Defending",
+  "learn.types.superEffective": "Super effective against",
+  "learn.types.notVeryEffective": "Not very effective against",
+  "learn.types.noEffect": "No effect on",
+  "learn.types.weakTo": "Weak to",
+  "learn.types.resists": "Resists",
+  "learn.types.immuneTo": "Immune to",
+  "learn.types.traits": "Traits",
+  "learn.types.chartGuide": "Rows attack, columns defend.",
+  "learn.types.legendSuper": "Super effective",
+  "learn.types.legendResist": "Not very effective",
+  "learn.types.legendNoEffect": "No effect",
 } as const;
 
 export type LearnKey = keyof typeof learnEn;

@@ -4,12 +4,12 @@ import { ChevronDownIcon } from "lucide-react";
 import { useDisplayName } from "@/data/display-names";
 import { TypeBadge } from "@/components/type-badge";
 import { localized, type LocalizedText } from "@/features/learn/guides";
-import { typesChrome } from "@/features/learn/types/chrome";
 import { matchupsFor } from "@/features/learn/types/matchups";
 import { typeAnchor } from "@/features/learn/types/type-ids";
 import { TYPE_TRAITS } from "@/features/learn/types/type-traits";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useLocale } from "@/lib/i18n/locale";
+import { useT } from "@/lib/i18n/t";
 import { cn } from "@/lib/utils";
 import type { TypeName } from "@/types/pokemon";
 
@@ -45,10 +45,11 @@ function BadgeRow({
 /** A traits list, only when the type has verified traits. */
 function TraitsList({ traits }: { traits: readonly LocalizedText[] }) {
   const [locale] = useLocale();
+  const t = useT();
   return (
     <div className="grid gap-1.5">
       <h3 className="font-heading text-sm font-semibold">
-        {typesChrome("learn.types.traits", locale)}
+        {t("learn.types.traits")}
       </h3>
       <ul className="grid gap-1.5">
         {traits.map((trait, index) => (
@@ -69,45 +70,42 @@ function CardBody({
   type: TypeName;
   traits: readonly LocalizedText[] | undefined;
 }) {
-  const [locale] = useLocale();
+  const t = useT();
   const matchups = matchupsFor(type);
   return (
     <div className="grid gap-3">
       <div className="grid items-start gap-3 md:grid-cols-2">
         <div className="grid content-start gap-2">
           <h3 className="font-heading text-sm font-semibold">
-            {typesChrome("learn.types.attacking", locale)}
+            {t("learn.types.attacking")}
           </h3>
           <div className="grid gap-2">
             <BadgeRow
-              label={typesChrome("learn.types.superEffective", locale)}
+              label={t("learn.types.superEffective")}
               types={matchups.superEffective}
             />
             <BadgeRow
-              label={typesChrome("learn.types.notVeryEffective", locale)}
+              label={t("learn.types.notVeryEffective")}
               types={matchups.notVeryEffective}
             />
             <BadgeRow
-              label={typesChrome("learn.types.noEffect", locale)}
+              label={t("learn.types.noEffect")}
               types={matchups.noEffect}
             />
           </div>
         </div>
         <div className="grid content-start gap-2">
           <h3 className="font-heading text-sm font-semibold">
-            {typesChrome("learn.types.defending", locale)}
+            {t("learn.types.defending")}
           </h3>
           <div className="grid gap-2">
+            <BadgeRow label={t("learn.types.weakTo")} types={matchups.weakTo} />
             <BadgeRow
-              label={typesChrome("learn.types.weakTo", locale)}
-              types={matchups.weakTo}
-            />
-            <BadgeRow
-              label={typesChrome("learn.types.resists", locale)}
+              label={t("learn.types.resists")}
               types={matchups.resists}
             />
             <BadgeRow
-              label={typesChrome("learn.types.immuneTo", locale)}
+              label={t("learn.types.immuneTo")}
               types={matchups.immuneTo}
             />
           </div>
