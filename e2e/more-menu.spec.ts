@@ -13,10 +13,10 @@ test("the More menu holds the extra destinations on every layout", async ({
   await page.goto("/");
 
   // The header nav is hidden on phones, the tab bar on desktop: exactly
-  // one More trigger is in view either way.
+  // one visible "Main" nav either way, holding the one More trigger.
   const isMobile = (page.viewportSize()?.width ?? 1280) < 768;
   const scope = isMobile
-    ? page.getByRole("navigation", { name: "Main" }).nth(1)
+    ? page.getByRole("navigation", { name: "Main" })
     : page.getByRole("banner");
   const trigger = scope.getByRole("button", { name: /More/ });
   await expect(trigger).toBeVisible();
